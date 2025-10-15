@@ -1,9 +1,16 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import path from 'path';
 
 // Vitest configuration with Vite plugins and coverage using coverage-v8
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
+      '@triplex': path.resolve(__dirname, '.triplex'),
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom',

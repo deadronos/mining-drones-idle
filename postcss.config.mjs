@@ -14,11 +14,11 @@ import postcssPresetEnv from 'postcss-preset-env';
 
 export default {
   plugins: [
-  postcssImport(),
-  // Apply CSS nesting support (must run before Tailwind's processing so
-  // nested rules are available when Tailwind generates utilities).
-  postcssNesting(),
-  tailwindcss(),
+    postcssImport(),
+    // Apply CSS nesting support (must run before Tailwind's processing so
+    // nested rules are available when Tailwind generates utilities).
+    postcssNesting(),
+    tailwindcss(),
     postcssPresetEnv({
       // stage 3 enables a useful set of polyfills; adjust to your needs
       stage: 3,

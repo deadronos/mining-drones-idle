@@ -26,7 +26,13 @@ export default defineConfig([
 
   {
     // Apply TypeScript-specific rules only to application source and config files
-    files: ['src/**/*.{ts,tsx}', 'vite.config.ts', 'vitest.config.ts'],
+    files: [
+      'src/**/*.{ts,tsx}',
+      'tests/**/*.{ts,tsx}',
+      'vite.config.ts',
+      'vitest.config.ts',
+      'playwright.config.ts',
+    ],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
@@ -84,6 +90,10 @@ export default defineConfig([
             'emissive',
             'emissiveIntensity',
             'side',
+            'vertexColors',
+            'roughness',
+            'metalness',
+            'shadow-mapSize',
           ],
         },
       ],
@@ -113,6 +123,7 @@ export default defineConfig([
       '.eslintrc.{js,cjs,mjs}',
       'vite.config.{js,cjs,mjs}',
       'postcss.config.mjs',
+      'playwright.config.ts',
       'scripts/**',
       'tools/**',
     ],
