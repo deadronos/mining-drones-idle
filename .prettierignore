@@ -1,0 +1,15 @@
+# Files and folders to ignore when running Prettier
+node_modules/
+dist/
+build/
+coverage/
+.vscode/
+.idea/
+*.min.js
+node_modules/
+dist/
+build/
+coverage/
+.vscode/
+.idea/
+*.min.js
