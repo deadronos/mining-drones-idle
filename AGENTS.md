@@ -4,6 +4,8 @@ use 'sequentialthinking' tool eagerly.
 
 Look at `.github/instructions/spec-driven-workflow-v1.instructions.md` for guidance on spec/design/tasks.
 
+also look into `.github/instructions/*.instructions.md` files and which glob patterns of files they should guide.
+
 the initial idea was '/idea.md'
 progressive designs are at '/memory/designs'
 
