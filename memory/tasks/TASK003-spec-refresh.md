@@ -2,7 +2,7 @@
 
 ## Status
 
-In Progress
+Completed (2025-02-15)
 
 ## Summary
 
@@ -10,11 +10,11 @@ Update `spec/spec-full-idea.md` so it mirrors the shipped MVP and persistence/of
 
 ## Tasks
 
-1. Review current ECS, store, persistence, and offline modules to capture factual behavior (DES002).
-2. Rewrite spec sections (overview, goals, requirements, data model, systems, persistence/offline, UI/UX, acceptance criteria, roadmap, changelog) per DES002 table.
-3. Ensure new requirements RQ-006 and RQ-007 are satisfied in the spec narrative (implemented vs. planned differentiation).
-4. Update memory logs (progress) after spec changes.
-5. Prepare PR summary referencing DES002 and TASK003.
+1. ✅ Review current ECS, store, persistence, and offline modules to capture factual behavior (DES002).
+2. ✅ Rewrite spec sections (overview, goals, requirements, data model, systems, persistence/offline, UI/UX, acceptance criteria, roadmap, changelog) per DES002 table.
+3. ✅ Ensure new requirements RQ-006 and RQ-007 are satisfied in the spec narrative (implemented vs. planned differentiation).
+4. ✅ Update memory logs (progress) after spec changes.
+5. ✅ Prepare PR summary referencing DES002 and TASK003.
 
 ## Dependencies
 

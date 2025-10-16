@@ -2,13 +2,15 @@
 
 ## Current Focus
 
-Update `spec/spec-full-idea.md` to reflect the latest implemented systems (ECS loop, power, offline simulation utilities, persistence manager API) and clarify remaining roadmap gaps.
+Translate the refreshed spec into implementation tasks—start with extending the store to support the persistence manager (settings slice, snapshot helpers) before wiring it into the app bootstrap.
 
 ## Recent Changes
 
 - Core MVP delivered with ECS loop, rendering, and UI panel.
 - Persistence/offline iteration introduced new tests and utilities but integration is pending.
+- Spec updated with requirement status table and explicit persistence manager gaps (DES002/TASK003).
 
 ## Next Steps
 
-- Document spec adjustments per TASK003 to capture current behavior and outstanding work.
+- Extend the store with persistence settings/snapshot APIs so `createPersistenceManager` can operate safely.
+- Plan bootstrap wiring and settings UI per the updated roadmap once the store work lands.
