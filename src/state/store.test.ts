@@ -5,6 +5,9 @@ import {
   computePrestigeGain,
   createStoreInstance,
   moduleDefinitions,
+  parseSnapshot,
+  saveVersion,
+  serializeStore,
 } from '@/state/store';
 
 describe('state/store', () => {
@@ -46,5 +49,36 @@ describe('state/store', () => {
     expect(after.prestige.cores).toBe(3 + preview);
     expect(after.resources.bars).toBe(0);
     expect(after.modules.droneBay).toBe(1);
+  });
+
+  it('updates settings with normalization and export/import roundtrips', () => {
+    const store = createStoreInstance();
+    const api = store.getState();
+    api.updateSettings({ autosaveInterval: 33.7, notation: 'engineering', offlineCapHours: -4 });
+    const afterUpdate = store.getState();
+    expect(afterUpdate.settings.autosaveInterval).toBe(33);
+    expect(afterUpdate.settings.notation).toBe('engineering');
+    expect(afterUpdate.settings.offlineCapHours).toBe(0);
+
+    const snapshot = serializeStore(store.getState());
+    expect(snapshot.settings.autosaveInterval).toBe(33);
+    expect(snapshot.save.version).toBe(saveVersion);
+
+    const payload = JSON.stringify(snapshot);
+    const parsed = parseSnapshot(payload);
+    expect(parsed?.settings.notation).toBe('engineering');
+
+    const fresh = createStoreInstance();
+    const success = fresh.getState().importState(payload);
+    expect(success).toBe(true);
+    const imported = fresh.getState();
+    expect(imported.settings.autosaveInterval).toBe(33);
+    expect(imported.resources.ore).toBe(snapshot.resources.ore);
+  });
+
+  it('rejects invalid import payloads gracefully', () => {
+    const store = createStoreInstance();
+    const success = store.getState().importState('not-json');
+    expect(success).toBe(false);
   });
 });

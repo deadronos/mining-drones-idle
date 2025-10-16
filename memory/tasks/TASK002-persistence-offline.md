@@ -32,3 +32,18 @@ Implement save/load with autosave and offline simulation, create settings UI for
 2. Update the persistence manager to forward the configured cap and adjust helper signatures accordingly.
 3. Add regression tests covering custom offline caps and persistence load behavior (with mocked storage/time).
 4. Re-run formatters, linters, type checking, unit tests, and e2e suite to validate the changes.
+
+## Progress Log
+
+### 2025-02-16
+
+- Store now includes a `settings` slice, snapshot helpers, and RNG seed preservation for persistence consumers.
+- Bootstrapped `createPersistenceManager` in `main.tsx` with autosave scheduling and unload visibility hooks.
+- Delivered `SettingsPanel` UI with autosave/offline controls, import/export workflow, and Vitest coverage.
+- Ran formatter, ESLint, type checking, and the full unit suite to validate the milestone 1 slice.
+
+## Updated Iteration Plan (2025-02-16)
+
+1. Break out refinery processing into its ECS system and expose `processRefinery` for offline parity.
+2. Expand offline simulation tests to cover the new system delegation.
+3. Design the follow-up UI/UX for offline recap before entering Milestone 2 implementation.
