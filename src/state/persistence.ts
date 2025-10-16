@@ -14,13 +14,19 @@ import { computeOfflineSeconds, simulateOfflineProgress } from '@/lib/offline';
 
 export const SAVE_KEY = 'space-factory-save';
 
+import type { MigrationReport } from '@/state/migrations';
+
 export interface PersistenceManager {
   load(this: void): void;
+  // returns a migration report when one was applied
+  loadWithReport?(this: void): MigrationReport | undefined;
   start(this: void): void;
   stop(this: void): void;
   saveNow(this: void): void;
   exportState(this: void): string;
   importState(this: void, payload: string): boolean;
+  // import with migration report
+  importStateWithReport?(this: void, payload: string): { success: boolean; report?: MigrationReport };
 }
 
 const hasStorage = () => typeof window !== 'undefined' && !!window.localStorage;
@@ -69,6 +75,8 @@ export const createPersistenceManager = (
     }, delay);
   };
 
+  let lastLoadReport: MigrationReport | undefined;
+
   const load = () => {
     if (!hasStorage()) return;
     const raw = window.localStorage.getItem(SAVE_KEY);
@@ -83,7 +91,9 @@ export const createPersistenceManager = (
     }
     // Run migrations to ensure snapshot shape is current
     try {
-      snapshot = migrateSnapshot(snapshot);
+      const result = migrateSnapshot(snapshot);
+      snapshot = result.snapshot;
+      lastLoadReport = result.report;
     } catch (err) {
       console.warn('Migration failed, falling back to parsed snapshot', err);
     }
@@ -130,22 +140,30 @@ export const createPersistenceManager = (
   const exportState = () => store.getState().exportState();
 
   const importState = (payload: string) => {
+    const result = importStateWithReport(payload);
+    return result.success;
+  };
+
+  const importStateWithReport = (payload: string) => {
     // parse + migrate before handing to store import
     const parsed = parseSnapshot(payload);
-    if (!parsed) return false;
+    if (!parsed) return { success: false as const };
     let migrated = parsed;
+    let report;
     try {
-      migrated = migrateSnapshot(parsed);
+      const r = migrateSnapshot(parsed);
+      migrated = r.snapshot;
+      report = r.report;
     } catch (err) {
       console.warn('Migration failed during import', err);
     }
     const success = store.getState().importState(JSON.stringify(migrated));
-    if (!success) return false;
+    if (!success) return { success: false as const, report };
     store.getState().setLastSave(Date.now());
     saveNow();
     scheduleAutosave();
-    return true;
+    return { success: true as const, report };
   };
 
-  return { load, start, stop, saveNow, exportState, importState };
+  return { load, start, stop, saveNow, exportState, importState, importStateWithReport, loadWithReport: () => lastLoadReport };
 };

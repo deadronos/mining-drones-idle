@@ -13,11 +13,14 @@ describe('migrations', () => {
       settings: { autosaveEnabled: true, autosaveInterval: 10, offlineCapHours: 8, notation: 'standard', throttleFloor: 0.25 },
     } as Partial<StoreSnapshot>;
 
-    const migrated = migrateSnapshot(legacy as StoreSnapshot);
-    expect(migrated.save.version).toBe(saveVersion);
-    expect(migrated.settings).toBeDefined();
-    // showTrails should be present and default to true
-    expect((migrated.settings).showTrails).toBe(true);
+      const { snapshot: migrated, report } = migrateSnapshot(legacy as StoreSnapshot);
+      expect(report.migrated).toBe(true);
+      expect(report.fromVersion).toBe('0.0.1');
+      expect(report.toVersion).toBe(saveVersion);
+      expect(migrated.save.version).toBe(saveVersion);
+      expect(migrated.settings).toBeDefined();
+      // showTrails should be present and default to true
+      expect(migrated.settings.showTrails).toBe(true);
   });
 
   it('is idempotent when applied to current snapshots', () => {
@@ -28,8 +31,9 @@ describe('migrations', () => {
       save: { lastSave: Date.now(), version: saveVersion },
       settings: { autosaveEnabled: true, autosaveInterval: 10, offlineCapHours: 8, notation: 'standard', throttleFloor: 0.25, showTrails: false },
     } as StoreSnapshot;
-    const migrated = migrateSnapshot(current);
-    expect(migrated.save.version).toBe(saveVersion);
-    expect(migrated.settings.showTrails).toBe(false);
+      const { snapshot: migrated, report } = migrateSnapshot(current);
+      expect(report.migrated).toBe(false);
+      expect(migrated.save.version).toBe(saveVersion);
+      expect(migrated.settings.showTrails).toBe(false);
   });
 });
