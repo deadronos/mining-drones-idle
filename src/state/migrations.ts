@@ -41,7 +41,12 @@ const migrations: Array<{ targetVersion: string; migrate: MigrationFn }> = [
       const migrated = { ...snapshot } as StoreSnapshot;
       // ensure showTrails exists on settings (introduced in 0.1.0)
       migrated.settings = { ...(migrated.settings ?? {}), showTrails: migrated.settings?.showTrails ?? true };
-  migrated.save = { ...(migrated.save ?? ({} as StoreSnapshot['save'])), version: snapshot.save?.version ?? '0.0.0', lastSave: migrated.save?.lastSave ?? Date.now() };
+      const existingSave = migrated.save ?? { lastSave: Date.now(), version: '0.0.0' };
+      migrated.save = {
+        ...existingSave,
+        version: snapshot.save?.version ?? existingSave.version,
+        lastSave: existingSave.lastSave ?? Date.now(),
+      };
       return { snapshot: migrated, description: 'ensure settings.showTrails default and save meta' };
     },
   },
@@ -53,6 +58,10 @@ const migrations: Array<{ targetVersion: string; migrate: MigrationFn }> = [
       if (migrated.resources) {
         migrated.resources = {
           ore: Number(migrated.resources.ore) || 0,
+          ice: Number(migrated.resources?.ice) || 0,
+          metals: Number(migrated.resources?.metals) || 0,
+          crystals: Number(migrated.resources?.crystals) || 0,
+          organics: Number(migrated.resources?.organics) || 0,
           bars: Number(migrated.resources.bars) || 0,
           energy: Number(migrated.resources.energy) || 0,
           credits: Number(migrated.resources.credits) || 0,

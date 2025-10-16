@@ -21,7 +21,16 @@ describe('state/persistence', () => {
   it('loads save and simulates offline with configured cap hours', () => {
     const store = createStoreInstance();
     const snapshot = {
-      resources: { ore: 5_000, bars: 0, energy: 160, credits: 0 },
+      resources: {
+        ore: 5_000,
+        ice: 0,
+        metals: 0,
+        crystals: 0,
+        organics: 0,
+        bars: 0,
+        energy: 160,
+        credits: 0,
+      },
       modules: { droneBay: 3, refinery: 2, storage: 1, solar: 1, scanner: 0 },
       prestige: { cores: 4 },
       save: { lastSave: FIXED_NOW.getTime() - 13 * 3600 * 1000, version: '0.2.0' },

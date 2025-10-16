@@ -2,7 +2,7 @@
 
 ## Current Focus
 
-Implement per-drone asteroid targeting variation and seeded flight offsets (TASK012), including persistence of in-progress flights across saves.
+Implement dynamic asteroid biomes (TASK013): deterministic biome assignment, fracture events, drone reassignment heuristics, and HUD inspector surfacing biome modifiers.
 
 ## Recent Changes
 
@@ -13,6 +13,6 @@ Implement per-drone asteroid targeting variation and seeded flight offsets (TASK
 
 ## Next Steps
 
-- Monitor runtime performance/visual impact of the new per-drone flights and adjust offset ranges if needed.
-- Coordinate follow-up polish for Task011 and remaining visual backlog items now that flight persistence landed.
-- Document migration rollout guidance for QA and confirm legacy saves resume in-flight drones without regression reports.
+- Build biome data module, extend entities, and integrate fracture system before polishing visuals.
+- Validate deterministic behavior with seeded tests before expanding content.
+- Align with visual polish backlog once biome HUD and particles are ready for art review.

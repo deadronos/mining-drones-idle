@@ -4,18 +4,27 @@ import { assignDroneTarget } from '@/ecs/systems/droneAI';
 import { computeWaypointWithOffset } from '@/ecs/systems/travel';
 import type { AsteroidEntity, DroneEntity } from '@/ecs/world';
 import { createRng } from '@/lib/rng';
+import { createAsteroidBiomeState } from '@/ecs/biomes';
 
-const createAsteroid = (id: string, position: Vector3, oreRemaining = 100): AsteroidEntity => ({
-  id,
-  kind: 'asteroid',
-  position,
-  oreRemaining,
-  richness: 1,
-  radius: 1,
-  rotation: 0,
-  spin: 0,
-  colorBias: 1,
-});
+const createAsteroid = (id: string, position: Vector3, oreRemaining = 100): AsteroidEntity => {
+  const biome = createAsteroidBiomeState(createRng(7));
+  return {
+    id,
+    kind: 'asteroid',
+    position,
+    oreRemaining,
+    richness: 1,
+    radius: 1,
+    rotation: 0,
+    spin: 0,
+    colorBias: 1,
+    biome,
+    gravityMultiplier: biome.gravityMultiplier,
+    resourceProfile: biome.resourceProfile,
+    dominantResource: biome.dominantResource,
+    regions: null,
+  };
+};
 
 const createDrone = (position: Vector3): DroneEntity => ({
   id: 'drone-test',
@@ -23,6 +32,7 @@ const createDrone = (position: Vector3): DroneEntity => ({
   position: position.clone(),
   state: 'idle',
   targetId: null,
+  targetRegionId: null,
   cargo: 0,
   capacity: 40,
   speed: 14,
@@ -34,6 +44,7 @@ const createDrone = (position: Vector3): DroneEntity => ({
   charging: false,
   lastDockingFrom: null,
   flightSeed: null,
+  cargoProfile: { ore: 0, metals: 0, crystals: 0, organics: 0, ice: 0 },
 });
 
 describe('assignDroneTarget', () => {

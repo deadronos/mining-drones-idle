@@ -3,10 +3,12 @@ import { useEffect, useRef } from 'react';
 import type { InstancedMesh } from 'three';
 import { Color, Matrix4, Quaternion, Vector3 } from 'three';
 import { gameWorld } from '@/ecs/world';
+import { getBiomeDefinition } from '@/lib/biomes';
 
 const ASTEROID_LIMIT = 256;
-const baseColor = new Color('#475569');
-const richColor = new Color('#8dd0ff');
+const primaryColor = new Color();
+const secondaryColor = new Color();
+const regionMix = new Color();
 const tempMatrix = new Matrix4();
 const tempQuat = new Quaternion();
 const tempScale = new Vector3();
@@ -35,8 +37,21 @@ export const Asteroids = () => {
       tempScale.setScalar(asteroid.radius);
       tempMatrix.compose(asteroid.position, tempQuat, tempScale);
       mesh.setMatrixAt(i, tempMatrix);
+      const biomeDef = getBiomeDefinition(asteroid.biome.biomeId);
+      primaryColor.set(biomeDef.palette.primary);
+      secondaryColor.set(biomeDef.palette.secondary);
+      let displayColor = primaryColor;
+      if (asteroid.regions && asteroid.regions.length > 0) {
+        regionMix.setRGB(0, 0, 0);
+        for (const region of asteroid.regions) {
+          const regionDef = getBiomeDefinition(region.biomeId);
+          tempColor.set(regionDef.palette.primary).multiplyScalar(region.weight);
+          regionMix.add(tempColor);
+        }
+        displayColor = regionMix;
+      }
       const t = Math.min(Math.max((asteroid.colorBias - 0.8) / 0.8, 0), 1);
-      tempColor.copy(baseColor).lerp(richColor, t);
+      tempColor.copy(displayColor).lerp(secondaryColor, t);
       mesh.setColorAt(i, tempColor);
     }
     mesh.count = count;

@@ -141,6 +141,7 @@ describe('state/store', () => {
       droneId: 'drone-1',
       state: 'toAsteroid',
       targetAsteroidId: 'asteroid-1',
+      targetRegionId: 'region-1',
       pathSeed: 42,
       travel: {
         from: [0, 0, 0],
@@ -153,6 +154,7 @@ describe('state/store', () => {
     const snapshot = serializeStore(store.getState());
     expect(snapshot.droneFlights).toHaveLength(1);
     expect(snapshot.droneFlights?.[0].pathSeed).toBe(42);
+    expect(snapshot.droneFlights?.[0].targetRegionId).toBe('region-1');
     expect(snapshot.droneFlights?.[0].travel.elapsed).toBeCloseTo(0.25, 5);
     api.clearDroneFlight('drone-1');
     expect(store.getState().droneFlights).toHaveLength(0);

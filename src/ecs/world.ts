@@ -2,6 +2,12 @@ import { World, type Query } from 'miniplex';
 import { Quaternion, Vector3 } from 'three';
 import { randomOnRing, randomRange, TAU } from '@/lib/math';
 import { createRng, type RandomSource } from '@/lib/rng';
+import {
+  createAsteroidBiomeState,
+  type AsteroidBiomeState,
+  type BiomeRegionState,
+} from '@/ecs/biomes';
+import type { ResourceKey, ResourceWeights } from '@/lib/biomes';
 import { storeApi, type ModuleId } from '@/state/store';
 
 export type DroneState = 'idle' | 'toAsteroid' | 'mining' | 'returning' | 'unloading';
@@ -39,6 +45,7 @@ export interface DroneEntity {
   position: Vector3;
   state: DroneState;
   targetId: string | null;
+  targetRegionId: string | null;
   cargo: number;
   capacity: number;
   speed: number;
@@ -50,6 +57,7 @@ export interface DroneEntity {
   charging: boolean;
   lastDockingFrom: Vector3 | null;
   flightSeed: number | null;
+  cargoProfile: ResourceWeights;
 }
 
 export interface AsteroidEntity {
@@ -62,6 +70,11 @@ export interface AsteroidEntity {
   rotation: number;
   spin: number;
   colorBias: number;
+  biome: AsteroidBiomeState;
+  gravityMultiplier: number;
+  resourceProfile: ResourceWeights;
+  dominantResource: ResourceKey;
+  regions: BiomeRegionState[] | null;
 }
 
 export interface FactoryEntity {
@@ -116,6 +129,7 @@ export const createAsteroid = (scannerLevel: number, rng: RandomSource): Asteroi
   const richness = randomRange(0.8, 1.2, rng) * richnessBias;
   const oreRemaining = BASE_ASTEROID_RICHNESS * richness;
   const radius = randomRange(0.6, 1.4, rng) * Math.cbrt(oreRemaining / BASE_ASTEROID_RICHNESS);
+  const biome = createAsteroidBiomeState(rng);
   return {
     id: nextId('asteroid'),
     kind: 'asteroid',
@@ -126,6 +140,11 @@ export const createAsteroid = (scannerLevel: number, rng: RandomSource): Asteroi
     rotation: randomRange(0, TAU, rng),
     spin: randomRange(-0.4, 0.4, rng),
     colorBias: richness,
+    biome,
+    gravityMultiplier: biome.gravityMultiplier,
+    resourceProfile: biome.resourceProfile,
+    dominantResource: biome.dominantResource,
+    regions: null,
   };
 };
 
@@ -140,6 +159,7 @@ const createDrone = (origin: Vector3): DroneEntity => ({
   position: origin.clone(),
   state: 'idle',
   targetId: null,
+  targetRegionId: null,
   cargo: 0,
   capacity: DEFAULT_DRONE_CAPACITY,
   speed: DEFAULT_DRONE_SPEED,
@@ -151,6 +171,7 @@ const createDrone = (origin: Vector3): DroneEntity => ({
   charging: false,
   lastDockingFrom: null,
   flightSeed: null,
+  cargoProfile: { ore: 0, metals: 0, crystals: 0, organics: 0, ice: 0 },
 });
 
 const isDrone = (entity: Entity): entity is DroneEntity => entity.kind === 'drone';

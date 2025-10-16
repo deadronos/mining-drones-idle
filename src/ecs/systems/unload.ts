@@ -1,6 +1,7 @@
 import { Vector3 } from 'three';
 import type { GameWorld } from '@/ecs/world';
-import type { StoreApiType } from '@/state/store';
+import type { Resources, StoreApiType } from '@/state/store';
+import { RESOURCE_KEYS } from '@/lib/biomes';
 
 const TRANSFER_EVENT_LIMIT = 48;
 const TRANSFER_DURATION = 0.65;
@@ -17,7 +18,21 @@ export const createUnloadSystem = (world: GameWorld, store: StoreApiType) => {
       if (drone.state !== 'unloading') continue;
       const amount = drone.cargo;
       if (amount > 0) {
-        store.getState().addOre(amount);
+        const breakdown: Record<string, number> = {};
+        let delivered = 0;
+        for (const key of RESOURCE_KEYS) {
+          const portion = drone.cargoProfile[key];
+          if (portion > 0) {
+            breakdown[key] = portion;
+            delivered += portion;
+          }
+        }
+        const delta = { ...breakdown } as Partial<Resources>;
+        const remainder = amount - delivered;
+        if (remainder > 1e-3) {
+          delta.ore = (delta.ore ?? 0) + remainder;
+        }
+        store.getState().addResources(delta);
         const timestamp = now();
         const transfer = {
           id: `${drone.id}-${timestamp.toString(16)}`,
@@ -33,8 +48,12 @@ export const createUnloadSystem = (world: GameWorld, store: StoreApiType) => {
         factory.activity.lastTransferAt = timestamp;
       }
       drone.cargo = 0;
+      for (const key of RESOURCE_KEYS) {
+        drone.cargoProfile[key] = 0;
+      }
       drone.state = 'idle';
       drone.targetId = null;
+      drone.targetRegionId = null;
       drone.travel = null;
       drone.position.copy(factory.position);
       drone.lastDockingFrom = null;

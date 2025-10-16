@@ -4,6 +4,7 @@ import { computeTravelPosition, snapshotToTravel, travelToSnapshot } from '@/ecs
 import type { DroneFlightPhase, DroneFlightState, StoreApiType } from '@/state/store';
 import type { RandomSource } from '@/lib/rng';
 import { computeWaypointWithOffset } from '@/ecs/systems/travel';
+import { getRegionById, pickRegionForDrone } from '@/ecs/biomes';
 
 const nearestTemp = new Vector3();
 const midPoint = new Vector3();
@@ -23,6 +24,9 @@ interface TargetCandidate {
 interface AssignmentResult {
   target: AsteroidEntity;
   pathSeed: number;
+  destination: Vector3;
+  regionId: string | null;
+  gravityMultiplier: number;
 }
 
 const toWeight = (distance: number) => 1 / Math.max(distance, 1);
@@ -66,7 +70,19 @@ export const assignDroneTarget = (
     }
   }
   const seed = Math.max(1, Math.floor(rng.next() * 0xffffffff));
-  return { target: chosen.asteroid, pathSeed: seed };
+  const target = chosen.asteroid;
+  let regionId: string | null = null;
+  let destination = target.position.clone();
+  let gravityMultiplier = target.gravityMultiplier;
+  if (target.regions && target.regions.length > 0) {
+    const region = pickRegionForDrone(target, target.biome, target.regions, rng);
+    if (region) {
+      regionId = region.id;
+      destination = target.position.clone().add(region.offset);
+      gravityMultiplier = region.gravityMultiplier;
+    }
+  }
+  return { target, pathSeed: seed, destination, regionId, gravityMultiplier };
 };
 
 const startTravel = (
@@ -74,12 +90,14 @@ const startTravel = (
   destination: Vector3,
   phase: DroneFlightPhase,
   store: StoreApiType,
-  options?: { recordDockingFrom?: boolean },
+  options?: { recordDockingFrom?: boolean; gravityMultiplier?: number },
 ) => {
   const from = drone.position.clone();
   const to = destination.clone();
   const distance = from.distanceTo(to);
-  const duration = Math.max(distance / Math.max(1, drone.speed), 0.1);
+  const gravity = Math.max(0.5, options?.gravityMultiplier ?? 1);
+  const effectiveSpeed = Math.max(1, drone.speed / gravity);
+  const duration = Math.max(distance / effectiveSpeed, 0.1);
   const travel: TravelData = { from, to, elapsed: 0, duration };
   const pathSeed = drone.flightSeed ?? 1;
   drone.flightSeed = pathSeed;
@@ -106,6 +124,7 @@ const startTravel = (
   drone.state = phase;
   if (phase === 'returning') {
     drone.targetId = null;
+    drone.targetRegionId = null;
   }
   if (options?.recordDockingFrom) {
     drone.lastDockingFrom = from.clone();
@@ -114,10 +133,12 @@ const startTravel = (
   }
 
   const targetAsteroidId = phase === 'toAsteroid' ? drone.targetId : null;
+  const targetRegionId = phase === 'toAsteroid' ? drone.targetRegionId : null;
   store.getState().recordDroneFlight({
     droneId: drone.id,
     state: phase,
     targetAsteroidId,
+    targetRegionId,
     pathSeed,
     travel: travelToSnapshot(travel),
   });
@@ -159,6 +180,7 @@ const synchronizeDroneFlight = (
   drone.state = flight.state;
   drone.flightSeed = flight.pathSeed;
   drone.targetId = flight.state === 'toAsteroid' ? flight.targetAsteroidId : null;
+  drone.targetRegionId = flight.state === 'toAsteroid' ? flight.targetRegionId : null;
   drone.travel = travel;
   if (flight.state === 'returning') {
     drone.lastDockingFrom = travel.from.clone();
@@ -183,11 +205,15 @@ export const createDroneAISystem = (world: GameWorld, store: StoreApiType) => {
 
       if (drone.state === 'idle') {
         drone.flightSeed = null;
+        drone.targetRegionId = null;
         const assignment = assignDroneTarget(drone, asteroidQuery, rng);
         if (assignment) {
           drone.targetId = assignment.target.id;
           drone.flightSeed = assignment.pathSeed;
-          startTravel(drone, assignment.target.position, 'toAsteroid', store);
+          drone.targetRegionId = assignment.regionId;
+          startTravel(drone, assignment.destination, 'toAsteroid', store, {
+            gravityMultiplier: assignment.gravityMultiplier,
+          });
         } else {
           store.getState().clearDroneFlight(drone.id);
         }
@@ -200,8 +226,28 @@ export const createDroneAISystem = (world: GameWorld, store: StoreApiType) => {
           store.getState().clearDroneFlight(drone.id);
           drone.state = 'idle';
           drone.targetId = null;
+          drone.targetRegionId = null;
           drone.travel = null;
           drone.flightSeed = null;
+        }
+        if (target?.regions?.length) {
+          const region = getRegionById(target.regions, drone.targetRegionId);
+          if (!region) {
+            const reassigned = pickRegionForDrone(target, target.biome, target.regions, rng);
+            if (reassigned) {
+              drone.targetRegionId = reassigned.id;
+              drone.flightSeed = Math.max(1, Math.floor(rng.next() * 0xffffffff));
+              startTravel(drone, target.position.clone().add(reassigned.offset), 'toAsteroid', store, {
+                gravityMultiplier: reassigned.gravityMultiplier,
+              });
+            } else {
+              store.getState().clearDroneFlight(drone.id);
+              drone.state = 'returning';
+              drone.targetId = null;
+              drone.targetRegionId = null;
+              drone.travel = null;
+            }
+          }
         }
         continue;
       }
@@ -217,6 +263,7 @@ export const createDroneAISystem = (world: GameWorld, store: StoreApiType) => {
 
       if (drone.state === 'returning' && !drone.travel) {
         drone.flightSeed = Math.max(1, Math.floor(rng.next() * 0xffffffff));
+        drone.targetRegionId = null;
         startTravel(drone, factory.position, 'returning', store, { recordDockingFrom: true });
       }
     }

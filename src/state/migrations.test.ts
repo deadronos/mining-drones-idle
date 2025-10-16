@@ -6,7 +6,7 @@ import type { StoreSnapshot } from './store';
 describe('migrations', () => {
   it('adds showTrails default and updates version for legacy snapshots', () => {
     const legacy = {
-      resources: { ore: 10, bars: 0, energy: 50, credits: 0 },
+      resources: { ore: 10, ice: 0, metals: 0, crystals: 0, organics: 0, bars: 0, energy: 50, credits: 0 },
       modules: { droneBay: 1, refinery: 0, storage: 0, solar: 0, scanner: 0 },
       prestige: { cores: 0 },
       save: { lastSave: 1_000_000, version: '0.0.1' },
@@ -27,7 +27,7 @@ describe('migrations', () => {
 
   it('is idempotent when applied to current snapshots', () => {
     const current = {
-      resources: { ore: 0, bars: 0, energy: 100, credits: 0 },
+      resources: { ore: 0, ice: 0, metals: 0, crystals: 0, organics: 0, bars: 0, energy: 100, credits: 0 },
       modules: { droneBay: 1, refinery: 0, storage: 0, solar: 0, scanner: 0 },
       prestige: { cores: 0 },
       save: { lastSave: Date.now(), version: saveVersion },
