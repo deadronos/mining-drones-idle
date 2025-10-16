@@ -171,6 +171,17 @@ export const getEnergyGeneration = (modules: Modules) => SOLAR_BASE_GEN * (modul
 export const getEnergyConsumption = (_modules: Modules, drones: number) =>
   drones * DRONE_ENERGY_COST;
 
+export const computeEnergyThrottle = (
+  state: Pick<StoreState, 'resources' | 'modules' | 'settings'>,
+) => {
+  const capacity = getEnergyCapacity(state.modules);
+  if (capacity <= 0) {
+    return 1;
+  }
+  const normalized = Math.max(0, Math.min(1, state.resources.energy / capacity));
+  return Math.max(state.settings.throttleFloor, normalized);
+};
+
 const initialResources: Resources = { ore: 0, bars: 0, energy: BASE_ENERGY_CAP, credits: 0 };
 const initialModules: Modules = { droneBay: 1, refinery: 0, storage: 0, solar: 0, scanner: 0 };
 const initialPrestige: Prestige = { cores: 0 };

@@ -26,21 +26,21 @@ Stack: React, Vite, TypeScript, React Three Fiber (r3f), Drei, Miniplex (ECS), Z
 
 ## Requirements (EARS-style)
 
-| ID | Requirement | Status | Acceptance / Notes |
-| --- | --- | --- | --- |
-| **RQ-006** | WHEN maintainers consult the spec for save/offline behavior, THE SYSTEM SHALL describe the persistence manager API and offline simulation helpers that currently exist in the codebase. | Implemented (Documentation) | This spec enumerates manager methods, storage key, and offline simulation flow tied to `src/state/persistence.ts` and `src/lib/offline.ts`. |
-| **RQ-007** | WHEN the spec covers UI and ECS systems, THE SYSTEM SHALL distinguish between implemented features and roadmap items. | Implemented (Documentation) | Sections below label "Currently enforced" vs. "Planned", and call out TODO systems (refinery, settings/offline recap). |
-| **RQ-PERSIST** | WHEN the persistence manager loads a save, THE SYSTEM SHALL deserialize snapshot data, apply it to the store, compute offline seconds with the configured cap, and simulate catch-up before scheduling autosave. | Blocked (Store gap) | `createPersistenceManager.load()` contains this logic but `StoreState` lacks `settings`, `applySnapshot`, and serialization helpers, so wiring cannot succeed until the store slice lands. |
-| **RQ-TIME** | WHEN the ECS tick runs, THE SYSTEM SHALL use a fixed timestep accumulator so larger frame deltas trigger multiple `step` invocations. | Implemented | `createTimeSystem.update` loops over `fixed(step)` whenever the accumulator exceeds the configured step. |
-| **RQ-002** | WHEN a drone bay level increases, THE SYSTEM SHALL adjust the active drone count to match `max(1, modules.droneBay)` and update per-drone stats. | Implemented | `createFleetSystem` spawns/removes drones and recalculates speed/capacity/mining rate each frame. |
-| **RQ-DRONE-AI** | WHEN a drone is idle, THE SYSTEM SHALL target the nearest asteroid with ore and transition to `toAsteroid`; invalid targets reset the drone to idle. | Implemented | `createDroneAISystem` assigns `targetId`, kicks off travel, and clears invalid/empty assignments. |
-| **RQ-MINING** | WHEN a drone reaches an asteroid and mines, THE SYSTEM SHALL deduct ore, load cargo to capacity, and switch to `returning` when cargo is full or ore exhausted. | Implemented | `createMiningSystem` mutates `drone.cargo`/`asteroid.oreRemaining` and toggles drone state accordingly. |
-| **RQ-UNLOAD** | WHEN a returning drone finishes travel, THE SYSTEM SHALL unload cargo into the store and reset to idle at the factory. | Implemented | `createUnloadSystem` deposits ore via `store.addOre`, zeroes cargo, and snaps the drone home. |
-| **RQ-001** | WHEN the store tick executes, THE SYSTEM SHALL convert ore into bars based on refinery level and prestige bonus while respecting the 10:1 ratio and per-second cap. | Implemented | `store.tick` enforces the cap, multiplies by refinery + prestige bonuses, and updates ore/bars totals. |
-| **RQ-POWER** | WHEN the power system runs, THE SYSTEM SHALL adjust energy by generation minus drone consumption, clamp to [0, capacity], and surface the result to the UI. | Implemented | `createPowerSystem` leverages `getEnergyGeneration/Consumption/Capacity` and writes energy back to the store. |
-| **RQ-UI** | WHEN the UI renders, THE SYSTEM SHALL display HUD summaries (ore, bars, energy, drones) and an Upgrade/Prestige panel reflecting affordability and prestige readiness. | Implemented | `App` HUD and `UpgradePanel` selectors keep values live and disable unaffordable actions; settings/offline recap remain roadmap items. |
-| **RQ-003** | WHEN asteroids deplete, THE SYSTEM SHALL recycle them and maintain the target asteroid count biased by scanner level. | Implemented | `createAsteroidSystem` trims empty asteroids and `ensureAsteroidTarget` repopulates using scanner-level richness bias. |
-| **RQ-005** | WHEN prestige requirements are met, THE SYSTEM SHALL grant cores, reset resources/modules, and retain the base energy capacity. | Implemented | `store.doPrestige` guards the threshold, updates cores, and restores default resources/modules while keeping baseline energy. |
+| ID              | Requirement                                                                                                                                                                                                      | Status                      | Acceptance / Notes                                                                                                                                                                         |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **RQ-006**      | WHEN maintainers consult the spec for save/offline behavior, THE SYSTEM SHALL describe the persistence manager API and offline simulation helpers that currently exist in the codebase.                          | Implemented (Documentation) | This spec enumerates manager methods, storage key, and offline simulation flow tied to `src/state/persistence.ts` and `src/lib/offline.ts`.                                                |
+| **RQ-007**      | WHEN the spec covers UI and ECS systems, THE SYSTEM SHALL distinguish between implemented features and roadmap items.                                                                                            | Implemented (Documentation) | Sections below label "Currently enforced" vs. "Planned", and call out TODO systems (refinery, settings/offline recap).                                                                     |
+| **RQ-PERSIST**  | WHEN the persistence manager loads a save, THE SYSTEM SHALL deserialize snapshot data, apply it to the store, compute offline seconds with the configured cap, and simulate catch-up before scheduling autosave. | Blocked (Store gap)         | `createPersistenceManager.load()` contains this logic but `StoreState` lacks `settings`, `applySnapshot`, and serialization helpers, so wiring cannot succeed until the store slice lands. |
+| **RQ-TIME**     | WHEN the ECS tick runs, THE SYSTEM SHALL use a fixed timestep accumulator so larger frame deltas trigger multiple `step` invocations.                                                                            | Implemented                 | `createTimeSystem.update` loops over `fixed(step)` whenever the accumulator exceeds the configured step.                                                                                   |
+| **RQ-002**      | WHEN a drone bay level increases, THE SYSTEM SHALL adjust the active drone count to match `max(1, modules.droneBay)` and update per-drone stats.                                                                 | Implemented                 | `createFleetSystem` spawns/removes drones and recalculates speed/capacity/mining rate each frame.                                                                                          |
+| **RQ-DRONE-AI** | WHEN a drone is idle, THE SYSTEM SHALL target the nearest asteroid with ore and transition to `toAsteroid`; invalid targets reset the drone to idle.                                                             | Implemented                 | `createDroneAISystem` assigns `targetId`, kicks off travel, and clears invalid/empty assignments.                                                                                          |
+| **RQ-MINING**   | WHEN a drone reaches an asteroid and mines, THE SYSTEM SHALL deduct ore, load cargo to capacity, and switch to `returning` when cargo is full or ore exhausted.                                                  | Implemented                 | `createMiningSystem` mutates `drone.cargo`/`asteroid.oreRemaining` and toggles drone state accordingly.                                                                                    |
+| **RQ-UNLOAD**   | WHEN a returning drone finishes travel, THE SYSTEM SHALL unload cargo into the store and reset to idle at the factory.                                                                                           | Implemented                 | `createUnloadSystem` deposits ore via `store.addOre`, zeroes cargo, and snaps the drone home.                                                                                              |
+| **RQ-001**      | WHEN the store tick executes, THE SYSTEM SHALL convert ore into bars based on refinery level and prestige bonus while respecting the 10:1 ratio and per-second cap.                                              | Implemented                 | `store.tick` enforces the cap, multiplies by refinery + prestige bonuses, and updates ore/bars totals.                                                                                     |
+| **RQ-POWER**    | WHEN the power system runs, THE SYSTEM SHALL adjust energy by generation minus drone consumption, clamp to [0, capacity], and surface the result to the UI.                                                      | Implemented                 | `createPowerSystem` leverages `getEnergyGeneration/Consumption/Capacity` and writes energy back to the store.                                                                              |
+| **RQ-UI**       | WHEN the UI renders, THE SYSTEM SHALL display HUD summaries (ore, bars, energy, drones) and an Upgrade/Prestige panel reflecting affordability and prestige readiness.                                           | Implemented                 | `App` HUD and `UpgradePanel` selectors keep values live and disable unaffordable actions; settings/offline recap remain roadmap items.                                                     |
+| **RQ-003**      | WHEN asteroids deplete, THE SYSTEM SHALL recycle them and maintain the target asteroid count biased by scanner level.                                                                                            | Implemented                 | `createAsteroidSystem` trims empty asteroids and `ensureAsteroidTarget` repopulates using scanner-level richness bias.                                                                     |
+| **RQ-005**      | WHEN prestige requirements are met, THE SYSTEM SHALL grant cores, reset resources/modules, and retain the base energy capacity.                                                                                  | Implemented                 | `store.doPrestige` guards the threshold, updates cores, and restores default resources/modules while keeping baseline energy.                                                              |
 
 ## Current Implementation Snapshot
 
@@ -66,17 +66,17 @@ Stack: React, Vite, TypeScript, React Three Fiber (r3f), Drei, Miniplex (ECS), Z
 
 ### Systems
 
-| System | Responsibility | Notes |
-| --- | --- | --- |
-| `createTimeSystem(step)` | Fixed-timestep accumulator with clamp to `step * 10`; runs `fixed(step)` while accumulator ≥ step. | Step defaults to 0.1s; frame delta clamped to 0.25s in `Scene`. |
-| `createFleetSystem` | Keeps drone count synced with `modules.droneBay`, updates per-drone stats (speed, capacity, mining rate). | Speed bonus +5% per level beyond the first. |
-| `createAsteroidSystem` | Rotates asteroids, removes depleted ones, maintains target count using scanner level richness bias. | Scanner increases spawn richness by +5% per level. |
-| `createDroneAISystem` | Assigns idle drones to nearest ore-rich asteroid, validates targets, ensures returning drones have travel plan. | Resets invalid targets to idle. |
-| `createTravelSystem` | Advances travel interpolation and transitions drones to `mining` or `unloading` upon arrival. | Uses linear interpolation between cached vectors. |
-| `createMiningSystem` | Mines ore while drone state is `mining`, respecting capacity and asteroid ore, transitions to returning when done. | Currently halts entirely when global energy ≤ 0.1; gradual throttling is a roadmap item. |
-| `createUnloadSystem` | Transfers cargo to store ore, resets drone state/position to idle. | Calls `store.addOre` for deposit. |
-| `createPowerSystem` | Computes generation vs. consumption and clamps energy to capacity. | No throttle feedback yet beyond mining guard noted above. |
-| `createRefinerySystem` | Placeholder to eventually move ore→bars conversion out of the store. | TODO: implement once store exposes `processRefinery`. |
+| System                   | Responsibility                                                                                                     | Notes                                                                                    |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `createTimeSystem(step)` | Fixed-timestep accumulator with clamp to `step * 10`; runs `fixed(step)` while accumulator ≥ step.                 | Step defaults to 0.1s; frame delta clamped to 0.25s in `Scene`.                          |
+| `createFleetSystem`      | Keeps drone count synced with `modules.droneBay`, updates per-drone stats (speed, capacity, mining rate).          | Speed bonus +5% per level beyond the first.                                              |
+| `createAsteroidSystem`   | Rotates asteroids, removes depleted ones, maintains target count using scanner level richness bias.                | Scanner increases spawn richness by +5% per level.                                       |
+| `createDroneAISystem`    | Assigns idle drones to nearest ore-rich asteroid, validates targets, ensures returning drones have travel plan.    | Resets invalid targets to idle.                                                          |
+| `createTravelSystem`     | Advances travel interpolation and transitions drones to `mining` or `unloading` upon arrival.                      | Uses linear interpolation between cached vectors.                                        |
+| `createMiningSystem`     | Mines ore while drone state is `mining`, respecting capacity and asteroid ore, transitions to returning when done. | Currently halts entirely when global energy ≤ 0.1; gradual throttling is a roadmap item. |
+| `createUnloadSystem`     | Transfers cargo to store ore, resets drone state/position to idle.                                                 | Calls `store.addOre` for deposit.                                                        |
+| `createPowerSystem`      | Computes generation vs. consumption and clamps energy to capacity.                                                 | No throttle feedback yet beyond mining guard noted above.                                |
+| `createRefinerySystem`   | Placeholder to eventually move ore→bars conversion out of the store.                                               | TODO: implement once store exposes `processRefinery`.                                    |
 
 ### Rendering & UI
 
@@ -162,13 +162,13 @@ Stack: React, Vite, TypeScript, React Three Fiber (r3f), Drei, Miniplex (ECS), Z
 
 ## Handoff Checklist
 
-- [ ] Persistence manager integrated with store bootstrap and Settings UI delivered.
-- [ ] Autosave/offline settings, import/export workflow, and migrations documented.
-- [ ] Refinery ECS system implemented; offline simulation aligned with `processRefinery`.
-- [ ] Energy throttle improvements validated with tests.
-- [ ] RNG seed persisted and documented (new saves generate seed, import/export retains it).
+- [x] Persistence manager integrated with store bootstrap and Settings UI delivered.
+- [x] Autosave/offline settings, import/export workflow, and migrations documented.
+- [x] Refinery ECS system implemented; offline simulation aligned with `processRefinery`.
+- [x] Energy throttle improvements validated with tests.
+- [x] RNG seed persisted and documented (new saves generate seed, import/export retains it).
 - [ ] Responsive layout reviewed; performance target 60fps on modern browsers.
-- [ ] README updated with developer setup, persistence instructions, and testing guidance.
+- [x] README updated with developer setup, persistence instructions, and testing guidance.
 
 ## Spec Change Log
 
