@@ -13,6 +13,25 @@ export interface TravelData {
   duration: number;
 }
 
+export interface FactoryActivityState {
+  processing: number;
+  throughput: number;
+  boost: number;
+  lastTransferAt: number;
+}
+
+export interface FactoryTransferEvent {
+  id: string;
+  amount: number;
+  from: Vector3;
+  to: Vector3;
+  duration: number;
+}
+
+export interface FactoryEventState {
+  transfers: FactoryTransferEvent[];
+}
+
 export interface DroneEntity {
   id: string;
   kind: 'drone';
@@ -28,6 +47,7 @@ export interface DroneEntity {
   battery: number;
   maxBattery: number;
   charging: boolean;
+  lastDockingFrom: Vector3 | null;
 }
 
 export interface AsteroidEntity {
@@ -47,6 +67,7 @@ export interface FactoryEntity {
   kind: 'factory';
   position: Vector3;
   orientation: Quaternion;
+  activity: FactoryActivityState;
 }
 
 export type Entity = DroneEntity | AsteroidEntity | FactoryEntity;
@@ -57,6 +78,7 @@ export interface GameWorld {
   droneQuery: Query<DroneEntity>;
   asteroidQuery: Query<AsteroidEntity>;
   rng: RandomSource;
+  events: FactoryEventState;
 }
 
 export interface CreateWorldOptions {
@@ -78,6 +100,12 @@ const createFactory = (): FactoryEntity => ({
   kind: 'factory',
   position: new Vector3(0, 0, 0),
   orientation: new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), TAU / 8),
+  activity: {
+    processing: 0,
+    throughput: 0,
+    boost: 0,
+    lastTransferAt: 0,
+  },
 });
 
 export const createAsteroid = (scannerLevel: number, rng: RandomSource): AsteroidEntity => {
@@ -119,6 +147,7 @@ const createDrone = (origin: Vector3): DroneEntity => ({
   battery: DEFAULT_DRONE_BATTERY,
   maxBattery: DEFAULT_DRONE_BATTERY,
   charging: false,
+  lastDockingFrom: null,
 });
 
 const isDrone = (entity: Entity): entity is DroneEntity => entity.kind === 'drone';
@@ -133,12 +162,13 @@ export const createGameWorld = (options: CreateWorldOptions = {}): GameWorld => 
   const factory = world.add(createFactory());
   const droneQuery = world.where(isDrone).connect();
   const asteroidQuery = world.where(isAsteroid).connect();
+  const events: FactoryEventState = { transfers: [] };
 
   for (let i = 0; i < asteroidCount; i += 1) {
     world.add(createAsteroid(0, rng));
   }
 
-  return { world, factory, droneQuery, asteroidQuery, rng };
+  return { world, factory, droneQuery, asteroidQuery, rng, events };
 };
 
 const initialSeed = storeApi.getState().rngSeed;

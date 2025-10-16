@@ -12,4 +12,4 @@
 | TASK008 | Visual Polish (Trails First)            | In Progress | 2025-10-17 |
 | TASK009 | Tests & CI                              | In Progress | 2025-10-16 |
 | TASK010 | Migration Helpers & Documentation       | Pending     | 2025-10-16 |
-| TASK011 | Factory Visuals                         | Pending     | 2025-10-16 |
+| TASK011 | Factory Visuals                         | In Progress | 2025-10-17 |

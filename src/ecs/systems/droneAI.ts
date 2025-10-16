@@ -4,12 +4,21 @@ import type { StoreApiType } from '@/state/store';
 
 const temp = new Vector3();
 
-const computeTravel = (drone: DroneEntity, destination: Vector3) => {
+const computeTravel = (
+  drone: DroneEntity,
+  destination: Vector3,
+  options?: { recordDockingFrom?: boolean },
+) => {
   const from = drone.position.clone();
   const to = destination.clone();
   const distance = from.distanceTo(to);
   const duration = Math.max(distance / Math.max(1, drone.speed), 0.1);
   drone.travel = { from, to, elapsed: 0, duration };
+  if (options?.recordDockingFrom) {
+    drone.lastDockingFrom = from.clone();
+  } else if (drone.state !== 'returning') {
+    drone.lastDockingFrom = null;
+  }
 };
 
 const findNearestAsteroid = (source: Vector3, asteroids: Iterable<AsteroidEntity>) => {
@@ -55,7 +64,7 @@ export const createDroneAISystem = (world: GameWorld, _store: StoreApiType) => {
         continue;
       }
       if (drone.state === 'returning' && !drone.travel) {
-        computeTravel(drone, factory.position);
+        computeTravel(drone, factory.position, { recordDockingFrom: true });
       }
     }
   };

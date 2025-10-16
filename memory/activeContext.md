@@ -2,7 +2,7 @@
 
 ## Current Focus
 
-Deliver visual polish milestones starting with drone trails while keeping persistence/settings docs aligned with the shipped implementation.
+Implement factory visual upgrades (TASK011) including conveyors, transfer FX, and performance profiles while keeping persistence/settings docs aligned with the shipped implementation.
 
 ## Recent Changes
 
@@ -15,5 +15,5 @@ Deliver visual polish milestones starting with drone trails while keeping persis
 ## Next Steps
 
 - Validate runtime performance of the new trails on low-spec profiles and provide screenshots for design review.
-- Scope factory/scanner visual polish follow-ups and related Settings toggles.
+- Ship factory/scanner visual polish follow-ups and related Settings toggles, starting with TASK011, and close out remaining snapshot/perf coverage.
 - Plan HUD indicators for energy throttling/battery state once visual polish baseline ships.

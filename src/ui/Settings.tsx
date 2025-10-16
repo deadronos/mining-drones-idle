@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEventHandler } from 'react';
-import { useStore } from '@/state/store';
+import { useStore, type PerformanceProfile } from '@/state/store';
 import type { PersistenceManager } from '@/state/persistence';
-import { Toast } from './Toast';
+import type { MigrationReport } from '@/state/migrations';
 import { useToast } from './ToastProvider';
 
 interface SettingsPanelProps {
@@ -63,19 +63,22 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
-      void file
+    void file
       .text()
       .then((content) => {
         // Prefer importStateWithReport when available so we can surface migration summaries
-        const anyPersistence = persistence as PersistenceManager & {
-          importStateWithReport?: (payload: string) => { success: boolean; report?: any };
+        const extendedPersistence = persistence as PersistenceManager & {
+          importStateWithReport?: (payload: string) => { success: boolean; report?: MigrationReport };
         };
-            if (anyPersistence.importStateWithReport) {
-          const { success, report } = anyPersistence.importStateWithReport(content);
+        const reportResult = extendedPersistence.importStateWithReport?.(content);
+        if (reportResult) {
+          const { success, report } = reportResult;
           if (success) {
             setImportError(null);
-            if (report && report.migrated) {
-              toastApi.push(`Imported and migrated save from ${report.fromVersion} → ${report.toVersion}. Applied: ${report.applied.join(', ')}`);
+            if (report?.migrated) {
+              toastApi.push(
+                `Imported and migrated save from ${report.fromVersion} → ${report.toVersion}. Applied: ${report.applied.join(', ')}`,
+              );
             }
             handleClose();
             return;
@@ -123,6 +126,10 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
 
   const handleTrails: ChangeEventHandler<HTMLInputElement> = (event) => {
     updateSettings({ showTrails: event.target.checked });
+  };
+
+  const handlePerformanceProfile: ChangeEventHandler<HTMLSelectElement> = (event) => {
+    updateSettings({ performanceProfile: event.target.value as PerformanceProfile });
   };
 
   return (
@@ -224,6 +231,21 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
               aria-label="Toggle drone trails"
             />
           </label>
+          <label className="settings-row">
+            <span>
+              Factory performance profile
+              <small>Balance factory visual effects with your device capabilities.</small>
+            </span>
+            <select
+              value={settings.performanceProfile}
+              onChange={handlePerformanceProfile}
+              aria-label="Select factory performance profile"
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </label>
         </section>
         <section className="settings-section">
           <h3>Data tools</h3>
@@ -249,7 +271,6 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
           <p className="settings-meta">Last saved: {formattedLastSave}</p>
           {importError ? <p className="settings-error">{importError}</p> : null}
         </section>
-  {/* global toasts are rendered by ToastProvider */}
       </div>
     </div>
   );

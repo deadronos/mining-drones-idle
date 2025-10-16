@@ -1,19 +1,43 @@
+import { Vector3 } from 'three';
 import type { GameWorld } from '@/ecs/world';
 import type { StoreApiType } from '@/state/store';
 
+const TRANSFER_EVENT_LIMIT = 48;
+const TRANSFER_DURATION = 0.65;
+const TRANSFER_OFFSET = new Vector3(0, 0.6, 0);
+
+const now = () => (typeof performance !== 'undefined' && typeof performance.now === 'function'
+  ? performance.now()
+  : Date.now());
+
 export const createUnloadSystem = (world: GameWorld, store: StoreApiType) => {
-  const { droneQuery, factory } = world;
+  const { droneQuery, factory, events } = world;
   return (_dt: number) => {
     for (const drone of droneQuery) {
       if (drone.state !== 'unloading') continue;
-      if (drone.cargo > 0) {
-        store.getState().addOre(drone.cargo);
+      const amount = drone.cargo;
+      if (amount > 0) {
+        store.getState().addOre(amount);
+        const timestamp = now();
+        const transfer = {
+          id: `${drone.id}-${timestamp.toString(16)}`,
+          amount,
+          from: (drone.lastDockingFrom ?? drone.position).clone().add(TRANSFER_OFFSET),
+          to: factory.position.clone().add(TRANSFER_OFFSET),
+          duration: TRANSFER_DURATION,
+        };
+        events.transfers.push(transfer);
+        if (events.transfers.length > TRANSFER_EVENT_LIMIT) {
+          events.transfers.splice(0, events.transfers.length - TRANSFER_EVENT_LIMIT);
+        }
+        factory.activity.lastTransferAt = timestamp;
       }
       drone.cargo = 0;
       drone.state = 'idle';
       drone.targetId = null;
       drone.travel = null;
       drone.position.copy(factory.position);
+      drone.lastDockingFrom = null;
     }
   };
 };
