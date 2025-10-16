@@ -65,4 +65,24 @@ describe('lib/offline', () => {
     expect(offline.bars).toBeCloseTo(manual.bars, 5);
     expect(offline.ore).toBeCloseTo(manual.ore, 5);
   });
+
+  it('preserves untouched resource fields after simulation', () => {
+    const store = createStoreInstance();
+    const state = store.getState();
+    store.setState({
+      resources: {
+        ...state.resources,
+        ore: 500,
+        energy: 321,
+        credits: 123,
+      },
+      modules: { ...state.modules, refinery: 1 },
+    });
+
+    simulateOfflineProgress(store, 60, { step: 1 });
+
+    const { resources } = store.getState();
+    expect(resources.energy).toBe(321);
+    expect(resources.credits).toBe(123);
+  });
 });

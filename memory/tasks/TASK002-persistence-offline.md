@@ -26,9 +26,9 @@ Implement save/load with autosave and offline simulation, create settings UI for
 
 - Requirements RQ-006, RQ-007, and RQ-008 satisfied with passing automated tests.
 
-## Current Iteration Plan (2025-02-17)
+## Current Iteration Plan (2025-02-18)
 
-1. Verify the live ECS refinery loop for multi-minute sessions and capture telemetry needs for balancing.
+1. Run extended live sessions to confirm the ECS refinery loop matches offline results and capture telemetry needs for balancing.
 2. Outline documentation updates explaining the shared refinery helpers for reviewers.
 3. Draft the follow-up design notes for the energy throttling milestone while insights are fresh.
 
@@ -48,8 +48,14 @@ Implement save/load with autosave and offline simulation, create settings UI for
 - Authored dedicated refinery system unit tests to confirm parity with offline simulation loops.
 - Re-executed formatting, linting, type checking, and unit tests to secure the migration.
 
-## Updated Iteration Plan (2025-02-17)
+### 2025-02-18
+
+- Reworked offline catch-up to iterate on snapshot data with `computeRefineryProduction`, removing the legacy tick fallback.
+- Added a regression test ensuring untouched resource fields (energy, credits) remain stable after offline processing.
+- Ran the formatter, ESLint, type checking, and unit suites to validate the refinery alignment changes.
+
+## Updated Iteration Plan (2025-02-18)
 
 1. Evaluate whether offline recap UX or telemetry should surface refinery throughput insights for players.
-2. Confirm persistence autosave/import flows remain stable after the ECS migration (spot-check manual runs).
+2. Capture manual QA findings from extended offline catch-up sessions and confirm autosave/import remain stable post-refactor.
 3. Transition planning towards energy throttling once refinery metrics look healthy.

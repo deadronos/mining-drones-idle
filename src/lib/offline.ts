@@ -1,4 +1,5 @@
 import type { StoreApi } from 'zustand';
+import { computeRefineryProduction } from '@/state/store';
 import type { StoreState } from '@/state/store';
 
 const HOURS_TO_SECONDS = 3600;
@@ -29,19 +30,46 @@ export const simulateOfflineProgress = (
       : clampOfflineSeconds(normalizedSeconds, options.capHours);
   if (clampedSeconds <= 0) return;
   const iterations = Math.floor(clampedSeconds / step);
-  const remainder = clampedSeconds - iterations * step;
-  const runStep = (delta: number) => {
-    const api = store.getState();
-    if (typeof api.processRefinery === 'function') {
-      api.processRefinery(delta);
-    } else {
-      api.tick(delta);
-    }
+  let remainder = clampedSeconds - iterations * step;
+  const baseState = store.getState();
+  const snapshot: Pick<StoreState, 'resources' | 'modules' | 'prestige'> = {
+    resources: { ...baseState.resources },
+    modules: baseState.modules,
+    prestige: baseState.prestige,
   };
+
+  const applyStep = (delta: number) => {
+    const stats = computeRefineryProduction(snapshot, delta);
+    if (stats.oreConsumed <= 0 && stats.barsProduced <= 0) {
+      return false;
+    }
+    snapshot.resources = {
+      ...snapshot.resources,
+      ore: Math.max(0, snapshot.resources.ore - stats.oreConsumed),
+      bars: snapshot.resources.bars + stats.barsProduced,
+    };
+    return true;
+  };
+
+  let progressed = false;
   for (let i = 0; i < iterations; i += 1) {
-    runStep(step);
+    if (!applyStep(step)) {
+      remainder = 0;
+      break;
+    }
+    progressed = true;
   }
-  if (remainder > 0) {
-    runStep(remainder);
+  if (remainder > 0 && applyStep(remainder)) {
+    progressed = true;
   }
+
+  if (!progressed) return;
+
+  store.setState((state) => ({
+    resources: {
+      ...state.resources,
+      ore: snapshot.resources.ore,
+      bars: snapshot.resources.bars,
+    },
+  }));
 };
