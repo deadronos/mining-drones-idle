@@ -44,6 +44,7 @@ describe('ui/Settings', () => {
         notation: 'standard',
         throttleFloor: 0.25,
         showTrails: true,
+        performanceProfile: 'medium',
       },
       save: { ...state.save, lastSave: 1_700_000_000_000 },
     }));
@@ -93,6 +94,16 @@ describe('ui/Settings', () => {
     expect(toggle.checked).toBe(true);
     fireEvent.click(toggle);
     expect(storeApi.getState().settings.showTrails).toBe(false);
+  });
+
+  it('changes factory performance profile', () => {
+    const persistence = createPersistenceMock();
+    render(<SettingsPanel onClose={() => undefined} persistence={persistence} />);
+
+    const select = screen.getByLabelText<HTMLSelectElement>(/factory performance profile/i);
+    expect(select.value).toBe('medium');
+    fireEvent.change(select, { target: { value: 'high' } });
+    expect(storeApi.getState().settings.performanceProfile).toBe('high');
   });
 
   it('invokes persistence export workflow when exporting', () => {

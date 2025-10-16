@@ -1,8 +1,8 @@
 # TASK011 - Factory Visuals
 
-**Status:** Pending
+**Status:** In Progress
 **Added:** 2025-10-16
-**Updated:** 2025-10-16
+**Updated:** 2025-10-17
 
 ## Original Request
 
@@ -25,12 +25,12 @@ Factory visuals require art assets (sprites/meshes), cheap GPU techniques (UV-sc
 
 | ID   | Description                                | Status      | Updated    |
 | ---- | ------------------------------------------ | ----------- | ---------- |
-| 11.1 | FactoryModel placeholder & materials       | Not Started | 2025-10-16 |
-| 11.2 | ConveyorSystem + UV-scroll shader          | Not Started | 2025-10-16 |
-| 11.3 | TransferFX pool + event wiring             | Not Started | 2025-10-16 |
-| 11.4 | Boost emissive pulse                       | Not Started | 2025-10-16 |
-| 11.5 | Settings integration for performance profile | Not Started | 2025-10-16 |
-| 11.6 | Visual snapshot tests + perf scene         | Not Started | 2025-10-16 |
+| 11.1 | FactoryModel placeholder & materials       | Completed   | 2025-10-17 |
+| 11.2 | ConveyorSystem + UV-scroll shader          | Completed   | 2025-10-17 |
+| 11.3 | TransferFX pool + event wiring             | Completed   | 2025-10-17 |
+| 11.4 | Boost emissive pulse                       | Completed   | 2025-10-17 |
+| 11.5 | Settings integration for performance profile | Completed   | 2025-10-17 |
+| 11.6 | Visual snapshot tests + perf scene         | In Progress | 2025-10-17 |
 
 ## Acceptance Criteria
 
@@ -43,4 +43,8 @@ Factory visuals require art assets (sprites/meshes), cheap GPU techniques (UV-sc
 ### 2025-10-16
 
 - Created task file and linked design doc `DES010`.
+
+### 2025-10-17
+
+- Implemented factory activity tracking, conveyor animation, transfer FX, and boost pulse wired into the ECS; added profile-aware visuals and unit coverage for unload/refinery systems. Snapshot/perf scene follow-up remains open.
 

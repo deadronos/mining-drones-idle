@@ -30,6 +30,7 @@ describe('state/persistence', () => {
         autosaveInterval: 10,
         offlineCapHours: 12,
         notation: 'standard' as const,
+        performanceProfile: 'medium' as const,
       },
       rngSeed: 123456789,
     };

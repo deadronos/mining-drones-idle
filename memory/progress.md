@@ -16,8 +16,10 @@
 
 - Implemented migration helpers (`src/state/migrations.ts`) to normalize legacy snapshots on load/import; README updated with save format and migration guidance.
 
+- Upgraded factory visuals with animated conveyors, transfer FX, boost pulses, and a settings-driven performance profile backed by ECS activity signals (TASK011).
+
 ## Open Items
 
 - Track UI follow-up for surfacing per-drone battery levels and throttle warnings in the HUD.
 - Validate seeded RNG integration across save import/export flows and plan any reset tooling.
-- Capture performance telemetry for drone trails and scope factory/scanner visual polish follow-ups.
+- Capture performance telemetry for drone trails and finalize factory snapshot/perf scene coverage for TASK011.

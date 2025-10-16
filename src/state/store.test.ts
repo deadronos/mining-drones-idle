@@ -60,12 +60,14 @@ describe('state/store', () => {
       notation: 'engineering',
       offlineCapHours: -4,
       showTrails: false,
+      performanceProfile: 'high',
     });
     const afterUpdate = store.getState();
     expect(afterUpdate.settings.autosaveInterval).toBe(33);
     expect(afterUpdate.settings.notation).toBe('engineering');
     expect(afterUpdate.settings.offlineCapHours).toBe(0);
     expect(afterUpdate.settings.showTrails).toBe(false);
+    expect(afterUpdate.settings.performanceProfile).toBe('high');
 
     const snapshot = serializeStore(store.getState());
     expect(snapshot.settings.autosaveInterval).toBe(33);
@@ -82,6 +84,7 @@ describe('state/store', () => {
     const imported = fresh.getState();
     expect(imported.settings.autosaveInterval).toBe(33);
     expect(imported.settings.showTrails).toBe(false);
+    expect(imported.settings.performanceProfile).toBe('high');
     expect(imported.resources.ore).toBe(snapshot.resources.ore);
   });
 

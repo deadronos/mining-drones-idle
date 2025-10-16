@@ -10,14 +10,16 @@ const SAVE_VERSION = '0.1.0';
 const GROWTH = 1.15;
 const PRESTIGE_THRESHOLD = 5_000;
 const BASE_REFINERY_RATE = 1;
-const ORE_PER_BAR = 10;
-const ORE_CONVERSION_PER_SECOND = 10;
+export const ORE_PER_BAR = 10;
+export const ORE_CONVERSION_PER_SECOND = 10;
 const BASE_STORAGE = 400;
 const STORAGE_PER_LEVEL = 100;
 const BASE_ENERGY_CAP = 100;
 const ENERGY_PER_SOLAR = 25;
 const SOLAR_BASE_GEN = 5;
 export const DRONE_ENERGY_COST = 1.2;
+
+export type PerformanceProfile = 'low' | 'medium' | 'high';
 
 const initialSettings: StoreSettings = {
   autosaveEnabled: true,
@@ -26,6 +28,7 @@ const initialSettings: StoreSettings = {
   notation: 'standard',
   throttleFloor: 0.25,
   showTrails: true,
+  performanceProfile: 'medium',
 };
 
 export const saveVersion = SAVE_VERSION;
@@ -82,6 +85,7 @@ export interface StoreSettings {
   notation: NotationMode;
   throttleFloor: number;
   showTrails: boolean;
+  performanceProfile: PerformanceProfile;
 }
 
 export interface RefineryStats {
@@ -221,6 +225,13 @@ const normalizeSave = (snapshot?: Partial<SaveMeta>): SaveMeta => ({
 const normalizeNotation = (notation: unknown): NotationMode =>
   notation === 'engineering' ? 'engineering' : 'standard';
 
+const normalizePerformanceProfile = (profile: unknown): PerformanceProfile => {
+  if (profile === 'low' || profile === 'high') {
+    return profile;
+  }
+  return 'medium';
+};
+
 const normalizeSettings = (snapshot?: Partial<StoreSettings>): StoreSettings => ({
   autosaveEnabled:
     typeof snapshot?.autosaveEnabled === 'boolean'
@@ -241,6 +252,7 @@ const normalizeSettings = (snapshot?: Partial<StoreSettings>): StoreSettings => 
   ),
   showTrails:
     typeof snapshot?.showTrails === 'boolean' ? snapshot.showTrails : initialSettings.showTrails,
+  performanceProfile: normalizePerformanceProfile(snapshot?.performanceProfile),
 });
 
 const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapshot => ({

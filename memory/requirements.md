@@ -43,3 +43,19 @@ WHEN the player changes the drone trails preference in Settings, THE SYSTEM SHAL
 ## RQ-011 Drone Trail Rendering
 
 WHEN drones travel or change state, THE SYSTEM SHALL render a fading trail indicating their recent path using at most one additional draw call and no more than 12 stored points per drone, honoring the global `showTrails` toggle. [Acceptance: Unit tests validate the trail buffer helper's vertex counts/color gradients, and manual verification confirms the toggle hides/shows trails without performance regressions.]
+
+## RQ-012 Factory Transfer Feedback
+
+WHEN a drone unloads cargo at the factory, THE SYSTEM SHALL emit a visible transfer effect that travels from the drone's approach vector into the factory within 0.75 seconds. [Acceptance: Unit tests cover event emission during unload, and manual verification confirms the effect spawns at runtime.]
+
+## RQ-013 Conveyor Activity Animation
+
+WHEN the refinery consumes ore, THE SYSTEM SHALL animate conveyor belts and ore items with speed proportional to the current processing intensity. [Acceptance: Unit tests assert processing intensity updates from the refinery system, and manual verification confirms belt motion while ore is processed.]
+
+## RQ-014 Boost Emissive Pulse
+
+WHEN refinery throughput exceeds the baseline by 20% or more, THE SYSTEM SHALL trigger a temporary boost pulse on factory materials that fades out over 1.5 seconds. [Acceptance: Unit tests verify boost levels decay over time and spike above the threshold, and manual verification confirms the emissive pulse.]
+
+## RQ-015 Performance Profiles
+
+WHEN the player selects a factory performance profile in Settings, THE SYSTEM SHALL adjust visual effect density to match the profile within the next rendered frame and persist the choice across saves. [Acceptance: Unit tests cover settings normalization/export, and manual verification confirms profiles toggle effect density.]

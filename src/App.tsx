@@ -20,25 +20,24 @@ export const App = ({ persistence }: AppProps) => {
   return (
     <ToastProvider>
       <div className="app">
-      <Canvas shadows camera={{ position: [0, 9, 22], fov: 52 }}>
-        <Scene />
-      </Canvas>
-      <div className="hud">
-        <div>Ore: {resources.ore.toFixed(1)}</div>
-        <div>Bars: {resources.bars.toFixed(1)}</div>
-        <div>Energy: {Math.round(resources.energy)}</div>
-        <div>Drones: {modules.droneBay}</div>
-        <button type="button" onClick={() => setSettingsOpen(true)} className="hud-button">
-          Settings
-        </button>
-      </div>
-      <UpgradePanel />
-      {settingsOpen ? (
-        <SettingsPanel onClose={() => setSettingsOpen(false)} persistence={persistence} />
-      ) : null}
+        <Canvas shadows camera={{ position: [0, 9, 22], fov: 52 }}>
+          <Scene />
+        </Canvas>
+        <div className="hud">
+          <div>Ore: {resources.ore.toFixed(1)}</div>
+          <div>Bars: {resources.bars.toFixed(1)}</div>
+          <div>Energy: {Math.round(resources.energy)}</div>
+          <div>Drones: {modules.droneBay}</div>
+          <button type="button" onClick={() => setSettingsOpen(true)} className="hud-button">
+            Settings
+          </button>
+        </div>
+        <UpgradePanel />
+        {settingsOpen ? (
+          <SettingsPanel onClose={() => setSettingsOpen(false)} persistence={persistence} />
+        ) : null}
       </div>
     </ToastProvider>
-    </div>
   );
 };
 
