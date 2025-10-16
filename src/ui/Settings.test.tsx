@@ -43,6 +43,7 @@ describe('ui/Settings', () => {
         offlineCapHours: 8,
         notation: 'standard',
         throttleFloor: 0.25,
+        showTrails: true,
       },
       save: { ...state.save, lastSave: 1_700_000_000_000 },
     }));
@@ -82,6 +83,16 @@ describe('ui/Settings', () => {
     const intervalInput = screen.getByLabelText<HTMLInputElement>(/autosave interval/i);
     fireEvent.change(intervalInput, { target: { value: '37.8' } });
     expect(storeApi.getState().settings.autosaveInterval).toBe(37);
+  });
+
+  it('toggles drone trails visibility', () => {
+    const persistence = createPersistenceMock();
+    render(<SettingsPanel onClose={() => undefined} persistence={persistence} />);
+
+    const toggle = screen.getByLabelText<HTMLInputElement>(/toggle drone trails/i);
+    expect(toggle.checked).toBe(true);
+    fireEvent.click(toggle);
+    expect(storeApi.getState().settings.showTrails).toBe(false);
   });
 
   it('invokes persistence export workflow when exporting', () => {

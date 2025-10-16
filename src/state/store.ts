@@ -25,6 +25,7 @@ const initialSettings: StoreSettings = {
   offlineCapHours: 8,
   notation: 'standard',
   throttleFloor: 0.25,
+  showTrails: true,
 };
 
 export const saveVersion = SAVE_VERSION;
@@ -80,6 +81,7 @@ export interface StoreSettings {
   offlineCapHours: number;
   notation: NotationMode;
   throttleFloor: number;
+  showTrails: boolean;
 }
 
 export interface RefineryStats {
@@ -237,6 +239,8 @@ const normalizeSettings = (snapshot?: Partial<StoreSettings>): StoreSettings => 
     1,
     Math.max(0, coerceNumber(snapshot?.throttleFloor, initialSettings.throttleFloor)),
   ),
+  showTrails:
+    typeof snapshot?.showTrails === 'boolean' ? snapshot.showTrails : initialSettings.showTrails,
 });
 
 const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapshot => ({

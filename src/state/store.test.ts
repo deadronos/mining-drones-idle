@@ -55,15 +55,22 @@ describe('state/store', () => {
   it('updates settings with normalization and export/import roundtrips', () => {
     const store = createStoreInstance();
     const api = store.getState();
-    api.updateSettings({ autosaveInterval: 33.7, notation: 'engineering', offlineCapHours: -4 });
+    api.updateSettings({
+      autosaveInterval: 33.7,
+      notation: 'engineering',
+      offlineCapHours: -4,
+      showTrails: false,
+    });
     const afterUpdate = store.getState();
     expect(afterUpdate.settings.autosaveInterval).toBe(33);
     expect(afterUpdate.settings.notation).toBe('engineering');
     expect(afterUpdate.settings.offlineCapHours).toBe(0);
+    expect(afterUpdate.settings.showTrails).toBe(false);
 
     const snapshot = serializeStore(store.getState());
     expect(snapshot.settings.autosaveInterval).toBe(33);
     expect(snapshot.save.version).toBe(saveVersion);
+    expect(snapshot.settings.showTrails).toBe(false);
 
     const payload = JSON.stringify(snapshot);
     const parsed = parseSnapshot(payload);
@@ -74,6 +81,7 @@ describe('state/store', () => {
     expect(success).toBe(true);
     const imported = fresh.getState();
     expect(imported.settings.autosaveInterval).toBe(33);
+    expect(imported.settings.showTrails).toBe(false);
     expect(imported.resources.ore).toBe(snapshot.resources.ore);
   });
 

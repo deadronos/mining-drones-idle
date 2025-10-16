@@ -1,33 +1,17 @@
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
 import type { InstancedMesh } from 'three';
-import { Color, Matrix4, Quaternion, Vector3 } from 'three';
+import { Matrix4, Quaternion, Vector3, Color } from 'three';
 import { gameWorld } from '@/ecs/world';
+import { colorForState } from '@/r3f/droneColors';
 
 const DRONE_LIMIT = 128;
-const idleColor = new Color('#94a3b8');
-const miningColor = new Color('#f97316');
-const returningColor = new Color('#22d3ee');
-const unloadingColor = new Color('#cbd5f5');
 const baseMatrix = new Matrix4();
 const orientation = new Quaternion();
 const scale = new Vector3(0.25, 0.6, 0.25);
 const forward = new Vector3(0, 1, 0);
 const direction = new Vector3();
 const color = new Color();
-
-const colorForState = (state: string) => {
-  switch (state) {
-    case 'mining':
-      return miningColor;
-    case 'returning':
-      return returningColor;
-    case 'unloading':
-      return unloadingColor;
-    default:
-      return idleColor;
-  }
-};
 
 export const Drones = () => {
   const ref = useRef<InstancedMesh>(null);

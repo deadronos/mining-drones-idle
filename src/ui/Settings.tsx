@@ -1,11 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ChangeEventHandler,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEventHandler } from 'react';
 import { useStore } from '@/state/store';
 import type { PersistenceManager } from '@/state/persistence';
 
@@ -107,6 +100,10 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
     updateSettings({ throttleFloor: Number.isFinite(next) ? next : settings.throttleFloor });
   };
 
+  const handleTrails: ChangeEventHandler<HTMLInputElement> = (event) => {
+    updateSettings({ showTrails: event.target.checked });
+  };
+
   return (
     <div className="settings-backdrop" role="presentation">
       <div
@@ -190,6 +187,21 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
               aria-valuenow={Number(settings.throttleFloor.toFixed(2))}
             />
             <span className="settings-value">{Math.round(settings.throttleFloor * 100)}%</span>
+          </label>
+        </section>
+        <section className="settings-section">
+          <h3>Visuals</h3>
+          <label className="settings-row">
+            <span>
+              Drone trails
+              <small>Disable for performance on lower-end GPUs.</small>
+            </span>
+            <input
+              type="checkbox"
+              checked={settings.showTrails}
+              onChange={handleTrails}
+              aria-label="Toggle drone trails"
+            />
           </label>
         </section>
         <section className="settings-section">

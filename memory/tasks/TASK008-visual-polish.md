@@ -1,8 +1,8 @@
 # TASK008 - Visual Polish (Trails First)
 
-**Status:** Pending  
-**Added:** 2025-10-16  
-**Updated:** 2025-10-16
+**Status:** In Progress
+**Added:** 2025-10-16
+**Updated:** 2025-10-17
 
 ## Original Request
 
@@ -14,17 +14,19 @@ Prototype trails in `src/r3f/Drones.tsx` using instancing or Drei `Trail`, add S
 
 ## Implementation Plan
 
-1. Implement trails prototype and performance test.
-1. Add Settings toggle and defaults.
-1. Iterate on factory visuals and scanner highlights.
+1. Extend store settings persistence with a `showTrails` boolean defaulting to true; update normalization and tests.
+2. Surface a "Drone trails" toggle in the Settings panel that updates/persists the new field.
+3. Create a GPU-friendly `DroneTrails` renderer (single `LineSegments` with fading colors) backed by a testable buffer helper.
+4. Conditionally mount the new renderer from `Scene` when the toggle is enabled.
+5. Refresh spec + memory docs to capture persistence completion and the new visuals toggle.
 
 ## Subtasks
 
-| ID | Description | Status | Updated | Notes |
-| --- | ----------- | ------ | ------- | ----- |
-| 8.1 | Trails prototype | Not Started | 2025-10-16 | `src/r3f/Drones.tsx` uses instancing but no trail implementation present. |
-| 8.2 | Settings toggle | Not Started | 2025-10-16 | Settings UI contains general toggles but no trail-specific toggle implemented. |
-| 8.3 | Factory visuals | Not Started | 2025-10-16 | Factory visual improvements remain to be implemented. |
+| ID  | Description      | Status      | Updated    | Notes                                                                |
+| --- | ---------------- | ----------- | ---------- | -------------------------------------------------------------------- |
+| 8.1 | Trails prototype | Completed   | 2025-10-17 | `TrailBuffer` + `DroneTrails` render fading line segments per drone. |
+| 8.2 | Settings toggle  | Completed   | 2025-10-17 | Settings panel exposes persisted `showTrails` toggle with tests.     |
+| 8.3 | Factory visuals  | Not Started | 2025-10-16 | Deferred to follow-up task.                                          |
 
 ## Acceptance Criteria
 
@@ -35,3 +37,8 @@ Prototype trails in `src/r3f/Drones.tsx` using instancing or Drei `Trail`, add S
 ### 2025-10-16
 
 - Verified: instanced drone rendering exists (`src/r3f/Drones.tsx`). Trails and additional visual polish remain TODO.
+
+### 2025-10-17
+
+- Implemented `TrailBuffer` helper and `DroneTrails` renderer to draw single-call line segments with fading colors per drone.
+- Added `settings.showTrails` persistence + Settings toggle, updated tests/spec, and wired `Scene` to mount trails based on the new flag.
