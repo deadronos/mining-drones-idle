@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  computeEnergyThrottle,
   costForLevel,
   computePrestigeBonus,
   computePrestigeGain,
@@ -80,5 +81,45 @@ describe('state/store', () => {
     const store = createStoreInstance();
     const success = store.getState().importState('not-json');
     expect(success).toBe(false);
+  });
+
+  it('computes throttle using energy fraction with configured floor', () => {
+    const store = createStoreInstance();
+    store.setState((state) => ({
+      resources: { ...state.resources, energy: 30 },
+      modules: { ...state.modules, solar: 0 },
+      settings: { ...state.settings, throttleFloor: 0.25 },
+    }));
+    const throttle = computeEnergyThrottle(store.getState());
+    expect(throttle).toBeCloseTo(0.3, 5);
+
+    store.setState((state) => ({
+      resources: { ...state.resources, energy: 1 },
+      settings: { ...state.settings, throttleFloor: 0.4 },
+    }));
+    const floored = computeEnergyThrottle(store.getState());
+    expect(floored).toBeCloseTo(0.4, 5);
+  });
+
+  it('persists rng seed across export and import operations', () => {
+    const store = createStoreInstance();
+    const initialSeed = store.getState().rngSeed;
+    expect(Number.isFinite(initialSeed)).toBe(true);
+
+    const exported = store.getState().exportState();
+    const snapshot = JSON.parse(exported) as { rngSeed?: number };
+    expect(snapshot.rngSeed).toBe(initialSeed);
+
+    const importedStore = createStoreInstance();
+    const success = importedStore.getState().importState(exported);
+    expect(success).toBe(true);
+    expect(importedStore.getState().rngSeed).toBe(initialSeed);
+
+    snapshot.rngSeed = 987654321;
+    const payloadWithSeed = JSON.stringify(snapshot);
+    const seededStore = createStoreInstance();
+    const seededSuccess = seededStore.getState().importState(payloadWithSeed);
+    expect(seededSuccess).toBe(true);
+    expect(seededStore.getState().rngSeed).toBe(987654321);
   });
 });

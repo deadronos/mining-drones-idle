@@ -1,5 +1,6 @@
 import type { GameWorld } from '@/ecs/world';
 import {
+  computeEnergyThrottle,
   getEnergyCapacity,
   getEnergyConsumption,
   getEnergyGeneration,
@@ -12,7 +13,8 @@ export const createPowerSystem = (world: GameWorld, store: StoreApiType) => {
     if (dt <= 0) return;
     const state = store.getState();
     const generation = getEnergyGeneration(state.modules);
-    const consumption = getEnergyConsumption(state.modules, droneQuery.size);
+    const throttle = computeEnergyThrottle(state);
+    const consumption = getEnergyConsumption(state.modules, droneQuery.size) * throttle;
     const cap = getEnergyCapacity(state.modules);
     const nextEnergy = Math.min(
       cap,
