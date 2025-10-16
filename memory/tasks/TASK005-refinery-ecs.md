@@ -1,6 +1,6 @@
 # TASK005 - Refinery ECS System & Offline Alignment
 
-**Status:** Pending  
+**Status:** Completed  
 **Added:** 2025-10-16  
 **Updated:** 2025-10-16
 
@@ -23,9 +23,9 @@ Implement system in `src/ecs/systems/refinery.ts`, expose `store.processRefinery
 
 | ID | Description | Status | Updated | Notes |
 | --- | ----------- | ------ | ------- | ----- |
-| 5.1 | Create refinery system file | Not Started |  |  |
-| 5.2 | Wire store.processRefinery | Not Started |  |  |
-| 5.3 | Offline parity tests | Not Started |  |  |
+| 5.1 | Create refinery system file | Completed | 2025-02-14 | `src/ecs/systems/refinery.ts` delegates to `store.processRefinery`. |
+| 5.2 | Wire store.processRefinery | Completed | 2025-02-14 | `src/state/store.ts` implements `processRefinery` and `computeRefineryProduction`. |
+| 5.3 | Offline parity tests | Completed | 2025-02-14 | `src/ecs/systems/refinery.test.ts` validates parity with offline processing. |
 
 ## Acceptance Criteria
 
@@ -35,4 +35,4 @@ Implement system in `src/ecs/systems/refinery.ts`, expose `store.processRefinery
 
 ### 2025-10-16
 
-- Task created and linked to `memory/designs/DES004-refinery-ecs.md`.
+- Verified: Refinery system exists in `src/ecs/systems/refinery.ts` and reuses store math. Offline parity test present. Marking TASK005 as Completed.

@@ -22,9 +22,9 @@ Prototype trails in `src/r3f/Drones.tsx` using instancing or Drei `Trail`, add S
 
 | ID | Description | Status | Updated | Notes |
 | --- | ----------- | ------ | ------- | ----- |
-| 8.1 | Trails prototype | Not Started |  |  |
-| 8.2 | Settings toggle | Not Started |  |  |
-| 8.3 | Factory visuals | Not Started |  |  |
+| 8.1 | Trails prototype | Not Started | 2025-10-16 | `src/r3f/Drones.tsx` uses instancing but no trail implementation present. |
+| 8.2 | Settings toggle | Not Started | 2025-10-16 | Settings UI contains general toggles but no trail-specific toggle implemented. |
+| 8.3 | Factory visuals | Not Started | 2025-10-16 | Factory visual improvements remain to be implemented. |
 
 ## Acceptance Criteria
 
@@ -34,4 +34,4 @@ Prototype trails in `src/r3f/Drones.tsx` using instancing or Drei `Trail`, add S
 
 ### 2025-10-16
 
-- Task created and linked to `memory/designs/DES007-visual-polish.md`.
+- Verified: instanced drone rendering exists (`src/r3f/Drones.tsx`). Trails and additional visual polish remain TODO.
