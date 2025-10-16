@@ -149,17 +149,6 @@ export const applyRefineryProduction = (state: StoreState, stats: RefineryStats)
   },
 });
 
-export const runRefineryStep = (store: StoreApiType, dt: number): RefineryStats => {
-  if (dt <= 0) return emptyRefineryStats;
-  const state = store.getState();
-  const stats = computeRefineryProduction(state, dt);
-  if (stats.oreConsumed <= 0 && stats.barsProduced <= 0) {
-    return emptyRefineryStats;
-  }
-  store.setState(applyRefineryProduction(state, stats));
-  return stats;
-};
-
 export const costForLevel = (base: number, level: number) =>
   Math.ceil(base * Math.pow(GROWTH, level));
 

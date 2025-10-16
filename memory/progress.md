@@ -8,6 +8,8 @@
 - Added requirement status table flagging the persistence manager store gaps and differentiating implemented vs. planned systems.
 - Kicked off Milestone 2 by migrating refinery processing into an ECS system with shared helpers and new parity unit tests.
 - Finalized offline catch-up alignment by iterating on snapshot data and adding regression coverage for untouched resources.
+- Expanded the implementation roadmap with error handling and testing strategy sections to de-risk upcoming persistence and ECS work.
+- Refined offline catch-up to reuse the store's refinery logic directly, emit telemetry for ore/bars processed, and surface load-time summaries via persistence logging.
 
 ## Open Items
 

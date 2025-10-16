@@ -54,6 +54,12 @@ Implement save/load with autosave and offline simulation, create settings UI for
 - Added a regression test ensuring untouched resource fields (energy, credits) remain stable after offline processing.
 - Ran the formatter, ESLint, type checking, and unit suites to validate the refinery alignment changes.
 
+### 2025-02-19
+
+- Updated the refinery ECS system to invoke the store's `processRefinery` action so live ticks and offline loops share the same execution path.
+- Refactored offline simulation to drive `processRefinery` directly, returning a telemetry report for ore consumption and bar output.
+- Logged offline recap summaries during persistence load to aid balancing and regression triage, with refreshed Vitest coverage for the new report contract.
+
 ## Updated Iteration Plan (2025-02-18)
 
 1. Evaluate whether offline recap UX or telemetry should surface refinery throughput insights for players.

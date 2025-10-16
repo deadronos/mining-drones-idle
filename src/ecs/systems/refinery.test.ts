@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createGameWorld } from '@/ecs/world';
 import { createRefinerySystem } from '@/ecs/systems/refinery';
-import { createStoreInstance, runRefineryStep } from '@/state/store';
+import { createStoreInstance } from '@/state/store';
 
 const setupStore = () => {
   const store = createStoreInstance();
@@ -22,7 +22,7 @@ describe('ecs/systems/refinery', () => {
     const system = createRefinerySystem(world, store);
     const dt = 0.75;
     system(dt);
-    runRefineryStep(mirrorStore, dt);
+    mirrorStore.getState().processRefinery(dt);
     const systemResources = store.getState().resources;
     const mirrorResources = mirrorStore.getState().resources;
     expect(systemResources.bars).toBeCloseTo(mirrorResources.bars, 5);
