@@ -14,12 +14,12 @@ import { computeOfflineSeconds, simulateOfflineProgress } from '@/lib/offline';
 export const SAVE_KEY = 'space-factory-save';
 
 export interface PersistenceManager {
-  load(): void;
-  start(): void;
-  stop(): void;
-  saveNow(): void;
-  exportState(): string;
-  importState(payload: string): boolean;
+  load(this: void): void;
+  start(this: void): void;
+  stop(this: void): void;
+  saveNow(this: void): void;
+  exportState(this: void): string;
+  importState(this: void, payload: string): boolean;
 }
 
 const hasStorage = () => typeof window !== 'undefined' && !!window.localStorage;

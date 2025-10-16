@@ -1,225 +1,365 @@
 # Implementation Plan — Space Factory
 
-This document captures the concrete implementation plan derived from `spec/spec-full-idea.md`. It lists milestones, tasks, files to change, acceptance criteria, tests, risks, and a recommended sequence of work.
+This implementation plan operationalizes the goals in `spec/spec-full-idea.md` by decomposing them into ordered milestones, concrete tasks, validation steps, and risk mitigations. It is the working roadmap for building out persistence, ECS refinements, energy management, deterministic RNG, polish, automated testing, and documentation.
 
 ---
 
-## High-level milestones (ordered)
+## Guiding requirements
 
-1. Persistence Integration & Settings UI (Export/Import JSON, autosave, offline cap)
-2. Refinery ECS System & Offline Alignment (`processRefinery`)
-3. Energy Throttle & Per-Drone Battery (gradual throttle, charging)
-4. Seeded RNG (persisted seed, random-on-new-save)
-5. Visual Polish (drone trails, factory visuals, scanner highlights)
-6. Tests & CI (unit tests + Playwright e2e for import/export/offline)
-7. Migration helpers, docs, README, performance and responsive checks
+The following spec requirements steer the plan (see `spec/spec-full-idea.md`):
+
+- **RQ-PERSIST** — Persistence manager must deserialize saves, cap offline progress, and start autosave once helpers exist.
+- **RQ-001** — Store tick/refinery parity must be maintained as refinery logic moves into ECS.
+- **RQ-POWER** — Energy simulation must remain accurate when introducing per-drone batteries and throttling.
+- **RQ-DRONE-AI / RQ-MINING** — Drone behavior must stay deterministic after energy throttling adjustments.
+- **Visual polish roadmap** — Maintain render performance while adding new visual aids.
 
 ---
 
+## Iteration strategy
+
+1. **Prep** — Confirm Memory Bank context, update `memory/activeContext.md` and task index before/after work sessions.
+2. **Milestone loop** — For each milestone: finalize design notes, implement in small branches, and run unit/UI tests before moving on.
+3. **Retrospective** — After each milestone, reassess risks and adjust sequencing (record changes in plan and Memory Bank).
+4. **PR cadence** — Target one PR per milestone where feasible to keep review scope manageable; include design/test artifacts in each PR.
+
+---
+
+## Cross-milestone dependencies
+
+- **Persistence foundations (M1)** unlock offline simulation updates (M2) and seeded RNG persistence (M4).
+- **Refinery ECS (M2)** must precede energy throttling (M3) to avoid rework in mining/power systems.
+- **Energy throttling (M3)** depends on Settings UI from M1 to expose throttle controls.
+- **Seeded RNG (M4)** requires persistence hooks from M1 and may affect visual polish (M5) due to deterministic asset placement.
+- **Testing/CI (M6)** builds on unit suites introduced in earlier milestones.
+- **Migration/docs (M7)** rely on finalized persistence behavior and APIs from M1–M4.
+
+Recommended execution order: M1 → M2 → M3 → M4 → M5 → M6 → M7, with visual polish (M5) adjustable if schedule pressure exists after core systems harden.
+
+---
 
 ## Milestone 1 — Persistence Integration & Settings UI
 
-Priority: High
-Estimated effort: 1.5–3 days
+**Priority:** High  **Estimated effort:** 1.5–3 days  **Spec refs:** RQ-PERSIST, persistence roadmap
 
-- Tasks
+### Objectives
 
-- Add `settings` slice to store with fields: `autosaveEnabled`, `autosaveIntervalSec`, `offlineCapHours`, `notation`.
-- Add store serialization helpers: `applySnapshot`, `serializeStore`, `exportState`, `importState`, and a placeholder `processRefinery` wrapper.
-- Implement persistence manager `src/state/persistence.ts` exposing: `load()`, `start()`, `stop()`, `saveNow()`, `exportState()`, `importState(payload)`.
-- Create Settings UI: `src/ui/Settings.tsx` with Wrench icon (Export, Import, autosave toggle/interval, offline cap, notation selector).
-- Wire persistence into bootstrap (`src/main.tsx` or `src/App.tsx`): call `persistence.load()` on start, run `simulateOfflineProgress()`, and start autosave.
-- Add `beforeunload`/`visibilitychange` handlers to persist `lastSave`.
+- Persist the full store snapshot, support autosave/offline caps, and expose JSON import/export via a Settings UI.
 
-Files to create/modify
+### Detailed tasks
 
-- modify: `src/state/store.ts` (extend store with `settings` and serialization helpers)
-- add: `src/state/persistence.ts`
-- add: `src/ui/Settings.tsx`
-- modify: `src/main.tsx` or `src/App.tsx`
+1. **Store enhancements (`src/state/store.ts`)**
+   - Add `settings` slice with default fields (`autosaveEnabled`, `autosaveIntervalSec`, `offlineCapHours`, `notation`, `throttleFloor`).
+   - Implement helper APIs: `applySnapshot`, `serializeStore`, `exportState`, `importState`, plus a delegating `processRefinery` placeholder returning refinery stats for now.
+   - Ensure type definitions cover migrations, including optional fields for backward compatibility.
+2. **Persistence manager (`src/state/persistence.ts`)**
+   - Implement `load`, `start`, `stop`, `saveNow`, `exportState`, `importState` using `localStorage` key (document fallback behavior).
+   - Handle version/migration map; log warnings for invalid payloads, and always back up previous saves before overwriting.
+   - Add event hooks for `beforeunload`/`visibilitychange` and offline simulation invocation.
+3. **Offline simulation**
+   - Integrate `simulateOfflineProgress` with configurable cap. Use `settings.offlineCapHours` when computing delta hours.
+4. **Settings UI (`src/ui/Settings.tsx`)**
+   - Build a modal or panel triggered from an icon in the HUD. Include:
+     - Autosave toggle + interval slider (with validation and tooltips).
+     - Offline cap numeric input (hours) and notation selector (engineering vs scientific).
+     - Export button (downloads JSON file) and Import button (file picker with validation feedback).
+     - Display last save timestamp and error alerts.
+   - Wire to Zustand store actions; disable import while autosave running to avoid concurrent writes.
+5. **Bootstrap wiring (`src/main.tsx` / `src/App.tsx`)**
+   - Initialize persistence manager before rendering UI, call `load()`, run offline simulation, then `start()` autosave.
+   - Register cleanup on unmount.
+6. **Telemetry & accessibility**
+   - Emit console info for successful loads/saves; ensure Settings UI is keyboard accessible and has ARIA labels.
 
-Acceptance criteria
+### Files to add/modify
 
-- Export/Import JSON UI works; import validates and migrates missing fields; export returns current save JSON.
-- On load, offline simulation is applied up to configured cap; HUD reflects updated resources.
-- Autosave persists state at interval (default 10s).
+- Modify: `src/state/store.ts`, `src/main.tsx`, `src/App.tsx` (depending on integration point)
+- Add: `src/state/persistence.ts`, `src/ui/Settings.tsx`, supporting UI styles/tests as needed
+- Update: `src/lib/offline.ts` to accept cap/notation parameters if required
 
-Tests
+### Acceptance criteria
 
-- Unit: `state/persistence.test.ts` (load/save/export/import/migration)
-- E2E: Playwright smoke for import/export + offline recap
+- Game loads previous session, caps offline progress per settings, and starts autosave by default (10s).
+- Users can export/import JSON saves from the Settings panel with validation and migration handling.
+- Settings persist across reloads and update UI immediately (e.g., autosave interval reflects new value).
 
-Risks & mitigations
+### Validation
 
-- Changes to store API may affect many modules: keep new functions additive and non-breaking.
-- Import malicious JSON: validate and sanitize; do not execute or eval payloads.
+- **Unit tests**: `state/persistence.test.ts`, `state/store.test.ts` for migrations, `ui/Settings.test.tsx` for form logic.
+- **Playwright smoke**: automate export/import cycle and offline recap verification.
+- **Manual**: Confirm autosave resumes after tab focus loss and that invalid imports surface friendly errors.
+
+### Risks & mitigations
+
+- **Corrupted imports** — Validate schema, keep backups, and surface errors without breaking store.
+- **Autosave race conditions** — Debounce `saveNow` and pause autosave during import.
+- **UI regression** — Keep Settings isolated (lazy loaded) to avoid bloating initial bundle.
+
+### Iteration checkpoints
+
+- After wiring store helpers, run tests and perform manual import/export to validate before adding UI.
+- After UI integration, execute Playwright scenario; adjust plan if UX feedback indicates missing affordances.
 
 ---
-
 
 ## Milestone 2 — Refinery ECS System & Offline Alignment
 
-Priority: High
-Estimated effort: 1–2 days
+**Priority:** High  **Estimated effort:** 1–2 days  **Spec refs:** RQ-001, refinery roadmap
 
-Tasks
+### Objectives
 
-- Implement `createRefinerySystem(world, store)` in `src/ecs/systems/refinery.ts`.
-- Expose `store.processRefinery(dt)` (store wrappers call into refinery logic or set of refiners).
-- Update `src/lib/offline.ts` to prefer `processRefinery` over fallback tick conversion.
-- Wire `createRefinerySystem` into `src/r3f/Scene.tsx` system list.
+- Move refinery logic from store tick into an ECS system to align real-time and offline processing paths.
 
-Acceptance criteria
+### Detailed tasks
 
-- Refinery outputs match previous store.tick outputs for same inputs.
-- Offline simulation uses `processRefinery` path and parity tests pass.
+1. **System implementation (`src/ecs/systems/refinery.ts`)**
+   - Create `createRefinerySystem(world, store)` returning `initialize`, `update`, and `cleanup` handlers.
+   - Consume refinery modules, prestige bonuses, and ore inputs; emit processed bars and updated ore totals each tick.
+2. **Store integration (`src/state/store.ts`)**
+   - Expose `processRefinery(dt)` that proxies to the ECS system for offline use; ensure determinism with fixed timestep.
+3. **Offline alignment (`src/lib/offline.ts`)**
+   - Replace fallback tick conversion with iterative `processRefinery` calls using stored snapshot data.
+   - Add parity tests comparing offline results to live tick for same intervals.
+4. **Bootstrap wiring (`src/r3f/Scene.tsx`)**
+   - Register the new refinery system in system initialization order (after mining/unload, before power if dependencies).
+5. **Instrumentation**
+   - Log discrepancies during development; optionally expose debug counters in dev tools overlay.
 
-Tests
+### Acceptance criteria
 
-- Unit: `ecs/systems/refinery.test.ts`
-- Offline parity: `lib/offline.test.ts`
+- Live gameplay and offline simulation produce identical ore→bar conversions given identical inputs.
+- No regression to store tick logic; tests confirm parity.
+
+### Validation
+
+- **Unit tests**: `ecs/systems/refinery.test.ts`, `lib/offline.test.ts` parity checks.
+- **Manual**: Compare ore/bar totals before/after offline catch-up for a known save.
+
+### Risks & mitigations
+
+- **Order-of-operations bugs** — Document system update order and add assertions.
+- **Performance** — Ensure offline simulation batches iterations efficiently.
+
+### Iteration checkpoints
+
+- After system integration, freeze offline tests to catch regressions before moving to energy work.
 
 ---
-
 
 ## Milestone 3 — Energy Throttle & Per-Drone Battery
 
-Priority: High
-Estimated effort: 1.5–3 days
+**Priority:** High  **Estimated effort:** 1.5–3 days  **Spec refs:** RQ-POWER, RQ-DRONE-AI, RQ-MINING
 
-Tasks
+### Objectives
 
-- Add `battery` and `maxBattery` fields to `DroneEntity` in `src/ecs/world.ts` and initialize in `createDrone`.
-- Modify `createTravelSystem` and `createMiningSystem` to consume battery per second and to scale speed/miningRate by `energyFraction = max(minFloor, battery/maxBattery)`.
-- Update `createPowerSystem` to include a charging model that charges drones at factory when energy buffer allows.
-- Expose throttle floor in Settings UI.
+- Introduce per-drone battery mechanics and graceful throttling while keeping drone AI deterministic.
 
-Acceptance criteria
+### Detailed tasks
 
-- Drones throttle gradually when battery low; they still return slowly instead of halting.
-- Energy flows and battery charge are visible in state and tests.
+1. **Data model updates (`src/ecs/world.ts`)**
+   - Extend `DroneEntity` with `battery`, `maxBattery`, `charging` states. Initialize values in `createDrone` using module bonuses.
+2. **Travel & mining adjustments (`src/ecs/systems/travel.ts`, `src/ecs/systems/mining.ts`)**
+   - Deduct battery consumption per second; compute `energyFraction = clamp(battery / maxBattery, throttleFloor, 1)`.
+   - Scale movement speed, mining rate, and energy usage by `energyFraction`.
+3. **Power system charging (`src/ecs/systems/power.ts`)**
+   - Allocate energy surplus to charge docked drones; respect power capacity and avoid negative energy.
+4. **Settings integration (`src/ui/Settings.tsx`)**
+   - Surface throttle floor slider/input with descriptive copy and safeguards.
+5. **UI feedback**
+   - Update HUD to display average battery levels or warnings when throttling triggers.
 
-Tests
+### Acceptance criteria
 
-- Unit: `ecs/systems/mining.test.ts` and `power.test.ts`
+- Drones slow down smoothly when low on battery and recover when charged; they never halt completely unless energy depleted.
+- Energy graphs remain stable; no infinite energy loops or negative values.
+
+### Validation
+
+- **Unit tests**: Extend `ecs/systems/mining.test.ts`, `ecs/systems/power.test.ts`, add `ecs/systems/travel.test.ts` coverage.
+- **Simulation test**: Run deterministic scenario verifying battery drains and recharge curves.
+- **Manual**: Observe throttling effect in dev build with debug overlays.
+
+### Risks & mitigations
+
+- **AI instability** — Maintain deterministic order; add tests covering drone state transitions.
+- **UX confusion** — Provide tooltips and color cues when throttling occurs.
+
+### Iteration checkpoints
+
+- Validate deterministic behavior with seeded RNG (placeholder until M4) before promoting change to mainline.
 
 ---
-
 
 ## Milestone 4 — Seeded RNG
 
-Priority: Medium
-Estimated effort: 0.5–1.5 days
+**Priority:** Medium  **Estimated effort:** 0.5–1.5 days  **Spec refs:** Deterministic RNG backlog
 
-Tasks
+### Objectives
 
-- Add `src/lib/rng.ts` implementing mulberry32 or similar.
-- Wrap `lib/math.ts` random calls to use seeded RNG instance; pass RNG from `createGameWorld` if provided.
-- Persist `rngSeed` to save and generate a random seed on new saves (crypto.getRandomValues where available).
+- Provide reproducible world generation through persisted RNG seeds.
 
-Acceptance criteria
+### Detailed tasks
 
-- Same seed + same save reproduce asteroid positions/richness on re-import.
+1. **RNG utility (`src/lib/rng.ts`)**
+   - Implement deterministic generator (e.g., Mulberry32) with seed setter and `next()` helpers.
+2. **Integration (`src/lib/math.ts`, `src/ecs/world.ts`)**
+   - Route random-dependent operations through RNG instance; update signatures to accept RNG parameter.
+3. **Persistence (`src/state/store.ts`, `src/state/persistence.ts`)**
+   - Add `rngSeed` to store snapshot; generate new seed on fresh saves using `crypto.getRandomValues` fallback.
+4. **Settings/Debug UI**
+   - Optionally expose seed view/copy to clipboard for reproducibility.
 
-Tests
+### Acceptance criteria
 
-- Unit: `lib/rng.test.ts` and integration test verifying deterministic world generation.
+- Importing a save reproduces identical asteroid layouts and resource distributions.
+- Changing seed and starting new game yields new arrangement.
+
+### Validation
+
+- **Unit tests**: `lib/rng.test.ts` for deterministic sequences; integration test verifying same seed yields same world state.
+- **Manual**: Compare exported saves with same/different seeds.
+
+### Risks & mitigations
+
+- **Performance** — Ensure RNG wrapper does not introduce overhead; precompute where necessary.
+- **Backward compatibility** — Provide default seed for legacy saves during import migration.
+
+### Iteration checkpoints
+
+- After RNG integration, rerun drone/battery tests to confirm determinism unaffected.
 
 ---
 
-
 ## Milestone 5 — Visual Polish (Trails first)
 
-Priority: Medium
-Estimated effort: 1–3 days
+**Priority:** Medium  **Estimated effort:** 1–3 days  **Spec refs:** Visual polish roadmap
 
-Tasks
+### Objectives
 
-- Implement drone trails (Drei `Trail` or a lightweight instanced line strip in `src/r3f/Drones.tsx`).
-- Add basic module visuals for Factory (show bays/units based on module levels).
-- Implement scanner rich-node highlight (shading or emissive ring for richer asteroids).
+- Improve readability with drone trails, enhanced factory visuals, and scanner highlights while guarding performance.
 
-Acceptance criteria
+### Detailed tasks
 
-- Visuals are performant (no major FPS drop); trails improve readability.
+1. **Drone trails (`src/r3f/Drones.tsx`)**
+   - Experiment with Drei `Trail` vs. custom instanced lines; profile performance and choose approach.
+   - Add toggles in Settings for low-spec devices.
+2. **Factory visuals (`src/r3f/Factory.tsx`)**
+   - Render module-based geometry variations (e.g., additional bays, lights) using instancing to avoid draw-call explosion.
+3. **Scanner highlights (`src/r3f/Asteroids.tsx`)**
+   - Apply emissive overlays or outline passes for high-value asteroids based on scanner level.
+4. **Performance verification**
+   - Capture FPS metrics before/after; ensure minimal regression (<5%).
+
+### Acceptance criteria
+
+- Visual additions render smoothly on baseline hardware and enhance game clarity.
+- Settings allow disabling effects for accessibility/performance.
+
+### Validation
+
+- **Visual QA**: Manual passes with screenshot artifacts.
+- **Automated**: Optional screenshot regression tests via Playwright if feasible.
+
+### Risks & mitigations
+
+- **GPU overhead** — Use instancing, dynamic resolution adjustments, and optional toggles.
+- **Visual clutter** — Iterate with feedback; provide colorblind-friendly palettes.
+
+### Iteration checkpoints
+
+- After trails implementation, gather internal feedback before expanding to factory/scanner work.
 
 ---
 
 ## Milestone 6 — Tests & CI
 
-Priority: High
-Estimated effort: 1–2 days
+**Priority:** High  **Estimated effort:** 1–2 days  **Spec refs:** Testing roadmap
 
-Tasks
+### Objectives
 
-- Add unit tests enumerated above and make sure Vitest runs green.
-- Add Playwright tests for import/export and offline recap.
-- Add/update CI workflows to run tests on PRs.
+- Consolidate automated testing (Vitest + Playwright) and wire CI workflows.
 
-Acceptance criteria
-- Green test suite in local runs and CI.
+### Detailed tasks
 
----
+1. **Unit test suite**
+   - Ensure all tests from previous milestones are passing and documented.
+   - Add coverage reports or snapshot comparisons where meaningful.
+2. **Playwright scenarios**
+   - Implement flows: import/export round-trip, offline recap display, settings adjustments, battery throttling visuals.
+   - Use test fixtures for seeded RNG saves.
+3. **CI integration**
+   - Update GitHub Actions workflows (or add new) to run `npm run lint`, `npm test`, `npm run e2e` headless.
+   - Cache dependencies to keep pipeline efficient.
+4. **Developer documentation**
+   - Update README/testing section with commands and troubleshooting tips.
 
-## Milestone 7 — Migration helpers & Docs
+### Acceptance criteria
 
-Priority: Low
-Estimated effort: 0.5–1 day
+- Local `npm test` and Playwright suites green; CI pipeline runs automatically on PRs.
+- Test artifacts (screenshots/videos) stored for failed runs.
 
-Tasks
+### Risks & mitigations
 
-- Implement import migration helpers in `store.importState` that fill missing fields and return migration logs.
-- Add README section documenting save JSON format, import/export, and migration notes.
-- Performance/responsive checklist and handoff notes.
+- **Flaky e2e tests** — Use deterministic seeds/timeouts, retry logic, and stable selectors.
 
-Acceptance criteria
-- Clear README and migration behavior; developer onboarding updated.
+### Iteration checkpoints
 
----
-
-## Cross-cutting concerns
-
-- Keep changes additive where possible; wrap new features behind Settings flags to allow safe rollout.
-- Always backup current save on import (automated temporary backup key in localStorage).
-- Use small incremental commits and run tests after each milestone.
+- After CI pipeline runs successfully in a branch, document setup in Memory Bank and README.
 
 ---
 
-## Dev commands (local)
+## Milestone 7 — Migration Helpers & Documentation
 
-Install dependencies:
+**Priority:** Low  **Estimated effort:** 0.5–1 day  **Spec refs:** Persistence/migration backlog
 
-```powershell
-npm install
-```
+### Objectives
 
-Start dev server:
+- Finalize import migrations, documentation, and performance/responsive checklists.
 
-```powershell
-npm run dev
-```
+### Detailed tasks
 
-Run unit tests:
+1. **Migration helpers**
+   - Extend `importState` to detect missing/legacy fields, apply defaults, and return migration logs for UI display or console.
+2. **Documentation updates**
+   - Add README sections covering save format, import/export instructions, offline behavior, and troubleshooting.
+   - Document Settings options, throttle behavior, and seeded RNG.
+3. **Performance/responsive audit**
+   - Run manual passes on various device sizes; note any layout issues.
+4. **Handoff notes**
+   - Update Memory Bank (`progress.md`, `activeContext.md`) with final status and open questions.
 
-```powershell
-npm test
-```
+### Acceptance criteria
 
-Run e2e (requires server running):
+- Import handles legacy saves gracefully and surfaces migration summary to the player.
+- README reflects new features and includes performance/responsive findings.
 
-```powershell
-npm run e2e
-```
+### Validation
+
+- **Unit tests**: Extend persistence tests with migration cases.
+- **Manual**: Validate README instructions by following them on a clean environment.
+
+### Risks & mitigations
+
+- **Documentation drift** — Review spec and README in tandem; include doc update checklist in PR template if needed.
+
+### Iteration checkpoints
+
+- After migration helpers validated, close out open Memory Bank tasks and archive plan references.
 
 ---
 
-## Next step (I can start now)
+## Continuous considerations
 
-I'll begin with Milestone 1 (persistence + Settings UI). Confirm and I will:
- 
-1. Add store `settings` slice and serialization helpers.
-2. Implement `src/state/persistence.ts` and `src/ui/Settings.tsx`.
-3. Wire persistence into bootstrap and add autosave, export/import, and offline simulation on load.
-4. Add tests for the persistence flow.
+- **Backward compatibility** — Always provide migration paths and backups for saved data.
+- **Performance budgets** — Monitor FPS and memory usage after each visual/system change.
+- **Accessibility** — Ensure new UI components meet keyboard navigation and contrast guidelines.
+- **Telemetry/logging** — Maintain structured logs for debugging persistence and ECS flows.
+- **Testing discipline** — Run linting, unit, and e2e suites before merging each milestone PR; document results in PR body.
 
-If you prefer a different starting point, tell me which milestone to prioritize and I'll start implementing it immediately.
+---
+
+## Next actions
+
+1. Confirm Memory Bank entries for persistence work (create/update task in `memory/tasks`).
+2. Begin Milestone 1 by enhancing `src/state/store.ts` and scaffolding the persistence manager.
+3. Prepare draft tests while implementing to ensure acceptance criteria stay testable.
