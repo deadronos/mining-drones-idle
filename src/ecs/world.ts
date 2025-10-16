@@ -11,6 +11,7 @@ export interface TravelData {
   to: Vector3;
   elapsed: number;
   duration: number;
+  control?: Vector3;
 }
 
 export interface FactoryActivityState {
@@ -48,6 +49,7 @@ export interface DroneEntity {
   maxBattery: number;
   charging: boolean;
   lastDockingFrom: Vector3 | null;
+  flightSeed: number | null;
 }
 
 export interface AsteroidEntity {
@@ -148,6 +150,7 @@ const createDrone = (origin: Vector3): DroneEntity => ({
   maxBattery: DEFAULT_DRONE_BATTERY,
   charging: false,
   lastDockingFrom: null,
+  flightSeed: null,
 });
 
 const isDrone = (entity: Entity): entity is DroneEntity => entity.kind === 'drone';

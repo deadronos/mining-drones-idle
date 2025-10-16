@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { Buffer } from 'buffer';
 
 test.describe('Persistence smoke tests', () => {
   test('export produces a valid JSON payload', async ({ page }) => {
@@ -14,7 +15,9 @@ test.describe('Persistence smoke tests', () => {
       await settingsButton.click();
       await page.evaluate(() => {
         const btn = document.querySelector('button[aria-label="Export save data"]');
-        btn?.click();
+        if (btn instanceof HTMLButtonElement) {
+          btn.click();
+        }
       });
       await page.waitForFunction(() => !!window.localStorage.getItem('space-factory-save'), null, {
         timeout: 5000,
@@ -53,7 +56,11 @@ test.describe('Persistence smoke tests', () => {
     const settingsButton = page.getByRole('button', { name: 'Settings' });
     await settingsButton.click();
     const fileInput = page.locator('input[type="file"]');
-    await fileInput.setInputFiles({ name: 'test-save.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(testState)) });
+    await fileInput.setInputFiles({
+      name: 'test-save.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(testState)),
+    });
 
     // wait for HUD to reflect imported state
     const hud = page.locator('.hud');
@@ -73,12 +80,10 @@ test.describe('Persistence smoke tests', () => {
 
     // Simulate offline progress by calling the app's window method if available
     const simulated = await page.evaluate(() => {
-      // The app exposes a test helper `__simulateOffline` for testing, otherwise try to advance time in store
-      // @ts-expect-error -- may not exist in production build
-      if ((window as any).__simulateOffline) {
-        // simulate 1 hour
-        // @ts-expect-error -- may not exist in production build
-        return (window as any).__simulateOffline(3600);
+      type WindowWithHelper = Window & { __simulateOffline?: (seconds: number) => unknown };
+      const helper = (window as WindowWithHelper).__simulateOffline;
+      if (typeof helper === 'function') {
+        return helper(3600);
       }
       return null;
     });

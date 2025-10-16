@@ -26,6 +26,16 @@ const semverCompare = (a: string, b: string) => {
 // Registry of migrations to apply in ascending order of targetVersion
 const migrations: Array<{ targetVersion: string; migrate: MigrationFn }> = [
   {
+    targetVersion: '0.2.0',
+    migrate: (snapshot) => {
+      const migrated = { ...snapshot } as StoreSnapshot;
+      if (!Array.isArray(migrated.droneFlights)) {
+        migrated.droneFlights = [];
+      }
+      return { snapshot: migrated, description: 'initialize drone flight state array' };
+    },
+  },
+  {
     targetVersion: '0.1.0',
     migrate: (snapshot) => {
       const migrated = { ...snapshot } as StoreSnapshot;

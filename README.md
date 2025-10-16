@@ -37,6 +37,7 @@ Saves are JSON snapshots stored under the `space-factory-save` key in `localStor
 - `settings` — user-configurable options (autosave, offline cap, notation, throttleFloor, showTrails)
 - `save` — metadata (lastSave timestamp and `version` string)
 - `rngSeed` — optional numeric seed for deterministic RNG
+- `droneFlights` — optional array describing active drone trips (target asteroid, path seed, travel progress)
 
 Versioning and migration strategy:
 
