@@ -89,9 +89,15 @@ export const createPersistenceManager = (
       settings.offlineCapHours,
     );
     if (offlineSeconds > 0) {
-      simulateOfflineProgress(store, offlineSeconds, {
+      const report = simulateOfflineProgress(store, offlineSeconds, {
         capHours: settings.offlineCapHours,
       });
+      if (report.barsProduced > 0 || report.oreConsumed > 0) {
+        console.info(
+          `Simulated ${report.simulatedSeconds.toFixed(1)}s of offline progress`,
+          report,
+        );
+      }
     }
     store.getState().setLastSave(now);
     saveNow();

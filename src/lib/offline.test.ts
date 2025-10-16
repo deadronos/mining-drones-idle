@@ -17,7 +17,8 @@ describe('lib/offline', () => {
   it('matches manual refinement loop', () => {
     const offlineStore = cloneStore();
     const manualStore = cloneStore();
-    simulateOfflineProgress(offlineStore, 6, { step: 0.2 });
+    const initialOre = offlineStore.getState().resources.ore;
+    const report = simulateOfflineProgress(offlineStore, 6, { step: 0.2 });
     const manualStep = 0.2;
     const iterations = Math.floor(6 / manualStep);
     const remainder = 6 - iterations * manualStep;
@@ -29,8 +30,14 @@ describe('lib/offline', () => {
     }
     const offlineResources = offlineStore.getState().resources;
     const manualResources = manualStore.getState().resources;
+    expect(report.simulatedSeconds).toBeCloseTo(6, 5);
+    expect(report.stepSize).toBeCloseTo(manualStep, 5);
+    expect(report.steps).toBe(iterations + (remainder > 0 ? 1 : 0));
+    expect(report.progressedSteps).toBeGreaterThan(0);
     expect(offlineResources.bars).toBeCloseTo(manualResources.bars, 5);
     expect(offlineResources.ore).toBeCloseTo(manualResources.ore, 5);
+    expect(report.barsProduced).toBeCloseTo(offlineResources.bars, 5);
+    expect(report.oreConsumed).toBeCloseTo(initialOre - offlineResources.ore, 5);
   });
 
   it('honors provided offline cap hours', () => {
@@ -48,7 +55,7 @@ describe('lib/offline', () => {
     const seconds = 10 * 3600; // 10 hours
     const capHours = 12;
     const step = 600; // 10 minutes per step
-    simulateOfflineProgress(baseStore, seconds, { step, capHours });
+    const report = simulateOfflineProgress(baseStore, seconds, { step, capHours });
 
     const clamped = clampOfflineSeconds(seconds, capHours);
     const iterations = Math.floor(clamped / step);
@@ -62,6 +69,8 @@ describe('lib/offline', () => {
 
     const offline = baseStore.getState().resources;
     const manual = manualStore.getState().resources;
+    expect(report.simulatedSeconds).toBeCloseTo(clamped, 5);
+    expect(report.steps).toBe(iterations + (remainder > 0 ? 1 : 0));
     expect(offline.bars).toBeCloseTo(manual.bars, 5);
     expect(offline.ore).toBeCloseTo(manual.ore, 5);
   });
@@ -79,10 +88,12 @@ describe('lib/offline', () => {
       modules: { ...state.modules, refinery: 1 },
     });
 
-    simulateOfflineProgress(store, 60, { step: 1 });
+    const report = simulateOfflineProgress(store, 60, { step: 1 });
 
     const { resources } = store.getState();
     expect(resources.energy).toBe(321);
     expect(resources.credits).toBe(123);
+    expect(report.simulatedSeconds).toBeCloseTo(60, 5);
+    expect(report.steps).toBeGreaterThan(0);
   });
 });

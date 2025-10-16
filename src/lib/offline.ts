@@ -1,5 +1,4 @@
 import type { StoreApi } from 'zustand';
-import { computeRefineryProduction } from '@/state/store';
 import type { StoreState } from '@/state/store';
 
 const HOURS_TO_SECONDS = 3600;
@@ -17,6 +16,15 @@ export interface OfflineSimulationOptions {
   capHours?: number;
 }
 
+export interface OfflineSimulationReport {
+  simulatedSeconds: number;
+  stepSize: number;
+  steps: number;
+  progressedSteps: number;
+  oreConsumed: number;
+  barsProduced: number;
+}
+
 export const simulateOfflineProgress = (
   store: StoreApi<StoreState>,
   seconds: number,
@@ -28,48 +36,38 @@ export const simulateOfflineProgress = (
     options?.capHours === undefined
       ? normalizedSeconds
       : clampOfflineSeconds(normalizedSeconds, options.capHours);
-  if (clampedSeconds <= 0) return;
-  const iterations = Math.floor(clampedSeconds / step);
-  let remainder = clampedSeconds - iterations * step;
-  const baseState = store.getState();
-  const snapshot: Pick<StoreState, 'resources' | 'modules' | 'prestige'> = {
-    resources: { ...baseState.resources },
-    modules: baseState.modules,
-    prestige: baseState.prestige,
+  const report: OfflineSimulationReport = {
+    simulatedSeconds: clampedSeconds,
+    stepSize: step,
+    steps: 0,
+    progressedSteps: 0,
+    oreConsumed: 0,
+    barsProduced: 0,
   };
+  if (clampedSeconds <= 0) {
+    return report;
+  }
 
-  const applyStep = (delta: number) => {
-    const stats = computeRefineryProduction(snapshot, delta);
+  const runStep = (delta: number) => {
+    if (delta <= 0) return;
+    report.steps += 1;
+    const stats = store.getState().processRefinery(delta);
     if (stats.oreConsumed <= 0 && stats.barsProduced <= 0) {
-      return false;
+      return;
     }
-    snapshot.resources = {
-      ...snapshot.resources,
-      ore: Math.max(0, snapshot.resources.ore - stats.oreConsumed),
-      bars: snapshot.resources.bars + stats.barsProduced,
-    };
-    return true;
+    report.progressedSteps += 1;
+    report.oreConsumed += stats.oreConsumed;
+    report.barsProduced += stats.barsProduced;
   };
 
-  let progressed = false;
+  const iterations = Math.floor(clampedSeconds / step);
   for (let i = 0; i < iterations; i += 1) {
-    if (!applyStep(step)) {
-      remainder = 0;
-      break;
-    }
-    progressed = true;
+    runStep(step);
   }
-  if (remainder > 0 && applyStep(remainder)) {
-    progressed = true;
+  const remainder = clampedSeconds - iterations * step;
+  if (remainder > 0) {
+    runStep(remainder);
   }
 
-  if (!progressed) return;
-
-  store.setState((state) => ({
-    resources: {
-      ...state.resources,
-      ore: snapshot.resources.ore,
-      bars: snapshot.resources.bars,
-    },
-  }));
+  return report;
 };
