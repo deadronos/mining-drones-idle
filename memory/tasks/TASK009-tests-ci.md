@@ -36,3 +36,8 @@ Prioritize deterministic unit tests for newly added systems and add Playwright s
 
 - Verified: Unit tests (Vitest) present and cover many core systems; Playwright e2e suite exists but more smoke tests for persistence/import/export are suggested.
 - Remaining: add GitHub Actions workflow to run lint, unit tests, Playwright e2e, and upload artifacts on failure. Marking TASK009 In Progress.
+
+### 2025-10-16 (update)
+
+- Added initial CI workflow `.github/workflows/ci.yml` that runs lint, Vitest unit tests, and Playwright e2e. Uses caching and uploads artifacts on failures. Next: run CI on branch, add targeted Playwright scenarios, and improve artifact collection (junit/coverage outputs).
+
