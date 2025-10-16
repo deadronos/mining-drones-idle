@@ -35,3 +35,11 @@ WHEN a drone consumes more power than the grid can supply, THE SYSTEM SHALL slow
 ## RQ-009 Seeded World Generation
 
 WHEN a new world is generated with a given RNG seed, THE SYSTEM SHALL place asteroids in identical positions and with the same attributes whenever that seed is reused, while different seeds yield different layouts. [Acceptance: Unit tests construct worlds with shared/different seeds and compare asteroid distributions.]
+
+## RQ-010 Visual Effects Toggle Persistence
+
+WHEN the player changes the drone trails preference in Settings, THE SYSTEM SHALL persist the `showTrails` flag across autosaves and import/export operations and apply the new value within the next rendered frame. [Acceptance: Unit tests cover settings normalization/serialization, and UI tests assert the toggle updates the store and re-renders the scene without errors.]
+
+## RQ-011 Drone Trail Rendering
+
+WHEN drones travel or change state, THE SYSTEM SHALL render a fading trail indicating their recent path using at most one additional draw call and no more than 12 stored points per drone, honoring the global `showTrails` toggle. [Acceptance: Unit tests validate the trail buffer helper's vertex counts/color gradients, and manual verification confirms the toggle hides/shows trails without performance regressions.]

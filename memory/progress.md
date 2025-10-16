@@ -12,8 +12,10 @@
 - Refined offline catch-up to reuse the store's refinery logic directly, emit telemetry for ore/bars processed, and surface load-time summaries via persistence logging.
 - Delivered per-drone battery throttling, charging allocation, and regression tests covering mining, travel, and power systems.
 - Implemented seeded RNG utility and routed world generation/math helpers through the stored seed with deterministic unit coverage and README updates.
+- Documented persistence manager integration/spec updates and introduced the `showTrails` Settings toggle alongside the new drone trail renderer and tests.
 
 ## Open Items
 
 - Track UI follow-up for surfacing per-drone battery levels and throttle warnings in the HUD.
 - Validate seeded RNG integration across save import/export flows and plan any reset tooling.
+- Capture performance telemetry for drone trails and scope factory/scanner visual polish follow-ups.

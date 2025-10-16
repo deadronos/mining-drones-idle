@@ -2,7 +2,7 @@
 
 ## Status
 
-In Progress
+Completed
 
 ## Summary
 
@@ -59,6 +59,11 @@ Implement save/load with autosave and offline simulation, create settings UI for
 - Updated the refinery ECS system to invoke the store's `processRefinery` action so live ticks and offline loops share the same execution path.
 - Refactored offline simulation to drive `processRefinery` directly, returning a telemetry report for ore consumption and bar output.
 - Logged offline recap summaries during persistence load to aid balancing and regression triage, with refreshed Vitest coverage for the new report contract.
+
+### 2025-10-17
+
+- Closed the lingering spec backlog by documenting the shipped persistence manager wiring, shared refinery helpers, and Settings defaults (including the new trails toggle).
+- Confirmed Settings serialization/import now includes `showTrails`, ensuring persistence tasks no longer block visual polish follow-ups.
 
 ## Updated Iteration Plan (2025-02-18)
 

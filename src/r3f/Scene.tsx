@@ -2,7 +2,7 @@ import { useFrame } from '@react-three/fiber';
 import { Suspense, useMemo } from 'react';
 import { Stars } from '@react-three/drei';
 import { gameWorld } from '@/ecs/world';
-import { storeApi } from '@/state/store';
+import { storeApi, useStore } from '@/state/store';
 import { createTimeSystem } from '@/ecs/systems/time';
 import { createFleetSystem } from '@/ecs/systems/fleet';
 import { createAsteroidSystem } from '@/ecs/systems/asteroids';
@@ -15,11 +15,13 @@ import { createRefinerySystem } from '@/ecs/systems/refinery';
 import { Factory } from '@/r3f/Factory';
 import { Asteroids } from '@/r3f/Asteroids';
 import { Drones } from '@/r3f/Drones';
+import { DroneTrails } from '@/r3f/DroneTrails';
 
 type SystemRunner = (dt: number) => void;
 
 export const Scene = () => {
   const time = useMemo(() => createTimeSystem(0.1), []);
+  const showTrails = useStore((state) => state.settings.showTrails);
   const systems = useMemo(() => {
     const store = storeApi;
     return {
@@ -65,6 +67,7 @@ export const Scene = () => {
         <Factory />
         <Asteroids />
         <Drones />
+        {showTrails ? <DroneTrails /> : null}
       </Suspense>
     </>
   );
