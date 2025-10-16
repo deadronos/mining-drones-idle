@@ -39,7 +39,7 @@ const generateSeed = () => {
 };
 
 export const moduleDefinitions = {
-  droneBay: { label: 'Drone Bay', baseCost: 50, description: '+1 drone, +5% travel speed' },
+  droneBay: { label: 'Drone Bay', baseCost: 40, description: '+1 drone, +5% travel speed' },
   refinery: { label: 'Refinery', baseCost: 80, description: '+10% bar output' },
   storage: { label: 'Storage', baseCost: 30, description: '+100 ore capacity' },
   solar: { label: 'Solar Array', baseCost: 40, description: '+5 energy/s, +25 max energy' },

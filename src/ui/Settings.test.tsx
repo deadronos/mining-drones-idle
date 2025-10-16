@@ -21,8 +21,10 @@ describe('ui/Settings', () => {
   let originalRevoke: ((url: string) => void) | undefined;
 
   beforeEach(() => {
-    originalCreate = URL.createObjectURL;
-    originalRevoke = URL.revokeObjectURL;
+    originalCreate =
+      typeof URL.createObjectURL === 'function' ? URL.createObjectURL.bind(URL) : undefined;
+    originalRevoke =
+      typeof URL.revokeObjectURL === 'function' ? URL.revokeObjectURL.bind(URL) : undefined;
     Object.defineProperty(URL, 'createObjectURL', {
       configurable: true,
       writable: true,
