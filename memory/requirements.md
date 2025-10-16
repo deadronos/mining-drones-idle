@@ -19,3 +19,11 @@ WHEN resources change due to simulation or actions, THE SYSTEM SHALL update HUD 
 ## RQ-005 Prestige Reset
 
 WHEN the player activates prestige with required bars, THE SYSTEM SHALL grant permanent cores based on bars held, reset run resources, and preserve prestige bonus function. [Acceptance: Unit test verifies prestige gain and reset behavior.]
+
+## RQ-006 Spec Reflects Persistence Stack
+
+WHEN maintainers consult the spec for save/offline behavior, THE SYSTEM SHALL describe the existing persistence manager API (load/start/stop/save/import/export) and the offline simulation utility contract including cap-hours handling. [Acceptance: Spec section enumerates manager methods, storage key, and offline simulation flow tied to current code.]
+
+## RQ-007 Spec Differentiates Implemented vs. Planned UI/Systems
+
+WHEN the spec covers UI and ECS systems, THE SYSTEM SHALL distinguish between features present in the codebase and roadmap items, so that readers can see current coverage and open gaps. [Acceptance: Spec explicitly labels implemented HUD/Upgrade panel, notes missing Settings/offline recap, and calls out placeholder systems.]
