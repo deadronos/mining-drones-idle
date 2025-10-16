@@ -2,12 +2,13 @@
 
 ## Current Focus
 
-Finish persistence/offline iteration by fixing cap handling and hardening tests per full spec.
+Update `spec/spec-full-idea.md` to reflect the latest implemented systems (ECS loop, power, offline simulation utilities, persistence manager API) and clarify remaining roadmap gaps.
 
 ## Recent Changes
 
 - Core MVP delivered with ECS loop, rendering, and UI panel.
+- Persistence/offline iteration introduced new tests and utilities but integration is pending.
 
 ## Next Steps
 
-- Execute iteration plan in TASK002 to finalize persistence/offline work and confirm testing suite.
+- Document spec adjustments per TASK003 to capture current behavior and outstanding work.
