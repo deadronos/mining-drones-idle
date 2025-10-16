@@ -35,6 +35,37 @@ const migrations: Array<{ targetVersion: string; migrate: MigrationFn }> = [
       return { snapshot: migrated, description: 'ensure settings.showTrails default and save meta' };
     },
   },
+  {
+    targetVersion: '0.0.2',
+    migrate: (snapshot) => {
+      // historical placeholder migration: normalize numeric fields that used to be strings
+      const migrated = { ...snapshot } as StoreSnapshot;
+      if (migrated.resources) {
+        migrated.resources = {
+          ore: Number(migrated.resources.ore) || 0,
+          bars: Number(migrated.resources.bars) || 0,
+          energy: Number(migrated.resources.energy) || 0,
+          credits: Number(migrated.resources.credits) || 0,
+        };
+      }
+      return { snapshot: migrated, description: 'normalize numeric resource fields' };
+    },
+  },
+  {
+    targetVersion: '0.0.3',
+    migrate: (snapshot) => {
+      // placeholder: ensure modules object has all keys
+      const migrated = { ...snapshot } as StoreSnapshot;
+      migrated.modules = {
+        droneBay: migrated.modules?.droneBay ?? 1,
+        refinery: migrated.modules?.refinery ?? 0,
+        storage: migrated.modules?.storage ?? 0,
+        solar: migrated.modules?.solar ?? 0,
+        scanner: migrated.modules?.scanner ?? 0,
+      };
+      return { snapshot: migrated, description: 'ensure module keys exist' };
+    },
+  },
 ];
 
 /**

@@ -36,6 +36,7 @@ const equality = (a: StoreSettings, b: StoreSettings) =>
 
 export const createPersistenceManager = (
   store: StoreApi<StoreState> = storeApi,
+  options?: { onMigrationReport?: (report?: MigrationReport) => void },
 ): PersistenceManager => {
   let autosaveHandle: ReturnType<typeof setInterval> | null = null;
   let unsubscribe: (() => void) | null = null;
@@ -94,6 +95,7 @@ export const createPersistenceManager = (
       const result = migrateSnapshot(snapshot);
       snapshot = result.snapshot;
       lastLoadReport = result.report;
+      options?.onMigrationReport?.(result.report);
     } catch (err) {
       console.warn('Migration failed, falling back to parsed snapshot', err);
     }
@@ -154,6 +156,7 @@ export const createPersistenceManager = (
       const r = migrateSnapshot(parsed);
       migrated = r.snapshot;
       report = r.report;
+      options?.onMigrationReport?.(report);
     } catch (err) {
       console.warn('Migration failed during import', err);
     }

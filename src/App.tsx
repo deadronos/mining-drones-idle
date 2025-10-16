@@ -6,6 +6,7 @@ import { useStore } from '@/state/store';
 import { SettingsPanel } from '@/ui/Settings';
 import type { PersistenceManager } from '@/state/persistence';
 import './styles.css';
+import { ToastProvider } from '@/ui/ToastProvider';
 
 interface AppProps {
   persistence: PersistenceManager;
@@ -17,7 +18,8 @@ export const App = ({ persistence }: AppProps) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
-    <div className="app">
+    <ToastProvider>
+      <div className="app">
       <Canvas shadows camera={{ position: [0, 9, 22], fov: 52 }}>
         <Scene />
       </Canvas>
@@ -34,6 +36,8 @@ export const App = ({ persistence }: AppProps) => {
       {settingsOpen ? (
         <SettingsPanel onClose={() => setSettingsOpen(false)} persistence={persistence} />
       ) : null}
+      </div>
+    </ToastProvider>
     </div>
   );
 };

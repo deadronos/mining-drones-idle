@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEventHandler } from 'react';
 import { useStore } from '@/state/store';
 import type { PersistenceManager } from '@/state/persistence';
+import { Toast } from './Toast';
+import { useToast } from './ToastProvider';
 
 interface SettingsPanelProps {
   onClose: () => void;
@@ -24,6 +26,7 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
   const updateSettings = useStore((state) => state.updateSettings);
   const lastSave = useStore((state) => state.save.lastSave);
   const [importError, setImportError] = useState<string | null>(null);
+  const toastApi = useToast();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleClose = useCallback(() => {
@@ -60,9 +63,27 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
-    void file
+      void file
       .text()
       .then((content) => {
+        // Prefer importStateWithReport when available so we can surface migration summaries
+        const anyPersistence = persistence as PersistenceManager & {
+          importStateWithReport?: (payload: string) => { success: boolean; report?: any };
+        };
+            if (anyPersistence.importStateWithReport) {
+          const { success, report } = anyPersistence.importStateWithReport(content);
+          if (success) {
+            setImportError(null);
+            if (report && report.migrated) {
+              toastApi.push(`Imported and migrated save from ${report.fromVersion} → ${report.toVersion}. Applied: ${report.applied.join(', ')}`);
+            }
+            handleClose();
+            return;
+          }
+          setImportError('Save file format was not recognized.');
+          return;
+        }
+
         const success = persistence.importState(content);
         if (success) {
           setImportError(null);
@@ -228,6 +249,7 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
           <p className="settings-meta">Last saved: {formattedLastSave}</p>
           {importError ? <p className="settings-error">{importError}</p> : null}
         </section>
+  {/* global toasts are rendered by ToastProvider */}
       </div>
     </div>
   );
