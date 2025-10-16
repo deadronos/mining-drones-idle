@@ -1,7 +1,8 @@
 import { World, type Query } from 'miniplex';
 import { Quaternion, Vector3 } from 'three';
 import { randomOnRing, randomRange, TAU } from '@/lib/math';
-import type { ModuleId } from '@/state/store';
+import { createRng, type RandomSource } from '@/lib/rng';
+import { storeApi, type ModuleId } from '@/state/store';
 
 export type DroneState = 'idle' | 'toAsteroid' | 'mining' | 'returning' | 'unloading';
 
@@ -24,6 +25,9 @@ export interface DroneEntity {
   miningRate: number;
   travel: TravelData | null;
   miningAccumulator: number;
+  battery: number;
+  maxBattery: number;
+  charging: boolean;
 }
 
 export interface AsteroidEntity {
@@ -52,6 +56,12 @@ export interface GameWorld {
   factory: FactoryEntity;
   droneQuery: Query<DroneEntity>;
   asteroidQuery: Query<AsteroidEntity>;
+  rng: RandomSource;
+}
+
+export interface CreateWorldOptions {
+  asteroidCount?: number;
+  rng?: RandomSource;
 }
 
 const nextId = (() => {
@@ -70,12 +80,12 @@ const createFactory = (): FactoryEntity => ({
   orientation: new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), TAU / 8),
 });
 
-export const createAsteroid = (scannerLevel: number): AsteroidEntity => {
-  const position = randomOnRing(12, 48, 6);
+export const createAsteroid = (scannerLevel: number, rng: RandomSource): AsteroidEntity => {
+  const position = randomOnRing(12, 48, 6, rng);
   const richnessBias = 1 + scannerLevel * 0.05;
-  const richness = randomRange(0.8, 1.2) * richnessBias;
+  const richness = randomRange(0.8, 1.2, rng) * richnessBias;
   const oreRemaining = BASE_ASTEROID_RICHNESS * richness;
-  const radius = randomRange(0.6, 1.4) * Math.cbrt(oreRemaining / BASE_ASTEROID_RICHNESS);
+  const radius = randomRange(0.6, 1.4, rng) * Math.cbrt(oreRemaining / BASE_ASTEROID_RICHNESS);
   return {
     id: nextId('asteroid'),
     kind: 'asteroid',
@@ -83,11 +93,16 @@ export const createAsteroid = (scannerLevel: number): AsteroidEntity => {
     oreRemaining,
     richness,
     radius,
-    rotation: randomRange(0, TAU),
-    spin: randomRange(-0.4, 0.4),
+    rotation: randomRange(0, TAU, rng),
+    spin: randomRange(-0.4, 0.4, rng),
     colorBias: richness,
   };
 };
+
+const DEFAULT_DRONE_CAPACITY = 40;
+const DEFAULT_DRONE_SPEED = 14;
+const DEFAULT_DRONE_MINING_RATE = 6;
+const DEFAULT_DRONE_BATTERY = 24;
 
 const createDrone = (origin: Vector3): DroneEntity => ({
   id: nextId('drone'),
@@ -96,30 +111,39 @@ const createDrone = (origin: Vector3): DroneEntity => ({
   state: 'idle',
   targetId: null,
   cargo: 0,
-  capacity: 40,
-  speed: 14,
-  miningRate: 6,
+  capacity: DEFAULT_DRONE_CAPACITY,
+  speed: DEFAULT_DRONE_SPEED,
+  miningRate: DEFAULT_DRONE_MINING_RATE,
   travel: null,
   miningAccumulator: 0,
+  battery: DEFAULT_DRONE_BATTERY,
+  maxBattery: DEFAULT_DRONE_BATTERY,
+  charging: false,
 });
 
 const isDrone = (entity: Entity): entity is DroneEntity => entity.kind === 'drone';
 const isAsteroid = (entity: Entity): entity is AsteroidEntity => entity.kind === 'asteroid';
 
-export const createGameWorld = (asteroidCount = ASTEROID_TARGET): GameWorld => {
+export const createGameWorld = (options: CreateWorldOptions = {}): GameWorld => {
+  const {
+    asteroidCount = ASTEROID_TARGET,
+    rng = createRng(Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)),
+  } = options;
   const world = new World<Entity>();
   const factory = world.add(createFactory());
   const droneQuery = world.where(isDrone).connect();
   const asteroidQuery = world.where(isAsteroid).connect();
 
   for (let i = 0; i < asteroidCount; i += 1) {
-    world.add(createAsteroid(0));
+    world.add(createAsteroid(0, rng));
   }
 
-  return { world, factory, droneQuery, asteroidQuery };
+  return { world, factory, droneQuery, asteroidQuery, rng };
 };
 
-export const gameWorld = createGameWorld();
+const initialSeed = storeApi.getState().rngSeed;
+
+export const gameWorld = createGameWorld({ rng: createRng(initialSeed) });
 
 export const spawnDrone = (world: GameWorld) =>
   world.world.add(createDrone(world.factory.position));
@@ -127,7 +151,7 @@ export const spawnDrone = (world: GameWorld) =>
 export const removeDrone = (world: GameWorld, drone: DroneEntity) => world.world.remove(drone);
 
 export const spawnAsteroid = (world: GameWorld, scannerLevel: number) =>
-  world.world.add(createAsteroid(scannerLevel));
+  world.world.add(createAsteroid(scannerLevel, world.rng));
 
 export const removeAsteroid = (world: GameWorld, asteroid: AsteroidEntity) =>
   world.world.remove(asteroid);

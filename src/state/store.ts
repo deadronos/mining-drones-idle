@@ -17,7 +17,7 @@ const STORAGE_PER_LEVEL = 100;
 const BASE_ENERGY_CAP = 100;
 const ENERGY_PER_SOLAR = 25;
 const SOLAR_BASE_GEN = 5;
-const DRONE_ENERGY_COST = 1.2;
+export const DRONE_ENERGY_COST = 1.2;
 
 const initialSettings: StoreSettings = {
   autosaveEnabled: true,

@@ -5,7 +5,7 @@ import { createStoreInstance } from '@/state/store';
 
 describe('ecs/systems/fleet', () => {
   it('maintains drone count according to module level', () => {
-    const world = createGameWorld(0);
+    const world = createGameWorld({ asteroidCount: 0 });
     const store = createStoreInstance();
     const system = createFleetSystem(world, store);
     system(0.1);

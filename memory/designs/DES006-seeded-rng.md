@@ -1,6 +1,6 @@
 # DES006 — Seeded RNG
 
-**Status:** Draft
+**Status:** Completed
 **Created:** 2025-10-16
 
 ## Summary
@@ -9,7 +9,7 @@ Add a deterministic RNG utility and route all random-dependent operations throug
 
 ## API
 
-- `createRNG(seed: number)` -> `{ next(): number, nextInt(max): number }`
+- `createRng(seed: number)` -> `{ seed: number, next(): number, nextInt(min, max): number, nextRange(min, max): number }`
 
 ## Notes
 

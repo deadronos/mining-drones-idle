@@ -26,7 +26,7 @@ export const Scene = () => {
       fleet: createFleetSystem(gameWorld, store),
       asteroids: createAsteroidSystem(gameWorld, store),
       droneAI: createDroneAISystem(gameWorld, store),
-      travel: createTravelSystem(gameWorld),
+      travel: createTravelSystem(gameWorld, store),
       mining: createMiningSystem(gameWorld, store),
       unload: createUnloadSystem(gameWorld, store),
       power: createPowerSystem(gameWorld, store),

@@ -1,6 +1,6 @@
 # DES005 — Energy Throttle & Per-Drone Battery
 
-**Status:** Draft
+**Status:** Completed
 **Created:** 2025-10-16
 
 ## Summary
