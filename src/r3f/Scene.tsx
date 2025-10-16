@@ -12,6 +12,7 @@ import { createMiningSystem } from '@/ecs/systems/mining';
 import { createUnloadSystem } from '@/ecs/systems/unload';
 import { createPowerSystem } from '@/ecs/systems/power';
 import { createRefinerySystem } from '@/ecs/systems/refinery';
+import { createBiomeSystem } from '@/ecs/systems/biomes';
 import { Factory } from '@/r3f/Factory';
 import { Asteroids } from '@/r3f/Asteroids';
 import { Drones } from '@/r3f/Drones';
@@ -25,6 +26,7 @@ export const Scene = () => {
   const systems = useMemo(() => {
     const store = storeApi;
     return {
+      biomes: createBiomeSystem(gameWorld),
       fleet: createFleetSystem(gameWorld, store),
       asteroids: createAsteroidSystem(gameWorld, store),
       droneAI: createDroneAISystem(gameWorld, store),
@@ -40,6 +42,7 @@ export const Scene = () => {
     const clamped = Math.min(delta, 0.25);
     time.update(clamped, (step) => {
       systems.fleet(step);
+      systems.biomes(step);
       systems.asteroids(step);
       systems.droneAI(step);
       systems.travel(step);

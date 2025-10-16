@@ -42,6 +42,7 @@ export const createTravelSystem = (world: GameWorld, store: StoreApiType) => {
           droneId: drone.id,
           state: drone.state,
           targetAsteroidId: drone.state === 'toAsteroid' ? drone.targetId : null,
+          targetRegionId: drone.state === 'toAsteroid' ? drone.targetRegionId : null,
           pathSeed: drone.flightSeed,
           travel: travelToSnapshot(travel),
         });

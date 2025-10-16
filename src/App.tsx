@@ -7,6 +7,7 @@ import { SettingsPanel } from '@/ui/Settings';
 import type { PersistenceManager } from '@/state/persistence';
 import './styles.css';
 import { ToastProvider } from '@/ui/ToastProvider';
+import { AsteroidInspector } from '@/ui/AsteroidInspector';
 
 interface AppProps {
   persistence: PersistenceManager;
@@ -25,6 +26,10 @@ export const App = ({ persistence }: AppProps) => {
         </Canvas>
         <div className="hud">
           <div>Ore: {resources.ore.toFixed(1)}</div>
+          <div>Metals: {resources.metals.toFixed(1)}</div>
+          <div>Crystals: {resources.crystals.toFixed(1)}</div>
+          <div>Organics: {resources.organics.toFixed(1)}</div>
+          <div>Ice: {resources.ice.toFixed(1)}</div>
           <div>Bars: {resources.bars.toFixed(1)}</div>
           <div>Energy: {Math.round(resources.energy)}</div>
           <div>Drones: {modules.droneBay}</div>
@@ -33,6 +38,7 @@ export const App = ({ persistence }: AppProps) => {
           </button>
         </div>
         <UpgradePanel />
+        <AsteroidInspector />
         {settingsOpen ? (
           <SettingsPanel onClose={() => setSettingsOpen(false)} persistence={persistence} />
         ) : null}

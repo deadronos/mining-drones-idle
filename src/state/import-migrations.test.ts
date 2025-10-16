@@ -22,7 +22,7 @@ describe('persistence migration reporting', () => {
       importStateWithReport?: (payload: string) => { success: boolean; report?: MigrationReport };
     };
     const legacy = {
-      resources: { ore: 1, bars: 0, energy: 100, credits: 0 },
+      resources: { ore: 1, ice: 0, metals: 0, crystals: 0, organics: 0, bars: 0, energy: 100, credits: 0 },
       modules: { droneBay: 1, refinery: 0, storage: 0, solar: 0, scanner: 0 },
       prestige: { cores: 0 },
       save: { lastSave: Date.now() - 1000, version: '0.0.1' },
@@ -40,7 +40,7 @@ describe('persistence migration reporting', () => {
   it('loadWithReport returns a report after loading a legacy save from storage', () => {
     const store = createStoreInstance();
     const legacy = {
-      resources: { ore: 2, bars: 0, energy: 100, credits: 0 },
+      resources: { ore: 2, ice: 0, metals: 0, crystals: 0, organics: 0, bars: 0, energy: 100, credits: 0 },
       modules: { droneBay: 1, refinery: 0, storage: 0, solar: 0, scanner: 0 },
       prestige: { cores: 0 },
       save: { lastSave: Date.now() - 1000, version: '0.0.1' },

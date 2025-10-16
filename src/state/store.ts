@@ -37,6 +37,7 @@ export interface DroneFlightState {
   droneId: string;
   state: DroneFlightPhase;
   targetAsteroidId: string | null;
+  targetRegionId: string | null;
   pathSeed: number;
   travel: TravelSnapshot;
 }
@@ -74,6 +75,10 @@ export type ModuleId = keyof typeof moduleDefinitions;
 
 export interface Resources {
   ore: number;
+  ice: number;
+  metals: number;
+  crystals: number;
+  organics: number;
   bars: number;
   energy: number;
   credits: number;
@@ -131,6 +136,7 @@ export interface StoreState {
   settings: StoreSettings;
   rngSeed: number;
   droneFlights: DroneFlightState[];
+  addResources(this: void, delta: Partial<Resources>, options?: { capacityAware?: boolean }): void;
   addOre(this: void, amount: number): void;
   buy(this: void, id: ModuleId): void;
   tick(this: void, dt: number): void;
@@ -212,10 +218,21 @@ export const computeEnergyThrottle = (
   return Math.max(state.settings.throttleFloor, normalized);
 };
 
-const initialResources: Resources = { ore: 0, bars: 0, energy: BASE_ENERGY_CAP, credits: 0 };
+const initialResources: Resources = {
+  ore: 0,
+  ice: 0,
+  metals: 0,
+  crystals: 0,
+  organics: 0,
+  bars: 0,
+  energy: BASE_ENERGY_CAP,
+  credits: 0,
+};
 const initialModules: Modules = { droneBay: 1, refinery: 0, storage: 0, solar: 0, scanner: 0 };
 const initialPrestige: Prestige = { cores: 0 };
 const initialSave: SaveMeta = { lastSave: Date.now(), version: SAVE_VERSION };
+
+const rawResourceKeys = ['ore', 'ice', 'metals', 'crystals', 'organics'] as const;
 
 const coerceNumber = (value: unknown, fallback: number) => {
   const result = Number(value);
@@ -293,10 +310,12 @@ const normalizeDroneFlight = (value: unknown): DroneFlightState | null => {
   const pathSeed = coerceNumber(raw.pathSeed, 0);
   const targetAsteroidId =
     typeof raw.targetAsteroidId === 'string' ? raw.targetAsteroidId : null;
+  const targetRegionId = typeof raw.targetRegionId === 'string' ? raw.targetRegionId : null;
   return {
     droneId: raw.droneId,
     state: raw.state,
     targetAsteroidId,
+    targetRegionId,
     pathSeed,
     travel,
   };
@@ -320,12 +339,43 @@ const cloneDroneFlight = (flight: DroneFlightState): DroneFlightState => ({
   droneId: flight.droneId,
   state: flight.state,
   targetAsteroidId: flight.targetAsteroidId,
+  targetRegionId: flight.targetRegionId,
   pathSeed: flight.pathSeed,
   travel: cloneTravelSnapshot(flight.travel),
 });
 
+const mergeResourceDelta = (
+  base: Resources,
+  delta: Partial<Resources>,
+  capacity: number,
+  capacityAware: boolean,
+): Resources => {
+  const next: Resources = { ...base };
+  for (const key of rawResourceKeys) {
+    const amount = delta[key];
+    if (typeof amount !== 'number' || !Number.isFinite(amount) || amount === 0) continue;
+    const current = base[key];
+    const candidate = current + amount;
+    next[key] = capacityAware ? Math.min(capacity, Math.max(0, candidate)) : candidate;
+  }
+  if (typeof delta.bars === 'number' && Number.isFinite(delta.bars) && delta.bars !== 0) {
+    next.bars = Math.max(0, next.bars + delta.bars);
+  }
+  if (typeof delta.energy === 'number' && Number.isFinite(delta.energy) && delta.energy !== 0) {
+    next.energy = Math.max(0, next.energy + delta.energy);
+  }
+  if (typeof delta.credits === 'number' && Number.isFinite(delta.credits) && delta.credits !== 0) {
+    next.credits = Math.max(0, next.credits + delta.credits);
+  }
+  return next;
+};
+
 const normalizeResources = (snapshot?: Partial<Resources>): Resources => ({
   ore: coerceNumber(snapshot?.ore, initialResources.ore),
+  ice: coerceNumber(snapshot?.ice, initialResources.ice),
+  metals: coerceNumber(snapshot?.metals, initialResources.metals),
+  crystals: coerceNumber(snapshot?.crystals, initialResources.crystals),
+  organics: coerceNumber(snapshot?.organics, initialResources.organics),
   bars: coerceNumber(snapshot?.bars, initialResources.bars),
   energy: coerceNumber(snapshot?.energy, initialResources.energy),
   credits: coerceNumber(snapshot?.credits, initialResources.credits),
@@ -425,12 +475,16 @@ const storeCreator: StateCreator<StoreState> = (set, get) => ({
   rngSeed: generateSeed(),
   droneFlights: [],
 
-  addOre: (amount) =>
+  addResources: (delta, options) =>
     set((state) => {
       const capacity = getStorageCapacity(state.modules);
-      const ore = Math.min(capacity, state.resources.ore + amount);
-      return { resources: { ...state.resources, ore } };
+      const capacityAware = options?.capacityAware ?? true;
+      const resources = mergeResourceDelta(state.resources, delta ?? {}, capacity, capacityAware);
+      return { resources };
     }),
+
+  addOre: (amount) =>
+    get().addResources({ ore: amount }),
 
   buy: (id) =>
     set((state) => {
