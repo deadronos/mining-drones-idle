@@ -1,6 +1,6 @@
 # TASK006 - Energy Throttle & Per-Drone Battery
 
-**Status:** In Progress  
+**Status:** Completed
 **Added:** 2025-10-16  
 **Updated:** 2025-10-16
 
@@ -22,12 +22,12 @@ Extend drone entity components and modify travel/mining systems to apply `energy
 
 ## Subtasks
 
-| ID | Description | Status | Updated | Notes |
-| --- | ----------- | ------ | ------- | ----- |
-| 6.1 | Drone component updates | Not Started | 2025-10-16 | `src/ecs/world.ts` DroneEntity does not include per-drone battery fields yet. |
-| 6.2 | Travel & mining adjustments | Partially Completed | 2025-02-14 | `src/ecs/systems/mining.ts` and `src/ecs/systems/travel.ts` use `computeEnergyThrottle` to scale mining and travel behavior where appropriate. |
-| 6.3 | Power charging allocation | Partially Completed | 2025-02-14 | `src/ecs/systems/power.ts` computes generation, consumption and applies throttle globally; per-drone allocation not implemented. |
-| 6.4 | Settings & HUD wiring | Partially Completed | 2025-02-16 | Settings UI exposes throttleFloor; HUD feedback for individual drone battery not present. |
+| ID  | Description                 | Status              | Updated    | Notes                                                                                                                 |
+| --- | --------------------------- | ------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------- |
+| 6.1 | Drone component updates     | Completed           | 2025-10-16 | Added battery, maxBattery, and charging flags to `DroneEntity` in `src/ecs/world.ts`.                                 |
+| 6.2 | Travel & mining adjustments | Completed           | 2025-10-16 | Both systems now scale movement/mining speed by per-drone energy fraction and drain battery via `consumeDroneEnergy`. |
+| 6.3 | Power charging allocation   | Completed           | 2025-10-16 | `src/ecs/systems/power.ts` allocates stored energy to docked drones, clamping values and toggling `charging` state.   |
+| 6.4 | Settings & HUD wiring       | Partially Completed | 2025-10-16 | Settings UI exposes throttleFloor; HUD feedback for individual drone battery not present.                             |
 
 ## Acceptance Criteria
 
@@ -39,3 +39,9 @@ Extend drone entity components and modify travel/mining systems to apply `energy
 
 - Verified: Energy throttle math implemented in `src/state/store.ts` and used by `src/ecs/systems/power.ts` and `src/ecs/systems/mining.ts` to scale consumption and mining rates.
 - Remaining: add per-drone battery fields to `DroneEntity`, implement per-drone drain/charge allocation, and surface HUD indicators. Marking TASK006 In Progress.
+
+### 2025-10-16
+
+- Added drone battery fields, helper utilities, and updated travel/mining to consume per-drone energy with throttle floor clamping.
+- Reworked the power system to route solar/storage output into docked-drone charging while keeping stored energy non-negative.
+- Extended test suite with travel, mining, and power coverage for drained batteries and throttled progress; README documents the new behaviour. Marking TASK006 Completed.

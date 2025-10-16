@@ -29,11 +29,11 @@ Player progress is stored in `localStorage` using the `space-factory-save` key. 
 
 ## Energy throttling
 
-Energy production and consumption are evaluated every simulation tick. When the battery level falls, a throttle factor computed from `energy / capacity` (clamped by the Settings "Throttle floor") slows mining progress and proportionally reduces per-drone consumption. This keeps the factory responsive—operations smooth out instead of stopping entirely—and allows excess generation to recharge the grid. The behavior is covered by dedicated unit tests for both the mining and power systems.
+Each drone tracks its own battery and drains power while travelling or mining. The drain rate scales with the configured "Throttle floor": the lower the battery, the slower the drone moves and mines, but progress never drops below the floor unless the player explicitly sets it to zero. The power system converts the factory's stored energy and solar generation into per-drone charging whenever drones are docked, keeping energy values non-negative and smoothing out bursts of demand. Dedicated unit tests cover mining, travel, and power behaviour under drained and replenished batteries.
 
 ## Deterministic RNG seeds
 
-Each save stores a `rngSeed` value. Fresh games generate a seed using `crypto.getRandomValues` (falling back to `Math.random` if necessary). Exported saves include the seed, and importing that payload restores the same seed so asteroid layouts and other random-driven systems stay reproducible. Seeds that are missing from older snapshots are regenerated automatically.
+Each save stores a `rngSeed` value. Fresh games generate a seed using `crypto.getRandomValues` (falling back to `Math.random` if necessary). A Mulberry32-based utility feeds world generation and math helpers so asteroid placement and other random-driven systems are reproducible. Exported saves include the seed, and importing that payload restores the same layout. Seeds that are missing from older snapshots are regenerated automatically.
 
 ## Testing & quality checks
 

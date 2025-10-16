@@ -1,13 +1,13 @@
 import type { GameWorld } from '@/ecs/world';
-import { computeEnergyThrottle, type StoreApiType } from '@/state/store';
+import { consumeDroneEnergy } from '@/ecs/energy';
+import { DRONE_ENERGY_COST, type StoreApiType } from '@/state/store';
 
 export const createMiningSystem = (world: GameWorld, store: StoreApiType) => {
   const { droneQuery, asteroidQuery } = world;
   return (dt: number) => {
     if (dt <= 0) return;
-    const state = store.getState();
-    const throttle = computeEnergyThrottle(state);
-    if (throttle <= 0) return;
+    const { settings } = store.getState();
+    const throttleFloor = settings.throttleFloor;
     for (const drone of droneQuery) {
       if (drone.state !== 'mining') continue;
       const asteroid = asteroidQuery.entities.find((node) => node.id === drone.targetId);
@@ -24,7 +24,11 @@ export const createMiningSystem = (world: GameWorld, store: StoreApiType) => {
         drone.travel = null;
         continue;
       }
-      const mined = Math.min(drone.miningRate * throttle * dt, capacityLeft, asteroid.oreRemaining);
+      const { fraction } = consumeDroneEnergy(drone, dt, throttleFloor, DRONE_ENERGY_COST);
+      if (fraction <= 0) {
+        continue;
+      }
+      const mined = Math.min(drone.miningRate * fraction * dt, capacityLeft, asteroid.oreRemaining);
       if (mined <= 0) {
         drone.state = 'returning';
         drone.targetId = null;

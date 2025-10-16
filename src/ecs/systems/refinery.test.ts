@@ -16,7 +16,7 @@ const setupStore = () => {
 
 describe('ecs/systems/refinery', () => {
   it('shares refinery math with offline processing', () => {
-    const world = createGameWorld(0);
+    const world = createGameWorld({ asteroidCount: 0 });
     const store = setupStore();
     const mirrorStore = setupStore();
     const system = createRefinerySystem(world, store);
@@ -30,7 +30,7 @@ describe('ecs/systems/refinery', () => {
   });
 
   it('ignores non-positive timesteps', () => {
-    const world = createGameWorld(0);
+    const world = createGameWorld({ asteroidCount: 0 });
     const store = setupStore();
     const system = createRefinerySystem(world, store);
     const before = store.getState().resources;

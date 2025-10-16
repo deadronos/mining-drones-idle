@@ -1,18 +1,17 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createAsteroid } from '@/ecs/world';
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
+import { createRng } from '@/lib/rng';
 
 describe('ecs/systems/asteroids', () => {
   it('spawns richer asteroids with higher scanner level', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.5);
-    const samples = (level: number) =>
-      Array.from({ length: 20 }, () => createAsteroid(level)).reduce(
-        (sum, asteroid) => sum + asteroid.richness,
-        0,
-      ) / 20;
+    const samples = (level: number) => {
+      const rng = createRng(12345);
+      let total = 0;
+      for (let index = 0; index < 20; index += 1) {
+        total += createAsteroid(level, rng).richness;
+      }
+      return total / 20;
+    };
     const base = samples(0);
     const boosted = samples(5);
     expect(boosted).toBeGreaterThan(base);

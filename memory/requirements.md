@@ -27,3 +27,11 @@ WHEN maintainers consult the spec for save/offline behavior, THE SYSTEM SHALL de
 ## RQ-007 Spec Differentiates Implemented vs. Planned UI/Systems
 
 WHEN the spec covers UI and ECS systems, THE SYSTEM SHALL distinguish between features present in the codebase and roadmap items, so that readers can see current coverage and open gaps. [Acceptance: Spec explicitly labels implemented HUD/Upgrade panel, notes missing Settings/offline recap, and calls out placeholder systems.]
+
+## RQ-008 Per-Drone Energy Throttle
+
+WHEN a drone consumes more power than the grid can supply, THE SYSTEM SHALL slow that drone's travel and mining speed according to its battery charge fraction while never dropping below the configured throttle floor and without allowing negative battery values. [Acceptance: Unit tests exercise mining and travel ticks with depleted batteries to confirm throttled progress and non-negative charge.]
+
+## RQ-009 Seeded World Generation
+
+WHEN a new world is generated with a given RNG seed, THE SYSTEM SHALL place asteroids in identical positions and with the same attributes whenever that seed is reused, while different seeds yield different layouts. [Acceptance: Unit tests construct worlds with shared/different seeds and compare asteroid distributions.]

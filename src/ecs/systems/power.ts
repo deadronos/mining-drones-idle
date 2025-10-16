@@ -1,8 +1,7 @@
 import type { GameWorld } from '@/ecs/world';
 import {
-  computeEnergyThrottle,
+  DRONE_ENERGY_COST,
   getEnergyCapacity,
-  getEnergyConsumption,
   getEnergyGeneration,
   type StoreApiType,
 } from '@/state/store';
@@ -13,15 +12,39 @@ export const createPowerSystem = (world: GameWorld, store: StoreApiType) => {
     if (dt <= 0) return;
     const state = store.getState();
     const generation = getEnergyGeneration(state.modules);
-    const throttle = computeEnergyThrottle(state);
-    const consumption = getEnergyConsumption(state.modules, droneQuery.size) * throttle;
     const cap = getEnergyCapacity(state.modules);
-    const nextEnergy = Math.min(
-      cap,
-      Math.max(0, state.resources.energy + (generation - consumption) * dt),
-    );
-    if (Math.abs(nextEnergy - state.resources.energy) > 1e-4) {
-      store.setState({ resources: { ...state.resources, energy: nextEnergy } });
+    let stored = Math.min(cap, Math.max(0, state.resources.energy + generation * dt));
+
+    const chargeRate = DRONE_ENERGY_COST * 2;
+    for (const drone of droneQuery) {
+      const isChargingCandidate =
+        (drone.state === 'idle' || drone.state === 'unloading') &&
+        drone.battery < drone.maxBattery - 1e-4;
+      if (!isChargingCandidate) {
+        drone.charging = false;
+        continue;
+      }
+      if (stored <= 0) {
+        drone.charging = false;
+        continue;
+      }
+      const deficit = drone.maxBattery - drone.battery;
+      const potential = Math.min(deficit, chargeRate * dt, stored);
+      if (potential > 0) {
+        drone.battery += potential;
+        if (drone.battery > drone.maxBattery) {
+          drone.battery = drone.maxBattery;
+        }
+        stored -= potential;
+        drone.charging = true;
+      } else {
+        drone.charging = false;
+      }
+    }
+
+    stored = Math.min(cap, Math.max(0, stored));
+    if (Math.abs(stored - state.resources.energy) > 1e-4) {
+      store.setState({ resources: { ...state.resources, energy: stored } });
     }
   };
 };

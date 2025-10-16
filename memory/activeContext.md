@@ -2,18 +2,16 @@
 
 ## Current Focus
 
-Advance TASK002 by unifying refinery processing between live ECS ticks and offline catch-up while capturing telemetry for later balancing work.
+Stabilize the new per-drone energy systems and seeded RNG pipeline from TASK006/TASK007, and prepare UI follow-ups for battery HUD feedback.
 
 ## Recent Changes
 
-- Ensured the refinery ECS system now delegates directly to the store's `processRefinery` method for identical live/offline behavior.
-- Refactored offline simulation to call store actions in fixed steps and return telemetry about ore consumption and bar production.
-- Added persistence logging for offline catch-up runs to aid balancing and regression debugging.
-- Expanded the implementation plan with an error handling matrix and unit testing roadmap to guide upcoming milestones.
+- Introduced per-drone battery fields, travel/mining throttling, and charging allocation with new unit coverage.
+- Added deterministic RNG utility, updated world generation to consume seeded randomness, and expanded tests/README accordingly.
+- Maintained persistence hooks so RNG seeds and energy settings continue to roundtrip through snapshots.
 
 ## Next Steps
 
-- Monitor telemetry from offline recap sessions to ensure refinery parity holds under varied saves.
-- Outline follow-up work for energy throttling and per-drone batteries once refinery parity remains stable.
-- Capture any manual QA findings from extended offline catch-up runs and feed them into the upcoming energy milestone planning.
-- Feed the new error handling/test strategy into Milestone 1 execution notes and update task breakdowns accordingly.
+- Monitor simulation telemetry to validate long-run battery balance and identify UI indicators needed for individual drones.
+- Plan HUD work to surface average/low battery warnings and evaluate Settings copy for throttle floor guidance.
+- Review RNG integration with save import/export flows and scope any reset/regeneration hooks needed for world rebuilds.

@@ -10,8 +10,10 @@
 - Finalized offline catch-up alignment by iterating on snapshot data and adding regression coverage for untouched resources.
 - Expanded the implementation roadmap with error handling and testing strategy sections to de-risk upcoming persistence and ECS work.
 - Refined offline catch-up to reuse the store's refinery logic directly, emit telemetry for ore/bars processed, and surface load-time summaries via persistence logging.
+- Delivered per-drone battery throttling, charging allocation, and regression tests covering mining, travel, and power systems.
+- Implemented seeded RNG utility and routed world generation/math helpers through the stored seed with deterministic unit coverage and README updates.
 
 ## Open Items
 
-- Prepare PR summary covering the refinery system migration and associated tests.
-- Scope upcoming energy throttling/per-drone battery design work contingent on refinery stability.
+- Track UI follow-up for surfacing per-drone battery levels and throttle warnings in the HUD.
+- Validate seeded RNG integration across save import/export flows and plan any reset tooling.

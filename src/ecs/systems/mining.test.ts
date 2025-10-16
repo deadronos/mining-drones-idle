@@ -4,7 +4,7 @@ import { createGameWorld, spawnAsteroid, spawnDrone } from '@/ecs/world';
 import { createStoreInstance } from '@/state/store';
 
 const setupMiningScenario = () => {
-  const world = createGameWorld(0);
+  const world = createGameWorld({ asteroidCount: 0 });
   const store = createStoreInstance();
   const asteroid = spawnAsteroid(world, 0);
   asteroid.oreRemaining = 1_000;
@@ -15,23 +15,38 @@ const setupMiningScenario = () => {
 };
 
 describe('ecs/systems/mining', () => {
-  it('scales mining progress by throttle factor', () => {
+  it('scales mining progress by available battery fraction', () => {
     const { world, store, drone } = setupMiningScenario();
+    drone.battery = drone.maxBattery / 2;
     store.setState((state) => ({
-      resources: { ...state.resources, energy: 10 },
       settings: { ...state.settings, throttleFloor: 0.2 },
     }));
 
     const system = createMiningSystem(world, store);
     system(1);
 
-    expect(drone.cargo).toBeCloseTo(1.2, 5);
+    expect(drone.cargo).toBeCloseTo(3, 5);
+    expect(drone.battery).toBeCloseTo(drone.maxBattery / 2 - 0.6, 5);
   });
 
-  it('halts mining when throttle resolves to zero', () => {
+  it('respects throttle floor when the battery is empty', () => {
     const { world, store, drone } = setupMiningScenario();
+    drone.battery = 0;
     store.setState((state) => ({
-      resources: { ...state.resources, energy: 0 },
+      settings: { ...state.settings, throttleFloor: 0.25 },
+    }));
+
+    const system = createMiningSystem(world, store);
+    system(1);
+
+    expect(drone.cargo).toBeCloseTo(1.5, 5);
+    expect(drone.battery).toBe(0);
+  });
+
+  it('halts mining when throttle floor is zero and the battery is empty', () => {
+    const { world, store, drone } = setupMiningScenario();
+    drone.battery = 0;
+    store.setState((state) => ({
       settings: { ...state.settings, throttleFloor: 0 },
     }));
 
