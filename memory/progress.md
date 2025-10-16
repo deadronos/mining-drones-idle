@@ -14,6 +14,8 @@
 - Implemented seeded RNG utility and routed world generation/math helpers through the stored seed with deterministic unit coverage and README updates.
 - Documented persistence manager integration/spec updates and introduced the `showTrails` Settings toggle alongside the new drone trail renderer and tests.
 
+- Implemented migration helpers (`src/state/migrations.ts`) to normalize legacy snapshots on load/import; README updated with save format and migration guidance.
+
 ## Open Items
 
 - Track UI follow-up for surfacing per-drone battery levels and throttle warnings in the HUD.

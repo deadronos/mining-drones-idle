@@ -9,6 +9,7 @@ import {
   storeApi,
   saveVersion,
 } from '@/state/store';
+import { migrateSnapshot } from '@/state/migrations';
 import { computeOfflineSeconds, simulateOfflineProgress } from '@/lib/offline';
 
 export const SAVE_KEY = 'space-factory-save';
@@ -75,10 +76,16 @@ export const createPersistenceManager = (
       store.getState().setLastSave(Date.now());
       return;
     }
-    const snapshot = parseSnapshot(raw);
+    let snapshot = parseSnapshot(raw);
     if (!snapshot) {
       store.getState().setLastSave(Date.now());
       return;
+    }
+    // Run migrations to ensure snapshot shape is current
+    try {
+      snapshot = migrateSnapshot(snapshot);
+    } catch (err) {
+      console.warn('Migration failed, falling back to parsed snapshot', err);
     }
     store.getState().applySnapshot(snapshot);
     const now = Date.now();
@@ -123,7 +130,16 @@ export const createPersistenceManager = (
   const exportState = () => store.getState().exportState();
 
   const importState = (payload: string) => {
-    const success = store.getState().importState(payload);
+    // parse + migrate before handing to store import
+    const parsed = parseSnapshot(payload);
+    if (!parsed) return false;
+    let migrated = parsed;
+    try {
+      migrated = migrateSnapshot(parsed);
+    } catch (err) {
+      console.warn('Migration failed during import', err);
+    }
+    const success = store.getState().importState(JSON.stringify(migrated));
     if (!success) return false;
     store.getState().setLastSave(Date.now());
     saveNow();

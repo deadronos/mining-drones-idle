@@ -27,6 +27,29 @@ Player progress is stored in `localStorage` using the `space-factory-save` key. 
 - **Import/Export** – Manual backups are available from Settings. Export generates a timestamped JSON download. Import validates the payload, applies store migrations, refreshes autosave, and reports errors inline without dropping the current save.
 - **Migrations** – Snapshots store a semantic `save.version`. New fields (for example, throttle settings or RNG seeds) are normalized when loading older saves so existing progress continues to work without manual intervention.
 
+### Save format & migration strategy
+
+Saves are JSON snapshots stored under the `space-factory-save` key in `localStorage`. The shape is described by the `StoreSnapshot` TypeScript type in `src/state/store.ts` and includes:
+
+- `resources` — ore, bars, energy, credits
+- `modules` — counts for droneBay, refinery, storage, solar, scanner
+- `prestige` — prestige cores
+- `settings` — user-configurable options (autosave, offline cap, notation, throttleFloor, showTrails)
+- `save` — metadata (lastSave timestamp and `version` string)
+- `rngSeed` — optional numeric seed for deterministic RNG
+
+Versioning and migration strategy:
+
+- Each snapshot includes a `save.version` string. The current runtime exports saves with the repository `saveVersion` (see `src/state/store.ts`).
+- On load and on import, the `PersistenceManager` parses the snapshot and runs the migration pipeline (`src/state/migrations.ts`) before applying the snapshot to the live store.
+- Migrations are additive and idempotent. The migration pipeline ensures new fields get safe defaults (for example, `settings.showTrails` defaults to `true`) and updates `save.version` to the current version on successful migration.
+- When making breaking changes to the save shape, add a small migration function to `src/state/migrations.ts` that detects older `save.version` values and upgrades the payload step-by-step. Keep the migration logic minimal and test-backed.
+
+Troubleshooting:
+
+- If import fails with a parse error, check that the exported JSON is intact (no trailing text or formatting from editors). Use the Settings > Export to create a clean backup.
+- If older saves produce unexpected values, open an issue and include the exported payload; maintainers can add a migration test for the specific legacy format.
+
 ## Energy throttling
 
 Each drone tracks its own battery and drains power while travelling or mining. The drain rate scales with the configured "Throttle floor": the lower the battery, the slower the drone moves and mines, but progress never drops below the floor unless the player explicitly sets it to zero. The power system converts the factory's stored energy and solar generation into per-drone charging whenever drones are docked, keeping energy values non-negative and smoothing out bursts of demand. Dedicated unit tests cover mining, travel, and power behaviour under drained and replenished batteries.
