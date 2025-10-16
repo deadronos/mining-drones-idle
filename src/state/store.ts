@@ -117,6 +117,49 @@ export interface StoreState {
   importState(this: void, payload: string): boolean;
 }
 
+export type StoreApiType = StoreApi<StoreState>;
+
+const emptyRefineryStats: RefineryStats = { oreConsumed: 0, barsProduced: 0 };
+
+export const computeRefineryProduction = (
+  state: Pick<StoreState, 'resources' | 'modules' | 'prestige'>,
+  dt: number,
+): RefineryStats => {
+  if (dt <= 0) return emptyRefineryStats;
+  const oreAvailable = state.resources.ore;
+  if (oreAvailable <= 0) {
+    return emptyRefineryStats;
+  }
+  const prestigeMult = computePrestigeBonus(state.prestige.cores);
+  const refineryMult = Math.pow(1.1, state.modules.refinery);
+  const oreConsumed = Math.min(oreAvailable, ORE_CONVERSION_PER_SECOND * dt);
+  if (oreConsumed <= 0) {
+    return emptyRefineryStats;
+  }
+  const barsProduced =
+    (oreConsumed / ORE_PER_BAR) * BASE_REFINERY_RATE * refineryMult * prestigeMult;
+  return { oreConsumed, barsProduced };
+};
+
+export const applyRefineryProduction = (state: StoreState, stats: RefineryStats) => ({
+  resources: {
+    ...state.resources,
+    ore: Math.max(0, state.resources.ore - stats.oreConsumed),
+    bars: state.resources.bars + stats.barsProduced,
+  },
+});
+
+export const runRefineryStep = (store: StoreApiType, dt: number): RefineryStats => {
+  if (dt <= 0) return emptyRefineryStats;
+  const state = store.getState();
+  const stats = computeRefineryProduction(state, dt);
+  if (stats.oreConsumed <= 0 && stats.barsProduced <= 0) {
+    return emptyRefineryStats;
+  }
+  store.setState(applyRefineryProduction(state, stats));
+  return stats;
+};
+
 export const costForLevel = (base: number, level: number) =>
   Math.ceil(base * Math.pow(GROWTH, level));
 
@@ -261,17 +304,14 @@ const storeCreator: StateCreator<StoreState> = (set, get) => ({
   },
 
   processRefinery: (dt) => {
-    if (dt <= 0) return { oreConsumed: 0, barsProduced: 0 };
+    if (dt <= 0) return emptyRefineryStats;
     const state = get();
-    const prestigeMult = computePrestigeBonus(state.prestige.cores);
-    const refineryMult = Math.pow(1.1, state.modules.refinery);
-    const oreConversion = Math.min(state.resources.ore, ORE_CONVERSION_PER_SECOND * dt);
-    const barsProduced =
-      (oreConversion / ORE_PER_BAR) * BASE_REFINERY_RATE * refineryMult * prestigeMult;
-    const nextOre = state.resources.ore - oreConversion;
-    const nextBars = state.resources.bars + barsProduced;
-    set({ resources: { ...state.resources, ore: nextOre, bars: nextBars } });
-    return { oreConsumed: oreConversion, barsProduced };
+    const stats = computeRefineryProduction(state, dt);
+    if (stats.oreConsumed <= 0 && stats.barsProduced <= 0) {
+      return emptyRefineryStats;
+    }
+    set(applyRefineryProduction(state, stats));
+    return stats;
   },
 
   prestigeReady: () => get().resources.bars >= PRESTIGE_THRESHOLD,
@@ -324,7 +364,5 @@ const storeCreator: StateCreator<StoreState> = (set, get) => ({
 export const createStoreInstance = () => createVanillaStore<StoreState>(storeCreator);
 
 export const useStore = create<StoreState>()(storeCreator);
-
-export type StoreApiType = StoreApi<StoreState>;
 
 export const storeApi = useStore as unknown as StoreApiType;
