@@ -21,6 +21,8 @@ describe('migrations', () => {
       expect(migrated.settings).toBeDefined();
       // showTrails should be present and default to true
       expect(migrated.settings.showTrails).toBe(true);
+      expect(Array.isArray(migrated.droneFlights)).toBe(true);
+      expect(migrated.droneFlights?.length).toBe(0);
   });
 
   it('is idempotent when applied to current snapshots', () => {
@@ -29,11 +31,21 @@ describe('migrations', () => {
       modules: { droneBay: 1, refinery: 0, storage: 0, solar: 0, scanner: 0 },
       prestige: { cores: 0 },
       save: { lastSave: Date.now(), version: saveVersion },
-      settings: { autosaveEnabled: true, autosaveInterval: 10, offlineCapHours: 8, notation: 'standard', throttleFloor: 0.25, showTrails: false },
+      settings: {
+        autosaveEnabled: true,
+        autosaveInterval: 10,
+        offlineCapHours: 8,
+        notation: 'standard',
+        throttleFloor: 0.25,
+        showTrails: false,
+        performanceProfile: 'medium',
+      },
+      droneFlights: [] as StoreSnapshot['droneFlights'],
     } as StoreSnapshot;
       const { snapshot: migrated, report } = migrateSnapshot(current);
       expect(report.migrated).toBe(false);
       expect(migrated.save.version).toBe(saveVersion);
       expect(migrated.settings.showTrails).toBe(false);
+      expect(migrated.droneFlights).toEqual([]);
   });
 });

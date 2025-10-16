@@ -59,3 +59,15 @@ WHEN refinery throughput exceeds the baseline by 20% or more, THE SYSTEM SHALL t
 ## RQ-015 Performance Profiles
 
 WHEN the player selects a factory performance profile in Settings, THE SYSTEM SHALL adjust visual effect density to match the profile within the next rendered frame and persist the choice across saves. [Acceptance: Unit tests cover settings normalization/export, and manual verification confirms profiles toggle effect density.]
+
+## RQ-016 Per-Drone Target Selection
+
+WHEN an idle drone seeks a mining target while multiple asteroids are available, THE SYSTEM SHALL choose among the nearby asteroids using deterministic weighted randomization so that simultaneous assignments distribute drones instead of converging on a single rock. [Acceptance: Unit tests simulate repeated assignments and assert the chosen asteroid IDs vary when multiple options exist.]
+
+## RQ-017 Deterministic Flight Offsets
+
+WHEN a drone begins travel, THE SYSTEM SHALL generate a seeded path offset that perturbs the waypoint curve without changing its endpoints, ensuring drones with identical seeds reproduce the same motion. [Acceptance: Unit tests cover offset determinism for fixed seeds and confirm path endpoints remain stable.]
+
+## RQ-018 Flight Persistence
+
+WHEN the player saves or reloads while drones are mid-flight, THE SYSTEM SHALL serialize and restore each flight's target, seeded offset, and progress so that drones resume the exact trajectory after load. [Acceptance: Integration test saves a mid-flight snapshot, reloads it, and verifies flight state resumes with matching progress and seed.]

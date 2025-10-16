@@ -5,7 +5,7 @@ import {
   type StoreApi,
 } from 'zustand/vanilla';
 
-const SAVE_VERSION = '0.1.0';
+const SAVE_VERSION = '0.2.0';
 
 const GROWTH = 1.15;
 const PRESTIGE_THRESHOLD = 5_000;
@@ -20,6 +20,26 @@ const SOLAR_BASE_GEN = 5;
 export const DRONE_ENERGY_COST = 1.2;
 
 export type PerformanceProfile = 'low' | 'medium' | 'high';
+
+export type VectorTuple = [number, number, number];
+
+export interface TravelSnapshot {
+  from: VectorTuple;
+  to: VectorTuple;
+  elapsed: number;
+  duration: number;
+  control?: VectorTuple;
+}
+
+export type DroneFlightPhase = 'toAsteroid' | 'returning';
+
+export interface DroneFlightState {
+  droneId: string;
+  state: DroneFlightPhase;
+  targetAsteroidId: string | null;
+  pathSeed: number;
+  travel: TravelSnapshot;
+}
 
 const initialSettings: StoreSettings = {
   autosaveEnabled: true,
@@ -100,6 +120,7 @@ export interface StoreSnapshot {
   save: SaveMeta;
   settings: StoreSettings;
   rngSeed?: number;
+  droneFlights?: DroneFlightState[];
 }
 
 export interface StoreState {
@@ -109,6 +130,7 @@ export interface StoreState {
   save: SaveMeta;
   settings: StoreSettings;
   rngSeed: number;
+  droneFlights: DroneFlightState[];
   addOre(this: void, amount: number): void;
   buy(this: void, id: ModuleId): void;
   tick(this: void, dt: number): void;
@@ -121,6 +143,8 @@ export interface StoreState {
   applySnapshot(this: void, snapshot: StoreSnapshot): void;
   exportState(this: void): string;
   importState(this: void, payload: string): boolean;
+  recordDroneFlight(this: void, flight: DroneFlightState): void;
+  clearDroneFlight(this: void, droneId: string): void;
 }
 
 export type StoreApiType = StoreApi<StoreState>;
@@ -198,6 +222,108 @@ const coerceNumber = (value: unknown, fallback: number) => {
   return Number.isFinite(result) ? result : fallback;
 };
 
+const normalizeVectorTuple = (value: unknown): VectorTuple | null => {
+  if (!Array.isArray(value) || value.length !== 3) {
+    return null;
+  }
+  const parsed = value.map((component) => Number(component));
+  if (parsed.some((component) => !Number.isFinite(component))) {
+    return null;
+  }
+  return [parsed[0], parsed[1], parsed[2]] as VectorTuple;
+};
+
+const cloneVectorTuple = (value: VectorTuple): VectorTuple => [value[0], value[1], value[2]];
+
+const normalizeTravelSnapshot = (value: unknown): TravelSnapshot | null => {
+  if (typeof value !== 'object' || value === null) {
+    return null;
+  }
+  const raw = value as Partial<TravelSnapshot> & {
+    from?: unknown;
+    to?: unknown;
+    control?: unknown;
+    elapsed?: unknown;
+    duration?: unknown;
+  };
+  const from = normalizeVectorTuple(raw.from);
+  const to = normalizeVectorTuple(raw.to);
+  if (!from || !to) {
+    return null;
+  }
+  const duration = Math.max(0, coerceNumber(raw.duration, 0));
+  const elapsed = Math.max(0, Math.min(duration, coerceNumber(raw.elapsed, 0)));
+  const control = normalizeVectorTuple(raw.control ?? null) ?? undefined;
+  return {
+    from,
+    to,
+    elapsed,
+    duration,
+    control,
+  };
+};
+
+const cloneTravelSnapshot = (travel: TravelSnapshot): TravelSnapshot => ({
+  from: cloneVectorTuple(travel.from),
+  to: cloneVectorTuple(travel.to),
+  elapsed: travel.elapsed,
+  duration: travel.duration,
+  control: travel.control ? cloneVectorTuple(travel.control) : undefined,
+});
+
+const normalizeDroneFlight = (value: unknown): DroneFlightState | null => {
+  if (typeof value !== 'object' || value === null) {
+    return null;
+  }
+  const raw = value as Partial<DroneFlightState> & {
+    travel?: unknown;
+    pathSeed?: unknown;
+    targetAsteroidId?: unknown;
+  };
+  if (typeof raw.droneId !== 'string' || raw.droneId.length === 0) {
+    return null;
+  }
+  if (raw.state !== 'toAsteroid' && raw.state !== 'returning') {
+    return null;
+  }
+  const travel = normalizeTravelSnapshot(raw.travel);
+  if (!travel) {
+    return null;
+  }
+  const pathSeed = coerceNumber(raw.pathSeed, 0);
+  const targetAsteroidId =
+    typeof raw.targetAsteroidId === 'string' ? raw.targetAsteroidId : null;
+  return {
+    droneId: raw.droneId,
+    state: raw.state,
+    targetAsteroidId,
+    pathSeed,
+    travel,
+  };
+};
+
+const normalizeDroneFlights = (value: unknown): DroneFlightState[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const flights: DroneFlightState[] = [];
+  for (const entry of value) {
+    const normalized = normalizeDroneFlight(entry);
+    if (normalized) {
+      flights.push(normalized);
+    }
+  }
+  return flights;
+};
+
+const cloneDroneFlight = (flight: DroneFlightState): DroneFlightState => ({
+  droneId: flight.droneId,
+  state: flight.state,
+  targetAsteroidId: flight.targetAsteroidId,
+  pathSeed: flight.pathSeed,
+  travel: cloneTravelSnapshot(flight.travel),
+});
+
 const normalizeResources = (snapshot?: Partial<Resources>): Resources => ({
   ore: coerceNumber(snapshot?.ore, initialResources.ore),
   bars: coerceNumber(snapshot?.bars, initialResources.bars),
@@ -265,6 +391,7 @@ const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapshot => (
     typeof snapshot.rngSeed === 'number' && Number.isFinite(snapshot.rngSeed)
       ? snapshot.rngSeed
       : undefined,
+  droneFlights: normalizeDroneFlights(snapshot.droneFlights),
 });
 
 export const serializeStore = (state: StoreState): StoreSnapshot => ({
@@ -274,6 +401,7 @@ export const serializeStore = (state: StoreState): StoreSnapshot => ({
   save: { ...state.save, version: SAVE_VERSION },
   settings: { ...state.settings },
   rngSeed: state.rngSeed,
+  droneFlights: state.droneFlights.map(cloneDroneFlight),
 });
 
 export const stringifySnapshot = (snapshot: StoreSnapshot) => JSON.stringify(snapshot);
@@ -295,6 +423,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => ({
   save: { ...initialSave },
   settings: { ...initialSettings },
   rngSeed: generateSeed(),
+  droneFlights: [],
 
   addOre: (amount) =>
     set((state) => {
@@ -343,6 +472,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => ({
         prestige,
         resources: { ...initialResources, energy: BASE_ENERGY_CAP },
         modules: { ...initialModules },
+        droneFlights: [],
       };
     }),
 
@@ -362,6 +492,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => ({
         save,
         settings: normalized.settings,
         rngSeed: normalized.rngSeed ?? generateSeed(),
+        droneFlights: normalized.droneFlights ?? [],
       };
     }),
 
@@ -375,6 +506,18 @@ const storeCreator: StateCreator<StoreState> = (set, get) => ({
     get().applySnapshot(snapshot);
     return true;
   },
+
+  recordDroneFlight: (flight) =>
+    set((state) => {
+      const snapshot = cloneDroneFlight(flight);
+      const remaining = state.droneFlights.filter((entry) => entry.droneId !== snapshot.droneId);
+      return { droneFlights: [...remaining, snapshot] };
+    }),
+
+  clearDroneFlight: (droneId) =>
+    set((state) => ({
+      droneFlights: state.droneFlights.filter((entry) => entry.droneId !== droneId),
+    })),
 });
 
 export const createStoreInstance = () => createVanillaStore<StoreState>(storeCreator);

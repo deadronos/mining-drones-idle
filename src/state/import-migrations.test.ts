@@ -34,6 +34,7 @@ describe('persistence migration reporting', () => {
   expect(report).toBeTruthy();
   expect(report!.migrated).toBe(true);
   expect(report!.fromVersion).toBe('0.0.1');
+  expect(store.getState().droneFlights).toEqual([]);
   });
 
   it('loadWithReport returns a report after loading a legacy save from storage', () => {
@@ -55,5 +56,6 @@ describe('persistence migration reporting', () => {
   expect(report).toBeTruthy();
   expect(report!.migrated).toBe(true);
   expect(report!.fromVersion).toBe('0.0.1');
+  expect(store.getState().droneFlights).toEqual([]);
   });
 });

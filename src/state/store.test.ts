@@ -133,4 +133,28 @@ describe('state/store', () => {
     expect(seededSuccess).toBe(true);
     expect(seededStore.getState().rngSeed).toBe(987654321);
   });
+
+  it('records and clears drone flight snapshots', () => {
+    const store = createStoreInstance();
+    const api = store.getState();
+    api.recordDroneFlight({
+      droneId: 'drone-1',
+      state: 'toAsteroid',
+      targetAsteroidId: 'asteroid-1',
+      pathSeed: 42,
+      travel: {
+        from: [0, 0, 0],
+        to: [10, 0, 0],
+        control: [4, 1, 0],
+        elapsed: 0.25,
+        duration: 1,
+      },
+    });
+    const snapshot = serializeStore(store.getState());
+    expect(snapshot.droneFlights).toHaveLength(1);
+    expect(snapshot.droneFlights?.[0].pathSeed).toBe(42);
+    expect(snapshot.droneFlights?.[0].travel.elapsed).toBeCloseTo(0.25, 5);
+    api.clearDroneFlight('drone-1');
+    expect(store.getState().droneFlights).toHaveLength(0);
+  });
 });

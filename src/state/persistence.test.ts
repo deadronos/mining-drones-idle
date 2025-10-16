@@ -24,7 +24,7 @@ describe('state/persistence', () => {
       resources: { ore: 5_000, bars: 0, energy: 160, credits: 0 },
       modules: { droneBay: 3, refinery: 2, storage: 1, solar: 1, scanner: 0 },
       prestige: { cores: 4 },
-      save: { lastSave: FIXED_NOW.getTime() - 13 * 3600 * 1000, version: '0.1.0' },
+      save: { lastSave: FIXED_NOW.getTime() - 13 * 3600 * 1000, version: '0.2.0' },
       settings: {
         autosaveEnabled: true,
         autosaveInterval: 10,
@@ -33,6 +33,7 @@ describe('state/persistence', () => {
         performanceProfile: 'medium' as const,
       },
       rngSeed: 123456789,
+      droneFlights: [],
     };
     window.localStorage.setItem(SAVE_KEY, JSON.stringify(snapshot));
 
