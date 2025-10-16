@@ -2,15 +2,15 @@
 
 ## Current Focus
 
-Translate the refreshed spec into implementation tasks—start with extending the store to support the persistence manager (settings slice, snapshot helpers) before wiring it into the app bootstrap.
+Execute Milestone 2 kickoff: migrate refinery processing into an ECS system and ensure offline simulation shares the same helper logic.
 
 ## Recent Changes
 
-- Core MVP delivered with ECS loop, rendering, and UI panel.
-- Persistence/offline iteration introduced new tests and utilities but integration is pending.
-- Spec updated with requirement status table and explicit persistence manager gaps (DES002/TASK003).
+- Added shared refinery math utilities plus `runRefineryStep` so ECS and offline flows reuse one implementation.
+- Wired a dedicated refinery system into the render loop and removed the redundant `store.tick` invocation.
+- Expanded Vitest coverage with refinery system parity checks alongside existing offline simulations.
 
 ## Next Steps
 
-- Extend the store with persistence settings/snapshot APIs so `createPersistenceManager` can operate safely.
-- Plan bootstrap wiring and settings UI per the updated roadmap once the store work lands.
+- Observe autosave/offline behavior with the new ECS delegation and capture any balance regressions.
+- Outline follow-up work for energy throttling and per-drone batteries once refinery parity remains stable.

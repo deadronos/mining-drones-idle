@@ -41,6 +41,11 @@ canvas {
   font-size: 0.95rem;
 }
 
+.hud-button {
+  margin-top: 0.5rem;
+  justify-self: start;
+}
+
 .panel {
   position: absolute;
   top: 1rem;
@@ -112,6 +117,129 @@ button:hover:not(:disabled) {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+.settings-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(2, 6, 23, 0.35);
+  backdrop-filter: blur(6px);
+  z-index: 50;
+}
+
+.settings-panel {
+  width: min(420px, 95vw);
+  margin: 5rem 1.5rem 1.5rem;
+  padding: 1.5rem;
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.92);
+  box-shadow: 0 24px 48px rgba(2, 6, 23, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  color: #e2e8f0;
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.settings-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.settings-subtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.settings-section h3 {
+  margin: 0;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(94, 234, 212, 0.85);
+}
+
+.settings-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.settings-row span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.settings-row small {
+  color: rgba(148, 163, 184, 0.75);
+  font-size: 0.75rem;
+}
+
+.settings-row input[type='number'],
+.settings-row select {
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.8);
+  color: inherit;
+  font-size: 0.9rem;
+}
+
+.settings-row input[type='range'] {
+  width: 160px;
+}
+
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.settings-meta {
+  margin: 0;
+  font-size: 0.82rem;
+  color: rgba(148, 163, 184, 0.8);
+}
+
+.settings-error {
+  margin: 0;
+  color: #fca5a5;
+  font-size: 0.8rem;
+}
+
+.settings-value {
+  font-size: 0.8rem;
+  color: rgba(148, 163, 184, 0.85);
+}
+
+@media (max-width: 768px) {
+  .settings-backdrop {
+    justify-content: center;
+    align-items: flex-end;
+  }
+
+  .settings-panel {
+    width: calc(100vw - 2rem);
+    margin: 0 1rem 1rem;
+  }
 }
 
 hr {

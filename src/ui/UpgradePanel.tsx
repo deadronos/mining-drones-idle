@@ -16,13 +16,9 @@ export const UpgradePanel = () => {
   const modules = useStore((state) => state.modules);
   const resources = useStore((state) => state.resources);
   const prestige = useStore((state) => state.prestige);
-  // eslint-disable-next-line @typescript-eslint/unbound-method
   const buy = useStore((state) => state.buy);
-  // eslint-disable-next-line @typescript-eslint/unbound-method
   const prestigeReady = useStore((state) => state.prestigeReady);
-  // eslint-disable-next-line @typescript-eslint/unbound-method
   const preview = useStore((state) => state.preview);
-  // eslint-disable-next-line @typescript-eslint/unbound-method
   const doPrestige = useStore((state) => state.doPrestige);
 
   const rows = useMemo(() => moduleRows, []);

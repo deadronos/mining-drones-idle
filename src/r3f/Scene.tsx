@@ -45,7 +45,6 @@ export const Scene = () => {
       systems.unload(step);
       systems.power(step);
       systems.refinery(step);
-      storeApi.getState().tick(step);
     });
   });
 

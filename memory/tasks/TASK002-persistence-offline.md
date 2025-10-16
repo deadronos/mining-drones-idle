@@ -26,9 +26,30 @@ Implement save/load with autosave and offline simulation, create settings UI for
 
 - Requirements RQ-006, RQ-007, and RQ-008 satisfied with passing automated tests.
 
-## Current Iteration Plan (2025-02-14)
+## Current Iteration Plan (2025-02-17)
 
-1. Fix offline simulation clamping so the user-configured offline cap is honored instead of falling back to the default value.
-2. Update the persistence manager to forward the configured cap and adjust helper signatures accordingly.
-3. Add regression tests covering custom offline caps and persistence load behavior (with mocked storage/time).
-4. Re-run formatters, linters, type checking, unit tests, and e2e suite to validate the changes.
+1. Verify the live ECS refinery loop for multi-minute sessions and capture telemetry needs for balancing.
+2. Outline documentation updates explaining the shared refinery helpers for reviewers.
+3. Draft the follow-up design notes for the energy throttling milestone while insights are fresh.
+
+## Progress Log
+
+### 2025-02-16
+
+- Store now includes a `settings` slice, snapshot helpers, and RNG seed preservation for persistence consumers.
+- Bootstrapped `createPersistenceManager` in `main.tsx` with autosave scheduling and unload visibility hooks.
+- Delivered `SettingsPanel` UI with autosave/offline controls, import/export workflow, and Vitest coverage.
+- Ran formatter, ESLint, type checking, and the full unit suite to validate the milestone 1 slice.
+
+### 2025-02-17
+
+- Introduced shared refinery helpers plus `runRefineryStep` so ECS, offline, and tests reuse identical math.
+- Wired the new refinery system into the scene update order and removed redundant `store.tick` processing.
+- Authored dedicated refinery system unit tests to confirm parity with offline simulation loops.
+- Re-executed formatting, linting, type checking, and unit tests to secure the migration.
+
+## Updated Iteration Plan (2025-02-17)
+
+1. Evaluate whether offline recap UX or telemetry should surface refinery throughput insights for players.
+2. Confirm persistence autosave/import flows remain stable after the ECS migration (spot-check manual runs).
+3. Transition planning towards energy throttling once refinery metrics look healthy.
