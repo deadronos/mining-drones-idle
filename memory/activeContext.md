@@ -2,13 +2,12 @@
 
 ## Current Focus
 
-Core MVP delivered; preparing documentation and PR handoff.
+Finish persistence/offline iteration by fixing cap handling and hardening tests per full spec.
 
 ## Recent Changes
 
-- Implemented store, ECS systems, rendering components, UI overlay, and automated tests.
-- Verified linting, formatting, type checking, unit, and e2e suites.
+- Core MVP delivered with ECS loop, rendering, and UI panel.
 
 ## Next Steps
 
-- Summarize work, capture evidence, and open PR.
+- Execute iteration plan in TASK002 to finalize persistence/offline work and confirm testing suite.
