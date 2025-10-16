@@ -13,3 +13,4 @@
 | TASK009 | Tests & CI                              | In Progress | 2025-10-16 |
 | TASK010 | Migration Helpers & Documentation       | Pending     | 2025-10-16 |
 | TASK011 | Factory Visuals                         | In Progress | 2025-10-17 |
+| TASK012 | Drone Asteroid Targeting Variation      | Pending     | 2025-10-16 |
