@@ -50,7 +50,7 @@ export default defineConfig([
       '@typescript-eslint': tsPlugin,
     },
     settings: {
-      react: { version: 'detect' },
+      react: { version: '19.2' },
     },
     rules: {
       // merge recommended rules from plugins (apply type-aware configs only for TS)
@@ -108,7 +108,7 @@ export default defineConfig([
       globals: globals.browser,
     },
     plugins: { 'react-hooks': reactHooks },
-    settings: { react: { version: 'detect' } },
+    settings: { react: { version: '19.2' } },
     rules: {
       // apply JS-focused React rules (don't include TypeScript rules here)
       ...react.configs.recommended.rules,
