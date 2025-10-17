@@ -98,6 +98,8 @@ export default defineConfig(async ({ mode }) => {
       sourcemap: mode === 'development',
       // raise warning threshold for large chunks in playground repos
       chunkSizeWarningLimit: 2000,
+      // output folder for GitHub Pages automated deployments
+      outDir: 'output',
     },
     optimizeDeps: {
       include: ['react', 'react-dom', 'three'],
@@ -106,5 +108,8 @@ export default defineConfig(async ({ mode }) => {
       // avoid runtime crashes when libs check process.env in browser code
       'process.env': {},
     },
+    // Use a safe default base in production. If you want a repo-specific
+    // base like '/mining-drones-idle/' you can set CUSTOM_BASE env var in CI.
+    base: process.env.CUSTOM_BASE ?? (process.env.NODE_ENV === 'production' ? './' : '/'),
   };
 });
