@@ -1,0 +1,128 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - generic [ref=e7]:
+    - generic [ref=e8]: "Ore: 0.0"
+    - generic [ref=e9]: "Metals: 9.4"
+    - generic [ref=e10]: "Crystals: 23.1"
+    - generic [ref=e11]: "Organics: 1.9"
+    - generic [ref=e12]: "Ice: 25.3"
+    - generic [ref=e13]: "Bars: 3.1"
+    - generic [ref=e14]: "Energy: 134"
+    - generic [ref=e15]: "Drones: 1"
+    - generic [ref=e16]:
+      - heading "Resource Bonuses" [level=4] [ref=e17]
+      - list [ref=e18]:
+        - listitem "Metals bonus 18.2% boosts cargo pods." [ref=e19]:
+          - generic [ref=e20]: Drone Capacity
+          - generic [ref=e21]: +18.2%
+        - listitem "Metals bonus 18.2% reinforces chassis." [ref=e22]:
+          - generic [ref=e23]: Drone Battery
+          - generic [ref=e24]: +18.2%
+        - listitem "Crystals bonus 24.8% tunes refinement." [ref=e25]:
+          - generic [ref=e26]: Refinery Yield
+          - generic [ref=e27]: +24.8%
+        - listitem "Organics bonus 8.6% accelerates fabrication." [ref=e28]:
+          - generic [ref=e29]: Drone Output Speed
+          - generic [ref=e30]: +10.3%
+        - listitem "Ice bonus 34.5% expands capacitor banks." [ref=e31]:
+          - generic [ref=e32]: Energy Storage
+          - generic [ref=e33]: +34.5%
+        - listitem "Organics bonus 8.6% boosts passive regen." [ref=e34]:
+          - generic [ref=e35]: Energy Generation
+          - generic [ref=e36]: +5.2%
+        - listitem "Ice bonus 34.5% cools systems to reduce drain." [ref=e37]:
+          - generic [ref=e38]: Energy Drain
+          - generic [ref=e39]: −17.2%
+    - button "Settings" [ref=e40] [cursor=pointer]
+  - complementary [ref=e41]:
+    - heading "Upgrades" [level=3] [ref=e42]
+    - generic [ref=e43]:
+      - generic [ref=e44]:
+        - strong [ref=e45]: Drone Bay
+        - generic [ref=e46]: Lv 1
+        - generic [ref=e47]: +1 drone, +5% travel speed
+      - button "Buy (5 bars)" [disabled] [ref=e49]
+    - generic [ref=e50]:
+      - generic [ref=e51]:
+        - strong [ref=e52]: Refinery
+        - generic [ref=e53]: Lv 0
+        - generic [ref=e54]: +10% bar output
+      - button "Buy (8 bars)" [disabled] [ref=e56]
+    - generic [ref=e57]:
+      - generic [ref=e58]:
+        - strong [ref=e59]: Storage
+        - generic [ref=e60]: Lv 0
+        - generic [ref=e61]: +100 ore capacity
+      - button "Buy (3 bars)" [ref=e63] [cursor=pointer]
+    - generic [ref=e64]:
+      - generic [ref=e65]:
+        - strong [ref=e66]: Solar Array
+        - generic [ref=e67]: Lv 0
+        - generic [ref=e68]: +5 energy/s, +25 max energy
+      - button "Buy (4 bars)" [disabled] [ref=e70]
+    - generic [ref=e71]:
+      - generic [ref=e72]:
+        - strong [ref=e73]: Scanner
+        - generic [ref=e74]: Lv 0
+        - generic [ref=e75]: +5% new asteroid richness
+      - button "Buy (12 bars)" [disabled] [ref=e77]
+    - separator [ref=e78]
+    - heading "Prestige" [level=3] [ref=e79]
+    - generic [ref=e80]: "Bars: 3 → Next Cores: 0"
+    - button "Prestige Run" [disabled] [ref=e81]
+    - generic [ref=e82]: "Cores: 0 • Bonus: +0%"
+  - generic [ref=e83]:
+    - generic [ref=e84]:
+      - generic [ref=e85]:
+        - heading "Ferric Mantle" [level=3] [ref=e86]
+        - paragraph [ref=e87]: Asteroid asteroid-2
+      - generic [ref=e88]:
+        - button "Previous asteroid" [ref=e89] [cursor=pointer]: ◀
+        - generic [ref=e90]: 1 / 200
+        - button "Next asteroid" [ref=e91] [cursor=pointer]: ▶
+        - button "Collapse asteroid inspector" [ref=e92] [cursor=pointer]: ▼
+    - generic [ref=e93]:
+      - generic [ref=e95]: Primary Biome
+      - generic [ref=e97]:
+        - generic [ref=e98]: Gravity
+        - generic [ref=e99]: 0.99g
+      - generic [ref=e100]:
+        - generic [ref=e101]: Dominant Resource
+        - generic [ref=e102]: Organics
+      - generic [ref=e103]:
+        - generic [ref=e104]: Hazard
+        - generic [ref=e105]: Solar Flare
+    - generic [ref=e106]:
+      - generic [ref=e107]: Resource Mix
+      - list [ref=e108]:
+        - listitem [ref=e109]:
+          - generic [ref=e110]: Organics
+          - generic [ref=e111]: 32%
+        - listitem [ref=e112]:
+          - generic [ref=e113]: Ore
+          - generic [ref=e114]: 29%
+        - listitem [ref=e115]:
+          - generic [ref=e116]: Metals
+          - generic [ref=e117]: 23%
+    - generic [ref=e118]:
+      - generic [ref=e119]: Regions
+      - list [ref=e120]:
+        - listitem [ref=e121]:
+          - generic [ref=e122]:
+            - generic [ref=e125]: Ferric Mantle
+            - generic [ref=e126]: 40%
+          - generic [ref=e127]:
+            - generic [ref=e128]: 1.25g
+            - generic [ref=e129]: Metals
+            - generic [ref=e130]: Micro Quakes
+        - listitem [ref=e131]:
+          - generic [ref=e132]:
+            - generic [ref=e135]: Bio-Lattice
+            - generic [ref=e136]: 60%
+          - generic [ref=e137]:
+            - generic [ref=e138]: 0.82g
+            - generic [ref=e139]: Organics
+            - generic [ref=e140]: Spore Burst
+```

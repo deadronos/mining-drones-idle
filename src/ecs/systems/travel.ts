@@ -27,7 +27,7 @@ export const createTravelSystem = (world: GameWorld, store: StoreApiType) => {
   return (dt: number) => {
     if (dt <= 0) return;
     const api = store.getState();
-    const modifiers = getResourceModifiers(api.resources);
+    const modifiers = getResourceModifiers(api.resources, api.prestige.cores);
     const throttleFloor = api.settings.throttleFloor;
     const drainRate = DRONE_ENERGY_COST * modifiers.energyDrainMultiplier;
     for (const drone of droneQuery) {

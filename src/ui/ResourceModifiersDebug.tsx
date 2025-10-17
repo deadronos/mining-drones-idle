@@ -21,7 +21,8 @@ const formatDelta = (delta: number) => {
 
 export const ResourceModifiersDebug = () => {
   const resources = useStore((state) => state.resources);
-  const modifiers = useMemo(() => getResourceModifiers(resources), [resources]);
+  const prestigeCores = useStore((state) => state.prestige.cores);
+  const modifiers = useMemo(() => getResourceModifiers(resources, prestigeCores), [resources, prestigeCores]);
 
   const entries = [
     {

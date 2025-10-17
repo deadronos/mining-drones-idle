@@ -9,8 +9,8 @@ export const createMiningSystem = (world: GameWorld, store: StoreApiType) => {
   const { droneQuery, asteroidQuery } = world;
   return (dt: number) => {
     if (dt <= 0) return;
-    const { settings, resources } = store.getState();
-    const modifiers = getResourceModifiers(resources);
+    const { settings, resources, prestige } = store.getState();
+    const modifiers = getResourceModifiers(resources, prestige.cores);
     const throttleFloor = settings.throttleFloor;
     const drainRate = DRONE_ENERGY_COST * modifiers.energyDrainMultiplier;
     for (const drone of droneQuery) {

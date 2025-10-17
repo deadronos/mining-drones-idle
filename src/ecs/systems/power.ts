@@ -12,7 +12,7 @@ export const createPowerSystem = (world: GameWorld, store: StoreApiType) => {
   return (dt: number) => {
     if (dt <= 0) return;
     const state = store.getState();
-    const modifiers = getResourceModifiers(state.resources);
+    const modifiers = getResourceModifiers(state.resources, state.prestige.cores);
     const generation = getEnergyGeneration(state.modules, modifiers);
     const cap = getEnergyCapacity(state.modules, modifiers);
     let stored = Math.min(cap, Math.max(0, state.resources.energy + generation * dt));

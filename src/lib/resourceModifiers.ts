@@ -4,6 +4,7 @@ import {
   ORGANICS_DRONE_OUTPUT_FACTOR,
   ORGANICS_ENERGY_REGEN_FACTOR,
   RESOURCE_BALANCE,
+  getBalanceWithPrestige,
   type BalancedResource,
   type ResourceBalanceEntry,
 } from '@/config/resourceBalance';
@@ -27,18 +28,30 @@ export interface ResourceModifierSnapshot {
 const computeBonus = (amount: number, balance: ResourceBalanceEntry) => {
   const safeAmount = Math.max(0, amount);
   const scale = balance.scale > 0 ? balance.scale : 1;
-  const bonus = balance.cap * (1 - Math.exp(-safeAmount / scale));
-  return clamp(bonus, 0, balance.cap);
+  const cap = balance.cap;
+
+  // Primary saturation curve reaches ~99% of cap at 5*scale
+  const primaryBonus = cap * (1 - Math.exp(-safeAmount / scale));
+
+  // Soft cap: resources beyond saturation point still contribute
+  // at 1/10th the rate, creating unbounded but diminishing returns
+  const saturationPoint = scale * 5;
+  const overflow = Math.max(0, safeAmount - saturationPoint);
+  const overflowBonus = (overflow / (scale * 10)) * cap;
+
+  return Math.max(0, primaryBonus + overflowBonus);
 };
 
-const pickBonus = (resources: Resources, key: BalancedResource) =>
-  computeBonus(resources[key] ?? 0, RESOURCE_BALANCE[key]);
+const pickBonus = (resources: Resources, key: BalancedResource, prestigeCores = 0) => {
+  const balance = getBalanceWithPrestige(RESOURCE_BALANCE[key], prestigeCores);
+  return computeBonus(resources[key] ?? 0, balance);
+};
 
-export const getResourceModifiers = (resources: Resources): ResourceModifierSnapshot => {
-  const metalsBonus = pickBonus(resources, 'metals');
-  const crystalsBonus = pickBonus(resources, 'crystals');
-  const organicsBonus = pickBonus(resources, 'organics');
-  const iceBonus = pickBonus(resources, 'ice');
+export const getResourceModifiers = (resources: Resources, prestigeCores = 0): ResourceModifierSnapshot => {
+  const metalsBonus = pickBonus(resources, 'metals', prestigeCores);
+  const crystalsBonus = pickBonus(resources, 'crystals', prestigeCores);
+  const organicsBonus = pickBonus(resources, 'organics', prestigeCores);
+  const iceBonus = pickBonus(resources, 'ice', prestigeCores);
 
   const droneBatteryMultiplier = 1 + metalsBonus;
   const droneCapacityMultiplier = 1 + metalsBonus;

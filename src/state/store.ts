@@ -174,7 +174,7 @@ export const computeRefineryProduction = (
   }
   const prestigeMult = computePrestigeBonus(state.prestige.cores);
   const refineryMult = Math.pow(1.1, state.modules.refinery);
-  const modifiers = getResourceModifiers(state.resources);
+  const modifiers = getResourceModifiers(state.resources, state.prestige.cores);
   const oreConsumed = Math.min(oreAvailable, ORE_CONVERSION_PER_SECOND * dt);
   if (oreConsumed <= 0) {
     return emptyRefineryStats;
@@ -232,9 +232,9 @@ export const getEnergyConsumption = (
 ) => drones * DRONE_ENERGY_COST * (modifiers?.energyDrainMultiplier ?? 1);
 
 export const computeEnergyThrottle = (
-  state: Pick<StoreState, 'resources' | 'modules' | 'settings'>,
+  state: Pick<StoreState, 'resources' | 'modules' | 'settings' | 'prestige'>,
 ) => {
-  const modifiers = getResourceModifiers(state.resources);
+  const modifiers = getResourceModifiers(state.resources, state.prestige.cores);
   const capacity = getEnergyCapacity(state.modules, modifiers);
   if (capacity <= 0) {
     return 1;
@@ -374,6 +374,7 @@ const mergeResourceDelta = (
   delta: Partial<Resources>,
   modules: Modules,
   capacityAware: boolean,
+  prestigeCores = 0,
 ): Resources => {
   const next: Resources = { ...base };
   for (const key of rawResourceKeys) {
@@ -393,7 +394,7 @@ const mergeResourceDelta = (
   if (!capacityAware) {
     return next;
   }
-  const modifiers = getResourceModifiers(next);
+  const modifiers = getResourceModifiers(next, prestigeCores);
   const capacity = getStorageCapacity(modules, modifiers);
   for (const key of rawResourceKeys) {
     const value = next[key];
@@ -524,6 +525,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => ({
         delta ?? {},
         state.modules,
         capacityAware,
+        state.prestige.cores,
       );
       return { resources };
     }),

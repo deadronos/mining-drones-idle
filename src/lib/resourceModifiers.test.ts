@@ -15,16 +15,23 @@ const buildResources = (patch: ResourcePatch) => ({
 });
 
 describe('lib/resourceModifiers', () => {
-  it('applies diminishing returns with configured caps', () => {
+  it('applies diminishing returns with soft caps', () => {
     const low = getResourceModifiers(buildResources({ metals: 5, ice: 3, crystals: 2, organics: 4 }));
     const high = getResourceModifiers(buildResources({ metals: 80, ice: 80, crystals: 80, organics: 80 }));
+    const veryHigh = getResourceModifiers(buildResources({ metals: 200, ice: 200, crystals: 200, organics: 200 }));
 
     expect(low.metalsBonus).toBeGreaterThan(0);
     expect(low.metalsBonus).toBeLessThan(0.3);
-    expect(high.metalsBonus).toBeCloseTo(0.3, 3);
-    expect(high.crystalsBonus).toBeCloseTo(0.25, 3);
-    expect(high.iceBonus).toBeCloseTo(0.35, 3);
-    expect(high.organicsBonus).toBeCloseTo(0.4, 3);
+    // High amounts should exceed hard caps due to soft cap overflow bonus
+    expect(high.metalsBonus).toBeGreaterThan(0.3);
+    expect(high.crystalsBonus).toBeGreaterThan(0.25);
+    expect(high.iceBonus).toBeGreaterThan(0.35);
+    expect(high.organicsBonus).toBeGreaterThan(0.4);
+    // Very high amounts should continue to increase (soft cap, no hard ceiling)
+    expect(veryHigh.metalsBonus).toBeGreaterThan(high.metalsBonus);
+    expect(veryHigh.crystalsBonus).toBeGreaterThan(high.crystalsBonus);
+    expect(veryHigh.iceBonus).toBeGreaterThan(high.iceBonus);
+    expect(veryHigh.organicsBonus).toBeGreaterThan(high.organicsBonus);
   });
 
   it('derives multipliers from raw bonuses', () => {
@@ -41,5 +48,16 @@ describe('lib/resourceModifiers', () => {
     expect(modifiers.energyDrainMultiplier).toBeGreaterThan(0.5);
     expect(modifiers.droneProductionSpeedMultiplier).toBeGreaterThan(1);
     expect(modifiers.energyGenerationMultiplier).toBeGreaterThan(1);
+  });
+
+  it('increases bonuses with prestige cores', () => {
+    const resources = buildResources({ metals: 20, crystals: 10, organics: 15, ice: 18 });
+    const baseModifiers = getResourceModifiers(resources, 0);
+    const prestigeModifiers = getResourceModifiers(resources, 50);
+
+    expect(prestigeModifiers.metalsBonus).toBeGreaterThan(baseModifiers.metalsBonus);
+    expect(prestigeModifiers.crystalsBonus).toBeGreaterThan(baseModifiers.crystalsBonus);
+    expect(prestigeModifiers.organicsBonus).toBeGreaterThan(baseModifiers.organicsBonus);
+    expect(prestigeModifiers.iceBonus).toBeGreaterThan(baseModifiers.iceBonus);
   });
 });
