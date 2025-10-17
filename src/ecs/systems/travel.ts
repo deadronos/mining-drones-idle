@@ -4,6 +4,7 @@ import type { GameWorld } from '@/ecs/world';
 import { computeTravelPosition, travelToSnapshot } from '@/ecs/flights';
 import { createRng } from '@/lib/rng';
 import { DRONE_ENERGY_COST, type StoreApiType } from '@/state/store';
+import { getResourceModifiers } from '@/lib/resourceModifiers';
 
 const offsetVector = new Vector3();
 
@@ -26,11 +27,13 @@ export const createTravelSystem = (world: GameWorld, store: StoreApiType) => {
   return (dt: number) => {
     if (dt <= 0) return;
     const api = store.getState();
+    const modifiers = getResourceModifiers(api.resources);
     const throttleFloor = api.settings.throttleFloor;
+    const drainRate = DRONE_ENERGY_COST * modifiers.energyDrainMultiplier;
     for (const drone of droneQuery) {
       const travel = drone.travel;
       if (!travel) continue;
-      const { fraction } = consumeDroneEnergy(drone, dt, throttleFloor, DRONE_ENERGY_COST);
+      const { fraction } = consumeDroneEnergy(drone, dt, throttleFloor, drainRate);
       travel.elapsed = Math.min(travel.elapsed + dt * fraction, travel.duration);
       computeTravelPosition(travel, drone.position);
 

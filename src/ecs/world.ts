@@ -148,10 +148,10 @@ export const createAsteroid = (scannerLevel: number, rng: RandomSource): Asteroi
   };
 };
 
-const DEFAULT_DRONE_CAPACITY = 40;
-const DEFAULT_DRONE_SPEED = 14;
-const DEFAULT_DRONE_MINING_RATE = 6;
-const DEFAULT_DRONE_BATTERY = 24;
+export const DEFAULT_DRONE_CAPACITY = 40;
+export const DEFAULT_DRONE_SPEED = 14;
+export const DEFAULT_DRONE_MINING_RATE = 6;
+export const DEFAULT_DRONE_BATTERY = 24;
 
 const createDrone = (origin: Vector3): DroneEntity => ({
   id: nextId('drone'),

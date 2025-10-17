@@ -2,7 +2,7 @@
 id: DES014
 title: Tie resource types (Metals, Crystals, Organics, Ice) into game loop
 created: 2025-10-17
-updated: 2025-10-17
+updated: 2025-10-18
 authors:
   - copilot
 ---
@@ -60,3 +60,4 @@ Testing
 
 Notes
 - Tuning will require iterating caps/scales based on average resource levels. Add debug UI to surface per-resource M_r values for balancing.
+- 2025-10-18 — Implemented baseline modifiers (caps/scales, helper, ECS integration, HUD debug list). Consumable burst effects remain future work.

@@ -1,15 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import {
   computeEnergyThrottle,
+  computeRefineryProduction,
   costForLevel,
   computePrestigeBonus,
   computePrestigeGain,
   createStoreInstance,
+  getEnergyCapacity,
+  getEnergyGeneration,
   moduleDefinitions,
   parseSnapshot,
   saveVersion,
   serializeStore,
 } from '@/state/store';
+import { getResourceModifiers } from '@/lib/resourceModifiers';
 
 describe('state/store', () => {
   it('converts ore into bars using refinery and prestige multipliers', () => {
@@ -27,6 +31,24 @@ describe('state/store', () => {
     const expectedBars = (Math.min(100, 10) / 10) * refineMult * prestigeMult;
     expect(result.resources.bars).toBeCloseTo(expectedBars, 5);
     expect(result.resources.ore).toBeCloseTo(90);
+  });
+
+  it('boosts refinery output when crystals are stockpiled', () => {
+    const store = createStoreInstance();
+    store.setState((state) => ({
+      resources: { ...state.resources, ore: 40, crystals: 0 },
+    }));
+    const baseline = computeRefineryProduction(store.getState(), 1);
+    store.setState((state) => ({
+      resources: { ...state.resources, ore: 40, crystals: 20 },
+    }));
+    const boosted = computeRefineryProduction(store.getState(), 1);
+    const modifiers = getResourceModifiers(store.getState().resources);
+    expect(boosted.barsProduced).toBeGreaterThan(baseline.barsProduced);
+    expect(boosted.barsProduced).toBeCloseTo(
+      baseline.barsProduced * modifiers.refineryYieldMultiplier,
+      5,
+    );
   });
 
   it('grows upgrade cost exponentially', () => {
@@ -110,6 +132,25 @@ describe('state/store', () => {
     }));
     const floored = computeEnergyThrottle(store.getState());
     expect(floored).toBeCloseTo(0.4, 5);
+  });
+
+  it('expands energy capacity and generation with resource modifiers', () => {
+    const store = createStoreInstance();
+    const baseModules = store.getState().modules;
+    const baseCapacity = getEnergyCapacity(baseModules);
+    const baseGeneration = getEnergyGeneration(baseModules);
+
+    store.setState((state) => ({
+      modules: { ...state.modules, solar: 0 },
+      resources: { ...state.resources, ice: 30, organics: 18 },
+    }));
+    const state = store.getState();
+    const modifiers = getResourceModifiers(state.resources);
+    const boostedCapacity = getEnergyCapacity(state.modules, modifiers);
+    const boostedGeneration = getEnergyGeneration(state.modules, modifiers);
+
+    expect(boostedCapacity).toBeGreaterThan(baseCapacity);
+    expect(boostedGeneration).toBeGreaterThan(baseGeneration);
   });
 
   it('persists rng seed across export and import operations', () => {

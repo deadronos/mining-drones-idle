@@ -5,14 +5,16 @@ import {
   getEnergyGeneration,
   type StoreApiType,
 } from '@/state/store';
+import { getResourceModifiers } from '@/lib/resourceModifiers';
 
 export const createPowerSystem = (world: GameWorld, store: StoreApiType) => {
   const { droneQuery } = world;
   return (dt: number) => {
     if (dt <= 0) return;
     const state = store.getState();
-    const generation = getEnergyGeneration(state.modules);
-    const cap = getEnergyCapacity(state.modules);
+    const modifiers = getResourceModifiers(state.resources);
+    const generation = getEnergyGeneration(state.modules, modifiers);
+    const cap = getEnergyCapacity(state.modules, modifiers);
     let stored = Math.min(cap, Math.max(0, state.resources.energy + generation * dt));
 
     const chargeRate = DRONE_ENERGY_COST * 2;

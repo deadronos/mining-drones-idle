@@ -1,18 +1,59 @@
-import type { GameWorld, DroneEntity } from '@/ecs/world';
-import { removeDrone, spawnDrone } from '@/ecs/world';
-import type { StoreApiType } from '@/state/store';
+import {
+  DEFAULT_DRONE_BATTERY,
+  DEFAULT_DRONE_CAPACITY,
+  DEFAULT_DRONE_MINING_RATE,
+  DEFAULT_DRONE_SPEED,
+  type DroneEntity,
+  type GameWorld,
+  removeDrone,
+  spawnDrone,
+} from '@/ecs/world';
+import { RESOURCE_KEYS } from '@/lib/biomes';
+import { getResourceModifiers, type ResourceModifierSnapshot } from '@/lib/resourceModifiers';
+import type { Modules, StoreApiType } from '@/state/store';
 
-const BASE_SPEED = 14;
+const updateDroneStats = (
+  drone: DroneEntity,
+  modules: Modules,
+  modifiers: ResourceModifierSnapshot,
+) => {
+  const speedBonus = 1 + Math.max(0, modules.droneBay - 1) * 0.05;
+  const baseSpeed = DEFAULT_DRONE_SPEED * speedBonus;
+  drone.speed = baseSpeed * modifiers.droneProductionSpeedMultiplier;
 
-const updateDroneStats = (drone: DroneEntity, level: number) => {
-  const speedBonus = 1 + Math.max(0, level - 1) * 0.05;
-  drone.speed = BASE_SPEED * speedBonus;
+  const capacityBase = DEFAULT_DRONE_CAPACITY + modules.storage * 5;
+  const targetCapacity = capacityBase * modifiers.droneCapacityMultiplier;
+  if (drone.cargo > targetCapacity) {
+    const scale = targetCapacity > 0 ? targetCapacity / drone.cargo : 0;
+    if (scale <= 0) {
+      drone.cargo = 0;
+      for (const key of RESOURCE_KEYS) {
+        drone.cargoProfile[key] = 0;
+      }
+    } else {
+      for (const key of RESOURCE_KEYS) {
+        drone.cargoProfile[key] *= scale;
+      }
+      drone.cargo = targetCapacity;
+    }
+  }
+  drone.capacity = targetCapacity;
+
+  const miningBase = DEFAULT_DRONE_MINING_RATE + modules.refinery * 0.5;
+  drone.miningRate = miningBase * modifiers.droneProductionSpeedMultiplier;
+
+  const previousMax = drone.maxBattery > 0 ? drone.maxBattery : DEFAULT_DRONE_BATTERY;
+  const fraction = previousMax > 0 ? drone.battery / previousMax : 0;
+  const targetMaxBattery = DEFAULT_DRONE_BATTERY * modifiers.droneBatteryMultiplier;
+  drone.maxBattery = targetMaxBattery;
+  drone.battery = Math.min(drone.maxBattery, Math.max(0, fraction * drone.maxBattery));
 };
 
 export const createFleetSystem = (world: GameWorld, store: StoreApiType) => {
   const { droneQuery, factory } = world;
   return (_dt: number) => {
-    const { modules } = store.getState();
+    const { modules, resources } = store.getState();
+    const modifiers = getResourceModifiers(resources);
     const target = Math.max(1, modules.droneBay);
     while (droneQuery.size < target) {
       const drone = spawnDrone(world);
@@ -23,9 +64,7 @@ export const createFleetSystem = (world: GameWorld, store: StoreApiType) => {
       removeDrone(world, drone);
     }
     for (const drone of droneQuery) {
-      updateDroneStats(drone, modules.droneBay);
-      drone.capacity = 40 + modules.storage * 5;
-      drone.miningRate = 6 + modules.refinery * 0.5;
+      updateDroneStats(drone, modules, modifiers);
     }
   };
 };

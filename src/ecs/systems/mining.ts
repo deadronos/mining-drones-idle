@@ -3,13 +3,16 @@ import { consumeDroneEnergy } from '@/ecs/energy';
 import { DRONE_ENERGY_COST, type StoreApiType } from '@/state/store';
 import { getRegionById } from '@/ecs/biomes';
 import { RESOURCE_KEYS } from '@/lib/biomes';
+import { getResourceModifiers } from '@/lib/resourceModifiers';
 
 export const createMiningSystem = (world: GameWorld, store: StoreApiType) => {
   const { droneQuery, asteroidQuery } = world;
   return (dt: number) => {
     if (dt <= 0) return;
-    const { settings } = store.getState();
+    const { settings, resources } = store.getState();
+    const modifiers = getResourceModifiers(resources);
     const throttleFloor = settings.throttleFloor;
+    const drainRate = DRONE_ENERGY_COST * modifiers.energyDrainMultiplier;
     for (const drone of droneQuery) {
       if (drone.state !== 'mining') continue;
       const asteroid = asteroidQuery.entities.find((node) => node.id === drone.targetId);
@@ -27,7 +30,7 @@ export const createMiningSystem = (world: GameWorld, store: StoreApiType) => {
         drone.travel = null;
         continue;
       }
-      const { fraction } = consumeDroneEnergy(drone, dt, throttleFloor, DRONE_ENERGY_COST);
+      const { fraction } = consumeDroneEnergy(drone, dt, throttleFloor, drainRate);
       if (fraction <= 0) {
         continue;
       }

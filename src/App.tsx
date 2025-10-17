@@ -8,6 +8,7 @@ import type { PersistenceManager } from '@/state/persistence';
 import './styles.css';
 import { ToastProvider } from '@/ui/ToastProvider';
 import { AsteroidInspector } from '@/ui/AsteroidInspector';
+import { ResourceModifiersDebug } from '@/ui/ResourceModifiersDebug';
 
 interface AppProps {
   persistence: PersistenceManager;
@@ -33,6 +34,7 @@ export const App = ({ persistence }: AppProps) => {
           <div>Bars: {resources.bars.toFixed(1)}</div>
           <div>Energy: {Math.round(resources.energy)}</div>
           <div>Drones: {modules.droneBay}</div>
+          <ResourceModifiersDebug />
           <button type="button" onClick={() => setSettingsOpen(true)} className="hud-button">
             Settings
           </button>

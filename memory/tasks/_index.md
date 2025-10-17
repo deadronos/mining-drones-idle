@@ -16,4 +16,4 @@
 | TASK012 | Drone Asteroid Targeting Variation      | Completed   | 2025-10-17 |
 | TASK013 | Dynamic Asteroid Biomes Implementation  | In Progress | 2025-10-18 |
 | TASK014 | Dynamic Asteroid Biomes Test Stabilization | Completed   | 2025-10-18 |
-| TASK015 | Tie resource types into game loop       | Pending     | 2025-10-17 |
+| TASK015 | Tie resource types into game loop       | Completed   | 2025-10-18 |
