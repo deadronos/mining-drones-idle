@@ -66,11 +66,11 @@ const generateSeed = () => {
 };
 
 export const moduleDefinitions = {
-  droneBay: { label: 'Drone Bay', baseCost: 40, description: '+1 drone, +5% travel speed' },
-  refinery: { label: 'Refinery', baseCost: 80, description: '+10% bar output' },
-  storage: { label: 'Storage', baseCost: 30, description: '+100 ore capacity' },
-  solar: { label: 'Solar Array', baseCost: 40, description: '+5 energy/s, +25 max energy' },
-  scanner: { label: 'Scanner', baseCost: 120, description: '+5% new asteroid richness' },
+  droneBay: { label: 'Drone Bay', baseCost: 4, description: '+1 drone, +5% travel speed' },
+  refinery: { label: 'Refinery', baseCost: 8, description: '+10% bar output' },
+  storage: { label: 'Storage', baseCost: 3, description: '+100 ore capacity' },
+  solar: { label: 'Solar Array', baseCost: 4, description: '+5 energy/s, +25 max energy' },
+  scanner: { label: 'Scanner', baseCost: 12, description: '+5% new asteroid richness' },
 } as const;
 
 export type ModuleId = keyof typeof moduleDefinitions;
