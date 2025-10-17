@@ -99,7 +99,7 @@ export default defineConfig(async ({ mode }) => {
       // raise warning threshold for large chunks in playground repos
       chunkSizeWarningLimit: 2000,
       // output folder for GitHub Pages automated deployments
-      outDir: 'output',
+      outDir: 'dist',
     },
     optimizeDeps: {
       include: ['react', 'react-dom', 'three'],
