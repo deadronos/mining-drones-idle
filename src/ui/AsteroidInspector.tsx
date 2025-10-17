@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { gameWorld } from '@/ecs/world';
+import { useStore } from '@/state/store';
 import { getBiomeDefinition, RESOURCE_KEYS, type ResourceKey } from '@/lib/biomes';
 
 const RESOURCE_LABELS: Record<ResourceKey, string> = {
@@ -20,6 +21,9 @@ const formatHazard = (id: string | undefined | null) => {
 export const AsteroidInspector = () => {
   const [index, setIndex] = useState(0);
   const [, forceUpdate] = useState(0);
+  const selectedAsteroidId = useStore((state) => state.selectedAsteroidId);
+  const isCollapsed = useStore((state) => state.settings.inspectorCollapsed);
+  const toggleInspector = useStore((state) => state.toggleInspector);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -30,7 +34,17 @@ export const AsteroidInspector = () => {
 
   const asteroids = gameWorld.asteroidQuery.entities;
   const total = asteroids.length;
-  const safeIndex = total === 0 ? 0 : Math.min(index, total - 1);
+
+  // If an asteroid is selected, find its index; otherwise use navigation index
+  let displayIndex = index;
+  if (selectedAsteroidId && total > 0) {
+    const selectedIdx = asteroids.findIndex((a) => a.id === selectedAsteroidId);
+    if (selectedIdx !== -1) {
+      displayIndex = selectedIdx;
+    }
+  }
+
+  const safeIndex = total === 0 ? 0 : Math.min(displayIndex, total - 1);
 
   if (total === 0) {
     return (
@@ -42,6 +56,24 @@ export const AsteroidInspector = () => {
           </div>
         </div>
         <p className="inspector-empty">Biomes will appear once scanners discover asteroids.</p>
+      </div>
+    );
+  }
+
+  if (isCollapsed) {
+    return (
+      <div className="inspector-collapsed-bar">
+        <button
+          type="button"
+          onClick={() => toggleInspector()}
+          className="inspector-collapse-toggle"
+          aria-label="Expand asteroid inspector"
+        >
+          ▲ Inspector
+        </button>
+        <span className="inspector-mini-info">
+          {selectedAsteroidId ? `Selected: ${selectedAsteroidId}` : `${total} asteroids`}
+        </span>
       </div>
     );
   }
@@ -81,6 +113,14 @@ export const AsteroidInspector = () => {
           </span>
           <button type="button" onClick={handleNext} aria-label="Next asteroid">
             ▶
+          </button>
+          <button
+            type="button"
+            onClick={() => toggleInspector()}
+            className="inspector-collapse-button"
+            aria-label="Collapse asteroid inspector"
+          >
+            ▼
           </button>
         </div>
       </div>

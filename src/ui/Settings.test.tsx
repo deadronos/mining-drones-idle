@@ -45,6 +45,7 @@ describe('ui/Settings', () => {
         throttleFloor: 0.25,
         showTrails: true,
         performanceProfile: 'medium',
+        inspectorCollapsed: false,
       },
       save: { ...state.save, lastSave: 1_700_000_000_000 },
     }));

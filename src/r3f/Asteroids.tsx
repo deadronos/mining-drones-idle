@@ -1,8 +1,9 @@
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
 import type { InstancedMesh } from 'three';
-import { Color, Matrix4, Quaternion, Vector3 } from 'three';
+import { Color, Matrix4, Quaternion, Vector3, Raycaster, Vector2 } from 'three';
 import { gameWorld } from '@/ecs/world';
+import { useStore } from '@/state/store';
 import { getBiomeDefinition } from '@/lib/biomes';
 
 const ASTEROID_LIMIT = 256;
@@ -18,6 +19,9 @@ const tempColor = new Color();
 export const Asteroids = () => {
   const ref = useRef<InstancedMesh>(null);
   const { asteroidQuery } = gameWorld;
+  const { camera } = useThree();
+  const raycaster = useRef(new Raycaster());
+  const setSelectedAsteroid = useStore((state) => state.setSelectedAsteroid);
 
   useEffect(() => {
     asteroidQuery.connect();
@@ -25,6 +29,40 @@ export const Asteroids = () => {
       asteroidQuery.disconnect();
     };
   }, [asteroidQuery]);
+
+  // Add click handler for asteroid selection
+  useEffect(() => {
+    const handleClick = (event: MouseEvent) => {
+      const mesh = ref.current;
+      if (!mesh) return;
+
+      const rect = document.querySelector('canvas')?.getBoundingClientRect();
+      if (!rect) return;
+
+      // Convert mouse coordinates to normalized device coordinates
+      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.current.setFromCamera(new Vector2(x, y), camera);
+
+      // Get intersections with the asteroids mesh
+      const intersects = raycaster.current.intersectObject(mesh, false);
+
+      if (intersects.length > 0) {
+        const instanceIndex = intersects[0].instanceId;
+        if (instanceIndex !== undefined) {
+          const asteroids = asteroidQuery.entities;
+          const selectedAsteroid = asteroids[instanceIndex];
+          if (selectedAsteroid) {
+            setSelectedAsteroid(selectedAsteroid.id);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, [camera, asteroidQuery, setSelectedAsteroid]);
 
   useFrame(() => {
     const mesh = ref.current;

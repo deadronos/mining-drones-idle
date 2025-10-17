@@ -51,6 +51,7 @@ const initialSettings: StoreSettings = {
   throttleFloor: 0.25,
   showTrails: true,
   performanceProfile: 'medium',
+  inspectorCollapsed: false,
 };
 
 export const saveVersion = SAVE_VERSION;
@@ -112,6 +113,7 @@ export interface StoreSettings {
   throttleFloor: number;
   showTrails: boolean;
   performanceProfile: PerformanceProfile;
+  inspectorCollapsed: boolean;
 }
 
 export interface RefineryStats {
@@ -137,6 +139,7 @@ export interface StoreState {
   settings: StoreSettings;
   rngSeed: number;
   droneFlights: DroneFlightState[];
+  selectedAsteroidId: string | null;
   addResources(this: void, delta: Partial<Resources>, options?: { capacityAware?: boolean }): void;
   addOre(this: void, amount: number): void;
   buy(this: void, id: ModuleId): void;
@@ -147,6 +150,8 @@ export interface StoreState {
   doPrestige(this: void): void;
   setLastSave(this: void, timestamp: number): void;
   updateSettings(this: void, patch: Partial<StoreSettings>): void;
+  setSelectedAsteroid(this: void, asteroidId: string | null): void;
+  toggleInspector(this: void): void;
   applySnapshot(this: void, snapshot: StoreSnapshot): void;
   exportState(this: void): string;
   importState(this: void, payload: string): boolean;
@@ -460,6 +465,10 @@ const normalizeSettings = (snapshot?: Partial<StoreSettings>): StoreSettings => 
   showTrails:
     typeof snapshot?.showTrails === 'boolean' ? snapshot.showTrails : initialSettings.showTrails,
   performanceProfile: normalizePerformanceProfile(snapshot?.performanceProfile),
+  inspectorCollapsed:
+    typeof snapshot?.inspectorCollapsed === 'boolean'
+      ? snapshot.inspectorCollapsed
+      : initialSettings.inspectorCollapsed,
 });
 
 const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapshot => ({
@@ -505,6 +514,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => ({
   settings: { ...initialSettings },
   rngSeed: generateSeed(),
   droneFlights: [],
+  selectedAsteroidId: null,
 
   addResources: (delta, options) =>
     set((state) => {
@@ -570,6 +580,17 @@ const storeCreator: StateCreator<StoreState> = (set, get) => ({
   updateSettings: (patch) =>
     set((state) => ({ settings: normalizeSettings({ ...state.settings, ...patch }) })),
 
+  setSelectedAsteroid: (asteroidId) =>
+    set(() => ({ selectedAsteroidId: asteroidId })),
+
+  toggleInspector: () =>
+    set((state) => ({
+      settings: normalizeSettings({
+        ...state.settings,
+        inspectorCollapsed: !state.settings.inspectorCollapsed,
+      }),
+    })),
+
   applySnapshot: (snapshot) =>
     set(() => {
       const normalized = normalizeSnapshot(snapshot);
@@ -582,6 +603,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => ({
         settings: normalized.settings,
         rngSeed: normalized.rngSeed ?? generateSeed(),
         droneFlights: normalized.droneFlights ?? [],
+        selectedAsteroidId: null,
       };
     }),
 
