@@ -35,6 +35,9 @@ jobs:
   deploy:
     needs: build-and-deploy
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     # No environment object to keep this workflow portable across forks
     # and avoid requiring a pre-created GitHub Environment in the repo.
 
