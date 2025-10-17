@@ -1,0 +1,44 @@
+name: Build and Deploy to GitHub Pages
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (output folder)
+        # Use a repo-specific base so asset paths resolve correctly on Pages
+        env:
+          CUSTOM_BASE: '/mining-drones-idle/'
+        run: npm run build:output
+
+      - name: Upload artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: output
+
+  deploy:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    # No environment object to keep this workflow portable across forks
+    # and avoid requiring a pre-created GitHub Environment in the repo.
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v2
