@@ -97,7 +97,7 @@ const startTravel = (
   // Defensive validation: ensure vectors are finite
   const invalidVec = (v: Vector3) => !Number.isFinite(v.x) || !Number.isFinite(v.y) || !Number.isFinite(v.z);
   if (invalidVec(from) || invalidVec(to)) {
-    // eslint-disable-next-line no-console
+
     console.warn('[startTravel] invalid from/to vectors; forcing return-to-base', {
       id: drone.id,
       from: from.toArray(),
@@ -191,7 +191,7 @@ const synchronizeDroneFlight = (
       !Number.isFinite(travel.from.x) || !Number.isFinite(travel.from.y) || !Number.isFinite(travel.from.z) ||
       !Number.isFinite(travel.to.x) || !Number.isFinite(travel.to.y) || !Number.isFinite(travel.to.z);
     if (invalid) {
-      // eslint-disable-next-line no-console
+
       console.warn('[synchronizeDroneFlight] invalid travel snapshot; clearing flight', {
         id: flight.droneId,
         flight,
@@ -205,7 +205,7 @@ const synchronizeDroneFlight = (
       return;
     }
   } catch (err) {
-    // eslint-disable-next-line no-console
+
     console.warn('[synchronizeDroneFlight] failed to parse travel snapshot', { id: flight.droneId, err });
     store.getState().clearDroneFlight(flight.droneId);
     drone.state = 'idle';
@@ -225,7 +225,6 @@ const synchronizeDroneFlight = (
     return;
   }
 
-  const travel = snapshotToTravel(flight.travel);
   drone.state = flight.state;
   drone.flightSeed = flight.pathSeed;
   drone.targetId = flight.state === 'toAsteroid' ? flight.targetAsteroidId : null;
