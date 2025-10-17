@@ -10,6 +10,8 @@
     "test:watch": "vitest --watch",
     "coverage": "vitest run --coverage",
     "build": "tsc -b && vite build",
+    "build:output": "npm run build",
+    "deploy:pages": "echo 'Use GitHub Actions to deploy on tag push'",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
