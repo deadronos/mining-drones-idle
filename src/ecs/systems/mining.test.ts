@@ -55,4 +55,24 @@ describe('ecs/systems/mining', () => {
 
     expect(drone.cargo).toBe(0);
   });
+
+  it('reduces energy drain when ice modifiers are active', () => {
+    const baseScenario = setupMiningScenario();
+    baseScenario.drone.battery = baseScenario.drone.maxBattery;
+    const baseSystem = createMiningSystem(baseScenario.world, baseScenario.store);
+    baseSystem(1);
+    const baseConsumed = baseScenario.drone.maxBattery - baseScenario.drone.battery;
+
+    const reducedScenario = setupMiningScenario();
+    reducedScenario.drone.battery = reducedScenario.drone.maxBattery;
+    reducedScenario.store.setState((state) => ({
+      resources: { ...state.resources, ice: 40 },
+    }));
+    const reducedSystem = createMiningSystem(reducedScenario.world, reducedScenario.store);
+    reducedSystem(1);
+    const reducedConsumed =
+      reducedScenario.drone.maxBattery - reducedScenario.drone.battery;
+
+    expect(reducedConsumed).toBeLessThan(baseConsumed);
+  });
 });

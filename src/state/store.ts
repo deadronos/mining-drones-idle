@@ -4,6 +4,7 @@ import {
   type StateCreator,
   type StoreApi,
 } from 'zustand/vanilla';
+import { getResourceModifiers, type ResourceModifierSnapshot } from '@/lib/resourceModifiers';
 
 const SAVE_VERSION = '0.2.0';
 
@@ -168,12 +169,17 @@ export const computeRefineryProduction = (
   }
   const prestigeMult = computePrestigeBonus(state.prestige.cores);
   const refineryMult = Math.pow(1.1, state.modules.refinery);
+  const modifiers = getResourceModifiers(state.resources);
   const oreConsumed = Math.min(oreAvailable, ORE_CONVERSION_PER_SECOND * dt);
   if (oreConsumed <= 0) {
     return emptyRefineryStats;
   }
   const barsProduced =
-    (oreConsumed / ORE_PER_BAR) * BASE_REFINERY_RATE * refineryMult * prestigeMult;
+    (oreConsumed / ORE_PER_BAR) *
+    BASE_REFINERY_RATE *
+    refineryMult *
+    prestigeMult *
+    modifiers.refineryYieldMultiplier;
   return { oreConsumed, barsProduced };
 };
 
@@ -196,21 +202,35 @@ export const computePrestigeBonus = (cores: number) => {
   return 1 + 0.05 * capped + 0.02 * overflow;
 };
 
-export const getStorageCapacity = (modules: Modules) =>
-  BASE_STORAGE + modules.storage * STORAGE_PER_LEVEL;
+export const getStorageCapacity = (
+  modules: Modules,
+  modifiers?: ResourceModifierSnapshot,
+) => {
+  const base = BASE_STORAGE + modules.storage * STORAGE_PER_LEVEL;
+  return base * (modifiers?.storageCapacityMultiplier ?? 1);
+};
 
-export const getEnergyCapacity = (modules: Modules) =>
-  BASE_ENERGY_CAP + modules.solar * ENERGY_PER_SOLAR;
+export const getEnergyCapacity = (modules: Modules, modifiers?: ResourceModifierSnapshot) => {
+  const base = BASE_ENERGY_CAP + modules.solar * ENERGY_PER_SOLAR;
+  return base * (modifiers?.energyStorageMultiplier ?? 1);
+};
 
-export const getEnergyGeneration = (modules: Modules) => SOLAR_BASE_GEN * (modules.solar + 1);
+export const getEnergyGeneration = (
+  modules: Modules,
+  modifiers?: ResourceModifierSnapshot,
+) => SOLAR_BASE_GEN * (modules.solar + 1) * (modifiers?.energyGenerationMultiplier ?? 1);
 
-export const getEnergyConsumption = (_modules: Modules, drones: number) =>
-  drones * DRONE_ENERGY_COST;
+export const getEnergyConsumption = (
+  _modules: Modules,
+  drones: number,
+  modifiers?: ResourceModifierSnapshot,
+) => drones * DRONE_ENERGY_COST * (modifiers?.energyDrainMultiplier ?? 1);
 
 export const computeEnergyThrottle = (
   state: Pick<StoreState, 'resources' | 'modules' | 'settings'>,
 ) => {
-  const capacity = getEnergyCapacity(state.modules);
+  const modifiers = getResourceModifiers(state.resources);
+  const capacity = getEnergyCapacity(state.modules, modifiers);
   if (capacity <= 0) {
     return 1;
   }
@@ -347,16 +367,14 @@ const cloneDroneFlight = (flight: DroneFlightState): DroneFlightState => ({
 const mergeResourceDelta = (
   base: Resources,
   delta: Partial<Resources>,
-  capacity: number,
+  modules: Modules,
   capacityAware: boolean,
 ): Resources => {
   const next: Resources = { ...base };
   for (const key of rawResourceKeys) {
     const amount = delta[key];
     if (typeof amount !== 'number' || !Number.isFinite(amount) || amount === 0) continue;
-    const current = base[key];
-    const candidate = current + amount;
-    next[key] = capacityAware ? Math.min(capacity, Math.max(0, candidate)) : candidate;
+    next[key] = base[key] + amount;
   }
   if (typeof delta.bars === 'number' && Number.isFinite(delta.bars) && delta.bars !== 0) {
     next.bars = Math.max(0, next.bars + delta.bars);
@@ -366,6 +384,19 @@ const mergeResourceDelta = (
   }
   if (typeof delta.credits === 'number' && Number.isFinite(delta.credits) && delta.credits !== 0) {
     next.credits = Math.max(0, next.credits + delta.credits);
+  }
+  if (!capacityAware) {
+    return next;
+  }
+  const modifiers = getResourceModifiers(next);
+  const capacity = getStorageCapacity(modules, modifiers);
+  for (const key of rawResourceKeys) {
+    const value = next[key];
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      next[key] = Math.max(0, Math.min(capacity, base[key]));
+    } else {
+      next[key] = Math.min(capacity, Math.max(0, value));
+    }
   }
   return next;
 };
@@ -477,9 +508,13 @@ const storeCreator: StateCreator<StoreState> = (set, get) => ({
 
   addResources: (delta, options) =>
     set((state) => {
-      const capacity = getStorageCapacity(state.modules);
       const capacityAware = options?.capacityAware ?? true;
-      const resources = mergeResourceDelta(state.resources, delta ?? {}, capacity, capacityAware);
+      const resources = mergeResourceDelta(
+        state.resources,
+        delta ?? {},
+        state.modules,
+        capacityAware,
+      );
       return { resources };
     }),
 

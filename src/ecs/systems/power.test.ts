@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createPowerSystem } from '@/ecs/systems/power';
 import { createGameWorld, spawnDrone } from '@/ecs/world';
-import { createStoreInstance } from '@/state/store';
+import { createStoreInstance, getEnergyCapacity, getEnergyGeneration } from '@/state/store';
+import { getResourceModifiers } from '@/lib/resourceModifiers';
 
 const addDrones = (world: ReturnType<typeof createGameWorld>, count: number) => {
   for (let index = 0; index < count; index += 1) {
@@ -57,5 +58,28 @@ describe('ecs/systems/power', () => {
     expect(batteries[2]).toBeCloseTo(0.2, 5);
     expect(batteries[3]).toBeCloseTo(0, 5);
     expect(drones.some((drone) => drone?.charging === false && drone?.battery === 0)).toBe(true);
+  });
+
+  it('scales stored energy with organics and ice modifiers', () => {
+    const world = createGameWorld({ asteroidCount: 0 });
+    const store = createStoreInstance();
+    store.setState((state) => ({
+      modules: { ...state.modules, solar: 0 },
+      resources: { ...state.resources, organics: 20, ice: 40, energy: 0 },
+    }));
+
+    const snapshot = store.getState();
+    const modifiers = getResourceModifiers(snapshot.resources);
+    const expectedGeneration = getEnergyGeneration(snapshot.modules, modifiers);
+    const expectedCapacity = getEnergyCapacity(snapshot.modules, modifiers);
+
+    const system = createPowerSystem(world, store);
+    system(1);
+
+    const { resources } = store.getState();
+    expect(resources.energy).toBeCloseTo(
+      Math.min(expectedCapacity, expectedGeneration),
+      5,
+    );
   });
 });

@@ -71,3 +71,15 @@ WHEN a drone begins travel, THE SYSTEM SHALL generate a seeded path offset that 
 ## RQ-018 Flight Persistence
 
 WHEN the player saves or reloads while drones are mid-flight, THE SYSTEM SHALL serialize and restore each flight's target, seeded offset, and progress so that drones resume the exact trajectory after load. [Acceptance: Integration test saves a mid-flight snapshot, reloads it, and verifies flight state resumes with matching progress and seed.]
+
+## RQ-019 Resource Modifier Computation
+
+WHEN resource stockpiles change, THE SYSTEM SHALL recompute persistent modifiers using diminishing returns and clamp them to configured caps while exposing the values to downstream systems. [Acceptance: Unit tests cover modifier math for each resource at low/high stocks and assert caps are respected.]
+
+## RQ-020 Resource-Driven Systems Integration
+
+WHEN Metals, Crystals, Organics, or Ice amounts change, THE SYSTEM SHALL adjust drone durability/capacity, refinery yield, and energy storage/generation/consumption within the next simulation tick. [Acceptance: Unit/integration tests observe stat deltas in fleet, refinery, and energy systems after updating the corresponding resources.]
+
+## RQ-021 Resource Modifier Visibility
+
+WHEN players view the HUD, THE SYSTEM SHALL display current resource-derived bonuses with descriptive labels and tooltips that update as resources change. [Acceptance: React component test or manual verification confirms the HUD list reflects live modifier percentages.]

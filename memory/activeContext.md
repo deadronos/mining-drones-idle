@@ -4,6 +4,8 @@
 
 Implement dynamic asteroid biomes (TASK013): deterministic biome assignment, fracture events, drone reassignment heuristics, and HUD inspector surfacing biome modifiers.
 
+Tie resource types into the live loop (TASK015): implemented modifiers now feed refinery, fleet, power, mining, and HUD; confirm balance and surface follow-up work for consumable effects.
+
 ## Recent Changes
 
 - Finalized spec/persistence backlog items for TASK002, documenting the live manager wiring and Settings defaults.
