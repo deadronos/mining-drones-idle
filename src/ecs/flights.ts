@@ -14,6 +14,14 @@ export const travelToSnapshot = (travel: TravelData): TravelSnapshot => ({
   control: travel.control ? vectorToTuple(travel.control) : undefined,
 });
 
+export const isFiniteVector = (vector: Vector3) =>
+  Number.isFinite(vector.x) && Number.isFinite(vector.y) && Number.isFinite(vector.z);
+
+export const isFiniteTravel = (travel: TravelData) =>
+  Number.isFinite(travel.elapsed) && Number.isFinite(travel.duration) &&
+  isFiniteVector(travel.from) && isFiniteVector(travel.to) &&
+  (travel.control ? isFiniteVector(travel.control) : true);
+
 export const snapshotToTravel = (snapshot: TravelSnapshot): TravelData => ({
   from: tupleToVector(snapshot.from),
   to: tupleToVector(snapshot.to),

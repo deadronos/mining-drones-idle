@@ -2,6 +2,7 @@ import { Vector3 } from 'three';
 import { consumeDroneEnergy } from '@/ecs/energy';
 import type { GameWorld } from '@/ecs/world';
 import { computeTravelPosition, travelToSnapshot } from '@/ecs/flights';
+import { isFiniteTravel } from '@/ecs/flights';
 import { createRng } from '@/lib/rng';
 import { DRONE_ENERGY_COST, type StoreApiType } from '@/state/store';
 import { getResourceModifiers } from '@/lib/resourceModifiers';
@@ -33,6 +34,23 @@ export const createTravelSystem = (world: GameWorld, store: StoreApiType) => {
     for (const drone of droneQuery) {
       const travel = drone.travel;
       if (!travel) continue;
+      // Defensive: validate travel object
+      if (!isFiniteTravel(travel) || !Number.isFinite(travel.duration) || travel.duration <= 0) {
+        // Log minimal snapshot for debugging and recover the drone to a safe state
+        // eslint-disable-next-line no-console
+        console.warn('[travel] invalid travel detected, clearing travel', {
+          id: drone.id,
+          state: drone.state,
+          travel: travelToSnapshot(travel),
+        });
+        // clear travel and force returning to base as a safe fallback
+        drone.travel = null;
+        drone.flightSeed = null;
+        if (drone.state !== 'unloading') {
+          drone.state = 'returning';
+        }
+        continue;
+      }
       const { fraction } = consumeDroneEnergy(drone, dt, throttleFloor, drainRate);
       travel.elapsed = Math.min(travel.elapsed + dt * fraction, travel.duration);
       computeTravelPosition(travel, drone.position);

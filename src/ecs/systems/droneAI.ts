@@ -94,6 +94,23 @@ const startTravel = (
 ) => {
   const from = drone.position.clone();
   const to = destination.clone();
+  // Defensive validation: ensure vectors are finite
+  const invalidVec = (v: Vector3) => !Number.isFinite(v.x) || !Number.isFinite(v.y) || !Number.isFinite(v.z);
+  if (invalidVec(from) || invalidVec(to)) {
+    // eslint-disable-next-line no-console
+    console.warn('[startTravel] invalid from/to vectors; forcing return-to-base', {
+      id: drone.id,
+      from: from.toArray(),
+      to: to.toArray(),
+      phase,
+    });
+    // fallback: send drone back to factory by clearing travel and marking returning
+    drone.travel = null;
+    drone.flightSeed = null;
+    drone.state = 'returning';
+    drone.targetId = null;
+    return;
+  }
   const distance = from.distanceTo(to);
   const gravity = Math.max(0.5, options?.gravityMultiplier ?? 1);
   const effectiveSpeed = Math.max(1, drone.speed / gravity);
@@ -164,6 +181,38 @@ const synchronizeDroneFlight = (
       drone.flightSeed = null;
       return;
     }
+  }
+  // Validate travel rehydrated from store
+  let travel: TravelData;
+  try {
+    travel = snapshotToTravel(flight.travel);
+    const invalid = !travel || !Number.isFinite(travel.duration) || Number.isNaN(travel.duration) ||
+      !Number.isFinite(travel.elapsed) || Number.isNaN(travel.elapsed) ||
+      !Number.isFinite(travel.from.x) || !Number.isFinite(travel.from.y) || !Number.isFinite(travel.from.z) ||
+      !Number.isFinite(travel.to.x) || !Number.isFinite(travel.to.y) || !Number.isFinite(travel.to.z);
+    if (invalid) {
+      // eslint-disable-next-line no-console
+      console.warn('[synchronizeDroneFlight] invalid travel snapshot; clearing flight', {
+        id: flight.droneId,
+        flight,
+      });
+      store.getState().clearDroneFlight(flight.droneId);
+      // put drone in idle to allow reassignment
+      drone.state = 'idle';
+      drone.targetId = null;
+      drone.travel = null;
+      drone.flightSeed = null;
+      return;
+    }
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('[synchronizeDroneFlight] failed to parse travel snapshot', { id: flight.droneId, err });
+    store.getState().clearDroneFlight(flight.droneId);
+    drone.state = 'idle';
+    drone.targetId = null;
+    drone.travel = null;
+    drone.flightSeed = null;
+    return;
   }
 
   const needsUpdate =
