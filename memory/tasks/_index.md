@@ -17,3 +17,6 @@
 | TASK013 | Dynamic Asteroid Biomes Implementation  | In Progress | 2025-10-18 |
 | TASK014 | Dynamic Asteroid Biomes Test Stabilization | Completed   | 2025-10-18 |
 | TASK015 | Tie resource types into game loop       | Completed   | 2025-10-18 |
+| TASK016 | Factory Buyable Implementation          | Pending     | 2025-10-18 |
+
+```
