@@ -9,7 +9,7 @@ import { getResourceModifiers, type ResourceModifierSnapshot } from '@/lib/resou
 const SAVE_VERSION = '0.2.0';
 
 const GROWTH = 1.15;
-const PRESTIGE_THRESHOLD = 5_000;
+export const PRESTIGE_THRESHOLD = 5_000;
 const BASE_REFINERY_RATE = 1;
 export const ORE_PER_BAR = 10;
 export const ORE_CONVERSION_PER_SECOND = 10;
