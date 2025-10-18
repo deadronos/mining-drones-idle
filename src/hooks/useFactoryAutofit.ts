@@ -4,7 +4,12 @@ import type { PerspectiveCamera } from 'three';
 import { Vector3 } from 'three';
 import { useStore } from '../state/store';
 import type { BuildableFactory } from '../ecs/factories';
-import { computeAutofitCamera, lerpCameraState, type AutofitConfig } from '../lib/camera';
+import {
+  computeAutofitCamera,
+  lerpCameraState,
+  type AutofitConfig,
+  type CameraState,
+} from '../lib/camera';
 
 const DEFAULT_CONFIG: AutofitConfig = {
   margin: 6,
@@ -22,10 +27,7 @@ export const useFactoryAutofit = () => {
   const factories: BuildableFactory[] = useStore((state) => state.factories);
   const sequence = useStore((state) => state.factoryAutofitSequence);
   const lerpStartTime = useRef<number | null>(null);
-  const previousCameraState = useRef<{
-    position: Vector3;
-    zoom: number;
-  } | null>(null);
+  const previousCameraState = useRef<CameraState | null>(null);
   const lastSequence = useRef<number>(sequence);
 
   useEffect(() => {
@@ -40,9 +42,8 @@ export const useFactoryAutofit = () => {
     lastSequence.current = sequence;
 
     const perspCamera = camera as PerspectiveCamera;
-    const currentState = {
+    const currentState: CameraState = {
       position: perspCamera.position.clone(),
-      zoom: 1, // For perspective cameras, we store distance as inverse zoom
     };
 
     // Store initial state for lerp
@@ -67,7 +68,7 @@ export const useFactoryAutofit = () => {
 
       const newState = lerpCameraState(previousCameraState.current, targetState, progress);
       perspCamera.position.copy(newState.position);
-      // For perspective cameras, we just update position, no zoom property
+      // Perspective cameras rely on position updates only; distance is encoded in placement
       perspCamera.updateProjectionMatrix();
 
       if (progress < 1) {
