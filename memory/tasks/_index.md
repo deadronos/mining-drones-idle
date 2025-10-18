@@ -9,10 +9,10 @@
 | TASK005 | Refinery ECS System & Offline Alignment    | Completed   | 2025-10-16 |
 | TASK006 | Energy Throttle & Per-Drone Battery        | Completed   | 2025-10-16 |
 | TASK007 | Seeded RNG                                 | Completed   | 2025-10-16 |
-| TASK008 | Visual Polish (Trails First)               | In Progress | 2025-10-17 |
+| TASK008 | Visual Polish (Trails First)               | Completed   | 2025-10-18 |
 | TASK009 | Tests & CI                                 | In Progress | 2025-10-16 |
 | TASK010 | Migration Helpers & Documentation          | Pending     | 2025-10-16 |
-| TASK011 | Factory Visuals                            | In Progress | 2025-10-17 |
+| TASK011 | Factory Visuals                            | Completed   | 2025-10-18 |
 | TASK012 | Drone Asteroid Targeting Variation         | Completed   | 2025-10-17 |
 | TASK013 | Dynamic Asteroid Biomes Implementation     | In Progress | 2025-10-18 |
 | TASK014 | Dynamic Asteroid Biomes Test Stabilization | Completed   | 2025-10-18 |

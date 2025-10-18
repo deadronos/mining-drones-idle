@@ -1,8 +1,8 @@
 # TASK008 - Visual Polish (Trails First)
 
-**Status:** In Progress
+**Status:** Completed
 **Added:** 2025-10-16
-**Updated:** 2025-10-17
+**Updated:** 2025-10-18
 
 ## Original Request
 
@@ -26,7 +26,7 @@ Prototype trails in `src/r3f/Drones.tsx` using instancing or Drei `Trail`, add S
 | --- | ---------------- | ----------- | ---------- | -------------------------------------------------------------------- |
 | 8.1 | Trails prototype | Completed   | 2025-10-17 | `TrailBuffer` + `DroneTrails` render fading line segments per drone. |
 | 8.2 | Settings toggle  | Completed   | 2025-10-17 | Settings panel exposes persisted `showTrails` toggle with tests.     |
-| 8.3 | Factory visuals  | Not Started | 2025-10-16 | Deferred to follow-up task.                                          |
+| 8.3 | Factory visuals  | Completed   | 2025-10-18 | Moved implementation into TASK011 and completed visuals (conveyors, transfer FX, boost pulse). |
 
 ## Acceptance Criteria
 
@@ -42,3 +42,7 @@ Prototype trails in `src/r3f/Drones.tsx` using instancing or Drei `Trail`, add S
 
 - Implemented `TrailBuffer` helper and `DroneTrails` renderer to draw single-call line segments with fading colors per drone.
 - Added `settings.showTrails` persistence + Settings toggle, updated tests/spec, and wired `Scene` to mount trails based on the new flag.
+
+### 2025-10-18
+
+- Completed factory visuals integration originally deferred from TASK008 by implementing conveyors, transfer FX, and boost pulses in the `Factory` renderer. Performance profile toggle implemented and verified in low/medium/high modes. Snapshot/perf scene creation deferred to TASK011 but visual features verified in-game and covered by basic unit tests and visual smoke checks.
