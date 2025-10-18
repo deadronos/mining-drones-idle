@@ -2,23 +2,24 @@
 
 ## Current Focus
 
-Implement TASK017 (Factory Fleet Upgrades & Ownership): weighted drone return routing, per-factory ledgers, and selector-driven factory management UI.
+Execute TASK018 (Desktop Responsive HUD & Panels): introduce fluid typography, clamped panel widths, and scrollable sidebars so the existing desktop UI scales without overflow.
 
 ## Recent Changes
 
-- Drafted DES016 to outline per-factory resources, drone ownership, and selector UI interfaces.
-- Logged TASK017 plan covering store/ECS updates, UI rebuild, and validation steps.
-- Captured requirements RQ-026 through RQ-028 for routing distribution, per-factory energy, and UI selector expectations.
+- Captured responsive requirements RQ-029 through RQ-031.
+- Authored DES017 outlining CSS variable strategy and desktop-only scope with future mobile considerations.
+- Created TASK018 implementation plan covering global styles and FactoryManager adjustments.
 
 ## Next Steps
 
-1. Extend store models and migrations with per-factory energy/resource fields plus drone ownership metadata.
-2. Update ECS systems (drone AI, unload, refining) to consume new helpers and enforce dock queues/energy caps.
-3. Rebuild FactoryManager UI with selector navigation, per-factory upgrades, and drone roster display.
-4. Implement validation tests (store, drone AI weighting, React panel) and refresh Playwright flow if necessary.
+1. Update `src/styles.css` with fluid scaling variables, sidebar constraints, and breakpoint tweaks per DES017.
+2. Refresh `src/ui/FactoryManager.css` to reference the shared typography/spacing variables.
+3. Manually verify layout behaviour at 960px–1920px widths and ~720px height, then run lint/typecheck/tests.
+4. Log future mobile/tab layout ideas in docs for follow-up.
 
 ## References
 
-- Task details: `memory/tasks/TASK017-factory-fleet-upgrades.md`
-- Design: `memory/designs/DES016-factory-fleet-upgrades.md`
-- Requirements: `memory/requirements.md` (RQ-026..RQ-028)
+- Task details: `memory/tasks/TASK018-desktop-responsive-scaling.md`
+- Design: `memory/designs/DES017-desktop-responsive-scaling.md`
+- Requirements: `memory/requirements.md` (RQ-029..RQ-031)
+- Previous scope: TASK017 remains paused; see `memory/tasks/TASK017-factory-fleet-upgrades.md` for context.

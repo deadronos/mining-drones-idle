@@ -19,6 +19,7 @@
 | TASK015 | Tie resource types into game loop          | Completed   | 2025-10-18 |
 | TASK016 | Factory Buyable Implementation             | Completed   | 2025-10-20 |
 | TASK017 | Factory Fleet Upgrades & Ownership         | In Progress | 2025-10-21 |
+| TASK018 | Desktop Responsive HUD & Panels            | In Progress | 2025-10-22 |
 
 ```
 
