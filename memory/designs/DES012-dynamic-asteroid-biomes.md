@@ -72,7 +72,11 @@ interface BiomeDefinition {
   particleTint: string;
   gravityMultiplier: number;
   resourceWeights: ResourceWeights;
-  hazardProfile: { id: 'storm' | 'flare' | 'spores' | 'quakes'; weight: number; severity: 'low' | 'medium' | 'high' }[];
+  hazardProfile: {
+    id: 'storm' | 'flare' | 'spores' | 'quakes';
+    weight: number;
+    severity: 'low' | 'medium' | 'high';
+  }[];
 }
 ```
 

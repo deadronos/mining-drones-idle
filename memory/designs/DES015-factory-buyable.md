@@ -2,7 +2,7 @@
 
 **Status:** Approved (ready for implementation)  
 **Date Created:** 2025-10-18  
-**Date Last Updated:** 2025-10-18  
+**Date Last Updated:** 2025-10-18
 
 ## Design Overview
 
@@ -62,7 +62,7 @@ This design document specifies a purchasable, placeable Factory building that dr
 ### Pricing Model
 
 - **Base cost:** 100 metal + 50 crystals (tunable).
-- **Linear scaling:** Cost of Nth factory = base + N * 50 increment.
+- **Linear scaling:** Cost of Nth factory = base + N \* 50 increment.
 - **Energy upkeep:** Scales linearly per factory.
 
 ### Camera & UI Behavior

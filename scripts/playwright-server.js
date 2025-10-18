@@ -26,10 +26,14 @@ function checkServer() {
   }
 
   console.log('Starting dev server: npm run dev -- --host');
-  const child = spawn(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'dev', '--', '--host'], {
-    stdio: 'inherit',
-    shell: false,
-  });
+  const child = spawn(
+    process.platform === 'win32' ? 'npm.cmd' : 'npm',
+    ['run', 'dev', '--', '--host'],
+    {
+      stdio: 'inherit',
+      shell: false,
+    },
+  );
 
   child.on('exit', (code) => {
     console.log(`Dev server process exited with ${code}`);

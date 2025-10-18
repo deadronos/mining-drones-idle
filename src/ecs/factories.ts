@@ -89,10 +89,7 @@ export const computeFactoryEnergyUpkeep = (factoryCount: number): number =>
  * Attempts to dock a drone to a factory.
  * Returns true if successfully queued (or immediately docked).
  */
-export const attemptDockDrone = (
-  factory: BuildableFactory,
-  droneId: string,
-): boolean => {
+export const attemptDockDrone = (factory: BuildableFactory, droneId: string): boolean => {
   if (factory.queuedDrones.length >= factory.dockingCapacity) {
     return false;
   }
@@ -103,11 +100,8 @@ export const attemptDockDrone = (
 /**
  * Removes a drone from the factory queue/dock.
  */
-export const removeDroneFromFactory = (
-  factory: BuildableFactory,
-  droneId: string,
-): void => {
-  factory.queuedDrones = factory.queuedDrones.filter(id => id !== droneId);
+export const removeDroneFromFactory = (factory: BuildableFactory, droneId: string): void => {
+  factory.queuedDrones = factory.queuedDrones.filter((id) => id !== droneId);
 };
 
 /**
@@ -132,10 +126,7 @@ export const getAvailableRefineSlots = (factory: BuildableFactory): number =>
  * Transfers ore from drone to factory storage.
  * Returns amount actually stored (capped by storage remaining).
  */
-export const transferOreToFactory = (
-  factory: BuildableFactory,
-  amount: number,
-): number => {
+export const transferOreToFactory = (factory: BuildableFactory, amount: number): number => {
   const available = factory.storageCapacity - factory.currentStorage;
   const transferred = Math.min(amount, available);
   factory.currentStorage += transferred;
@@ -190,7 +181,7 @@ export const tickRefineProcess = (
 
   if (process.progress >= 1) {
     // Refine completed
-    factory.activeRefines = factory.activeRefines.filter(p => p.id !== process.id);
+    factory.activeRefines = factory.activeRefines.filter((p) => p.id !== process.id);
     return process.amount; // Return refined amount
   }
 
@@ -223,7 +214,7 @@ export const enforceMinOneRefining = (
     }
   } else {
     // Normal energy: all can run at normal speed
-    factory.activeRefines.forEach(p => {
+    factory.activeRefines.forEach((p) => {
       p.speedMultiplier = 1;
     });
   }
@@ -251,16 +242,14 @@ export const findNearestAvailableFactory = (
   position: Vector3,
   roundRobinCounter = 0,
 ): { factory: BuildableFactory; distance: number } | null => {
-  const candidates = factories.filter(
-    f => getAvailableDockingSlots(f) > 0
-  );
+  const candidates = factories.filter((f) => getAvailableDockingSlots(f) > 0);
 
   if (candidates.length === 0) {
     return null;
   }
 
   // Calculate distances
-  const withDistances = candidates.map(factory => ({
+  const withDistances = candidates.map((factory) => ({
     factory,
     distance: position.distanceTo(factory.position),
   }));
@@ -269,10 +258,7 @@ export const findNearestAvailableFactory = (
   withDistances.sort((a, b) => a.distance - b.distance);
 
   // If only one or distances are very different, return nearest
-  if (
-    withDistances.length === 1 ||
-    withDistances[0].distance + 0.01 < withDistances[1].distance
-  ) {
+  if (withDistances.length === 1 || withDistances[0].distance + 0.01 < withDistances[1].distance) {
     return withDistances[0];
   }
 
@@ -295,5 +281,4 @@ export const findNearestAvailableFactory = (
  * Utility to compute distance between two Vector3 positions.
  * Helps with drone routing decisions.
  */
-export const computeDistance = (from: Vector3, to: Vector3): number =>
-  from.distanceTo(to);
+export const computeDistance = (from: Vector3, to: Vector3): number => from.distanceTo(to);

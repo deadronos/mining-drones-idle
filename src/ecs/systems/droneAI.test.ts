@@ -44,6 +44,7 @@ const createDrone = (position: Vector3): DroneEntity => ({
   charging: false,
   lastDockingFrom: null,
   flightSeed: null,
+  targetFactoryId: null,
   cargoProfile: { ore: 0, metals: 0, crystals: 0, organics: 0, ice: 0 },
 });
 

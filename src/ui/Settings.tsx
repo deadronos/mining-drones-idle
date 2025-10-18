@@ -68,7 +68,10 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
       .then((content) => {
         // Prefer importStateWithReport when available so we can surface migration summaries
         const extendedPersistence = persistence as PersistenceManager & {
-          importStateWithReport?: (payload: string) => { success: boolean; report?: MigrationReport };
+          importStateWithReport?: (payload: string) => {
+            success: boolean;
+            report?: MigrationReport;
+          };
         };
         const reportResult = extendedPersistence.importStateWithReport?.(content);
         if (reportResult) {

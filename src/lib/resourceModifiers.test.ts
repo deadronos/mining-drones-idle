@@ -16,9 +16,15 @@ const buildResources = (patch: ResourcePatch) => ({
 
 describe('lib/resourceModifiers', () => {
   it('applies diminishing returns with soft caps', () => {
-    const low = getResourceModifiers(buildResources({ metals: 5, ice: 3, crystals: 2, organics: 4 }));
-    const high = getResourceModifiers(buildResources({ metals: 80, ice: 80, crystals: 80, organics: 80 }));
-    const veryHigh = getResourceModifiers(buildResources({ metals: 200, ice: 200, crystals: 200, organics: 200 }));
+    const low = getResourceModifiers(
+      buildResources({ metals: 5, ice: 3, crystals: 2, organics: 4 }),
+    );
+    const high = getResourceModifiers(
+      buildResources({ metals: 80, ice: 80, crystals: 80, organics: 80 }),
+    );
+    const veryHigh = getResourceModifiers(
+      buildResources({ metals: 200, ice: 200, crystals: 200, organics: 200 }),
+    );
 
     expect(low.metalsBonus).toBeGreaterThan(0);
     expect(low.metalsBonus).toBeLessThan(0.3);
