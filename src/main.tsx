@@ -48,20 +48,20 @@ if (typeof window !== 'undefined') {
   // Also schedule a RAF as a fallback to cover paint timing.
   try {
     window.__appReady = true;
-  } catch (e) {
+  } catch {
     // noop
   }
   try {
     if (typeof document !== 'undefined' && document.documentElement) {
       document.documentElement.setAttribute('data-app-ready', 'true');
     }
-  } catch (e) {
+  } catch {
     // noop
   }
   requestAnimationFrame(() => {
     try {
       window.__appReady = true;
-    } catch (e) {
+    } catch {
       // noop
     }
   });

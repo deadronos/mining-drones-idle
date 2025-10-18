@@ -1,24 +1,30 @@
 import { expect, test } from '@playwright/test';
 
+type PersistenceBridge = {
+  exportState: () => string;
+  importState: (payload: string) => boolean;
+};
+
 test.describe('Factory management flow', () => {
   test('player can purchase factories and trigger camera autofit', async ({ page }) => {
     await page.goto('/');
     // Wait for the persistence helper to be exposed on window by the runtime boot sequence.
-    await page.waitForFunction(() => typeof (window as any).__persistence?.exportState === 'function', {
-      timeout: 20000,
-    });
+    await page.waitForFunction(
+      () => {
+        const helper = window as Window & { __persistence?: PersistenceBridge };
+        return typeof helper.__persistence?.exportState === 'function';
+      },
+      {
+        timeout: 20000,
+      },
+    );
     // Avoid waiting for UI panels which may be lazily rendered in CI. The persistence
     // helper is a reliable runtime signal we can use to import/export deterministic
     // snapshots for the test.
 
     // Export the current state, boost resources, and re-import so we can afford purchases.
     const snapshot = await page.evaluate(() => {
-      const helper = window as Window & {
-        __persistence?: {
-          exportState: () => string;
-          importState: (payload: string) => boolean;
-        };
-      };
+      const helper = window as Window & { __persistence?: PersistenceBridge };
       if (!helper.__persistence || typeof helper.__persistence.exportState !== 'function') {
         throw new Error('persistence manager not available on window');
       }
@@ -30,9 +36,7 @@ test.describe('Factory management flow', () => {
     snapshot.resources.energy = 500;
 
     const importSucceeded = await page.evaluate((payload) => {
-      const helper = window as Window & {
-        __persistence?: { importState: (value: string) => boolean };
-      };
+      const helper = window as Window & { __persistence?: PersistenceBridge };
       if (!helper.__persistence || typeof helper.__persistence.importState !== 'function') {
         return false;
       }
@@ -47,14 +51,11 @@ test.describe('Factory management flow', () => {
     // snapshot round-tripping without relying on UI timing.
     // Add one factory placeholder to the snapshot so total factories increases.
     snapshot.factories = snapshot.factories ?? [];
-    const beforeCount = snapshot.factories.length;
     // Position is required by normalizeFactorySnapshot; provide a minimal valid shape.
     snapshot.factories.push({ id: `test-factory-${Date.now()}`, position: [0, 0, 0] });
 
     const importSucceeded2 = await page.evaluate((payload) => {
-      const helper = window as Window & {
-        __persistence?: { importState: (value: string) => boolean };
-      };
+      const helper = window as Window & { __persistence?: PersistenceBridge };
       if (!helper.__persistence || typeof helper.__persistence.importState !== 'function') {
         return false;
       }
@@ -65,9 +66,7 @@ test.describe('Factory management flow', () => {
 
     // Re-export snapshot to confirm factory was added.
     const updatedSnapshot = await page.evaluate(() => {
-      const helper = window as Window & {
-        __persistence?: { exportState: () => string };
-      };
+      const helper = window as Window & { __persistence?: PersistenceBridge };
       if (!helper.__persistence || typeof helper.__persistence.exportState !== 'function') {
         throw new Error('persistence manager not available on window (post-import)');
       }
