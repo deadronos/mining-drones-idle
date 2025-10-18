@@ -1,21 +1,24 @@
 # Active Context
 
 ## Current Focus
-Factory buyable (TASK016) feature is complete and ready for review. Attention can shift to backlog grooming (e.g., Task011 visuals or Task013 biomes) and balance/playtest follow-ups.
+
+Implement TASK017 (Factory Fleet Upgrades & Ownership): weighted drone return routing, per-factory ledgers, and selector-driven factory management UI.
 
 ## Recent Changes
-- Integrated factory processing into the ECS loop and store; drones now reserve docking slots, unload into per-factory storage, and trigger refining with min-one-running safeguards.
-- Hooked FactoryManager UI into the HUD alongside the Upgrade panel, added pin toggles, and exposed an Autofit Camera control wired to the new `useFactoryAutofit` hook.
-- Updated persistence, migrations, and drone flight serialization with `targetFactoryId`, resolving type/lint issues and ensuring tests exercise the new paths.
-- Added Playwright coverage (`tests/e2e/factory-flow.spec.ts`) plus refreshed unit/integration suites for unloading, travel guards, and store snapshots.
+
+- Drafted DES016 to outline per-factory resources, drone ownership, and selector UI interfaces.
+- Logged TASK017 plan covering store/ECS updates, UI rebuild, and validation steps.
+- Captured requirements RQ-026 through RQ-028 for routing distribution, per-factory energy, and UI selector expectations.
 
 ## Next Steps
-1. Monitor balance: adjust `FACTORY_CONFIG` cost/throughput/energy once telemetry or playtest data is available.
-2. Expand UX polish—factory placement previews, persistent pinning, and richer HUD cues—under Task011/visual polish tracks.
-3. Continue Task013 (dynamic asteroid biomes) once factory work lands; ensure interactions with factory assignment remain stable.
-4. Consider additional e2e scenarios covering multi-factory saturation and low-energy throttling after broader QA.
+
+1. Extend store models and migrations with per-factory energy/resource fields plus drone ownership metadata.
+2. Update ECS systems (drone AI, unload, refining) to consume new helpers and enforce dock queues/energy caps.
+3. Rebuild FactoryManager UI with selector navigation, per-factory upgrades, and drone roster display.
+4. Implement validation tests (store, drone AI weighting, React panel) and refresh Playwright flow if necessary.
 
 ## References
-- Task details: `memory/tasks/TASK016-factory-buyable.md`
-- Completion summary: `memory/TASK016-COMPLETION-SUMMARY.md`
-- Design: `memory/designs/DES015-factory-buyable.md`
+
+- Task details: `memory/tasks/TASK017-factory-fleet-upgrades.md`
+- Design: `memory/designs/DES016-factory-fleet-upgrades.md`
+- Requirements: `memory/requirements.md` (RQ-026..RQ-028)

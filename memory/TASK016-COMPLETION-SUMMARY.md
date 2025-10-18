@@ -5,11 +5,13 @@
 **Session Duration:** ~5 implementation cycles (core feature + integration + validation)
 
 ## Overview
+
 - Delivered a fully functional factory gameplay loop: drones reserve docking slots, unload into per-factory storage, refuel, and trigger refining with minimum-throughput safeguards under low energy.
 - Integrated factories into the ECS update pipeline, store persistence, and camera UX. Purchase flow, UI panels, and autofit controls are wired into the live HUD.
 - Added unit, integration, and end-to-end coverage to lock the new behavior and regression-proof persistence and UI workflows.
 
 ## Feature Highlights
+
 - **Factory domain model (`src/ecs/factories.ts`)**: buildable factory type, cost scaling, docking queues, storage, refining, energy accounting, min-one-running enforcement, and nearest-available assignment with round-robin tie-breaks.
 - **Store integration (`src/state/store.ts`)**: persisted factory state, purchase API, docking/undocking helpers, ore transfer, round-robin counter, and a `processFactories(dt)` tick that drains energy and converts refined ore to player resources. Snapshot serialization/import handles drone flights with `targetFactoryId`.
 - **Drone systems**:
@@ -26,16 +28,19 @@
   - Legacy tests updated to set `targetFactoryId`, align expectations with factory storage, and use typed helpers instead of `any`.
 
 ## Validation
+
 - ✅ `npm run typecheck`
 - ✅ `npm run lint`
 - ✅ `npm run test` (83 tests including new factory E2E)
 
 ## Follow-up considerations
+
 - Balance numbers (cost curve, energy usage, storage) once real gameplay telemetry is available.
 - Additional UX polish such as hover-card pin persistence and factory placement previews can iterate in future tasks.
 - Consider broader e2e coverage for multi-factory docking saturation and low-energy throttling when the scene grows.
 
 ## File inventory
+
 - Core logic: `src/ecs/factories.ts`, `src/ecs/systems/{droneAI,travel,mining,unload,fleet,power}.ts`, `src/ecs/world.ts`, `src/lib/biomes.ts`, `src/lib/resourceModifiers.ts`.
 - Store & persistence: `src/state/store.ts`, `src/state/persistence.ts`, `src/state/migrations.ts`, `src/state/import-migrations.test.ts`, `src/state/store.factories.test.ts`.
 - UI & camera: `src/App.tsx`, `src/r3f/Scene.tsx`, `src/r3f/Factory.tsx`, `src/hooks/useFactoryAutofit.ts`, `src/ui/FactoryManager.tsx`, `src/ui/FactoryManager.css`, `src/styles.css`.

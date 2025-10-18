@@ -55,31 +55,94 @@ describe('store factory integration', () => {
     const state = store.getState();
     const factoryId = state.factories[0].id;
     const success = state.dockDroneAtFactory(factoryId, 'drone-test');
-    expect(success).toBe(true);
+    expect(success).toBe('docking');
     const afterDock = store.getState().factories[0];
     expect(afterDock.queuedDrones).toContain('drone-test');
     // docking the same drone again should not duplicate entries
     const repeat = store.getState().dockDroneAtFactory(factoryId, 'drone-test');
-    expect(repeat).toBe(true);
+    expect(repeat).toBe('docking');
     expect(
       store.getState().factories[0].queuedDrones.filter((id) => id === 'drone-test'),
     ).toHaveLength(1);
   });
 
-  it('processes factory storage into ore and drains energy', () => {
+  it('queues drones when docking capacity is saturated', () => {
+    const factoryId = store.getState().factories[0].id;
+    store.setState((state) => ({
+      factories: state.factories.map((factory, idx) =>
+        idx === 0 ? { ...factory, dockingCapacity: 1 } : factory,
+      ),
+    }));
+
+    expect(store.getState().dockDroneAtFactory(factoryId, 'drone-a')).toBe('docking');
+    expect(store.getState().dockDroneAtFactory(factoryId, 'drone-b')).toBe('queued');
+    const queued = store.getState().factories[0].queuedDrones;
+    expect(queued).toEqual(['drone-a', 'drone-b']);
+  });
+
+  it('processes factory storage into bars and drains global energy into factories', () => {
     const state = store.getState();
     const factoryId = state.factories[0].id;
     store.getState().transferOreToFactory(factoryId, 60);
     const energyBefore = store.getState().resources.energy;
     store.getState().processFactories(FACTORY_CONFIG.refineTime);
     const resources = store.getState().resources;
-    expect(resources.ore).toBeCloseTo(60, 5);
-    expect(resources.energy).toBeCloseTo(
-      energyBefore -
-        (FACTORY_CONFIG.idleEnergyPerSec + FACTORY_CONFIG.energyPerRefine) *
-          FACTORY_CONFIG.refineTime,
-      5,
+    const factory = store.getState().factories[0];
+    expect(factory.resources.bars).toBeGreaterThan(0);
+    expect(resources.bars).toBeGreaterThan(0);
+    const expectedTransfer = Math.min(
+      energyBefore,
+      FACTORY_CONFIG.energyCapacity - FACTORY_CONFIG.initialEnergy,
     );
+    expect(resources.energy).toBeCloseTo(energyBefore - expectedTransfer, 5);
+  });
+
+  it('adds resources to a factory ledger and mirrors to global totals', () => {
+    const factoryId = store.getState().factories[0].id;
+    store.getState().addResourcesToFactory(factoryId, { metals: 25, bars: 10 });
+    const { factories, resources } = store.getState();
+    expect(factories[0].resources.metals).toBeCloseTo(25);
+    expect(factories[0].resources.bars).toBeCloseTo(10);
+    expect(resources.metals).toBeCloseTo(25);
+    expect(resources.bars).toBeCloseTo(10);
+  });
+
+  it('upgrades factories using local resources', () => {
+    const factoryId = store.getState().factories[0].id;
+    store.setState((state) => ({
+      factories: state.factories.map((factory, idx) =>
+        idx === 0
+          ? {
+              ...factory,
+              resources: {
+                ...factory.resources,
+                metals: 100,
+                crystals: 100,
+                bars: 50,
+                organics: 50,
+                ice: 50,
+              },
+            }
+          : factory,
+      ),
+      resources: {
+        ...state.resources,
+        metals: 100,
+        crystals: 100,
+        bars: 50,
+        organics: 50,
+        ice: 50,
+      },
+    }));
+
+    const before = store.getState().factories[0];
+    const upgraded = store.getState().upgradeFactory(factoryId, 'docking');
+    expect(upgraded).toBe(true);
+    const after = store.getState().factories[0];
+    expect(after.dockingCapacity).toBe(before.dockingCapacity + 1);
+    expect(after.resources.metals).toBeLessThan(before.resources.metals);
+    expect(after.resources.crystals).toBeLessThan(before.resources.crystals);
+    expect(store.getState().resources.metals).toBeLessThan(100);
   });
 
   it('places purchased factories with randomized spacing within bounds', () => {

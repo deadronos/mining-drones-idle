@@ -71,10 +71,10 @@ describe('Factory Entity', () => {
 
   describe('Docking', () => {
     it('docks drones up to capacity', () => {
-      expect(attemptDockDrone(factory, 'drone-1')).toBe(true);
-      expect(attemptDockDrone(factory, 'drone-2')).toBe(true);
-      expect(attemptDockDrone(factory, 'drone-3')).toBe(true);
-      expect(attemptDockDrone(factory, 'drone-4')).toBe(false);
+      expect(attemptDockDrone(factory, 'drone-1')).toBe('docking');
+      expect(attemptDockDrone(factory, 'drone-2')).toBe('docking');
+      expect(attemptDockDrone(factory, 'drone-3')).toBe('docking');
+      expect(attemptDockDrone(factory, 'drone-4')).toBe('queued');
     });
 
     it('tracks docked drone count', () => {

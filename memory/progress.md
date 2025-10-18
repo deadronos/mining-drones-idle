@@ -21,6 +21,8 @@
 - Kicked off TASK012 to add per-drone target variation, seeded path offsets, and save/load persistence for active flights; requirements drafted and implementation plan captured in the task log.
 - Completed TASK012 with weighted targeting, seeded bezier travel, persisted `droneFlights`, README updates, and unit/integration coverage ensuring mid-flight saves restore correctly.
 
+- Initiated TASK017 to move factories toward per-factory ledgers and selector-driven management; requirements/design/task plan captured.
+
 ## Open Items
 
 - Track UI follow-up for surfacing per-drone battery levels and throttle warnings in the HUD.

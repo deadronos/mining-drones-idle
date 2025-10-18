@@ -5,7 +5,6 @@ import type { DroneFlightPhase, DroneFlightState, StoreApiType } from '@/state/s
 import type { RandomSource } from '@/lib/rng';
 import { computeWaypointWithOffset } from '@/ecs/systems/travel';
 import { getRegionById, pickRegionForDrone } from '@/ecs/biomes';
-import { findNearestAvailableFactory } from '@/ecs/factories';
 
 const nearestTemp = new Vector3();
 const midPoint = new Vector3();
@@ -15,6 +14,8 @@ const offset = new Vector3();
 const NEARBY_LIMIT = 4;
 const MAX_OFFSET_DISTANCE = 3;
 const EPSILON = 1e-4;
+const FACTORY_VARIETY_CHANCE = 0.25;
+const FACTORY_WEIGHT_EPSILON = 0.001;
 
 interface TargetCandidate {
   asteroid: AsteroidEntity;
@@ -271,24 +272,82 @@ export const createDroneAISystem = (world: GameWorld, store: StoreApiType) => {
     if (drone.targetFactoryId) {
       const existing = state.factories.find((item) => item.id === drone.targetFactoryId);
       if (existing) {
-        return { targetId: existing.id, position: existing.position.clone() };
+        const queueIndex = existing.queuedDrones.indexOf(drone.id);
+        if (queueIndex !== -1 && queueIndex < existing.dockingCapacity) {
+          return { targetId: existing.id, position: existing.position.clone() };
+        }
+        return null;
       }
       state.undockDroneFromFactory(drone.targetFactoryId, drone.id);
       drone.targetFactoryId = null;
     }
 
-    const roundRobin = state.factoryRoundRobin;
-    const assignment = findNearestAvailableFactory(state.factories, drone.position, roundRobin);
-    if (!assignment) {
+    const withDistances = state.factories.map((factory) => {
+      const distance = drone.position.distanceTo(factory.position);
+      const occupied = Math.min(factory.queuedDrones.length, factory.dockingCapacity);
+      const available = Math.max(0, factory.dockingCapacity - occupied);
+      return {
+        factory,
+        distance,
+        available,
+        queueLength: factory.queuedDrones.length,
+      };
+    });
+
+    const candidates = withDistances.filter((entry) => entry.available > 0);
+    let selected = null as (typeof withDistances)[number] | null;
+
+    if (candidates.length > 0) {
+      candidates.sort((a, b) => a.distance - b.distance);
+      selected = candidates[0];
+      if (candidates.length > 1 && rng.next() < FACTORY_VARIETY_CHANCE) {
+        const others = candidates.slice(1);
+        const weights = others.map((entry) => 1 / Math.max(entry.distance, FACTORY_WEIGHT_EPSILON));
+        const totalWeight = weights.reduce((sum, value) => sum + value, 0);
+        let roll = rng.next() * totalWeight;
+        for (let i = 0; i < others.length; i += 1) {
+          roll -= weights[i];
+          if (roll <= 0) {
+            selected = others[i];
+            break;
+          }
+        }
+      }
+    } else {
+      selected = withDistances.reduce<(typeof withDistances)[number] | null>((best, entry) => {
+        if (!best) return entry;
+        if (entry.queueLength < best.queueLength) return entry;
+        if (entry.queueLength === best.queueLength && entry.distance < best.distance) {
+          return entry;
+        }
+        return best;
+      }, null);
+    }
+
+    if (!selected) {
       return null;
     }
-    const reserved = state.dockDroneAtFactory(assignment.factory.id, drone.id);
-    if (!reserved) {
+
+    const result = state.dockDroneAtFactory(selected.factory.id, drone.id);
+    if (result === 'queued') {
+      drone.targetFactoryId = selected.factory.id;
       return null;
     }
-    store.getState().nextFactoryRoundRobin();
-    drone.targetFactoryId = assignment.factory.id;
-    return { targetId: assignment.factory.id, position: assignment.factory.position.clone() };
+    if (result === 'docking') {
+      drone.targetFactoryId = selected.factory.id;
+      return { targetId: selected.factory.id, position: selected.factory.position.clone() };
+    }
+
+    // Already exists in queue; check if now within docking range
+    const current = state.getFactory(selected.factory.id);
+    if (current) {
+      const queueIndex = current.queuedDrones.indexOf(drone.id);
+      if (queueIndex !== -1 && queueIndex < current.dockingCapacity) {
+        drone.targetFactoryId = current.id;
+        return { targetId: current.id, position: current.position.clone() };
+      }
+    }
+    return null;
   };
   return (_dt: number) => {
     const flights = store.getState().droneFlights;

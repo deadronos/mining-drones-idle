@@ -6,7 +6,12 @@ import {
 } from 'zustand/vanilla';
 import { Vector3 } from 'three';
 import { getResourceModifiers, type ResourceModifierSnapshot } from '@/lib/resourceModifiers';
-import type { BuildableFactory, RefineProcess } from '@/ecs/factories';
+import type {
+  BuildableFactory,
+  FactoryResources,
+  FactoryUpgrades,
+  RefineProcess,
+} from '@/ecs/factories';
 import {
   FACTORY_CONFIG,
   attemptDockDrone,
@@ -17,7 +22,10 @@ import {
   startRefineProcess,
   tickRefineProcess,
   transferOreToFactory as factoryTransferOre,
+  type DockingResult,
 } from '@/ecs/factories';
+
+export type { FactoryResources, FactoryUpgrades };
 
 const SAVE_VERSION = '0.2.0';
 
@@ -59,6 +67,23 @@ export interface RefineProcessSnapshot {
   speedMultiplier: number;
 }
 
+export interface FactoryResourceSnapshot {
+  ore: number;
+  bars: number;
+  metals: number;
+  crystals: number;
+  organics: number;
+  ice: number;
+  credits: number;
+}
+
+export interface FactoryUpgradeSnapshot {
+  docking: number;
+  refine: number;
+  storage: number;
+  energy: number;
+}
+
 export interface FactorySnapshot {
   id: string;
   position: VectorTuple;
@@ -71,6 +96,11 @@ export interface FactorySnapshot {
   queuedDrones: string[];
   activeRefines: RefineProcessSnapshot[];
   pinned: boolean;
+  energy: number;
+  energyCapacity: number;
+  resources: FactoryResourceSnapshot;
+  ownedDrones: string[];
+  upgrades: FactoryUpgradeSnapshot;
 }
 
 export type DroneFlightPhase = 'toAsteroid' | 'returning';
@@ -196,6 +226,77 @@ export const moduleDefinitions = {
 
 export type ModuleId = keyof typeof moduleDefinitions;
 
+export type FactoryUpgradeId = keyof FactoryUpgrades;
+
+interface FactoryUpgradeDefinition {
+  label: string;
+  description: string;
+  baseCost: Partial<FactoryResources>;
+  apply(factory: BuildableFactory): void;
+}
+
+const FACTORY_UPGRADE_GROWTH = 1.35;
+
+export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeDefinition> = {
+  docking: {
+    label: 'Landing Bay',
+    description: '+1 docking slot for concurrent drones',
+    baseCost: { metals: 40, crystals: 20 },
+    apply: (factory) => {
+      factory.dockingCapacity += 1;
+      factory.upgrades.docking += 1;
+    },
+  },
+  refine: {
+    label: 'Refinery Line',
+    description: '+1 refine slot for parallel batches',
+    baseCost: { metals: 35, bars: 10 },
+    apply: (factory) => {
+      factory.refineSlots += 1;
+      factory.upgrades.refine += 1;
+    },
+  },
+  storage: {
+    label: 'Bulk Storage',
+    description: '+150 ore storage capacity',
+    baseCost: { metals: 25, organics: 15 },
+    apply: (factory) => {
+      factory.storageCapacity += 150;
+      factory.upgrades.storage += 1;
+    },
+  },
+  energy: {
+    label: 'Capacitors',
+    description: '+30 local energy capacity',
+    baseCost: { crystals: 30, ice: 10 },
+    apply: (factory) => {
+      factory.energyCapacity += 30;
+      factory.upgrades.energy += 1;
+      factory.energy = Math.min(factory.energy, factory.energyCapacity);
+    },
+  },
+};
+
+const computeFactoryUpgradeCost = (
+  upgrade: FactoryUpgradeId,
+  level: number,
+): Partial<FactoryResources> => {
+  const definition = factoryUpgradeDefinitions[upgrade];
+  const result: Partial<FactoryResources> = {};
+  for (const [key, value] of Object.entries(definition.baseCost) as [
+    keyof FactoryResources,
+    number,
+  ][]) {
+    result[key] = Math.ceil(value * Math.pow(FACTORY_UPGRADE_GROWTH, level));
+  }
+  return result;
+};
+
+export const getFactoryUpgradeCost = (
+  upgrade: FactoryUpgradeId,
+  level: number,
+): Partial<FactoryResources> => computeFactoryUpgradeCost(upgrade, level);
+
 export interface Resources {
   ore: number;
   ice: number;
@@ -251,6 +352,8 @@ export interface StoreSnapshot {
   rngSeed?: number;
   droneFlights?: DroneFlightState[];
   factories?: FactorySnapshot[];
+  selectedFactoryId?: string | null;
+  droneOwners?: Record<string, string | null>;
 }
 
 export interface StoreState {
@@ -266,6 +369,8 @@ export interface StoreState {
   factoryRoundRobin: number;
   factoryAutofitSequence: number;
   selectedAsteroidId: string | null;
+  selectedFactoryId: string | null;
+  droneOwners: Record<string, string | null>;
   addResources(this: void, delta: Partial<Resources>, options?: { capacityAware?: boolean }): void;
   addOre(this: void, amount: number): void;
   buy(this: void, id: ModuleId): void;
@@ -289,10 +394,20 @@ export interface StoreState {
   purchaseFactory(this: void): boolean;
   toggleFactoryPinned(this: void, factoryId: string): void;
   setFactoryPinned(this: void, factoryId: string, pinned: boolean): void;
+  setSelectedFactory(this: void, factoryId: string | null): void;
+  cycleSelectedFactory(this: void, direction: 1 | -1): void;
   nextFactoryRoundRobin(this: void): number;
-  dockDroneAtFactory(this: void, factoryId: string, droneId: string): boolean;
-  undockDroneFromFactory(this: void, factoryId: string, droneId: string): void;
+  dockDroneAtFactory(this: void, factoryId: string, droneId: string): DockingResult;
+  undockDroneFromFactory(
+    this: void,
+    factoryId: string,
+    droneId: string,
+    options?: { transferOwnership?: boolean },
+  ): void;
   transferOreToFactory(this: void, factoryId: string, amount: number): number;
+  addResourcesToFactory(this: void, factoryId: string, delta: Partial<FactoryResources>): void;
+  allocateFactoryEnergy(this: void, factoryId: string, amount: number): number;
+  upgradeFactory(this: void, factoryId: string, upgrade: keyof FactoryUpgrades): boolean;
   processFactories(this: void, dt: number): void;
   triggerFactoryAutofit(this: void): void;
 }
@@ -515,6 +630,57 @@ const snapshotToRefineProcess = (snapshot: RefineProcessSnapshot): RefineProcess
   speedMultiplier: snapshot.speedMultiplier,
 });
 
+const normalizeFactoryResources = (value: unknown): FactoryResourceSnapshot => {
+  if (typeof value !== 'object' || value === null) {
+    return {
+      ore: 0,
+      bars: 0,
+      metals: 0,
+      crystals: 0,
+      organics: 0,
+      ice: 0,
+      credits: 0,
+    };
+  }
+  const raw = value as Partial<FactoryResourceSnapshot>;
+  return {
+    ore: Math.max(0, coerceNumber(raw.ore, 0)),
+    bars: Math.max(0, coerceNumber(raw.bars, 0)),
+    metals: Math.max(0, coerceNumber(raw.metals, 0)),
+    crystals: Math.max(0, coerceNumber(raw.crystals, 0)),
+    organics: Math.max(0, coerceNumber(raw.organics, 0)),
+    ice: Math.max(0, coerceNumber(raw.ice, 0)),
+    credits: Math.max(0, coerceNumber(raw.credits, 0)),
+  };
+};
+
+const normalizeFactoryUpgrades = (value: unknown): FactoryUpgradeSnapshot => {
+  if (typeof value !== 'object' || value === null) {
+    return { docking: 0, refine: 0, storage: 0, energy: 0 };
+  }
+  const raw = value as Partial<FactoryUpgradeSnapshot>;
+  return {
+    docking: Math.max(0, Math.floor(coerceNumber(raw.docking, 0))),
+    refine: Math.max(0, Math.floor(coerceNumber(raw.refine, 0))),
+    storage: Math.max(0, Math.floor(coerceNumber(raw.storage, 0))),
+    energy: Math.max(0, Math.floor(coerceNumber(raw.energy, 0))),
+  };
+};
+
+const normalizeDroneOwners = (value: unknown): Record<string, string | null> => {
+  if (typeof value !== 'object' || value === null) {
+    return {};
+  }
+  const result: Record<string, string | null> = {};
+  for (const [key, owner] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof key !== 'string') {
+      continue;
+    }
+    result[key] = typeof owner === 'string' && owner.length > 0 ? owner : null;
+  }
+  return result;
+};
+
 const normalizeRefineSnapshot = (value: unknown): RefineProcessSnapshot | null => {
   if (typeof value !== 'object' || value === null) {
     return null;
@@ -588,6 +754,13 @@ const normalizeFactorySnapshot = (value: unknown): FactorySnapshot | null => {
           .filter((entry): entry is RefineProcessSnapshot => entry !== null)
       : [],
     pinned: Boolean(raw.pinned),
+    energy: Math.max(0, coerceNumber(raw.energy, FACTORY_CONFIG.initialEnergy)),
+    energyCapacity: Math.max(1, coerceNumber(raw.energyCapacity, FACTORY_CONFIG.energyCapacity)),
+    resources: normalizeFactoryResources(raw.resources),
+    ownedDrones: Array.isArray(raw.ownedDrones)
+      ? raw.ownedDrones.filter((id): id is string => typeof id === 'string')
+      : [],
+    upgrades: normalizeFactoryUpgrades(raw.upgrades),
   };
 };
 
@@ -603,6 +776,11 @@ const cloneFactory = (factory: BuildableFactory): BuildableFactory => ({
   queuedDrones: [...factory.queuedDrones],
   activeRefines: factory.activeRefines.map(cloneRefineProcess),
   pinned: factory.pinned,
+  energy: factory.energy,
+  energyCapacity: factory.energyCapacity,
+  resources: { ...factory.resources },
+  ownedDrones: [...factory.ownedDrones],
+  upgrades: { ...factory.upgrades },
 });
 
 const snapshotToFactory = (snapshot: FactorySnapshot): BuildableFactory => ({
@@ -617,6 +795,11 @@ const snapshotToFactory = (snapshot: FactorySnapshot): BuildableFactory => ({
   queuedDrones: [...snapshot.queuedDrones],
   activeRefines: snapshot.activeRefines.map(snapshotToRefineProcess),
   pinned: snapshot.pinned,
+  energy: snapshot.energy,
+  energyCapacity: snapshot.energyCapacity,
+  resources: { ...snapshot.resources },
+  ownedDrones: [...snapshot.ownedDrones],
+  upgrades: { ...snapshot.upgrades },
 });
 
 const factoryToSnapshot = (factory: BuildableFactory): FactorySnapshot => ({
@@ -631,6 +814,11 @@ const factoryToSnapshot = (factory: BuildableFactory): FactorySnapshot => ({
   queuedDrones: [...factory.queuedDrones],
   activeRefines: factory.activeRefines.map(refineProcessToSnapshot),
   pinned: factory.pinned,
+  energy: factory.energy,
+  energyCapacity: factory.energyCapacity,
+  resources: { ...factory.resources },
+  ownedDrones: [...factory.ownedDrones],
+  upgrades: { ...factory.upgrades },
 });
 
 const cloneDroneFlight = (flight: DroneFlightState): DroneFlightState => ({
@@ -762,6 +950,14 @@ const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapshot => (
         .map((entry) => normalizeFactorySnapshot(entry))
         .filter((entry): entry is FactorySnapshot => entry !== null)
     : undefined,
+  selectedFactoryId:
+    typeof snapshot.selectedFactoryId === 'string' && snapshot.selectedFactoryId.length > 0
+      ? snapshot.selectedFactoryId
+      : null,
+  droneOwners:
+    snapshot.droneOwners && typeof snapshot.droneOwners === 'object'
+      ? normalizeDroneOwners(snapshot.droneOwners)
+      : undefined,
 });
 
 export const serializeStore = (state: StoreState): StoreSnapshot => ({
@@ -773,6 +969,8 @@ export const serializeStore = (state: StoreState): StoreSnapshot => ({
   rngSeed: state.rngSeed,
   droneFlights: state.droneFlights.map(cloneDroneFlight),
   factories: state.factories.map(factoryToSnapshot),
+  selectedFactoryId: state.selectedFactoryId,
+  droneOwners: { ...state.droneOwners },
 });
 
 export const stringifySnapshot = (snapshot: StoreSnapshot) => JSON.stringify(snapshot);
@@ -787,303 +985,542 @@ export const parseSnapshot = (payload: string): StoreSnapshot | null => {
   }
 };
 
-const storeCreator: StateCreator<StoreState> = (set, get) => ({
-  resources: { ...initialResources },
-  modules: { ...initialModules },
-  prestige: { ...initialPrestige },
-  save: { ...initialSave },
-  settings: { ...initialSettings },
-  rngSeed: generateSeed(),
-  droneFlights: [],
-  factories: createDefaultFactories(),
-  factoryProcessSequence: 0,
-  factoryRoundRobin: 0,
-  factoryAutofitSequence: 0,
-  selectedAsteroidId: null,
+const storeCreator: StateCreator<StoreState> = (set, get) => {
+  const defaultFactories = createDefaultFactories();
+  const initialSelectedFactory = defaultFactories[0]?.id ?? null;
+  return {
+    resources: { ...initialResources },
+    modules: { ...initialModules },
+    prestige: { ...initialPrestige },
+    save: { ...initialSave },
+    settings: { ...initialSettings },
+    rngSeed: generateSeed(),
+    droneFlights: [],
+    factories: createDefaultFactories(),
+    factoryProcessSequence: 0,
+    factoryRoundRobin: 0,
+    factoryAutofitSequence: 0,
+    selectedAsteroidId: null,
+    selectedFactoryId: initialSelectedFactory,
+    droneOwners: {},
 
-  addResources: (delta, options) =>
-    set((state) => {
-      const capacityAware = options?.capacityAware ?? true;
-      const resources = mergeResourceDelta(
-        state.resources,
-        delta ?? {},
-        state.modules,
-        capacityAware,
-        state.prestige.cores,
-      );
-      return { resources };
-    }),
-
-  addOre: (amount) => get().addResources({ ore: amount }),
-
-  buy: (id) =>
-    set((state) => {
-      const definition = moduleDefinitions[id];
-      const currentLevel = state.modules[id];
-      const cost = costForLevel(definition.baseCost, currentLevel);
-      if (state.resources.bars < cost) return state;
-      const resources: Resources = { ...state.resources, bars: state.resources.bars - cost };
-      const modules: Modules = { ...state.modules, [id]: currentLevel + 1 };
-      return { resources, modules };
-    }),
-
-  tick: (dt) => {
-    if (dt <= 0) return;
-    get().processRefinery(dt);
-  },
-
-  processRefinery: (dt) => {
-    if (dt <= 0) return emptyRefineryStats;
-    const state = get();
-    const stats = computeRefineryProduction(state, dt);
-    if (stats.oreConsumed <= 0 && stats.barsProduced <= 0) {
-      return emptyRefineryStats;
-    }
-    set(applyRefineryProduction(state, stats));
-    return stats;
-  },
-
-  prestigeReady: () => get().resources.bars >= PRESTIGE_THRESHOLD,
-
-  preview: () => computePrestigeGain(get().resources.bars),
-
-  doPrestige: () =>
-    set((state) => {
-      if (state.resources.bars < PRESTIGE_THRESHOLD) return state;
-      const gain = computePrestigeGain(state.resources.bars);
-      const prestige = { cores: state.prestige.cores + gain };
-      return {
-        prestige,
-        resources: { ...initialResources, energy: BASE_ENERGY_CAP },
-        modules: { ...initialModules },
-        droneFlights: [],
-      };
-    }),
-
-  setLastSave: (timestamp) => set((state) => ({ save: { ...state.save, lastSave: timestamp } })),
-
-  updateSettings: (patch) =>
-    set((state) => ({ settings: normalizeSettings({ ...state.settings, ...patch }) })),
-
-  setSelectedAsteroid: (asteroidId) => set(() => ({ selectedAsteroidId: asteroidId })),
-
-  toggleInspector: () =>
-    set((state) => ({
-      settings: normalizeSettings({
-        ...state.settings,
-        inspectorCollapsed: !state.settings.inspectorCollapsed,
+    addResources: (delta, options) =>
+      set((state) => {
+        const capacityAware = options?.capacityAware ?? true;
+        const resources = mergeResourceDelta(
+          state.resources,
+          delta ?? {},
+          state.modules,
+          capacityAware,
+          state.prestige.cores,
+        );
+        return { resources };
       }),
-    })),
 
-  applySnapshot: (snapshot) =>
-    set(() => {
-      const normalized = normalizeSnapshot(snapshot);
-      const save = { ...normalized.save, version: SAVE_VERSION };
-      const restoredFactories =
-        normalized.factories && normalized.factories.length > 0
-          ? normalized.factories.map(snapshotToFactory)
-          : createDefaultFactories();
-      return {
-        resources: normalized.resources,
-        modules: normalized.modules,
-        prestige: normalized.prestige,
-        save,
-        settings: normalized.settings,
-        rngSeed: normalized.rngSeed ?? generateSeed(),
-        droneFlights: normalized.droneFlights ?? [],
-        factories: restoredFactories,
-        factoryProcessSequence: deriveProcessSequence(restoredFactories),
-        factoryRoundRobin: 0,
-        factoryAutofitSequence: 0,
-        selectedAsteroidId: null,
-      };
-    }),
+    addOre: (amount) => get().addResources({ ore: amount }),
 
-  exportState: () => stringifySnapshot(serializeStore(get())),
+    buy: (id) =>
+      set((state) => {
+        const definition = moduleDefinitions[id];
+        const currentLevel = state.modules[id];
+        const cost = costForLevel(definition.baseCost, currentLevel);
+        if (state.resources.bars < cost) return state;
+        const resources: Resources = { ...state.resources, bars: state.resources.bars - cost };
+        const modules: Modules = { ...state.modules, [id]: currentLevel + 1 };
+        return { resources, modules };
+      }),
 
-  importState: (payload) => {
-    const snapshot = parseSnapshot(payload);
-    if (!snapshot) {
-      return false;
-    }
-    get().applySnapshot(snapshot);
-    return true;
-  },
+    tick: (dt) => {
+      if (dt <= 0) return;
+      get().processRefinery(dt);
+    },
 
-  recordDroneFlight: (flight) =>
-    set((state) => {
-      const snapshot = cloneDroneFlight(flight);
-      const remaining = state.droneFlights.filter((entry) => entry.droneId !== snapshot.droneId);
-      return { droneFlights: [...remaining, snapshot] };
-    }),
+    processRefinery: (dt) => {
+      if (dt <= 0) return emptyRefineryStats;
+      const state = get();
+      const stats = computeRefineryProduction(state, dt);
+      if (stats.oreConsumed <= 0 && stats.barsProduced <= 0) {
+        return emptyRefineryStats;
+      }
+      set(applyRefineryProduction(state, stats));
+      return stats;
+    },
 
-  clearDroneFlight: (droneId) =>
-    set((state) => ({
-      droneFlights: state.droneFlights.filter((entry) => entry.droneId !== droneId),
-    })),
+    prestigeReady: () => get().resources.bars >= PRESTIGE_THRESHOLD,
 
-  addFactory: (factory) =>
-    set((state) => ({
-      factories: [...state.factories, cloneFactory(factory)],
-    })),
+    preview: () => computePrestigeGain(get().resources.bars),
 
-  removeFactory: (factoryId) =>
-    set((state) => ({
-      factories: state.factories.filter((f) => f.id !== factoryId),
-    })),
+    doPrestige: () =>
+      set((state) => {
+        if (state.resources.bars < PRESTIGE_THRESHOLD) return state;
+        const gain = computePrestigeGain(state.resources.bars);
+        const prestige = { cores: state.prestige.cores + gain };
+        return {
+          prestige,
+          resources: { ...initialResources, energy: BASE_ENERGY_CAP },
+          modules: { ...initialModules },
+          droneFlights: [],
+        };
+      }),
 
-  getFactory: (factoryId) => {
-    const state = get();
-    return state.factories.find((f) => f.id === factoryId);
-  },
+    setLastSave: (timestamp) => set((state) => ({ save: { ...state.save, lastSave: timestamp } })),
 
-  purchaseFactory: () => {
-    const state = get();
-    const purchaseIndex = Math.max(0, state.factories.length - 1);
-    const cost = computeFactoryCost(purchaseIndex);
-    if (state.resources.metals < cost.metals || state.resources.crystals < cost.crystals) {
-      return false;
-    }
-    const id = `factory-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-    const position = computeFactoryPlacement(state.factories);
-    const factory = createFactory(id, position);
-    set((current) => ({
-      resources: {
-        ...current.resources,
-        metals: current.resources.metals - cost.metals,
-        crystals: current.resources.crystals - cost.crystals,
-      },
-      factories: [...current.factories, factory],
-      factoryAutofitSequence: current.factoryAutofitSequence + 1,
-    }));
-    return true;
-  },
+    updateSettings: (patch) =>
+      set((state) => ({ settings: normalizeSettings({ ...state.settings, ...patch }) })),
 
-  toggleFactoryPinned: (factoryId) =>
-    set((state) => ({
-      factories: state.factories.map((factory) =>
-        factory.id === factoryId ? { ...cloneFactory(factory), pinned: !factory.pinned } : factory,
-      ),
-    })),
+    setSelectedAsteroid: (asteroidId) => set(() => ({ selectedAsteroidId: asteroidId })),
 
-  setFactoryPinned: (factoryId, pinned) =>
-    set((state) => ({
-      factories: state.factories.map((factory) =>
-        factory.id === factoryId ? { ...cloneFactory(factory), pinned } : factory,
-      ),
-    })),
+    toggleInspector: () =>
+      set((state) => ({
+        settings: normalizeSettings({
+          ...state.settings,
+          inspectorCollapsed: !state.settings.inspectorCollapsed,
+        }),
+      })),
 
-  nextFactoryRoundRobin: () => {
-    let currentValue = 0;
-    set((state) => {
-      currentValue = state.factoryRoundRobin;
-      return { factoryRoundRobin: state.factoryRoundRobin + 1 };
-    });
-    return currentValue;
-  },
+    setSelectedFactory: (factoryId) => set(() => ({ selectedFactoryId: factoryId })),
 
-  dockDroneAtFactory: (factoryId, droneId) => {
-    const state = get();
-    const index = state.factories.findIndex((f) => f.id === factoryId);
-    if (index === -1) return false;
-    const base = state.factories[index];
-    if (base.queuedDrones.includes(droneId)) {
+    cycleSelectedFactory: (direction) =>
+      set((state) => {
+        const total = state.factories.length;
+        if (total === 0) {
+          return { selectedFactoryId: null };
+        }
+        const currentIndex = state.factories.findIndex(
+          (factory) => factory.id === state.selectedFactoryId,
+        );
+        const baseIndex = currentIndex === -1 ? 0 : currentIndex;
+        const nextIndex = (baseIndex + direction + total) % total;
+        return { selectedFactoryId: state.factories[nextIndex]?.id ?? null };
+      }),
+
+    applySnapshot: (snapshot) =>
+      set(() => {
+        const normalized = normalizeSnapshot(snapshot);
+        const save = { ...normalized.save, version: SAVE_VERSION };
+        const restoredFactories =
+          normalized.factories && normalized.factories.length > 0
+            ? normalized.factories.map(snapshotToFactory)
+            : createDefaultFactories();
+        const restoredRng =
+          typeof normalized.rngSeed === 'number' && Number.isFinite(normalized.rngSeed)
+            ? normalized.rngSeed
+            : generateSeed();
+        const selectedFactoryId =
+          normalized.selectedFactoryId &&
+          restoredFactories.some((factory) => factory.id === normalized.selectedFactoryId)
+            ? normalized.selectedFactoryId
+            : (restoredFactories[0]?.id ?? null);
+        return {
+          resources: normalizeResources(normalized.resources),
+          modules: normalizeModules(normalized.modules),
+          prestige: normalizePrestige(normalized.prestige),
+          save,
+          settings: normalizeSettings(normalized.settings),
+          rngSeed: restoredRng,
+          droneFlights: (normalized.droneFlights ?? []).map(cloneDroneFlight),
+          factories: restoredFactories,
+          factoryProcessSequence: deriveProcessSequence(restoredFactories),
+          factoryRoundRobin: 0,
+          factoryAutofitSequence: 0,
+          selectedAsteroidId: null,
+          selectedFactoryId,
+          droneOwners: normalizeDroneOwners(normalized.droneOwners ?? {}),
+        };
+      }),
+
+    exportState: () => stringifySnapshot(serializeStore(get())),
+
+    importState: (payload) => {
+      const snapshot = parseSnapshot(payload);
+      if (!snapshot) {
+        return false;
+      }
+      get().applySnapshot(snapshot);
       return true;
-    }
-    const updated = cloneFactory(base);
-    const success = attemptDockDrone(updated, droneId);
-    if (!success) {
-      return false;
-    }
-    set((current) => ({
-      factories: current.factories.map((factory, idx) => (idx === index ? updated : factory)),
-    }));
-    return true;
-  },
+    },
 
-  undockDroneFromFactory: (factoryId, droneId) => {
-    const state = get();
-    const index = state.factories.findIndex((f) => f.id === factoryId);
-    if (index === -1) {
-      return;
-    }
-    const updated = cloneFactory(state.factories[index]);
-    removeDroneFromFactory(updated, droneId);
-    set((current) => ({
-      factories: current.factories.map((factory, idx) => (idx === index ? updated : factory)),
-    }));
-  },
+    recordDroneFlight: (flight) =>
+      set((state) => {
+        const snapshot = cloneDroneFlight(flight);
+        const remaining = state.droneFlights.filter((entry) => entry.droneId !== snapshot.droneId);
+        return { droneFlights: [...remaining, snapshot] };
+      }),
 
-  transferOreToFactory: (factoryId, amount) => {
-    const state = get();
-    const index = state.factories.findIndex((f) => f.id === factoryId);
-    if (index === -1) return 0;
-    const updated = cloneFactory(state.factories[index]);
-    const transferred = factoryTransferOre(updated, amount);
-    set((current) => ({
-      factories: current.factories.map((factory, idx) => (idx === index ? updated : factory)),
-    }));
-    return transferred;
-  },
+    clearDroneFlight: (droneId) =>
+      set((state) => ({
+        droneFlights: state.droneFlights.filter((entry) => entry.droneId !== droneId),
+      })),
 
-  processFactories: (dt) => {
-    if (dt <= 0 || get().factories.length === 0) return;
+    addFactory: (factory) =>
+      set((state) => ({
+        factories: [...state.factories, cloneFactory(factory)],
+      })),
 
-    set((state) => {
-      let totalEnergyDrain = 0;
-      let totalRefinedOre = 0;
-      let processesStarted = 0;
-
-      const modifiers = getResourceModifiers(state.resources, state.prestige.cores);
-      const capacity = getEnergyCapacity(state.modules, modifiers);
-
-      const updatedFactories = state.factories.map((factory) => {
-        const working = cloneFactory(factory);
-
-        totalEnergyDrain += working.idleEnergyPerSec * dt;
-
-        while (working.currentStorage > 0 && working.activeRefines.length < working.refineSlots) {
-          const slotTarget = Math.max(1, working.refineSlots);
-          const batchSize = Math.min(
-            working.currentStorage,
-            Math.max(10, working.storageCapacity / slotTarget),
-          );
-          const processId = `${working.id}-p${state.factoryProcessSequence + processesStarted + 1}`;
-          const started = startRefineProcess(working, 'ore', batchSize, processId);
-          if (!started) {
-            break;
-          }
-          processesStarted += 1;
-        }
-
-        enforceMinOneRefining(working, Math.max(0, state.resources.energy), capacity);
-
-        for (let i = working.activeRefines.length - 1; i >= 0; i -= 1) {
-          const process = working.activeRefines[i];
-          totalEnergyDrain += working.energyPerRefine * dt * process.speedMultiplier;
-          const refined = tickRefineProcess(working, process, dt);
-          if (refined > 0) {
-            totalRefinedOre += refined;
+    removeFactory: (factoryId) =>
+      set((state) => {
+        const factories = state.factories.filter((f) => f.id !== factoryId);
+        const droneOwners = { ...state.droneOwners };
+        for (const [droneId, owner] of Object.entries(droneOwners)) {
+          if (owner === factoryId) {
+            droneOwners[droneId] = null;
           }
         }
+        const selectedFactoryId =
+          state.selectedFactoryId === factoryId
+            ? (factories[0]?.id ?? null)
+            : state.selectedFactoryId;
+        return { factories, droneOwners, selectedFactoryId };
+      }),
 
-        return working;
+    getFactory: (factoryId) => {
+      const state = get();
+      return state.factories.find((f) => f.id === factoryId);
+    },
+
+    purchaseFactory: () => {
+      const state = get();
+      const purchaseIndex = Math.max(0, state.factories.length - 1);
+      const cost = computeFactoryCost(purchaseIndex);
+      if (state.resources.metals < cost.metals || state.resources.crystals < cost.crystals) {
+        return false;
+      }
+      const id = `factory-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+      const position = computeFactoryPlacement(state.factories);
+      const factory = createFactory(id, position);
+      set((current) => ({
+        resources: {
+          ...current.resources,
+          metals: current.resources.metals - cost.metals,
+          crystals: current.resources.crystals - cost.crystals,
+        },
+        factories: [...current.factories, factory],
+        factoryAutofitSequence: current.factoryAutofitSequence + 1,
+        selectedFactoryId: factory.id,
+      }));
+      return true;
+    },
+
+    toggleFactoryPinned: (factoryId) =>
+      set((state) => ({
+        factories: state.factories.map((factory) =>
+          factory.id === factoryId
+            ? { ...cloneFactory(factory), pinned: !factory.pinned }
+            : factory,
+        ),
+      })),
+
+    setFactoryPinned: (factoryId, pinned) =>
+      set((state) => ({
+        factories: state.factories.map((factory) =>
+          factory.id === factoryId ? { ...cloneFactory(factory), pinned } : factory,
+        ),
+      })),
+
+    nextFactoryRoundRobin: () => {
+      let currentValue = 0;
+      set((state) => {
+        currentValue = state.factoryRoundRobin;
+        return { factoryRoundRobin: state.factoryRoundRobin + 1 };
       });
+      return currentValue;
+    },
 
-      const energy = Math.max(0, state.resources.energy - totalEnergyDrain);
-      const ore = Math.max(0, state.resources.ore + totalRefinedOre);
+    dockDroneAtFactory: (factoryId, droneId) => {
+      const state = get();
+      const index = state.factories.findIndex((f) => f.id === factoryId);
+      if (index === -1) return 'queued';
+      const base = state.factories[index];
+      const updated = cloneFactory(base);
+      const result = attemptDockDrone(updated, droneId);
+      if (result === 'exists') {
+        return base.queuedDrones.indexOf(droneId) < base.dockingCapacity ? 'docking' : 'queued';
+      }
+      set((current) => ({
+        factories: current.factories.map((factory, idx) => (idx === index ? updated : factory)),
+      }));
+      return result;
+    },
 
-      return {
-        resources: { ...state.resources, energy, ore },
-        factories: updatedFactories,
-        factoryProcessSequence: state.factoryProcessSequence + processesStarted,
-      };
-    });
-  },
+    undockDroneFromFactory: (factoryId, droneId, options) => {
+      const state = get();
+      const index = state.factories.findIndex((f) => f.id === factoryId);
+      if (index === -1) {
+        return;
+      }
+      const updated = cloneFactory(state.factories[index]);
+      removeDroneFromFactory(updated, droneId);
 
-  triggerFactoryAutofit: () =>
-    set((state) => ({ factoryAutofitSequence: state.factoryAutofitSequence + 1 })),
-});
+      let nextDroneOwners = state.droneOwners;
+      let factories = state.factories;
+
+      if (options?.transferOwnership) {
+        const previousOwnerId = state.droneOwners[droneId];
+        nextDroneOwners = { ...state.droneOwners, [droneId]: factoryId };
+
+        factories = state.factories.map((factory, idx) => {
+          const working = cloneFactory(factory);
+          if (working.ownedDrones.includes(droneId)) {
+            working.ownedDrones = working.ownedDrones.filter((id) => id !== droneId);
+          }
+          return idx === index
+            ? {
+                ...updated,
+                ownedDrones: Array.from(
+                  new Set([...updated.ownedDrones.filter((id) => id !== droneId), droneId]),
+                ),
+              }
+            : working;
+        });
+
+        if (previousOwnerId && previousOwnerId !== factoryId) {
+          factories = factories.map((factory) =>
+            factory.id === previousOwnerId
+              ? { ...factory, ownedDrones: factory.ownedDrones.filter((id) => id !== droneId) }
+              : factory,
+          );
+        }
+      } else {
+        factories = state.factories.map((factory, idx) => (idx === index ? updated : factory));
+      }
+
+      set(() => ({ factories, droneOwners: nextDroneOwners }));
+    },
+
+    transferOreToFactory: (factoryId, amount) => {
+      const state = get();
+      const index = state.factories.findIndex((f) => f.id === factoryId);
+      if (index === -1) return 0;
+      const updated = cloneFactory(state.factories[index]);
+      const transferred = factoryTransferOre(updated, amount);
+      set((current) => ({
+        factories: current.factories.map((factory, idx) => (idx === index ? updated : factory)),
+      }));
+      return transferred;
+    },
+
+    addResourcesToFactory: (factoryId, delta) => {
+      if (!delta) return;
+      set((state) => {
+        const index = state.factories.findIndex((f) => f.id === factoryId);
+        if (index === -1) {
+          return {};
+        }
+        const updated = cloneFactory(state.factories[index]);
+        const keys: (keyof FactoryResources)[] = [
+          'ore',
+          'bars',
+          'metals',
+          'crystals',
+          'organics',
+          'ice',
+          'credits',
+        ];
+        const globalDelta: Partial<Resources> = {};
+        let changed = false;
+        for (const key of keys) {
+          const amount = delta[key];
+          if (typeof amount !== 'number' || !Number.isFinite(amount) || amount === 0) {
+            continue;
+          }
+          const nextValue = Math.max(0, (updated.resources[key] ?? 0) + amount);
+          updated.resources[key] = nextValue;
+          if (key === 'ore') {
+            updated.currentStorage = updated.resources.ore;
+          } else if (key in state.resources) {
+            const resourceKey = key as keyof Resources;
+            globalDelta[resourceKey] = (globalDelta[resourceKey] ?? 0) + amount;
+          }
+          changed = true;
+        }
+        if (!changed) {
+          return {};
+        }
+        const factories = state.factories.map((factory, idx) =>
+          idx === index ? updated : factory,
+        );
+        const resources =
+          Object.keys(globalDelta).length > 0
+            ? mergeResourceDelta(
+                state.resources,
+                globalDelta,
+                state.modules,
+                false,
+                state.prestige.cores,
+              )
+            : state.resources;
+        return { factories, resources };
+      });
+    },
+
+    allocateFactoryEnergy: (factoryId, amount) => {
+      const requested = Math.max(0, amount);
+      if (requested <= 0) {
+        return 0;
+      }
+      let granted = 0;
+      set((state) => {
+        const index = state.factories.findIndex((f) => f.id === factoryId);
+        if (index === -1) {
+          return {};
+        }
+        const availableGlobal = Math.max(0, state.resources.energy);
+        if (availableGlobal <= 0) {
+          return {};
+        }
+        const updated = cloneFactory(state.factories[index]);
+        const availableCapacity = Math.max(0, updated.energyCapacity - updated.energy);
+        if (availableCapacity <= 0) {
+          return {};
+        }
+        const applied = Math.min(requested, availableCapacity, availableGlobal);
+        if (applied <= 0) {
+          return {};
+        }
+        updated.energy += applied;
+        granted = applied;
+        const factories = state.factories.map((factory, idx) =>
+          idx === index ? updated : factory,
+        );
+        const resources = {
+          ...state.resources,
+          energy: Math.max(0, state.resources.energy - applied),
+        };
+        return { factories, resources };
+      });
+      return granted;
+    },
+
+    upgradeFactory: (factoryId, upgrade) => {
+      const state = get();
+      const index = state.factories.findIndex((f) => f.id === factoryId);
+      if (index === -1) {
+        return false;
+      }
+      const definition = factoryUpgradeDefinitions[upgrade];
+      if (!definition) {
+        return false;
+      }
+      const base = state.factories[index];
+      const level = base.upgrades[upgrade];
+      const cost = computeFactoryUpgradeCost(upgrade, level);
+      for (const [key, value] of Object.entries(cost) as [keyof FactoryResources, number][]) {
+        if (value > 0 && (base.resources[key] ?? 0) < value) {
+          return false;
+        }
+      }
+      const updated = cloneFactory(base);
+      const globalDelta: Partial<Resources> = {};
+      for (const [key, value] of Object.entries(cost) as [keyof FactoryResources, number][]) {
+        if (value <= 0) continue;
+        updated.resources[key] = Math.max(0, (updated.resources[key] ?? 0) - value);
+        if (key === 'ore') {
+          updated.currentStorage = updated.resources.ore;
+        } else if (key in state.resources) {
+          const resourceKey = key as keyof Resources;
+          globalDelta[resourceKey] = (globalDelta[resourceKey] ?? 0) - value;
+        }
+      }
+      definition.apply(updated);
+      set((current) => {
+        const factories = current.factories.map((factory, idx) =>
+          idx === index ? updated : factory,
+        );
+        const resources =
+          Object.keys(globalDelta).length > 0
+            ? mergeResourceDelta(
+                current.resources,
+                globalDelta,
+                current.modules,
+                false,
+                current.prestige.cores,
+              )
+            : current.resources;
+        return { factories, resources };
+      });
+      return true;
+    },
+
+    processFactories: (dt) => {
+      if (dt <= 0 || get().factories.length === 0) return;
+
+      set((state) => {
+        let processesStarted = 0;
+        let remainingEnergy = Math.max(0, state.resources.energy);
+        let totalBarsProduced = 0;
+
+        const updatedFactories = state.factories.map((factory) => {
+          const working = cloneFactory(factory);
+
+          const energyNeeded = Math.max(0, working.energyCapacity - working.energy);
+          if (energyNeeded > 0 && remainingEnergy > 0) {
+            const pulled = Math.min(energyNeeded, remainingEnergy);
+            working.energy += pulled;
+            remainingEnergy -= pulled;
+          }
+
+          const idleDrain = working.idleEnergyPerSec * dt;
+          if (idleDrain > 0) {
+            working.energy = Math.max(0, working.energy - idleDrain);
+          }
+
+          while (
+            working.resources.ore > 0 &&
+            working.activeRefines.length < working.refineSlots &&
+            working.energy > 0
+          ) {
+            const slotTarget = Math.max(1, working.refineSlots);
+            const batchSize = Math.min(
+              working.resources.ore,
+              Math.max(10, working.storageCapacity / slotTarget),
+            );
+            const processId = `${working.id}-p${state.factoryProcessSequence + processesStarted + 1}`;
+            const started = startRefineProcess(working, 'ore', batchSize, processId);
+            if (!started) {
+              break;
+            }
+            processesStarted += 1;
+          }
+
+          if (working.activeRefines.length > 0) {
+            enforceMinOneRefining(working, working.energy, working.energyCapacity);
+          }
+
+          for (let i = working.activeRefines.length - 1; i >= 0; i -= 1) {
+            const process = working.activeRefines[i];
+            const drain = working.energyPerRefine * dt * process.speedMultiplier;
+            const consumed = Math.min(drain, working.energy);
+            working.energy = Math.max(0, working.energy - consumed);
+            const refined = tickRefineProcess(working, process, dt);
+            if (refined > 0) {
+              working.resources.bars += refined;
+              totalBarsProduced += refined;
+            }
+          }
+
+          working.currentStorage = working.resources.ore;
+
+          return working;
+        });
+
+        const resources = {
+          ...state.resources,
+          energy: remainingEnergy,
+          bars: state.resources.bars + totalBarsProduced,
+        };
+
+        return {
+          resources,
+          factories: updatedFactories,
+          factoryProcessSequence: state.factoryProcessSequence + processesStarted,
+        };
+      });
+    },
+
+    triggerFactoryAutofit: () =>
+      set((state) => ({ factoryAutofitSequence: state.factoryAutofitSequence + 1 })),
+  };
+};
 
 export const createStoreInstance = () => createVanillaStore<StoreState>(storeCreator);
 
