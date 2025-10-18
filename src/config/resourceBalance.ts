@@ -7,10 +7,10 @@ export type BalancedResource = 'metals' | 'crystals' | 'organics' | 'ice';
 
 // Base values without prestige bonuses
 export const RESOURCE_BALANCE: Record<BalancedResource, ResourceBalanceEntry> = {
-  metals: { cap: 0.3, scale: 10 },
-  crystals: { cap: 0.25, scale: 5 },
-  organics: { cap: 0.4, scale: 8 },
-  ice: { cap: 0.35, scale: 6 },
+  metals: { cap: 0.3, scale: 1000 },
+  crystals: { cap: 0.25, scale: 5000 },
+  organics: { cap: 0.4, scale: 8000 },
+  ice: { cap: 0.35, scale: 6000 },
 };
 
 /**
