@@ -9,6 +9,12 @@ export interface AutofitConfig {
   easeTime: number; // smoothing duration in seconds
 }
 
+export const DEFAULT_AUTOFIT_CONFIG: AutofitConfig = {
+  margin: 6,
+  maxZoom: 2.5,
+  easeTime: 0.5,
+};
+
 /**
  * Compute bounding box for a set of positions.
  * Returns { min, max, center, radius }.

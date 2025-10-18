@@ -7,15 +7,9 @@ import type { BuildableFactory } from '../ecs/factories';
 import {
   computeAutofitCamera,
   lerpCameraState,
-  type AutofitConfig,
+  DEFAULT_AUTOFIT_CONFIG,
   type CameraState,
 } from '../lib/camera';
-
-const DEFAULT_CONFIG: AutofitConfig = {
-  margin: 6,
-  maxZoom: 2.5,
-  easeTime: 0.5,
-};
 
 /**
  * Hook to manage camera autofit for factories.
@@ -53,7 +47,7 @@ export const useFactoryAutofit = () => {
     const positions = factories.map((f) => new Vector3(f.position.x, f.position.y, f.position.z));
     const aspect = size.width / size.height;
     const fov = 'fov' in perspCamera ? perspCamera.fov : 52;
-    const targetState = computeAutofitCamera(positions, DEFAULT_CONFIG, fov, aspect);
+    const targetState = computeAutofitCamera(positions, DEFAULT_AUTOFIT_CONFIG, fov, aspect);
 
     if (!targetState) return;
 
@@ -64,7 +58,7 @@ export const useFactoryAutofit = () => {
       if (!lerpStartTime.current || !previousCameraState.current || !targetState) return;
 
       const elapsed = (Date.now() - lerpStartTime.current) / 1000;
-      const progress = Math.min(1, elapsed / DEFAULT_CONFIG.easeTime);
+      const progress = Math.min(1, elapsed / DEFAULT_AUTOFIT_CONFIG.easeTime);
 
       const newState = lerpCameraState(previousCameraState.current, targetState, progress);
       perspCamera.position.copy(newState.position);
