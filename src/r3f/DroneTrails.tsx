@@ -22,8 +22,13 @@ export const DroneTrails = () => {
     if (!line) return;
     line.frustumCulled = false;
     const geometry = line.geometry;
-    geometry.setAttribute('position', new BufferAttribute(buffer.positions, 3));
-    geometry.setAttribute('color', new BufferAttribute(buffer.colors, 3));
+    // Ensure attributes exist immediately on mount to avoid race conditions
+    const existingPos = geometry.getAttribute('position') as BufferAttribute | undefined;
+    const existingColor = geometry.getAttribute('color') as BufferAttribute | undefined;
+    if (!existingPos) geometry.setAttribute('position', new BufferAttribute(buffer.positions, 3));
+    else if (existingPos.array !== buffer.positions) existingPos.array = buffer.positions;
+    if (!existingColor) geometry.setAttribute('color', new BufferAttribute(buffer.colors, 3));
+    else if (existingColor.array !== buffer.colors) existingColor.array = buffer.colors;
   }, [buffer]);
 
   useFrame(() => {
@@ -31,10 +36,22 @@ export const DroneTrails = () => {
     if (!line) return;
     const geometry = line.geometry;
     buffer.update(droneQuery.entities);
-    const positionAttr = geometry.getAttribute('position') as BufferAttribute;
-    const colorAttr = geometry.getAttribute('color') as BufferAttribute;
-    positionAttr.needsUpdate = true;
-    colorAttr.needsUpdate = true;
+    let positionAttr = geometry.getAttribute('position') as BufferAttribute | undefined;
+    let colorAttr = geometry.getAttribute('color') as BufferAttribute | undefined;
+
+    // If attributes are missing (race/HMR/edge case), recreate them so we can update safely
+    if (!positionAttr) {
+      geometry.setAttribute('position', new BufferAttribute(buffer.positions, 3));
+      positionAttr = geometry.getAttribute('position') as BufferAttribute;
+    }
+    if (!colorAttr) {
+      geometry.setAttribute('color', new BufferAttribute(buffer.colors, 3));
+      colorAttr = geometry.getAttribute('color') as BufferAttribute;
+    }
+
+    // Only set needsUpdate when the attribute exists
+    if (positionAttr) positionAttr.needsUpdate = true;
+    if (colorAttr) colorAttr.needsUpdate = true;
     geometry.setDrawRange(0, buffer.vertexCount);
     if (buffer.vertexCount > 0 && !geometry.boundingSphere) {
       geometry.computeBoundingSphere();
