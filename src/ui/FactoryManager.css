@@ -1,36 +1,36 @@
 .factory-panel {
-  padding: 1rem;
+  padding: var(--panel-padding-y) var(--panel-padding-x);
   border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 0.5rem;
+  border-radius: var(--card-radius);
   background: rgba(15, 23, 42, 0.72);
 }
 
 .factory-panel h3 {
   margin-top: 0;
   margin-bottom: 0.5rem;
-  font-size: 1.1rem;
+  font-size: var(--panel-heading-size);
 }
 
 .factory-panel p {
   margin: 0.25rem 0;
-  font-size: 0.9rem;
+  font-size: clamp(0.78rem, 0.72rem + 0.18vw, 0.9rem);
   color: #cbd5f5;
 }
 
 .factory-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  gap: clamp(0.4rem, 0.3rem + 0.2vw, 0.6rem);
+  margin-bottom: clamp(0.45rem, 0.35rem + 0.2vw, 0.6rem);
 }
 
 .factory-actions button {
-  padding: 0.35rem 0.6rem;
-  border-radius: 0.25rem;
+  padding: clamp(0.3rem, 0.25rem + 0.15vw, 0.45rem) clamp(0.5rem, 0.45rem + 0.25vw, 0.7rem);
+  border-radius: clamp(0.3rem, 0.25rem + 0.1vw, 0.45rem);
   border: 1px solid rgba(59, 130, 246, 0.4);
   background: rgba(37, 99, 235, 0.18);
   color: #bfdbfe;
-  font-size: 0.75rem;
+  font-size: clamp(0.68rem, 0.64rem + 0.14vw, 0.8rem);
   cursor: pointer;
 }
 
@@ -41,28 +41,29 @@
 }
 
 .factory-buy {
-  margin: 0.75rem 0;
-  padding: 0.5rem;
+  margin: clamp(0.6rem, 0.45rem + 0.25vw, 0.85rem) 0;
+  padding: clamp(0.4rem, 0.3rem + 0.2vw, 0.6rem);
   background: rgba(30, 41, 59, 0.6);
   border: 1px solid rgba(148, 163, 184, 0.25);
-  border-radius: 0.25rem;
+  border-radius: clamp(0.3rem, 0.25rem + 0.1vw, 0.45rem);
 }
 
 .factory-buy .cost {
   margin-bottom: 0.5rem;
-  font-size: 0.85rem;
+  font-size: clamp(0.74rem, 0.68rem + 0.16vw, 0.86rem);
   color: #cbd5f5;
 }
 
 .buy-factory-btn {
   width: 100%;
-  padding: 0.5rem;
+  padding: clamp(0.45rem, 0.35rem + 0.2vw, 0.65rem);
   background: #4a90e2;
   color: white;
   border: none;
-  border-radius: 0.25rem;
+  border-radius: clamp(0.35rem, 0.3rem + 0.1vw, 0.45rem);
   cursor: pointer;
   font-weight: bold;
+  font-size: clamp(0.78rem, 0.72rem + 0.18vw, 0.92rem);
 }
 
 .buy-factory-btn:hover:not(:disabled) {
@@ -75,12 +76,12 @@
 }
 
 .factory-card {
-  margin-bottom: 0.75rem;
-  padding: 0.5rem;
+  margin-bottom: clamp(0.6rem, 0.45rem + 0.25vw, 0.85rem);
+  padding: clamp(0.45rem, 0.35rem + 0.2vw, 0.65rem);
   background: rgba(15, 23, 42, 0.9);
   border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 0.25rem;
-  font-size: 0.8rem;
+  border-radius: clamp(0.3rem, 0.25rem + 0.1vw, 0.45rem);
+  font-size: clamp(0.74rem, 0.68rem + 0.18vw, 0.88rem);
 }
 
 .factory-card.selected {
@@ -91,22 +92,22 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: clamp(0.4rem, 0.3rem + 0.2vw, 0.6rem);
 }
 
 .factory-card-meta {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: clamp(0.35rem, 0.3rem + 0.15vw, 0.55rem);
 }
 
 .factory-card-title {
-  font-size: 0.95rem;
+  font-size: clamp(0.85rem, 0.8rem + 0.18vw, 0.98rem);
   font-weight: 600;
 }
 
 .factory-card-index {
-  font-size: 0.75rem;
+  font-size: clamp(0.66rem, 0.6rem + 0.14vw, 0.78rem);
   color: #94a3b8;
 }
 
@@ -114,9 +115,9 @@
   border: none;
   background: transparent;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: clamp(0.82rem, 0.78rem + 0.12vw, 0.95rem);
   line-height: 1;
-  padding: 0.1rem 0.2rem;
+  padding: clamp(0.08rem, 0.06rem + 0.05vw, 0.12rem) clamp(0.16rem, 0.14rem + 0.05vw, 0.22rem);
 }
 
 .pin-button:focus {
@@ -127,14 +128,14 @@
 .factory-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  gap: clamp(0.6rem, 0.5rem + 0.2vw, 0.85rem);
+  margin-bottom: clamp(0.55rem, 0.45rem + 0.2vw, 0.8rem);
   color: #e2e8f0;
 }
 
 .factory-grid h4 {
   margin: 0 0 0.25rem 0;
-  font-size: 0.85rem;
+  font-size: clamp(0.76rem, 0.7rem + 0.18vw, 0.9rem);
 }
 
 .factory-grid p {
@@ -161,11 +162,11 @@
   margin: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem;
+  gap: clamp(0.25rem, 0.2rem + 0.15vw, 0.4rem);
 }
 
 .factory-queue-item {
-  padding: 0.2rem 0.4rem;
+  padding: clamp(0.18rem, 0.15rem + 0.05vw, 0.28rem) clamp(0.32rem, 0.28rem + 0.1vw, 0.45rem);
   background: rgba(59, 130, 246, 0.12);
   border-radius: 0.2rem;
 }
@@ -176,8 +177,8 @@
 }
 
 .factory-upgrades {
-  margin-top: 0.75rem;
-  padding-top: 0.5rem;
+  margin-top: clamp(0.6rem, 0.45rem + 0.25vw, 0.85rem);
+  padding-top: clamp(0.35rem, 0.25rem + 0.2vw, 0.6rem);
   border-top: 1px solid rgba(148, 163, 184, 0.18);
 }
 
@@ -185,23 +186,23 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  gap: clamp(0.4rem, 0.3rem + 0.2vw, 0.65rem);
+  margin-bottom: clamp(0.35rem, 0.25rem + 0.2vw, 0.55rem);
 }
 
 .factory-upgrade-row .desc {
-  font-size: 0.75rem;
+  font-size: clamp(0.66rem, 0.6rem + 0.14vw, 0.78rem);
   color: #94a3b8;
 }
 
 .upgrade-button {
-  padding: 0.35rem 0.6rem;
-  border-radius: 0.25rem;
+  padding: clamp(0.3rem, 0.25rem + 0.15vw, 0.45rem) clamp(0.5rem, 0.45rem + 0.25vw, 0.7rem);
+  border-radius: clamp(0.3rem, 0.25rem + 0.1vw, 0.45rem);
   border: 1px solid rgba(56, 189, 248, 0.5);
   background: rgba(14, 165, 233, 0.18);
   color: #bae6fd;
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: clamp(0.68rem, 0.64rem + 0.14vw, 0.8rem);
 }
 
 .upgrade-button:disabled {
@@ -212,7 +213,7 @@
 }
 
 .factory-roster {
-  margin-top: 0.75rem;
+  margin-top: clamp(0.6rem, 0.45rem + 0.25vw, 0.85rem);
 }
 
 .factory-roster-list {
@@ -221,18 +222,19 @@
   margin: 0;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
-  gap: 0.3rem;
+  gap: clamp(0.25rem, 0.2rem + 0.15vw, 0.4rem);
 }
 
 .factory-roster-list li {
   background: rgba(37, 99, 235, 0.14);
-  border-radius: 0.25rem;
-  padding: 0.3rem;
+  border-radius: clamp(0.3rem, 0.25rem + 0.1vw, 0.45rem);
+  padding: clamp(0.25rem, 0.2rem + 0.1vw, 0.35rem);
   text-align: center;
+  font-size: clamp(0.68rem, 0.64rem + 0.14vw, 0.8rem);
 }
 
 .factory-refines {
-  margin-top: 0.75rem;
+  margin-top: clamp(0.6rem, 0.45rem + 0.25vw, 0.85rem);
 }
 
 .factory-refines ul {
@@ -242,13 +244,13 @@
 }
 
 .factory-refines li {
-  padding: 0.2rem 0;
-  font-size: 0.75rem;
+  padding: clamp(0.18rem, 0.15rem + 0.08vw, 0.28rem) 0;
+  font-size: clamp(0.68rem, 0.64rem + 0.14vw, 0.8rem);
   color: #cbd5f5;
 }
 
 .factory-empty {
-  margin-top: 1rem;
-  font-size: 0.85rem;
+  margin-top: clamp(0.85rem, 0.7rem + 0.3vw, 1.1rem);
+  font-size: clamp(0.76rem, 0.7rem + 0.18vw, 0.92rem);
   color: #94a3b8;
 }

@@ -111,3 +111,15 @@ WHEN factories consume or receive resources, THE SYSTEM SHALL track ore, refined
 ## RQ-028 Factory Upgrade & Ownership Panel
 
 WHEN the player opens the factory management UI, THE SYSTEM SHALL provide arrow controls to cycle through factories, show the selected factory's stats, and allow buying upgrades and assigning drones that persist to whichever factory they last landed on. [Acceptance: React component test verifies arrow cycling updates the display, upgrade buttons consume per-factory currency, and docking swaps drone ownership to the most recent factory.]
+
+## RQ-029 Desktop HUD Responsiveness
+
+WHEN the browser viewport width changes between 960px and 1920px, THE SYSTEM SHALL fluidly scale HUD typography and spacing so that no HUD item overflows its container and all resource labels remain fully visible. [Acceptance: UI test or manual verification captures widths at 960px, 1280px, and 1920px showing clamped typography with zero horizontal scroll or clipped text.]
+
+## RQ-030 Panel Height Management
+
+WHEN the available viewport height is less than 900px, THE SYSTEM SHALL constrain sidebar panels to fit within the viewport and provide internal scrolling so buttons and content remain reachable without overlapping other UI. [Acceptance: Manual verification resizes the window height to 720px and confirms the sidebar introduces scroll within its bounds while the rest of the UI remains unobscured.]
+
+## RQ-031 Inspector & Sidebar Coexistence
+
+WHEN the viewport width drops below 1280px, THE SYSTEM SHALL adjust inspector and sidebar widths using clamped sizing to prevent overlap or horizontal overflow while keeping all controls visible. [Acceptance: Manual verification at 1180px width confirms the sidebar and inspector remain within the window with no clipped buttons or text.]
