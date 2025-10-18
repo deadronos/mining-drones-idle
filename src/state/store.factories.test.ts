@@ -36,6 +36,21 @@ describe('store factory integration', () => {
     expect(updated.resources.crystals).toBeCloseTo(initialCrystals - cost.crystals, 5);
   });
 
+  it('triggers an autofit sequence when a factory is purchased', () => {
+    const state = store.getState();
+    store.setState({
+      resources: {
+        ...state.resources,
+        metals: 1_000,
+        crystals: 1_000,
+      },
+    });
+
+    expect(store.getState().factoryAutofitSequence).toBe(0);
+    store.getState().purchaseFactory();
+    expect(store.getState().factoryAutofitSequence).toBe(1);
+  });
+
   it('reserves docking slots when docking a drone', () => {
     const state = store.getState();
     const factoryId = state.factories[0].id;

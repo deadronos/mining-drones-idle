@@ -5,7 +5,7 @@ import type { Vector3 } from 'three';
  */
 export interface AutofitConfig {
   margin: number; // margin around factories in world units
-  maxZoomOut: number; // maximum allowed zoom-out factor
+  maxZoom: number; // maximum allowed zoom-in value
   easeTime: number; // smoothing duration in seconds
 }
 
@@ -59,9 +59,9 @@ export const computeAutofitCamera = (
   // Compute required zoom based on radius + margin
   const requiredRadius = bb.radius + config.margin;
   // Assuming orthogonal camera with zoom: visible radius = 10 / zoom
-  // zoom = 10 / requiredRadius, but cap to maxZoomOut
-  const baseZoom = Math.max(1, 10 / requiredRadius);
-  const zoom = Math.min(baseZoom, config.maxZoomOut);
+  // zoom = 10 / requiredRadius, but cap to maxZoom
+  const baseZoom = 10 / Math.max(requiredRadius, 0.001);
+  const zoom = Math.min(baseZoom, config.maxZoom);
 
   // Camera position: center of bounding box, slightly elevated
   const position = bb.center.clone();

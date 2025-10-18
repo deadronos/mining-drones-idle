@@ -7,8 +7,8 @@ import type { BuildableFactory } from '../ecs/factories';
 import { computeAutofitCamera, lerpCameraState, type AutofitConfig } from '../lib/camera';
 
 const DEFAULT_CONFIG: AutofitConfig = {
-  margin: 5,
-  maxZoomOut: 0.5,
+  margin: 6,
+  maxZoom: 2.5,
   easeTime: 0.5,
 };
 

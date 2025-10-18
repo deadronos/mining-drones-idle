@@ -954,6 +954,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => ({
         crystals: current.resources.crystals - cost.crystals,
       },
       factories: [...current.factories, factory],
+      factoryAutofitSequence: current.factoryAutofitSequence + 1,
     }));
     return true;
   },
