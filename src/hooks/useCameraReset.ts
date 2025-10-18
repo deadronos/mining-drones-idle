@@ -37,13 +37,15 @@ export const useCameraReset = () => {
       const elapsed = (Date.now() - lerpStartTime.current) / 1000;
       const progress = Math.min(1, elapsed / ANIMATION_DURATION);
 
-      // Ease-in-out interpolation
+      // Ease-in-out interpolation using quadratic easing.
+      // Implements the "easeInOutQuad" curve:
+      //   For progress < 0.5: t = 2 * progress^2 (accelerating)
+      //   For progress >= 0.5: t = -1 + (4 - 2 * progress) * progress (decelerating)
+      // Reference: https://easings.net/#easeInOutQuad
       const t = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
 
-      const newPosition = previousPosition.current
-        .clone()
-        .lerp(initialPosition.current, t);
-      
+      const newPosition = previousPosition.current.clone().lerp(initialPosition.current, t);
+
       perspCamera.position.copy(newPosition);
       perspCamera.updateProjectionMatrix();
 

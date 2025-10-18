@@ -45,17 +45,22 @@ export const computeBoundingBox = (
 
 /**
  * Compute camera position to fit all factories with margin.
- * Returns { position, zoom } target for camera.
- * 
+ * Returns { position, distance } target for camera.
+ *
  * For perspective cameras, we calculate the distance needed to fit all
  * factories in the viewport, considering FOV and aspect ratio.
  */
+export interface CameraState {
+  position: Vector3;
+  distance?: number;
+}
+
 export const computeAutofitCamera = (
   positions: Vector3[],
   config: AutofitConfig,
   fov = 52, // field of view in degrees (default from App.tsx)
   aspect = 1.5, // aspect ratio (width/height), default approximation
-): { position: Vector3; zoom: number } | null => {
+): CameraState | null => {
   if (positions.length === 0) return null;
 
   const bb = computeBoundingBox(positions);
@@ -63,48 +68,48 @@ export const computeAutofitCamera = (
 
   // Calculate the required distance to fit the bounding sphere
   const boundingSphereRadius = bb.radius + config.margin;
-  
+
   // Convert vertical FOV to radians
   const vFOV = (fov * Math.PI) / 180;
-  
+
   // Calculate distance needed to fit sphere vertically
   const distanceVertical = boundingSphereRadius / Math.tan(vFOV / 2);
-  
+
   // Calculate horizontal FOV based on aspect ratio
   const hFOV = 2 * Math.atan(Math.tan(vFOV / 2) * aspect);
-  
+
   // Calculate distance needed to fit sphere horizontally
   const distanceHorizontal = boundingSphereRadius / Math.tan(hFOV / 2);
-  
+
   // Use the larger distance to ensure everything fits
   const distance = Math.max(distanceVertical, distanceHorizontal);
-  
+
   // Camera position: center of bounding box + offset based on viewing angle
   // Original camera setup: position: [0, 9, 22] gives an elevation angle
   // We maintain this angle but scale the distance
   const position = bb.center.clone();
-  
+
   // Original camera ratios from [0, 9, 22]
-  const originalDistance = Math.sqrt(0*0 + 9*9 + 22*22); // ≈ 23.77
+  const originalDistance = Math.sqrt(0 * 0 + 9 * 9 + 22 * 22); // ≈ 23.77
   const yRatio = 9 / originalDistance; // ≈ 0.378
   const zRatio = 22 / originalDistance; // ≈ 0.925
-  
+
   // Apply the calculated distance while maintaining the viewing angle
   position.y += distance * yRatio;
   position.z += distance * zRatio;
 
-  // Return distance as inverse 'zoom' for compatibility (not actually used for perspective camera)
-  return { position, zoom: 1 / distance };
+  return { position, distance };
 };
 
 /**
  * Lerp between two camera states with easing.
  */
-export const lerpCameraState = (
-  from: { position: Vector3; zoom: number },
-  to: { position: Vector3; zoom: number },
-  t: number,
-): { position: Vector3; zoom: number } => ({
-  position: from.position.clone().lerp(to.position, t),
-  zoom: from.zoom + (to.zoom - from.zoom) * t,
-});
+export const lerpCameraState = (from: CameraState, to: CameraState, t: number): CameraState => {
+  const position = from.position.clone().lerp(to.position, t);
+  const distance =
+    from.distance !== undefined && to.distance !== undefined
+      ? from.distance + (to.distance - from.distance) * t
+      : (to.distance ?? from.distance);
+
+  return distance !== undefined ? { position, distance } : { position };
+};

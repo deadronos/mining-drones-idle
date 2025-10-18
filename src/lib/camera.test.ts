@@ -18,8 +18,8 @@ describe('computeAutofitCamera', () => {
     const result = computeAutofitCamera(positions, CONFIG, DEFAULT_FOV, DEFAULT_ASPECT);
 
     expect(result).not.toBeNull();
-    // For widely spaced factories, camera should be far away (low zoom value)
-    expect(result?.zoom ?? 1).toBeLessThan(0.05);
+    // For widely spaced factories, camera should be far away (large distance)
+    expect(result?.distance ?? 0).toBeGreaterThan(60);
     // Camera position should be elevated and behind the center
     expect(result?.position.y).toBeGreaterThan(0);
     expect(result?.position.z).toBeGreaterThan(10);
@@ -31,8 +31,8 @@ describe('computeAutofitCamera', () => {
     const result = computeAutofitCamera(positions, CONFIG, DEFAULT_FOV, DEFAULT_ASPECT);
 
     expect(result).not.toBeNull();
-    // For clustered factories, camera can be closer (higher zoom value)
-    expect(result?.zoom ?? 0).toBeGreaterThan(0.05);
+    // For clustered factories, camera can be closer (smaller distance)
+    expect(result?.distance ?? Infinity).toBeLessThan(40);
     // But should maintain minimum distance
     expect(result?.position.z).toBeGreaterThan(8);
   });
