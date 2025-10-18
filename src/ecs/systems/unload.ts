@@ -7,9 +7,10 @@ const TRANSFER_EVENT_LIMIT = 48;
 const TRANSFER_DURATION = 0.65;
 const TRANSFER_OFFSET = new Vector3(0, 0.6, 0);
 
-const now = () => (typeof performance !== 'undefined' && typeof performance.now === 'function'
-  ? performance.now()
-  : Date.now());
+const now = () =>
+  typeof performance !== 'undefined' && typeof performance.now === 'function'
+    ? performance.now()
+    : Date.now();
 
 export const createUnloadSystem = (world: GameWorld, store: StoreApiType) => {
   const { droneQuery, factory, events } = world;
@@ -27,18 +28,32 @@ export const createUnloadSystem = (world: GameWorld, store: StoreApiType) => {
             delivered += portion;
           }
         }
-        const delta = { ...breakdown } as Partial<Resources>;
         const remainder = amount - delivered;
-        if (remainder > 1e-3) {
-          delta.ore = (delta.ore ?? 0) + remainder;
+        const oreForFactory = (breakdown.ore ?? 0) + (remainder > 1e-3 ? remainder : 0);
+        const delta = { ...breakdown } as Partial<Resources>;
+        delete delta.ore;
+
+        const state = store.getState();
+        const fallbackFactoryId = state.factories[0]?.id ?? null;
+        const targetFactoryId = drone.targetFactoryId ?? fallbackFactoryId;
+        const targetFactory = targetFactoryId ? state.getFactory(targetFactoryId) : undefined;
+        if (oreForFactory > 0) {
+          if (targetFactory) {
+            state.transferOreToFactory(targetFactory.id, oreForFactory);
+          } else {
+            state.addResources({ ore: oreForFactory });
+          }
         }
-        store.getState().addResources(delta);
+        const resourceKeys = Object.keys(delta) as (keyof Resources)[];
+        if (resourceKeys.length > 0) {
+          state.addResources(delta);
+        }
         const timestamp = now();
         const transfer = {
           id: `${drone.id}-${timestamp.toString(16)}`,
           amount,
           from: (drone.lastDockingFrom ?? drone.position).clone().add(TRANSFER_OFFSET),
-          to: factory.position.clone().add(TRANSFER_OFFSET),
+          to: (targetFactory?.position ?? factory.position).clone().add(TRANSFER_OFFSET),
           duration: TRANSFER_DURATION,
         };
         events.transfers.push(transfer);
@@ -46,6 +61,9 @@ export const createUnloadSystem = (world: GameWorld, store: StoreApiType) => {
           events.transfers.splice(0, events.transfers.length - TRANSFER_EVENT_LIMIT);
         }
         factory.activity.lastTransferAt = timestamp;
+        if (targetFactoryId) {
+          state.undockDroneFromFactory(targetFactoryId, drone.id);
+        }
       }
       drone.cargo = 0;
       for (const key of RESOURCE_KEYS) {
@@ -55,8 +73,14 @@ export const createUnloadSystem = (world: GameWorld, store: StoreApiType) => {
       drone.targetId = null;
       drone.targetRegionId = null;
       drone.travel = null;
-      drone.position.copy(factory.position);
+      const fallbackPosition = factory.position;
+      const afterState = store.getState();
+      const targetFactory = drone.targetFactoryId
+        ? afterState.getFactory(drone.targetFactoryId)
+        : afterState.factories[0];
+      drone.position.copy(targetFactory?.position ?? fallbackPosition);
       drone.lastDockingFrom = null;
+      drone.targetFactoryId = null;
     }
   };
 };

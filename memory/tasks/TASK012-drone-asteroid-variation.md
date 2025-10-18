@@ -17,6 +17,7 @@ Introduce per-drone targeting variation and minor path offsets so drones fly dif
 ## Implementation Plan
 
 Subtasks:
+
 1. Extend store snapshot/schema with `DroneFlightState` plus helpers for serializing vector data; bump save version and migrations.
 2. Implement `assignDroneTarget` with weighted random selection over nearby asteroids, generating and recording per-flight seeds.
 3. Add `computeWaypointWithOffset` utility for deterministic control-point offsets; update travel system to use seeded bezier curves.
@@ -29,13 +30,13 @@ Subtasks:
 
 ### Subtasks
 
-| ID | Description | Status | Updated | Notes |
-| -- | ----------- | ------ | ------- | ----- |
-| 1 | Store schema + migrations | Completed | 2025-10-17 | Added `droneFlights` snapshot data and migration to seed empty arrays. |
-| 2 | Target assignment variation | Completed | 2025-10-17 | Implemented weighted per-drone targeting with seeded flight state. |
-| 3 | Seeded path offsets | Completed | 2025-10-17 | Added bezier control offsets derived from deterministic seeds. |
-| 4 | ECS sync & persistence | Completed | 2025-10-17 | Synced drones with persisted flights and curved travel paths. |
-| 5 | Tests & validation | Completed | 2025-10-17 | Added unit + integration coverage and updated README/tests. |
+| ID  | Description                 | Status    | Updated    | Notes                                                                  |
+| --- | --------------------------- | --------- | ---------- | ---------------------------------------------------------------------- |
+| 1   | Store schema + migrations   | Completed | 2025-10-17 | Added `droneFlights` snapshot data and migration to seed empty arrays. |
+| 2   | Target assignment variation | Completed | 2025-10-17 | Implemented weighted per-drone targeting with seeded flight state.     |
+| 3   | Seeded path offsets         | Completed | 2025-10-17 | Added bezier control offsets derived from deterministic seeds.         |
+| 4   | ECS sync & persistence      | Completed | 2025-10-17 | Synced drones with persisted flights and curved travel paths.          |
+| 5   | Tests & validation          | Completed | 2025-10-17 | Added unit + integration coverage and updated README/tests.            |
 
 ## Progress Log
 
@@ -53,6 +54,7 @@ Subtasks:
 - Integration: Start simulation, let drones begin flights, save snapshot, reload, verify target and path offsets persisted.
 
 ## Risks / Mitigations
+
 - Migration risk: coerce missing data on import to defaults.
 - Performance: offsets computation is O(1) per waypoint and uses small RNG; should be negligible.
 

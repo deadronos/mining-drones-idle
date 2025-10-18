@@ -57,7 +57,8 @@ export const createFleetSystem = (world: GameWorld, store: StoreApiType) => {
     const target = Math.max(1, modules.droneBay);
     while (droneQuery.size < target) {
       const drone = spawnDrone(world);
-      drone.position.copy(factory.position);
+      const primaryFactory = store.getState().factories[0];
+      drone.position.copy(primaryFactory?.position ?? factory.position);
     }
     while (droneQuery.size > target) {
       const drone = droneQuery.entities[droneQuery.size - 1];

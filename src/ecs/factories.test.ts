@@ -184,7 +184,7 @@ describe('Factory Entity', () => {
       startRefineProcess(factory, 'ore', 30, 'refine-2');
 
       enforceMinOneRefining(factory, 80, 100); // 80% energy
-      factory.activeRefines.forEach(p => {
+      factory.activeRefines.forEach((p) => {
         expect(p.speedMultiplier).toBe(1);
       });
     });

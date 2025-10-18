@@ -130,7 +130,10 @@ export interface BiomeSelectionOptions {
   bias?: Partial<Record<BiomeId, number>>;
 }
 
-export const chooseBiome = (rng: RandomSource, options: BiomeSelectionOptions = {}): BiomeDefinition => {
+export const chooseBiome = (
+  rng: RandomSource,
+  options: BiomeSelectionOptions = {},
+): BiomeDefinition => {
   const definitions = listBiomes();
   let total = 0;
   const weighted = definitions.map((biome) => {
@@ -174,4 +177,5 @@ export const rollHazard = (rng: RandomSource, biome: BiomeDefinition): HazardDef
   return normalized.at(-1)?.hazard ?? null;
 };
 
-export const applyGravityModifier = (base: number, biome: BiomeDefinition) => base * biome.gravityMultiplier;
+export const applyGravityModifier = (base: number, biome: BiomeDefinition) =>
+  base * biome.gravityMultiplier;

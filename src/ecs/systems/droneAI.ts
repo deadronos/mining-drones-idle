@@ -5,6 +5,7 @@ import type { DroneFlightPhase, DroneFlightState, StoreApiType } from '@/state/s
 import type { RandomSource } from '@/lib/rng';
 import { computeWaypointWithOffset } from '@/ecs/systems/travel';
 import { getRegionById, pickRegionForDrone } from '@/ecs/biomes';
+import { findNearestAvailableFactory } from '@/ecs/factories';
 
 const nearestTemp = new Vector3();
 const midPoint = new Vector3();
@@ -95,9 +96,9 @@ const startTravel = (
   const from = drone.position.clone();
   const to = destination.clone();
   // Defensive validation: ensure vectors are finite
-  const invalidVec = (v: Vector3) => !Number.isFinite(v.x) || !Number.isFinite(v.y) || !Number.isFinite(v.z);
+  const invalidVec = (v: Vector3) =>
+    !Number.isFinite(v.x) || !Number.isFinite(v.y) || !Number.isFinite(v.z);
   if (invalidVec(from) || invalidVec(to)) {
-
     console.warn('[startTravel] invalid from/to vectors; forcing return-to-base', {
       id: drone.id,
       from: from.toArray(),
@@ -121,9 +122,7 @@ const startTravel = (
 
   if (pathSeed) {
     midPoint.copy(from).lerp(to, 0.5);
-    offset
-      .copy(computeWaypointWithOffset(midPoint, pathSeed, 0))
-      .sub(midPoint);
+    offset.copy(computeWaypointWithOffset(midPoint, pathSeed, 0)).sub(midPoint);
     direction.copy(to).sub(from);
     const magnitudeSq = direction.lengthSq();
     if (magnitudeSq > EPSILON) {
@@ -142,6 +141,8 @@ const startTravel = (
   if (phase === 'returning') {
     drone.targetId = null;
     drone.targetRegionId = null;
+  } else {
+    drone.targetFactoryId = null;
   }
   if (options?.recordDockingFrom) {
     drone.lastDockingFrom = from.clone();
@@ -151,11 +152,13 @@ const startTravel = (
 
   const targetAsteroidId = phase === 'toAsteroid' ? drone.targetId : null;
   const targetRegionId = phase === 'toAsteroid' ? drone.targetRegionId : null;
+  const targetFactoryId = phase === 'returning' ? drone.targetFactoryId : null;
   store.getState().recordDroneFlight({
     droneId: drone.id,
     state: phase,
     targetAsteroidId,
     targetRegionId,
+    targetFactoryId,
     pathSeed,
     travel: travelToSnapshot(travel),
   });
@@ -172,7 +175,9 @@ const synchronizeDroneFlight = (
       store.getState().clearDroneFlight(flight.droneId);
       return;
     }
-    const target = world.asteroidQuery.entities.find((asteroid) => asteroid.id === flight.targetAsteroidId);
+    const target = world.asteroidQuery.entities.find(
+      (asteroid) => asteroid.id === flight.targetAsteroidId,
+    );
     if (!target || target.oreRemaining <= 0) {
       store.getState().clearDroneFlight(flight.droneId);
       drone.state = 'idle';
@@ -186,12 +191,19 @@ const synchronizeDroneFlight = (
   let travel: TravelData;
   try {
     travel = snapshotToTravel(flight.travel);
-    const invalid = !travel || !Number.isFinite(travel.duration) || Number.isNaN(travel.duration) ||
-      !Number.isFinite(travel.elapsed) || Number.isNaN(travel.elapsed) ||
-      !Number.isFinite(travel.from.x) || !Number.isFinite(travel.from.y) || !Number.isFinite(travel.from.z) ||
-      !Number.isFinite(travel.to.x) || !Number.isFinite(travel.to.y) || !Number.isFinite(travel.to.z);
+    const invalid =
+      !travel ||
+      !Number.isFinite(travel.duration) ||
+      Number.isNaN(travel.duration) ||
+      !Number.isFinite(travel.elapsed) ||
+      Number.isNaN(travel.elapsed) ||
+      !Number.isFinite(travel.from.x) ||
+      !Number.isFinite(travel.from.y) ||
+      !Number.isFinite(travel.from.z) ||
+      !Number.isFinite(travel.to.x) ||
+      !Number.isFinite(travel.to.y) ||
+      !Number.isFinite(travel.to.z);
     if (invalid) {
-
       console.warn('[synchronizeDroneFlight] invalid travel snapshot; clearing flight', {
         id: flight.droneId,
         flight,
@@ -205,8 +217,10 @@ const synchronizeDroneFlight = (
       return;
     }
   } catch (err) {
-
-    console.warn('[synchronizeDroneFlight] failed to parse travel snapshot', { id: flight.droneId, err });
+    console.warn('[synchronizeDroneFlight] failed to parse travel snapshot', {
+      id: flight.droneId,
+      err,
+    });
     store.getState().clearDroneFlight(flight.droneId);
     drone.state = 'idle';
     drone.targetId = null;
@@ -225,6 +239,13 @@ const synchronizeDroneFlight = (
     return;
   }
 
+  if (flight.state === 'returning') {
+    drone.targetFactoryId = flight.targetFactoryId;
+    if (flight.targetFactoryId) {
+      store.getState().dockDroneAtFactory(flight.targetFactoryId, drone.id);
+    }
+  }
+
   drone.state = flight.state;
   drone.flightSeed = flight.pathSeed;
   drone.targetId = flight.state === 'toAsteroid' ? flight.targetAsteroidId : null;
@@ -237,7 +258,38 @@ const synchronizeDroneFlight = (
 };
 
 export const createDroneAISystem = (world: GameWorld, store: StoreApiType) => {
-  const { droneQuery, asteroidQuery, factory, rng } = world;
+  const { droneQuery, asteroidQuery, rng } = world;
+  const assignReturnFactory = (
+    drone: DroneEntity,
+  ): { targetId: string; position: Vector3 } | null => {
+    const state = store.getState();
+    if (state.factories.length === 0) {
+      drone.targetFactoryId = null;
+      return null;
+    }
+
+    if (drone.targetFactoryId) {
+      const existing = state.factories.find((item) => item.id === drone.targetFactoryId);
+      if (existing) {
+        return { targetId: existing.id, position: existing.position.clone() };
+      }
+      state.undockDroneFromFactory(drone.targetFactoryId, drone.id);
+      drone.targetFactoryId = null;
+    }
+
+    const roundRobin = state.factoryRoundRobin;
+    const assignment = findNearestAvailableFactory(state.factories, drone.position, roundRobin);
+    if (!assignment) {
+      return null;
+    }
+    const reserved = state.dockDroneAtFactory(assignment.factory.id, drone.id);
+    if (!reserved) {
+      return null;
+    }
+    store.getState().nextFactoryRoundRobin();
+    drone.targetFactoryId = assignment.factory.id;
+    return { targetId: assignment.factory.id, position: assignment.factory.position.clone() };
+  };
   return (_dt: number) => {
     const flights = store.getState().droneFlights;
     const flightMap = new Map<string, DroneFlightState>();
@@ -285,9 +337,15 @@ export const createDroneAISystem = (world: GameWorld, store: StoreApiType) => {
             if (reassigned) {
               drone.targetRegionId = reassigned.id;
               drone.flightSeed = Math.max(1, Math.floor(rng.next() * 0xffffffff));
-              startTravel(drone, target.position.clone().add(reassigned.offset), 'toAsteroid', store, {
-                gravityMultiplier: reassigned.gravityMultiplier,
-              });
+              startTravel(
+                drone,
+                target.position.clone().add(reassigned.offset),
+                'toAsteroid',
+                store,
+                {
+                  gravityMultiplier: reassigned.gravityMultiplier,
+                },
+              );
             } else {
               store.getState().clearDroneFlight(drone.id);
               drone.state = 'returning';
@@ -310,9 +368,16 @@ export const createDroneAISystem = (world: GameWorld, store: StoreApiType) => {
       }
 
       if (drone.state === 'returning' && !drone.travel) {
-        drone.flightSeed = Math.max(1, Math.floor(rng.next() * 0xffffffff));
-        drone.targetRegionId = null;
-        startTravel(drone, factory.position, 'returning', store, { recordDockingFrom: true });
+        const assignment = assignReturnFactory(drone);
+        if (assignment) {
+          drone.flightSeed = Math.max(1, Math.floor(rng.next() * 0xffffffff));
+          drone.targetRegionId = null;
+          startTravel(drone, assignment.position, 'returning', store, { recordDockingFrom: true });
+        } else {
+          drone.flightSeed = null;
+          drone.targetRegionId = null;
+          drone.targetFactoryId = null;
+        }
       }
     }
   };

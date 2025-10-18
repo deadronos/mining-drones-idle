@@ -16,18 +16,18 @@ Align `spec/spec-full-idea.md` with the shipped MVP and the recent persistence/o
 
 ## Artifacts & Sections to Touch
 
-| Section | Action |
-| --- | --- |
-| Overview & Goals | Summarize current MVP scope, list constraints that are actually enforced, move stretch goals to roadmap |
-| Requirements | Keep deterministic/tick/drone/asteroid requirements, rewrite energy/UI requirements to match code, add new doc-specific requirements (RQ-006, RQ-007) |
-| Data Model | Reflect Zustand store shape (resources/modules/prestige/save + actions) and note absence of settings/persistence slices |
-| Systems | Provide per-system bullets of implemented behaviors, tag refinery and energy throttle as TODO |
-| Persistence & Offline | Describe `createPersistenceManager`, storage key, offline simulation flow, outstanding integration tasks |
-| Determinism & RNG | Note seeded RNG helper exists for world generation but seed persistence still TODO |
-| UI/UX | Detail HUD + UpgradePanel, highlight missing settings/prestige recap as roadmap |
-| Acceptance Criteria | Reference existing Vitest and Playwright coverage; flag desired future tests |
-| Roadmap | Reshuffle priorities to focus on integrating persistence manager, completing refinery system, implementing settings/offline recap, RNG persistence |
-| Changelog | Add entry for this refresh |
+| Section               | Action                                                                                                                                                |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Overview & Goals      | Summarize current MVP scope, list constraints that are actually enforced, move stretch goals to roadmap                                               |
+| Requirements          | Keep deterministic/tick/drone/asteroid requirements, rewrite energy/UI requirements to match code, add new doc-specific requirements (RQ-006, RQ-007) |
+| Data Model            | Reflect Zustand store shape (resources/modules/prestige/save + actions) and note absence of settings/persistence slices                               |
+| Systems               | Provide per-system bullets of implemented behaviors, tag refinery and energy throttle as TODO                                                         |
+| Persistence & Offline | Describe `createPersistenceManager`, storage key, offline simulation flow, outstanding integration tasks                                              |
+| Determinism & RNG     | Note seeded RNG helper exists for world generation but seed persistence still TODO                                                                    |
+| UI/UX                 | Detail HUD + UpgradePanel, highlight missing settings/prestige recap as roadmap                                                                       |
+| Acceptance Criteria   | Reference existing Vitest and Playwright coverage; flag desired future tests                                                                          |
+| Roadmap               | Reshuffle priorities to focus on integrating persistence manager, completing refinery system, implementing settings/offline recap, RNG persistence    |
+| Changelog             | Add entry for this refresh                                                                                                                            |
 
 ## Open Questions
 

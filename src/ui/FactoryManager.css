@@ -1,33 +1,57 @@
-.factory-manager {
+.factory-panel {
   padding: 1rem;
-  border: 1px solid #ccc;
+  border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 0.5rem;
-  background: #f9f9f9;
+  background: rgba(15, 23, 42, 0.72);
 }
 
-.factory-manager h3 {
+.factory-panel h3 {
   margin-top: 0;
   margin-bottom: 0.5rem;
   font-size: 1.1rem;
 }
 
-.factory-manager p {
+.factory-panel p {
   margin: 0.25rem 0;
   font-size: 0.9rem;
+  color: #cbd5f5;
+}
+
+.factory-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.factory-actions button {
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.25rem;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  background: rgba(37, 99, 235, 0.18);
+  color: #bfdbfe;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.factory-actions button:disabled {
+  border-color: rgba(148, 163, 184, 0.4);
+  color: #94a3b8;
+  cursor: not-allowed;
 }
 
 .factory-buy {
   margin: 0.75rem 0;
   padding: 0.5rem;
-  background: #fff;
-  border: 1px solid #ddd;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.25);
   border-radius: 0.25rem;
 }
 
 .factory-buy .cost {
   margin-bottom: 0.5rem;
   font-size: 0.85rem;
-  color: #555;
+  color: #cbd5f5;
 }
 
 .buy-factory-btn {
@@ -62,8 +86,8 @@
 .factory-card {
   margin-bottom: 0.75rem;
   padding: 0.5rem;
-  background: white;
-  border: 1px solid #ddd;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 0.25rem;
   font-size: 0.8rem;
 }
@@ -79,14 +103,24 @@
   font-size: 0.9rem;
 }
 
-.pinned-badge {
-  font-size: 0.8rem;
+.pin-button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 0.1rem 0.2rem;
+}
+
+.pin-button:focus {
+  outline: 2px solid #4a90e2;
+  outline-offset: 2px;
 }
 
 .factory-card .stats {
   margin-bottom: 0.5rem;
   line-height: 1.4;
-  color: #333;
+  color: #e2e8f0;
 }
 
 .factory-card .refines {
@@ -98,5 +132,5 @@
 .refine-item {
   padding: 0.2rem 0;
   font-size: 0.75rem;
-  color: #666;
+  color: #cbd5f5;
 }
