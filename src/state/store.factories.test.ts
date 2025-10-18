@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { createStoreInstance } from '@/state/store';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { FACTORY_MAX_DISTANCE, FACTORY_MIN_DISTANCE, createStoreInstance } from '@/state/store';
 import { FACTORY_CONFIG, computeFactoryCost } from '@/ecs/factories';
 
 describe('store factory integration', () => {
@@ -7,6 +7,10 @@ describe('store factory integration', () => {
 
   beforeEach(() => {
     store = createStoreInstance();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('deducts resources and adds factory when purchasing', () => {
@@ -61,5 +65,42 @@ describe('store factory integration', () => {
           FACTORY_CONFIG.refineTime,
       5,
     );
+  });
+
+  it('places purchased factories with randomized spacing within bounds', () => {
+    const randomSpy = vi.spyOn(Math, 'random');
+    randomSpy
+      .mockReturnValueOnce(0) // angle for second factory
+      .mockReturnValueOnce(0) // distance factor for second factory
+      .mockReturnValueOnce(0.1) // id entropy
+      .mockReturnValueOnce(0.25) // angle for third factory
+      .mockReturnValueOnce(0.5) // distance factor for third factory
+      .mockReturnValueOnce(0.2); // id entropy
+
+    const state = store.getState();
+    store.setState({
+      resources: { ...state.resources, metals: 10_000, crystals: 10_000 },
+    });
+
+    expect(store.getState().purchaseFactory()).toBe(true);
+    expect(store.getState().purchaseFactory()).toBe(true);
+
+    const factories = store.getState().factories;
+    expect(factories).toHaveLength(3);
+
+    const [origin, second, third] = factories;
+
+    const distanceToOrigin = second.position.distanceTo(origin.position);
+    expect(distanceToOrigin).toBeGreaterThanOrEqual(FACTORY_MIN_DISTANCE);
+    expect(distanceToOrigin).toBeLessThanOrEqual(FACTORY_MAX_DISTANCE);
+
+    const distancesForThird = factories
+      .slice(0, 2)
+      .map((factory) => third.position.distanceTo(factory.position))
+      .sort((a, b) => a - b);
+
+    expect(distancesForThird[0]).toBeGreaterThanOrEqual(FACTORY_MIN_DISTANCE);
+    expect(distancesForThird[0]).toBeLessThanOrEqual(FACTORY_MAX_DISTANCE);
+    expect(distancesForThird[1]).toBeLessThanOrEqual(FACTORY_MAX_DISTANCE);
   });
 });
