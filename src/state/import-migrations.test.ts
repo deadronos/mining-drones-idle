@@ -22,40 +22,71 @@ describe('persistence migration reporting', () => {
       importStateWithReport?: (payload: string) => { success: boolean; report?: MigrationReport };
     };
     const legacy = {
-      resources: { ore: 1, ice: 0, metals: 0, crystals: 0, organics: 0, bars: 0, energy: 100, credits: 0 },
+      resources: {
+        ore: 1,
+        ice: 0,
+        metals: 0,
+        crystals: 0,
+        organics: 0,
+        bars: 0,
+        energy: 100,
+        credits: 0,
+      },
       modules: { droneBay: 1, refinery: 0, storage: 0, solar: 0, scanner: 0 },
       prestige: { cores: 0 },
       save: { lastSave: Date.now() - 1000, version: '0.0.1' },
-      settings: { autosaveEnabled: true, autosaveInterval: 10, offlineCapHours: 8, notation: 'standard', throttleFloor: 0.25 },
+      settings: {
+        autosaveEnabled: true,
+        autosaveInterval: 10,
+        offlineCapHours: 8,
+        notation: 'standard',
+        throttleFloor: 0.25,
+      },
     };
-  if (!manager.importStateWithReport) throw new Error('importStateWithReport not implemented on manager');
-  const { success, report } = manager.importStateWithReport(JSON.stringify(legacy));
-  expect(success).toBe(true);
-  expect(report).toBeTruthy();
-  expect(report!.migrated).toBe(true);
-  expect(report!.fromVersion).toBe('0.0.1');
-  expect(store.getState().droneFlights).toEqual([]);
+    if (!manager.importStateWithReport)
+      throw new Error('importStateWithReport not implemented on manager');
+    const { success, report } = manager.importStateWithReport(JSON.stringify(legacy));
+    expect(success).toBe(true);
+    expect(report).toBeTruthy();
+    expect(report!.migrated).toBe(true);
+    expect(report!.fromVersion).toBe('0.0.1');
+    expect(store.getState().droneFlights).toEqual([]);
   });
 
   it('loadWithReport returns a report after loading a legacy save from storage', () => {
     const store = createStoreInstance();
     const legacy = {
-      resources: { ore: 2, ice: 0, metals: 0, crystals: 0, organics: 0, bars: 0, energy: 100, credits: 0 },
+      resources: {
+        ore: 2,
+        ice: 0,
+        metals: 0,
+        crystals: 0,
+        organics: 0,
+        bars: 0,
+        energy: 100,
+        credits: 0,
+      },
       modules: { droneBay: 1, refinery: 0, storage: 0, solar: 0, scanner: 0 },
       prestige: { cores: 0 },
       save: { lastSave: Date.now() - 1000, version: '0.0.1' },
-      settings: { autosaveEnabled: true, autosaveInterval: 10, offlineCapHours: 8, notation: 'standard', throttleFloor: 0.25 },
+      settings: {
+        autosaveEnabled: true,
+        autosaveInterval: 10,
+        offlineCapHours: 8,
+        notation: 'standard',
+        throttleFloor: 0.25,
+      },
     };
     window.localStorage.setItem(SAVE_KEY, JSON.stringify(legacy));
     const manager = createPersistenceManager(store) as PersistenceManager & {
       loadWithReport?: () => MigrationReport | undefined;
     };
-  manager.load();
-  if (!manager.loadWithReport) throw new Error('loadWithReport not implemented on manager');
-  const report = manager.loadWithReport();
-  expect(report).toBeTruthy();
-  expect(report!.migrated).toBe(true);
-  expect(report!.fromVersion).toBe('0.0.1');
-  expect(store.getState().droneFlights).toEqual([]);
+    manager.load();
+    if (!manager.loadWithReport) throw new Error('loadWithReport not implemented on manager');
+    const report = manager.loadWithReport();
+    expect(report).toBeTruthy();
+    expect(report!.migrated).toBe(true);
+    expect(report!.fromVersion).toBe('0.0.1');
+    expect(store.getState().droneFlights).toEqual([]);
   });
 });

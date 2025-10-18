@@ -47,7 +47,10 @@ const pickBonus = (resources: Resources, key: BalancedResource, prestigeCores = 
   return computeBonus(resources[key] ?? 0, balance);
 };
 
-export const getResourceModifiers = (resources: Resources, prestigeCores = 0): ResourceModifierSnapshot => {
+export const getResourceModifiers = (
+  resources: Resources,
+  prestigeCores = 0,
+): ResourceModifierSnapshot => {
   const metalsBonus = pickBonus(resources, 'metals', prestigeCores);
   const crystalsBonus = pickBonus(resources, 'crystals', prestigeCores);
   const organicsBonus = pickBonus(resources, 'organics', prestigeCores);

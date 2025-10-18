@@ -26,7 +26,10 @@ export interface PersistenceManager {
   exportState(this: void): string;
   importState(this: void, payload: string): boolean;
   // import with migration report
-  importStateWithReport?(this: void, payload: string): { success: boolean; report?: MigrationReport };
+  importStateWithReport?(
+    this: void,
+    payload: string,
+  ): { success: boolean; report?: MigrationReport };
 }
 
 const hasStorage = () => typeof window !== 'undefined' && !!window.localStorage;
@@ -168,5 +171,14 @@ export const createPersistenceManager = (
     return { success: true as const, report };
   };
 
-  return { load, start, stop, saveNow, exportState, importState, importStateWithReport, loadWithReport: () => lastLoadReport };
+  return {
+    load,
+    start,
+    stop,
+    saveNow,
+    exportState,
+    importState,
+    importStateWithReport,
+    loadWithReport: () => lastLoadReport,
+  };
 };

@@ -13,9 +13,9 @@ Ensure the dynamic asteroid biome feature remains deterministic by hardening the
 
 ## Goals & Acceptance Criteria
 
-1. **WHEN** the fracture generator is seeded identically, **THE TESTS SHALL** confirm biome region outputs using identifier-agnostic comparisons. *Acceptance:* `src/ecs/biomes.test.ts` passes consistently without relying on generated `region.id` values.
-2. **WHEN** biome regions are sanitized for comparison, **THE TESTS SHALL** retain coverage of weights, gravity multipliers, resource mixes, dominant resources, hazard states, and offsets. *Acceptance:* assertions still validate these fields after sanitization.
-3. **WHEN** regressions occur, **THE TESTS SHALL** provide readable diffs of biome properties. *Acceptance:* sanitized comparison structures remain serializable and human-readable.
+1. **WHEN** the fracture generator is seeded identically, **THE TESTS SHALL** confirm biome region outputs using identifier-agnostic comparisons. _Acceptance:_ `src/ecs/biomes.test.ts` passes consistently without relying on generated `region.id` values.
+2. **WHEN** biome regions are sanitized for comparison, **THE TESTS SHALL** retain coverage of weights, gravity multipliers, resource mixes, dominant resources, hazard states, and offsets. _Acceptance:_ assertions still validate these fields after sanitization.
+3. **WHEN** regressions occur, **THE TESTS SHALL** provide readable diffs of biome properties. _Acceptance:_ sanitized comparison structures remain serializable and human-readable.
 
 ## Approach
 
@@ -25,8 +25,8 @@ Ensure the dynamic asteroid biome feature remains deterministic by hardening the
 
 ## Risks & Mitigations
 
-- *Risk:* Over-sanitizing objects may hide legitimate regressions. *Mitigation:* only strip `id` and convert nested Three.js vectors into `{ x, y, z }` literals, keeping all biome metrics visible.
-- *Risk:* Future schema additions might include new non-deterministic properties. *Mitigation:* structure sanitizer to copy unknown enumerable fields automatically so new data is compared unless explicitly excluded.
+- _Risk:_ Over-sanitizing objects may hide legitimate regressions. _Mitigation:_ only strip `id` and convert nested Three.js vectors into `{ x, y, z }` literals, keeping all biome metrics visible.
+- _Risk:_ Future schema additions might include new non-deterministic properties. _Mitigation:_ structure sanitizer to copy unknown enumerable fields automatically so new data is compared unless explicitly excluded.
 
 ## Testing Strategy
 

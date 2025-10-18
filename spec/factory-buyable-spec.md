@@ -24,7 +24,7 @@ Add a purchasable, placeable Factory building that drones can dock into to unloa
 - Refine time: 10 seconds per batch (base).
 - Idle energy draw: 1 energy/sec; energy per refine: 5 energy.
 - Storage buffer: 300 units raw ore.
-- Price scaling: linear: price_n = base + n * 50 (n = factories owned).
+- Price scaling: linear: price_n = base + n \* 50 (n = factories owned).
 - Energy upkeep scales linearly with number of factories.
 - Drones choose nearest factory; ties resolved by round-robin distribution.
 - At least one refine slot remains active under low energy, with reduced speed to avoid soft-lock.
@@ -98,7 +98,7 @@ R10 — WHEN buying additional factories, THE SYSTEM SHALL apply a linear price 
 
 ### Acceptance criteria
 
-- Nth factory cost equals base + N * increment.
+- Nth factory cost equals base + N \* increment.
 - Total energy upkeep reflects the number of factories.
 
 ## Suggested data model

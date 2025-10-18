@@ -1,4 +1,3 @@
-
 # Dynamic Asteroid Biomes — Plan
 
 ## Summary
@@ -118,4 +117,5 @@ Playwright/UI:
 3. Build a small visual prototype scene for review and iterate on palettes. (Artist/Dev)
 
 ---
+
 _Generated plan — use as canonical starting point for implementation and task creation._

@@ -183,6 +183,7 @@ describe('state/store', () => {
       state: 'toAsteroid',
       targetAsteroidId: 'asteroid-1',
       targetRegionId: 'region-1',
+      targetFactoryId: null,
       pathSeed: 42,
       travel: {
         from: [0, 0, 0],

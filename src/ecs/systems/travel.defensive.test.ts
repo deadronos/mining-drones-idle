@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createTravelSystem } from '@/ecs/systems/travel';
-import { createGameWorld, spawnDrone } from '@/ecs/world';
-import { createStoreInstance } from '@/state/store';
+import { createGameWorld, spawnDrone, type TravelData } from '@/ecs/world';
+import { createStoreInstance, type DroneFlightState, type TravelSnapshot } from '@/state/store';
 import { Vector3 } from 'three';
 import { createDroneAISystem } from '@/ecs/systems/droneAI';
 
@@ -12,12 +12,13 @@ describe('ecs/systems/travel defensive guards', () => {
     const drone = spawnDrone(world);
     drone.state = 'toAsteroid';
     // create invalid travel with NaN duration
-    drone.travel = {
+    const invalidTravel: TravelData = {
       from: drone.position.clone(),
       to: drone.position.clone().add(new Vector3(10, 0, 0)),
       elapsed: 0,
-      duration: NaN,
-    } as any;
+      duration: Number.NaN,
+    };
+    drone.travel = invalidTravel;
 
     const system = createTravelSystem(world, store);
     system(0.5);
@@ -32,19 +33,22 @@ describe('ecs/systems/travel defensive guards', () => {
     const drone = spawnDrone(world);
 
     // create a malformed flight snapshot in the store
-    const badFlight = {
+    const malformedTravel: TravelSnapshot = {
+      from: [Number.NaN, 0, 0],
+      to: [0, 0, 0],
+      elapsed: 0,
+      duration: 1,
+    };
+
+    const badFlight: DroneFlightState = {
       droneId: drone.id,
       state: 'toAsteroid',
       targetAsteroidId: null,
       targetRegionId: null,
+      targetFactoryId: null,
       pathSeed: 1,
-      travel: {
-        from: [NaN, 0, 0],
-        to: [0, 0, 0],
-        elapsed: 0,
-        duration: 1,
-      },
-    } as any;
+      travel: malformedTravel,
+    };
 
     store.getState().recordDroneFlight(badFlight);
 

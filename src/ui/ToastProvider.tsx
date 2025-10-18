@@ -17,7 +17,6 @@ export const useToast = () => {
     // provide a safe no-op implementation when ToastProvider is not present (tests or minimal host)
     return {
       push: (message: string) => {
-         
         console.info('Toast:', message);
         return 'noop';
       },
