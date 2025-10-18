@@ -31,11 +31,11 @@ Harden the deterministic fracture tests for dynamic asteroid biomes so they igno
 
 ### Subtasks
 
-| ID  | Description                                               | Status       | Updated    | Notes |
-| --- | --------------------------------------------------------- | ------------ | ---------- | ----- |
-| 1.1 | Create biome region sanitizer helper                      | Completed    | 2025-10-18 | Added offset/hazard flattening |
-| 1.2 | Update deterministic fracture test to use sanitized data  | Completed    | 2025-10-18 | Snapshot comparison ignores IDs |
-| 1.3 | Run lint, typecheck, and tests to verify stability         | Completed    | 2025-10-18 | npm run lint · typecheck · test -- --run |
+| ID  | Description                                              | Status    | Updated    | Notes                                    |
+| --- | -------------------------------------------------------- | --------- | ---------- | ---------------------------------------- |
+| 1.1 | Create biome region sanitizer helper                     | Completed | 2025-10-18 | Added offset/hazard flattening           |
+| 1.2 | Update deterministic fracture test to use sanitized data | Completed | 2025-10-18 | Snapshot comparison ignores IDs          |
+| 1.3 | Run lint, typecheck, and tests to verify stability       | Completed | 2025-10-18 | npm run lint · typecheck · test -- --run |
 
 ## Progress Log
 

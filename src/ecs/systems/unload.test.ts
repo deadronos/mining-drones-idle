@@ -16,7 +16,8 @@ describe('ecs/systems/unload', () => {
     const system = createUnloadSystem(world, store);
     system(0.1);
 
-    expect(store.getState().resources.ore).toBeGreaterThan(0);
+    const factoryState = store.getState().factories[0];
+    expect(factoryState.currentStorage).toBeCloseTo(20, 5);
     expect(drone.state).toBe('idle');
     expect(drone.lastDockingFrom).toBeNull();
     expect(world.events.transfers.length).toBe(1);

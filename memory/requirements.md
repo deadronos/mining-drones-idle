@@ -83,3 +83,19 @@ WHEN Metals, Crystals, Organics, or Ice amounts change, THE SYSTEM SHALL adjust 
 ## RQ-021 Resource Modifier Visibility
 
 WHEN players view the HUD, THE SYSTEM SHALL display current resource-derived bonuses with descriptive labels and tooltips that update as resources change. [Acceptance: React component test or manual verification confirms the HUD list reflects live modifier percentages.]
+
+## RQ-022 Factory Purchase Flow
+
+WHEN the player buys a factory, THE SYSTEM SHALL verify affordability, deduct the metals and crystals cost, and place the new factory at a valid location with default capacities. [Acceptance: Unit test constructs a store, purchases a factory, and asserts resources drop while the factory count increases with initialized defaults.]
+
+## RQ-023 Drone Factory Assignment
+
+WHEN a drone transitions to a returning state with cargo, THE SYSTEM SHALL reserve a docking slot at the nearest available factory (round-robin for ties) and set the drone's travel target to that factory. [Acceptance: Simulation test flips a drone to returning and confirms the store records the assignment while the drone's travel destination matches the factory position.]
+
+## RQ-024 Factory Refining Pipeline
+
+WHEN factory storage contains ore and refine slots are free, THE SYSTEM SHALL start refine processes that drain energy each tick and deliver refined ore to the global resource pool on completion. [Acceptance: Store-level unit test enqueues ore, advances processFactories, and asserts energy decreases while refined ore accumulates.]
+
+## RQ-025 Camera Autofit Trigger
+
+WHEN the player clicks the Autofit Factories control, THE SYSTEM SHALL animate the camera to encompass all factory positions within the configured margin and zoom limits. [Acceptance: Hook unit test or integration harness fires the trigger and inspects the computed camera state for expected bounds.]

@@ -17,12 +17,14 @@ import { Factory } from '@/r3f/Factory';
 import { Asteroids } from '@/r3f/Asteroids';
 import { Drones } from '@/r3f/Drones';
 import { DroneTrails } from '@/r3f/DroneTrails';
+import { useFactoryAutofit } from '@/hooks/useFactoryAutofit';
 
 type SystemRunner = (dt: number) => void;
 
 export const Scene = () => {
   const time = useMemo(() => createTimeSystem(0.1), []);
   const showTrails = useStore((state) => state.settings.showTrails);
+  useFactoryAutofit();
   const systems = useMemo(() => {
     const store = storeApi;
     return {
@@ -50,6 +52,7 @@ export const Scene = () => {
       systems.unload(step);
       systems.power(step);
       systems.refinery(step);
+      storeApi.getState().processFactories(step);
     });
   });
 

@@ -21,11 +21,11 @@ Implement system in `src/ecs/systems/refinery.ts`, expose `store.processRefinery
 
 ## Subtasks
 
-| ID | Description | Status | Updated | Notes |
-| --- | ----------- | ------ | ------- | ----- |
-| 5.1 | Create refinery system file | Completed | 2025-02-14 | `src/ecs/systems/refinery.ts` delegates to `store.processRefinery`. |
-| 5.2 | Wire store.processRefinery | Completed | 2025-02-14 | `src/state/store.ts` implements `processRefinery` and `computeRefineryProduction`. |
-| 5.3 | Offline parity tests | Completed | 2025-02-14 | `src/ecs/systems/refinery.test.ts` validates parity with offline processing. |
+| ID  | Description                 | Status    | Updated    | Notes                                                                              |
+| --- | --------------------------- | --------- | ---------- | ---------------------------------------------------------------------------------- |
+| 5.1 | Create refinery system file | Completed | 2025-02-14 | `src/ecs/systems/refinery.ts` delegates to `store.processRefinery`.                |
+| 5.2 | Wire store.processRefinery  | Completed | 2025-02-14 | `src/state/store.ts` implements `processRefinery` and `computeRefineryProduction`. |
+| 5.3 | Offline parity tests        | Completed | 2025-02-14 | `src/ecs/systems/refinery.test.ts` validates parity with offline processing.       |
 
 ## Acceptance Criteria
 

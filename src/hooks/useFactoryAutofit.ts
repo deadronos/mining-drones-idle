@@ -7,8 +7,8 @@ import type { BuildableFactory } from '../ecs/factories';
 import { computeAutofitCamera, lerpCameraState, type AutofitConfig } from '../lib/camera';
 
 const DEFAULT_CONFIG: AutofitConfig = {
-  margin: 5,
-  maxZoomOut: 0.5,
+  margin: 6,
+  maxZoom: 2.5,
   easeTime: 0.5,
 };
 
@@ -19,16 +19,24 @@ const DEFAULT_CONFIG: AutofitConfig = {
 export const useFactoryAutofit = () => {
   const { camera } = useThree();
   const factories: BuildableFactory[] = useStore((state) => state.factories);
+  const sequence = useStore((state) => state.factoryAutofitSequence);
   const lerpStartTime = useRef<number | null>(null);
   const previousCameraState = useRef<{
     position: Vector3;
     zoom: number;
   } | null>(null);
+  const lastSequence = useRef<number>(sequence);
 
   useEffect(() => {
     if (!factories || factories.length === 0) {
+      lastSequence.current = sequence;
       return;
     }
+
+    if (sequence === lastSequence.current) {
+      return;
+    }
+    lastSequence.current = sequence;
 
     const orthoCamera = camera as OrthographicCamera;
     const currentState = {
@@ -68,5 +76,5 @@ export const useFactoryAutofit = () => {
     };
 
     animate();
-  }, [factories, camera]);
+  }, [factories, camera, sequence]);
 };

@@ -31,12 +31,15 @@ const BELTS: BeltDefinition[] = [
   },
 ];
 
-const PROFILE_CONFIG: Record<PerformanceProfile, {
-  itemCount: number;
-  transferLimit: number;
-  beltSpeed: number;
-  effectMultiplier: number;
-}> = {
+const PROFILE_CONFIG: Record<
+  PerformanceProfile,
+  {
+    itemCount: number;
+    transferLimit: number;
+    beltSpeed: number;
+    effectMultiplier: number;
+  }
+> = {
   low: { itemCount: 0, transferLimit: 0, beltSpeed: 0.55, effectMultiplier: 0.6 },
   medium: { itemCount: 12, transferLimit: 12, beltSpeed: 0.85, effectMultiplier: 1 },
   high: { itemCount: 24, transferLimit: 20, beltSpeed: 1.25, effectMultiplier: 1.3 },
@@ -96,17 +99,19 @@ const createConveyorTexture = () => {
   return texture;
 };
 
-export const Factory = () => {
+const FactoryModel = ({ position }: { position: Vector3 }) => {
   const performanceProfile = useStore((state) => state.settings.performanceProfile);
   const beltTextures = useMemo(() => BELTS.map(() => createConveyorTexture()), []);
-  useEffect(() => () => {
-    beltTextures.forEach((texture) => texture?.dispose());
-  }, [beltTextures]);
+  useEffect(
+    () => () => {
+      beltTextures.forEach((texture) => texture?.dispose());
+    },
+    [beltTextures],
+  );
 
   const beltOffsets = useRef<number[]>(BELTS.map(() => 0));
   const beltMaterials = useRef<Array<MeshStandardMaterial | null>>(BELTS.map(() => null));
   const itemMeshRef = useRef<InstancedMesh>(null);
-  const transferMeshRef = useRef<InstancedMesh>(null);
   const coreMaterialRef = useRef<MeshStandardMaterial>(null);
   const ringMaterialRef = useRef<MeshStandardMaterial>(null);
   const baseMaterialRef = useRef<MeshStandardMaterial>(null);
@@ -121,21 +126,9 @@ export const Factory = () => {
     })),
   );
   const itemStates = useRef<ItemState[]>(initialItemStates);
-  const [initialTransferStates] = useState<TransferState[]>(() =>
-    Array.from({ length: TRANSFER_POOL_SIZE }, () => ({
-      active: false,
-      elapsed: 0,
-      duration: 0.65,
-      from: new Vector3(),
-      to: new Vector3(),
-      arcHeight: 0.5,
-      amount: 0,
-    })),
-  );
-  const transferStates = useRef<TransferState[]>(initialTransferStates);
 
   useFrame((_, delta) => {
-    const { factory, events } = gameWorld;
+    const { factory } = gameWorld;
     const activity = factory.activity;
     const profileConfig = PROFILE_CONFIG[performanceProfile];
 
@@ -192,74 +185,13 @@ export const Factory = () => {
         itemMesh.instanceMatrix.needsUpdate = count > 0;
       }
     }
-
-    const transferMesh = transferMeshRef.current;
-    const queue = events.transfers;
-    if (transferMesh) {
-      if (profileConfig.transferLimit <= 0) {
-        queue.length = 0;
-        transferStates.current.forEach((state) => {
-          state.active = false;
-          state.elapsed = 0;
-        });
-        transferMesh.count = 0;
-        transferMesh.instanceMatrix.needsUpdate = true;
-      } else {
-        let spawnBudget = profileConfig.transferLimit;
-        while (queue.length > 0 && spawnBudget > 0) {
-          const event = queue.shift();
-          if (!event) break;
-          spawnBudget -= 1;
-          const slot = transferStates.current.find((state) => !state.active);
-          if (!slot) {
-            queue.unshift(event);
-            break;
-          }
-          slot.active = true;
-          slot.elapsed = 0;
-          slot.duration = event.duration;
-          slot.from.copy(event.from);
-          slot.to.copy(event.to);
-          slot.amount = event.amount;
-          slot.arcHeight = 0.4 + Math.min(1, event.amount / 80) * 0.5 * profileConfig.effectMultiplier;
-        }
-        if (queue.length > TRANSFER_POOL_SIZE) {
-          queue.splice(0, queue.length - TRANSFER_POOL_SIZE);
-        }
-        let count = 0;
-        for (const state of transferStates.current) {
-          if (!state.active) continue;
-          state.elapsed += delta;
-          const progress = state.duration > 0 ? state.elapsed / state.duration : 1;
-          if (progress >= 1) {
-            state.active = false;
-            continue;
-          }
-          const eased = progress * (2 - progress);
-          tempVector.copy(state.from).lerp(state.to, eased);
-          tempVector.y += Math.sin(Math.PI * eased) * state.arcHeight;
-          tempMatrix.compose(tempVector, identityQuaternion, fxScale);
-          transferMesh.setMatrixAt(count, tempMatrix);
-          const brightness = 0.55 + activity.boost * 0.4 + Math.min(0.4, state.amount / 140);
-          fxColor.setHSL(0.53, 0.85, Math.min(0.8, brightness));
-          transferMesh.setColorAt?.(count, fxColor);
-          count += 1;
-        }
-        transferMesh.count = count;
-        transferMesh.instanceMatrix.needsUpdate = count > 0;
-        if (transferMesh.instanceColor) {
-          transferMesh.instanceColor.needsUpdate = count > 0;
-        }
-      }
-    } else {
-      queue.length = 0;
-    }
   });
 
-  const { factory } = gameWorld;
+  const orientation = gameWorld.factory.orientation;
+  const positionArray: [number, number, number] = [position.x, position.y, position.z];
 
   return (
-    <group position={factory.position} quaternion={factory.orientation}>
+    <group position={positionArray} quaternion={orientation}>
       <mesh castShadow receiveShadow>
         <cylinderGeometry args={[2.2, 2.8, 1.2, 32]} />
         <meshStandardMaterial
@@ -319,28 +251,150 @@ export const Factory = () => {
           />
         </mesh>
       ))}
-      <instancedMesh ref={itemMeshRef} args={[undefined as never, undefined as never, ITEM_POOL_SIZE]} castShadow>
-        <boxGeometry args={[0.28, 0.18, 0.28]} />
-        <meshStandardMaterial color="#f59e0b" emissive="#fbbf24" emissiveIntensity={0.4} roughness={0.4} />
-      </instancedMesh>
       <instancedMesh
-        ref={transferMeshRef}
-        args={[undefined as never, undefined as never, TRANSFER_POOL_SIZE]}
+        ref={itemMeshRef}
+        args={[undefined as never, undefined as never, ITEM_POOL_SIZE]}
         castShadow
       >
-        <sphereGeometry args={[0.16, 12, 12]} />
+        <boxGeometry args={[0.28, 0.18, 0.28]} />
         <meshStandardMaterial
-          color="#38bdf8"
-          emissive="#0ea5e9"
-          emissiveIntensity={0.9}
-          roughness={0.25}
-          metalness={0.2}
-          vertexColors
-          transparent
-          opacity={0.9}
+          color="#f59e0b"
+          emissive="#fbbf24"
+          emissiveIntensity={0.4}
+          roughness={0.4}
         />
       </instancedMesh>
-      <pointLight ref={boostLightRef} position={[0, 2.6, 0]} color="#38bdf8" intensity={0.8} distance={10} decay={2} />
+      <pointLight
+        ref={boostLightRef}
+        position={[0, 2.6, 0]}
+        color="#38bdf8"
+        intensity={0.8}
+        distance={10}
+        decay={2}
+      />
     </group>
+  );
+};
+
+const FactoryTransferFX = () => {
+  const performanceProfile = useStore((state) => state.settings.performanceProfile);
+  const transferMeshRef = useRef<InstancedMesh>(null);
+  const [initialTransferStates] = useState<TransferState[]>(() =>
+    Array.from({ length: TRANSFER_POOL_SIZE }, () => ({
+      active: false,
+      elapsed: 0,
+      duration: 0.65,
+      from: new Vector3(),
+      to: new Vector3(),
+      arcHeight: 0.5,
+      amount: 0,
+    })),
+  );
+  const transferStates = useRef<TransferState[]>(initialTransferStates);
+
+  useFrame((_, delta) => {
+    const { events, factory } = gameWorld;
+    const activity = factory.activity;
+    const profileConfig = PROFILE_CONFIG[performanceProfile];
+    const transferMesh = transferMeshRef.current;
+    const queue = events.transfers;
+
+    if (!transferMesh) {
+      queue.length = 0;
+      return;
+    }
+
+    if (profileConfig.transferLimit <= 0) {
+      queue.length = 0;
+      transferStates.current.forEach((state) => {
+        state.active = false;
+        state.elapsed = 0;
+      });
+      transferMesh.count = 0;
+      transferMesh.instanceMatrix.needsUpdate = true;
+      return;
+    }
+
+    let spawnBudget = profileConfig.transferLimit;
+    while (queue.length > 0 && spawnBudget > 0) {
+      const event = queue.shift();
+      if (!event) break;
+      spawnBudget -= 1;
+      const slot = transferStates.current.find((state) => !state.active);
+      if (!slot) {
+        queue.unshift(event);
+        break;
+      }
+      slot.active = true;
+      slot.elapsed = 0;
+      slot.duration = event.duration;
+      slot.from.copy(event.from);
+      slot.to.copy(event.to);
+      slot.amount = event.amount;
+      slot.arcHeight = 0.4 + Math.min(1, event.amount / 80) * 0.5 * profileConfig.effectMultiplier;
+    }
+
+    if (queue.length > TRANSFER_POOL_SIZE) {
+      queue.splice(0, queue.length - TRANSFER_POOL_SIZE);
+    }
+
+    let count = 0;
+    for (const state of transferStates.current) {
+      if (!state.active) continue;
+      state.elapsed += delta;
+      const progress = state.duration > 0 ? state.elapsed / state.duration : 1;
+      if (progress >= 1) {
+        state.active = false;
+        continue;
+      }
+      const eased = progress * (2 - progress);
+      tempVector.copy(state.from).lerp(state.to, eased);
+      tempVector.y += Math.sin(Math.PI * eased) * state.arcHeight;
+      tempMatrix.compose(tempVector, identityQuaternion, fxScale);
+      transferMesh.setMatrixAt(count, tempMatrix);
+      const brightness = 0.55 + activity.boost * 0.4 + Math.min(0.4, state.amount / 140);
+      fxColor.setHSL(0.53, 0.85, Math.min(0.8, brightness));
+      transferMesh.setColorAt?.(count, fxColor);
+      count += 1;
+    }
+
+    transferMesh.count = count;
+    transferMesh.instanceMatrix.needsUpdate = count > 0;
+    if (transferMesh.instanceColor) {
+      transferMesh.instanceColor.needsUpdate = count > 0;
+    }
+  });
+
+  return (
+    <instancedMesh
+      ref={transferMeshRef}
+      args={[undefined as never, undefined as never, TRANSFER_POOL_SIZE]}
+      castShadow
+    >
+      <sphereGeometry args={[0.16, 12, 12]} />
+      <meshStandardMaterial
+        color="#38bdf8"
+        emissive="#0ea5e9"
+        emissiveIntensity={0.9}
+        roughness={0.25}
+        metalness={0.2}
+        vertexColors
+        transparent
+        opacity={0.9}
+      />
+    </instancedMesh>
+  );
+};
+
+export const Factory = () => {
+  const factories = useStore((state) => state.factories);
+
+  return (
+    <>
+      {factories.map((factory) => (
+        <FactoryModel key={factory.id} position={factory.position} />
+      ))}
+      <FactoryTransferFX />
+    </>
   );
 };

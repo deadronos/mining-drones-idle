@@ -46,6 +46,7 @@ export interface DroneEntity {
   state: DroneState;
   targetId: string | null;
   targetRegionId: string | null;
+  targetFactoryId: string | null;
   cargo: number;
   capacity: number;
   speed: number;
@@ -160,6 +161,7 @@ const createDrone = (origin: Vector3): DroneEntity => ({
   state: 'idle',
   targetId: null,
   targetRegionId: null,
+  targetFactoryId: null,
   cargo: 0,
   capacity: DEFAULT_DRONE_CAPACITY,
   speed: DEFAULT_DRONE_SPEED,

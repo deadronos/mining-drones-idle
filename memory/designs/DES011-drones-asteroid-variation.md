@@ -35,7 +35,7 @@ Data shapes
   droneId: string;
   targetAsteroidId?: string;
   pathSeed: number; // optional, set when flight begins
-}
+  }
 
 APIs / Interfaces (internal)
 
