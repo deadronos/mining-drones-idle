@@ -39,6 +39,7 @@ export const FactoryManager = () => {
   const upgradeFactory = useStore((state) => state.upgradeFactory);
   const toggleFactoryPinned = useStore((state) => state.toggleFactoryPinned);
   const triggerAutofit = useStore((state) => state.triggerFactoryAutofit);
+  const resetCamera = useStore((state) => state.resetCamera);
 
   const factoryCount = factories.length;
   const nextCost = useMemo(() => computeFactoryCost(Math.max(0, factoryCount - 1)), [factoryCount]);
@@ -78,6 +79,9 @@ export const FactoryManager = () => {
       <div className="factory-actions">
         <button type="button" onClick={triggerAutofit} disabled={factoryCount === 0}>
           Autofit Camera
+        </button>
+        <button type="button" onClick={resetCamera}>
+          Reset Camera
         </button>
       </div>
 

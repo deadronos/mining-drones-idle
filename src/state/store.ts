@@ -368,6 +368,7 @@ export interface StoreState {
   factoryProcessSequence: number;
   factoryRoundRobin: number;
   factoryAutofitSequence: number;
+  cameraResetSequence: number;
   selectedAsteroidId: string | null;
   selectedFactoryId: string | null;
   droneOwners: Record<string, string | null>;
@@ -410,6 +411,7 @@ export interface StoreState {
   upgradeFactory(this: void, factoryId: string, upgrade: keyof FactoryUpgrades): boolean;
   processFactories(this: void, dt: number): void;
   triggerFactoryAutofit(this: void): void;
+  resetCamera(this: void): void;
 }
 
 export type StoreApiType = StoreApi<StoreState>;
@@ -1000,6 +1002,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
     factoryProcessSequence: 0,
     factoryRoundRobin: 0,
     factoryAutofitSequence: 0,
+    cameraResetSequence: 0,
     selectedAsteroidId: null,
     selectedFactoryId: initialSelectedFactory,
     droneOwners: {},
@@ -1123,6 +1126,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
           factoryProcessSequence: deriveProcessSequence(restoredFactories),
           factoryRoundRobin: 0,
           factoryAutofitSequence: 0,
+          cameraResetSequence: 0,
           selectedAsteroidId: null,
           selectedFactoryId,
           droneOwners: normalizeDroneOwners(normalized.droneOwners ?? {}),
@@ -1519,6 +1523,8 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
 
     triggerFactoryAutofit: () =>
       set((state) => ({ factoryAutofitSequence: state.factoryAutofitSequence + 1 })),
+
+    resetCamera: () => set((state) => ({ cameraResetSequence: state.cameraResetSequence + 1 })),
   };
 };
 
