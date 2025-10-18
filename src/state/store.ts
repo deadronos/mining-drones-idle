@@ -5,6 +5,14 @@ import {
   type StoreApi,
 } from 'zustand/vanilla';
 import { getResourceModifiers, type ResourceModifierSnapshot } from '@/lib/resourceModifiers';
+import type { BuildableFactory } from '@/ecs/factories';
+import {
+  attemptDockDrone,
+  removeDroneFromFactory,
+  transferOreToFactory as factoryTransferOre,
+  tickRefineProcess,
+  enforceMinOneRefining,
+} from '@/ecs/factories';
 
 const SAVE_VERSION = '0.2.0';
 
@@ -129,6 +137,7 @@ export interface StoreSnapshot {
   settings: StoreSettings;
   rngSeed?: number;
   droneFlights?: DroneFlightState[];
+  factories?: BuildableFactory[];
 }
 
 export interface StoreState {
@@ -139,6 +148,7 @@ export interface StoreState {
   settings: StoreSettings;
   rngSeed: number;
   droneFlights: DroneFlightState[];
+  factories: BuildableFactory[];
   selectedAsteroidId: string | null;
   addResources(this: void, delta: Partial<Resources>, options?: { capacityAware?: boolean }): void;
   addOre(this: void, amount: number): void;
@@ -157,6 +167,13 @@ export interface StoreState {
   importState(this: void, payload: string): boolean;
   recordDroneFlight(this: void, flight: DroneFlightState): void;
   clearDroneFlight(this: void, droneId: string): void;
+  addFactory(this: void, factory: BuildableFactory): void;
+  removeFactory(this: void, factoryId: string): void;
+  getFactory(this: void, factoryId: string): BuildableFactory | undefined;
+  dockDroneAtFactory(this: void, factoryId: string, droneId: string): boolean;
+  undockDroneFromFactory(this: void, factoryId: string, droneId: string): void;
+  transferOreToFactory(this: void, factoryId: string, amount: number): number;
+  processFactories(this: void, dt: number): void;
 }
 
 export type StoreApiType = StoreApi<StoreState>;
@@ -483,6 +500,7 @@ const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapshot => (
       ? snapshot.rngSeed
       : undefined,
   droneFlights: normalizeDroneFlights(snapshot.droneFlights),
+  factories: Array.isArray(snapshot.factories) ? snapshot.factories : undefined,
 });
 
 export const serializeStore = (state: StoreState): StoreSnapshot => ({
@@ -493,6 +511,7 @@ export const serializeStore = (state: StoreState): StoreSnapshot => ({
   settings: { ...state.settings },
   rngSeed: state.rngSeed,
   droneFlights: state.droneFlights.map(cloneDroneFlight),
+  factories: state.factories.map(f => ({ ...f })),
 });
 
 export const stringifySnapshot = (snapshot: StoreSnapshot) => JSON.stringify(snapshot);
@@ -515,6 +534,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => ({
   settings: { ...initialSettings },
   rngSeed: generateSeed(),
   droneFlights: [],
+  factories: [],
   selectedAsteroidId: null,
 
   addResources: (delta, options) =>
@@ -605,6 +625,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => ({
         settings: normalized.settings,
         rngSeed: normalized.rngSeed ?? generateSeed(),
         droneFlights: normalized.droneFlights ?? [],
+        factories: normalized.factories ?? [],
         selectedAsteroidId: null,
       };
     }),
@@ -631,6 +652,92 @@ const storeCreator: StateCreator<StoreState> = (set, get) => ({
     set((state) => ({
       droneFlights: state.droneFlights.filter((entry) => entry.droneId !== droneId),
     })),
+
+  addFactory: (factory) =>
+    set((state) => ({
+      factories: [...state.factories, factory],
+    })),
+
+  removeFactory: (factoryId) =>
+    set((state) => ({
+      factories: state.factories.filter((f) => f.id !== factoryId),
+    })),
+
+  getFactory: (factoryId) => {
+    const state = get();
+    return state.factories.find((f) => f.id === factoryId);
+  },
+
+  dockDroneAtFactory: (factoryId, droneId) => {
+    const state = get();
+    const factory = state.factories.find((f) => f.id === factoryId);
+    if (!factory) return false;
+    return attemptDockDrone(factory, droneId);
+  },
+
+  undockDroneFromFactory: (factoryId, droneId) => {
+    const state = get();
+    const factory = state.factories.find((f) => f.id === factoryId);
+    if (factory) {
+      removeDroneFromFactory(factory, droneId);
+    }
+  },
+
+  transferOreToFactory: (factoryId, amount) => {
+    const state = get();
+    const factory = state.factories.find((f) => f.id === factoryId);
+    if (!factory) return 0;
+    const transferred = factoryTransferOre(factory, amount);
+    // Trigger a state update to ensure reactivity
+    set((s) => ({
+      factories: s.factories.map((f) =>
+        f.id === factoryId ? factory : f
+      ),
+    }));
+    return transferred;
+  },
+
+  processFactories: (dt) => {
+    if (dt <= 0 || get().factories.length === 0) return;
+
+    set((state) => {
+      let totalEnergyDrain = 0;
+      let totalRefinedOre = 0;
+
+      const updatedFactories = state.factories.map((factory) => {
+        const copy = { ...factory };
+
+        // Drain idle energy
+        totalEnergyDrain += copy.idleEnergyPerSec * dt;
+
+        // Enforce min-1-running constraint
+        const capacity = getEnergyCapacity(state.modules, getResourceModifiers(state.resources, state.prestige.cores));
+        enforceMinOneRefining(copy, Math.max(0, state.resources.energy), capacity);
+
+        // Process active refines
+        for (let i = copy.activeRefines.length - 1; i >= 0; i -= 1) {
+          const process = copy.activeRefines[i];
+          const refined = tickRefineProcess(copy, process, dt);
+          if (refined > 0) {
+            totalRefinedOre += refined;
+            totalEnergyDrain += process.energyRequired;
+          }
+        }
+
+        return copy;
+      });
+
+      // Apply energy drain and refined ore to global state
+      const newResources = { ...state.resources };
+      newResources.energy = Math.max(0, newResources.energy - totalEnergyDrain);
+      newResources.ore = Math.max(0, newResources.ore + totalRefinedOre);
+
+      return {
+        resources: newResources,
+        factories: updatedFactories,
+      };
+    });
+  },
 });
 
 export const createStoreInstance = () => createVanillaStore<StoreState>(storeCreator);

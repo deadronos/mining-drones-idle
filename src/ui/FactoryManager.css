@@ -1,0 +1,102 @@
+.factory-manager {
+  padding: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+  background: #f9f9f9;
+}
+
+.factory-manager h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.factory-manager p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.factory-buy {
+  margin: 0.75rem 0;
+  padding: 0.5rem;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 0.25rem;
+}
+
+.factory-buy .cost {
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.buy-factory-btn {
+  width: 100%;
+  padding: 0.5rem;
+  background: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.buy-factory-btn:hover:not(:disabled) {
+  background: #357abd;
+}
+
+.buy-factory-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.factory-list {
+  margin-top: 1rem;
+}
+
+.factory-list h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+}
+
+.factory-card {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.factory-card .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.factory-card .header strong {
+  font-size: 0.9rem;
+}
+
+.pinned-badge {
+  font-size: 0.8rem;
+}
+
+.factory-card .stats {
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+  color: #333;
+}
+
+.factory-card .refines {
+  background: #f0f0f0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.2rem;
+}
+
+.refine-item {
+  padding: 0.2rem 0;
+  font-size: 0.75rem;
+  color: #666;
+}
