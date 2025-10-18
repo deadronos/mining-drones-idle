@@ -18,6 +18,7 @@ import { Asteroids } from '@/r3f/Asteroids';
 import { Drones } from '@/r3f/Drones';
 import { DroneTrails } from '@/r3f/DroneTrails';
 import { useFactoryAutofit } from '@/hooks/useFactoryAutofit';
+import { useCameraReset } from '@/hooks/useCameraReset';
 
 type SystemRunner = (dt: number) => void;
 
@@ -25,6 +26,7 @@ export const Scene = () => {
   const time = useMemo(() => createTimeSystem(0.1), []);
   const showTrails = useStore((state) => state.settings.showTrails);
   useFactoryAutofit();
+  useCameraReset();
   const systems = useMemo(() => {
     const store = storeApi;
     return {

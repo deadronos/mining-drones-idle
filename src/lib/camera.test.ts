@@ -8,26 +8,48 @@ const CONFIG: AutofitConfig = {
   easeTime: 0.5,
 };
 
+const DEFAULT_FOV = 52;
+const DEFAULT_ASPECT = 1.5;
+
 describe('computeAutofitCamera', () => {
-  it('zooms out enough to include widely spaced factories', () => {
+  it('positions camera farther away for widely spaced factories', () => {
     const positions = [new Vector3(-60, 0, 0), new Vector3(60, 0, 0)];
 
-    const result = computeAutofitCamera(positions, CONFIG);
+    const result = computeAutofitCamera(positions, CONFIG, DEFAULT_FOV, DEFAULT_ASPECT);
 
     expect(result).not.toBeNull();
-    expect(result?.zoom ?? 1).toBeLessThan(0.3);
+    // For widely spaced factories, camera should be far away (low zoom value)
+    expect(result?.zoom ?? 1).toBeLessThan(0.05);
+    // Camera position should be elevated and behind the center
+    expect(result?.position.y).toBeGreaterThan(0);
+    expect(result?.position.z).toBeGreaterThan(10);
   });
 
-  it('caps zoom when factories are clustered together', () => {
+  it('positions camera closer for clustered factories', () => {
     const positions = [new Vector3(1, 2, 0), new Vector3(2, 3, 0)];
 
-    const result = computeAutofitCamera(positions, CONFIG);
+    const result = computeAutofitCamera(positions, CONFIG, DEFAULT_FOV, DEFAULT_ASPECT);
 
     expect(result).not.toBeNull();
-    expect(result?.zoom ?? 0).toBeLessThanOrEqual(CONFIG.maxZoom);
+    // For clustered factories, camera can be closer (higher zoom value)
+    expect(result?.zoom ?? 0).toBeGreaterThan(0.05);
+    // But should maintain minimum distance
+    expect(result?.position.z).toBeGreaterThan(8);
   });
 
   it('returns null when no positions are provided', () => {
-    expect(computeAutofitCamera([], CONFIG)).toBeNull();
+    expect(computeAutofitCamera([], CONFIG, DEFAULT_FOV, DEFAULT_ASPECT)).toBeNull();
+  });
+
+  it('centers camera on factory cluster', () => {
+    const positions = [new Vector3(-10, 0, 0), new Vector3(10, 0, 0), new Vector3(0, 15, 0)];
+
+    const result = computeAutofitCamera(positions, CONFIG, DEFAULT_FOV, DEFAULT_ASPECT);
+
+    expect(result).not.toBeNull();
+    // Camera X should be near center (around 0)
+    expect(Math.abs(result?.position.x ?? 100)).toBeLessThan(5);
+    // Camera should look at the vertical center (around 5)
+    expect(result?.position.y).toBeGreaterThan(0);
   });
 });

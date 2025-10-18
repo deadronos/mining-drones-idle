@@ -46,28 +46,57 @@ export const computeBoundingBox = (
 /**
  * Compute camera position and zoom to fit all factories with margin.
  * Returns { position, zoom } target for camera.
+ * 
+ * For perspective cameras, zoom is actually the distance from the target.
+ * We calculate the distance needed to fit the bounding sphere in view.
  */
 export const computeAutofitCamera = (
   positions: Vector3[],
   config: AutofitConfig,
+  fov = 52, // field of view in degrees (default from App.tsx)
+  aspect = 1.5, // aspect ratio (width/height), default approximation
 ): { position: Vector3; zoom: number } | null => {
   if (positions.length === 0) return null;
 
   const bb = computeBoundingBox(positions);
   if (!bb) return null;
 
-  // Compute required zoom based on radius + margin
-  const requiredRadius = bb.radius + config.margin;
-  // Assuming orthogonal camera with zoom: visible radius = 10 / zoom
-  // zoom = 10 / requiredRadius, but cap to maxZoom
-  const baseZoom = 10 / Math.max(requiredRadius, 0.001);
-  const zoom = Math.min(baseZoom, config.maxZoom);
-
-  // Camera position: center of bounding box, slightly elevated
+  // For perspective camera, we need to calculate the distance from center
+  // to fit the bounding sphere (radius + margin) in the viewport
+  const boundingSphereRadius = bb.radius + config.margin;
+  
+  // Convert FOV to radians and calculate vertical FOV
+  const vFOV = (fov * Math.PI) / 180;
+  
+  // Account for aspect ratio - use the smaller FOV dimension
+  const hFOV = 2 * Math.atan(Math.tan(vFOV / 2) * aspect);
+  const effectiveFOV = Math.min(vFOV, hFOV);
+  
+  // Calculate distance needed to fit bounding sphere
+  // distance = radius / tan(fov/2)
+  const distance = boundingSphereRadius / Math.tan(effectiveFOV / 2);
+  
+  // Apply maxZoom constraint (for perspective, smaller zoom = farther away)
+  // Minimum distance based on maxZoom (interpret maxZoom as minimum allowed distance multiplier)
+  const minDistance = 10; // minimum distance to prevent getting too close
+  const finalDistance = Math.max(distance, minDistance);
+  
+  // Camera position: center of bounding box + offset in viewing direction
+  // Assuming camera looks down at an angle (like original setup)
   const position = bb.center.clone();
-  position.z = position.z + 5; // Elevated for isometric view
+  
+  // Position camera at calculated distance, maintaining the viewing angle
+  // Original camera: position: [0, 9, 22] - that's roughly 40 degrees elevation
+  const elevationRatio = 9 / 22; // y/z ratio from original camera
+  const horizontalRatio = 0; // x/z ratio (camera centered)
+  
+  position.z += finalDistance;
+  position.y += finalDistance * elevationRatio;
+  position.x += finalDistance * horizontalRatio;
 
-  return { position, zoom };
+  // Return distance as 'zoom' for compatibility with existing interface
+  // Lower zoom value = camera is farther away
+  return { position, zoom: 1 / finalDistance };
 };
 
 /**

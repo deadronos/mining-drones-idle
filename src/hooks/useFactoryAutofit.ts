@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useThree } from '@react-three/fiber';
-import type { OrthographicCamera } from 'three';
+import type { PerspectiveCamera } from 'three';
 import { Vector3 } from 'three';
 import { useStore } from '../state/store';
 import type { BuildableFactory } from '../ecs/factories';
@@ -15,9 +15,10 @@ const DEFAULT_CONFIG: AutofitConfig = {
 /**
  * Hook to manage camera autofit for factories.
  * Smoothly animates camera to fit all factories on screen.
+ * Works with perspective cameras.
  */
 export const useFactoryAutofit = () => {
-  const { camera } = useThree();
+  const { camera, size } = useThree();
   const factories: BuildableFactory[] = useStore((state) => state.factories);
   const sequence = useStore((state) => state.factoryAutofitSequence);
   const lerpStartTime = useRef<number | null>(null);
@@ -38,18 +39,20 @@ export const useFactoryAutofit = () => {
     }
     lastSequence.current = sequence;
 
-    const orthoCamera = camera as OrthographicCamera;
+    const perspCamera = camera as PerspectiveCamera;
     const currentState = {
-      position: orthoCamera.position.clone(),
-      zoom: orthoCamera.zoom,
+      position: perspCamera.position.clone(),
+      zoom: 1, // For perspective cameras, we store distance as inverse zoom
     };
 
     // Store initial state for lerp
     previousCameraState.current ??= currentState;
 
-    // Compute target autofit state
+    // Compute target autofit state with viewport aspect ratio and FOV
     const positions = factories.map((f) => new Vector3(f.position.x, f.position.y, f.position.z));
-    const targetState = computeAutofitCamera(positions, DEFAULT_CONFIG);
+    const aspect = size.width / size.height;
+    const fov = 'fov' in perspCamera ? perspCamera.fov : 52;
+    const targetState = computeAutofitCamera(positions, DEFAULT_CONFIG, fov, aspect);
 
     if (!targetState) return;
 
@@ -63,9 +66,9 @@ export const useFactoryAutofit = () => {
       const progress = Math.min(1, elapsed / DEFAULT_CONFIG.easeTime);
 
       const newState = lerpCameraState(previousCameraState.current, targetState, progress);
-      orthoCamera.position.copy(newState.position);
-      orthoCamera.zoom = newState.zoom;
-      orthoCamera.updateProjectionMatrix();
+      perspCamera.position.copy(newState.position);
+      // For perspective cameras, we just update position, no zoom property
+      perspCamera.updateProjectionMatrix();
 
       if (progress < 1) {
         requestAnimationFrame(animate);
@@ -76,5 +79,5 @@ export const useFactoryAutofit = () => {
     };
 
     animate();
-  }, [factories, camera, sequence]);
+  }, [factories, camera, size, sequence]);
 };
