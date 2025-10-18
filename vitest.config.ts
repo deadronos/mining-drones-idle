@@ -16,7 +16,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: [],
     include: ['src/**/*.test.{ts,tsx}'],
-    watch:false,
+    watch: false,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'json'],

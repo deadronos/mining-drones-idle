@@ -77,9 +77,6 @@ describe('ecs/systems/power', () => {
     system(1);
 
     const { resources } = store.getState();
-    expect(resources.energy).toBeCloseTo(
-      Math.min(expectedCapacity, expectedGeneration),
-      5,
-    );
+    expect(resources.energy).toBeCloseTo(Math.min(expectedCapacity, expectedGeneration), 5);
   });
 });

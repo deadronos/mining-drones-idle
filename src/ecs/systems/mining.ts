@@ -21,6 +21,7 @@ export const createMiningSystem = (world: GameWorld, store: StoreApiType) => {
         drone.targetId = null;
         drone.targetRegionId = null;
         drone.travel = null;
+        drone.targetFactoryId = null;
         continue;
       }
       const capacityLeft = Math.max(0, drone.capacity - drone.cargo);
@@ -28,6 +29,7 @@ export const createMiningSystem = (world: GameWorld, store: StoreApiType) => {
         drone.state = 'returning';
         drone.targetId = null;
         drone.travel = null;
+        drone.targetFactoryId = null;
         continue;
       }
       const { fraction } = consumeDroneEnergy(drone, dt, throttleFloor, drainRate);
@@ -40,6 +42,7 @@ export const createMiningSystem = (world: GameWorld, store: StoreApiType) => {
         drone.targetId = null;
         drone.targetRegionId = null;
         drone.travel = null;
+        drone.targetFactoryId = null;
         continue;
       }
       const region = getRegionById(asteroid.regions, drone.targetRegionId);
@@ -57,6 +60,7 @@ export const createMiningSystem = (world: GameWorld, store: StoreApiType) => {
         drone.targetId = null;
         drone.targetRegionId = null;
         drone.travel = null;
+        drone.targetFactoryId = null;
       }
     }
   };

@@ -170,7 +170,10 @@ export const AsteroidInspector = () => {
                 <li key={region.id} className="inspector-region">
                   <div className="inspector-region-header">
                     <div className="inspector-region-title">
-                      <span className="inspector-region-color" style={{ backgroundColor: regionDef.palette.primary }} />
+                      <span
+                        className="inspector-region-color"
+                        style={{ backgroundColor: regionDef.palette.primary }}
+                      />
                       <span>{regionDef.name}</span>
                     </div>
                     <span>{formatPercent(region.weight)}</span>
@@ -178,7 +181,9 @@ export const AsteroidInspector = () => {
                   <div className="inspector-region-meta">
                     <span>{region.gravityMultiplier.toFixed(2)}g</span>
                     <span>{RESOURCE_LABELS[region.dominantResource]}</span>
-                    <span className={`inspector-badge severity-${region.hazard?.severity ?? 'none'}`}>
+                    <span
+                      className={`inspector-badge severity-${region.hazard?.severity ?? 'none'}`}
+                    >
                       {formatHazard(region.hazard?.id)}
                     </span>
                   </div>

@@ -77,11 +77,7 @@ const randomRegionOffset = (rng: RandomSource, radius: number) => {
   const v = rng.next();
   const theta = 2 * Math.PI * u;
   const phi = Math.acos(2 * v - 1);
-  tempVec.set(
-    Math.sin(phi) * Math.cos(theta),
-    Math.cos(phi),
-    Math.sin(phi) * Math.sin(theta),
-  );
+  tempVec.set(Math.sin(phi) * Math.cos(theta), Math.cos(phi), Math.sin(phi) * Math.sin(theta));
   tempVec.multiplyScalar(radius * REGION_OFFSET_RADIUS);
   return tempVec.clone();
 };
@@ -123,7 +119,9 @@ export const generateFractureRegions = (
 ): BiomeRegionState[] => {
   const minRegions = Math.max(2, options.minRegions ?? 2);
   const maxRegions = Math.max(minRegions, options.maxRegions ?? 4);
-  const rng: RandomGenerator = createRng(mixSeed(biomeState.fractureSeed, biomeState.fractureCount));
+  const rng: RandomGenerator = createRng(
+    mixSeed(biomeState.fractureSeed, biomeState.fractureCount),
+  );
   const span = Math.max(0, maxRegions - minRegions);
   const count = Math.min(maxRegions, minRegions + (span > 0 ? rng.nextInt(0, span) : 0));
   const weights = normalizeRegionWeights(
@@ -203,12 +201,15 @@ export const applyFractureToAsteroid = (
     );
     asteroid.gravityMultiplier = blendedGravity;
     asteroid.resourceProfile = normalizeResourceWeights(
-      regions.reduce((acc, region) => {
-        (Object.keys(region.resourceProfile) as ResourceKey[]).forEach((key) => {
-          acc[key] = (acc[key] ?? 0) + region.resourceProfile[key] * region.weight;
-        });
-        return acc;
-      }, { ore: 0, metals: 0, crystals: 0, organics: 0, ice: 0 } as ResourceWeights),
+      regions.reduce(
+        (acc, region) => {
+          (Object.keys(region.resourceProfile) as ResourceKey[]).forEach((key) => {
+            acc[key] = (acc[key] ?? 0) + region.resourceProfile[key] * region.weight;
+          });
+          return acc;
+        },
+        { ore: 0, metals: 0, crystals: 0, organics: 0, ice: 0 } as ResourceWeights,
+      ),
     );
     asteroid.dominantResource = getDominantResource(asteroid.resourceProfile);
     biomeState.resourceProfile = { ...asteroid.resourceProfile };

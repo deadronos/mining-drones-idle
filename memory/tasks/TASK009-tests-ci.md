@@ -20,11 +20,11 @@ Prioritize deterministic unit tests for newly added systems and add Playwright s
 
 ## Subtasks
 
-| ID | Description | Status | Updated | Notes |
-| --- | ----------- | ------ | ------- | ----- |
-| 9.1 | Unit test coverage | Partially Completed | 2025-02-18 | Vitest unit tests exist for store, persistence, refinery, power, and mining systems (`src/**/*.test.ts`). |
+| ID  | Description          | Status              | Updated    | Notes                                                                                                                |
+| --- | -------------------- | ------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------- |
+| 9.1 | Unit test coverage   | Partially Completed | 2025-02-18 | Vitest unit tests exist for store, persistence, refinery, power, and mining systems (`src/**/*.test.ts`).            |
 | 9.2 | Playwright scenarios | Partially Completed | 2025-02-14 | Playwright e2e exists in `tests/e2e/basic.spec.ts` but targeted scenarios for import/export/offline should be added. |
-| 9.3 | CI workflow | Not Started | 2025-10-16 | No `.github/workflows` present in repository; CI workflow should be added. |
+| 9.3 | CI workflow          | Not Started         | 2025-10-16 | No `.github/workflows` present in repository; CI workflow should be added.                                           |
 
 ## Acceptance Criteria
 
@@ -40,4 +40,3 @@ Prioritize deterministic unit tests for newly added systems and add Playwright s
 ### 2025-10-16 (update)
 
 - Added initial CI workflow `.github/workflows/ci.yml` that runs lint, Vitest unit tests, and Playwright e2e. Uses caching and uploads artifacts on failures. Next: run CI on branch, add targeted Playwright scenarios, and improve artifact collection (junit/coverage outputs).
-

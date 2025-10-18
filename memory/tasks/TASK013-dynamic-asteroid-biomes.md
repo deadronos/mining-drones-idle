@@ -44,14 +44,14 @@ Introduce biome-aware asteroids per `/plan/dynamic-asteroid-biomes-plan.md`: det
 
 ### Subtasks
 
-| ID   | Description                                       | Status       | Updated    | Notes |
-| ---- | ------------------------------------------------- | ------------ | ---------- | ----- |
-| 1.1  | Biome data module & store resource extensions     | Not Started  | 2025-10-18 |       |
-| 1.2  | Entity updates & deterministic biome assignment   | Not Started  | 2025-10-18 |       |
-| 1.3  | Fracture system & drone heuristics                | Not Started  | 2025-10-18 |       |
-| 1.4  | Mining/travel/unload integration                  | Not Started  | 2025-10-18 |       |
-| 1.5  | UI updates for resources & asteroid inspector     | Not Started  | 2025-10-18 |       |
-| 1.6  | Unit/UI tests for deterministic biome behaviors   | Not Started  | 2025-10-18 |       |
+| ID  | Description                                     | Status      | Updated    | Notes |
+| --- | ----------------------------------------------- | ----------- | ---------- | ----- |
+| 1.1 | Biome data module & store resource extensions   | Not Started | 2025-10-18 |       |
+| 1.2 | Entity updates & deterministic biome assignment | Not Started | 2025-10-18 |       |
+| 1.3 | Fracture system & drone heuristics              | Not Started | 2025-10-18 |       |
+| 1.4 | Mining/travel/unload integration                | Not Started | 2025-10-18 |       |
+| 1.5 | UI updates for resources & asteroid inspector   | Not Started | 2025-10-18 |       |
+| 1.6 | Unit/UI tests for deterministic biome behaviors | Not Started | 2025-10-18 |       |
 
 ## Progress Log
 

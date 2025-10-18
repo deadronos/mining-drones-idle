@@ -37,7 +37,6 @@ export const createTravelSystem = (world: GameWorld, store: StoreApiType) => {
       // Defensive: validate travel object
       if (!isFiniteTravel(travel) || !Number.isFinite(travel.duration) || travel.duration <= 0) {
         // Log minimal snapshot for debugging and recover the drone to a safe state
-        // eslint-disable-next-line no-console
         console.warn('[travel] invalid travel detected, clearing travel', {
           id: drone.id,
           state: drone.state,
@@ -64,6 +63,7 @@ export const createTravelSystem = (world: GameWorld, store: StoreApiType) => {
           state: drone.state,
           targetAsteroidId: drone.state === 'toAsteroid' ? drone.targetId : null,
           targetRegionId: drone.state === 'toAsteroid' ? drone.targetRegionId : null,
+          targetFactoryId: drone.state === 'returning' ? drone.targetFactoryId : null,
           pathSeed: drone.flightSeed,
           travel: travelToSnapshot(travel),
         });

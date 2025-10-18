@@ -4,7 +4,8 @@ import type { TravelSnapshot, VectorTuple } from '@/state/store';
 
 export const vectorToTuple = (vector: Vector3): VectorTuple => [vector.x, vector.y, vector.z];
 
-export const tupleToVector = (tuple: VectorTuple): Vector3 => new Vector3(tuple[0], tuple[1], tuple[2]);
+export const tupleToVector = (tuple: VectorTuple): Vector3 =>
+  new Vector3(tuple[0], tuple[1], tuple[2]);
 
 export const travelToSnapshot = (travel: TravelData): TravelSnapshot => ({
   from: vectorToTuple(travel.from),
@@ -18,8 +19,10 @@ export const isFiniteVector = (vector: Vector3) =>
   Number.isFinite(vector.x) && Number.isFinite(vector.y) && Number.isFinite(vector.z);
 
 export const isFiniteTravel = (travel: TravelData) =>
-  Number.isFinite(travel.elapsed) && Number.isFinite(travel.duration) &&
-  isFiniteVector(travel.from) && isFiniteVector(travel.to) &&
+  Number.isFinite(travel.elapsed) &&
+  Number.isFinite(travel.duration) &&
+  isFiniteVector(travel.from) &&
+  isFiniteVector(travel.to) &&
   (travel.control ? isFiniteVector(travel.control) : true);
 
 export const snapshotToTravel = (snapshot: TravelSnapshot): TravelData => ({
@@ -30,7 +33,10 @@ export const snapshotToTravel = (snapshot: TravelSnapshot): TravelData => ({
   control: snapshot.control ? tupleToVector(snapshot.control) : undefined,
 });
 
-export const computeTravelPosition = (travel: TravelData, out: Vector3 = new Vector3()): Vector3 => {
+export const computeTravelPosition = (
+  travel: TravelData,
+  out: Vector3 = new Vector3(),
+): Vector3 => {
   const duration = travel.duration > 0 ? travel.duration : 1;
   const t = Math.max(0, Math.min(1, travel.elapsed / duration));
   if (travel.control) {

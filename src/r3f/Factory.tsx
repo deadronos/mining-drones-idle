@@ -31,12 +31,15 @@ const BELTS: BeltDefinition[] = [
   },
 ];
 
-const PROFILE_CONFIG: Record<PerformanceProfile, {
-  itemCount: number;
-  transferLimit: number;
-  beltSpeed: number;
-  effectMultiplier: number;
-}> = {
+const PROFILE_CONFIG: Record<
+  PerformanceProfile,
+  {
+    itemCount: number;
+    transferLimit: number;
+    beltSpeed: number;
+    effectMultiplier: number;
+  }
+> = {
   low: { itemCount: 0, transferLimit: 0, beltSpeed: 0.55, effectMultiplier: 0.6 },
   medium: { itemCount: 12, transferLimit: 12, beltSpeed: 0.85, effectMultiplier: 1 },
   high: { itemCount: 24, transferLimit: 20, beltSpeed: 1.25, effectMultiplier: 1.3 },
@@ -99,9 +102,12 @@ const createConveyorTexture = () => {
 export const Factory = () => {
   const performanceProfile = useStore((state) => state.settings.performanceProfile);
   const beltTextures = useMemo(() => BELTS.map(() => createConveyorTexture()), []);
-  useEffect(() => () => {
-    beltTextures.forEach((texture) => texture?.dispose());
-  }, [beltTextures]);
+  useEffect(
+    () => () => {
+      beltTextures.forEach((texture) => texture?.dispose());
+    },
+    [beltTextures],
+  );
 
   const beltOffsets = useRef<number[]>(BELTS.map(() => 0));
   const beltMaterials = useRef<Array<MeshStandardMaterial | null>>(BELTS.map(() => null));
@@ -221,7 +227,8 @@ export const Factory = () => {
           slot.from.copy(event.from);
           slot.to.copy(event.to);
           slot.amount = event.amount;
-          slot.arcHeight = 0.4 + Math.min(1, event.amount / 80) * 0.5 * profileConfig.effectMultiplier;
+          slot.arcHeight =
+            0.4 + Math.min(1, event.amount / 80) * 0.5 * profileConfig.effectMultiplier;
         }
         if (queue.length > TRANSFER_POOL_SIZE) {
           queue.splice(0, queue.length - TRANSFER_POOL_SIZE);
@@ -319,9 +326,18 @@ export const Factory = () => {
           />
         </mesh>
       ))}
-      <instancedMesh ref={itemMeshRef} args={[undefined as never, undefined as never, ITEM_POOL_SIZE]} castShadow>
+      <instancedMesh
+        ref={itemMeshRef}
+        args={[undefined as never, undefined as never, ITEM_POOL_SIZE]}
+        castShadow
+      >
         <boxGeometry args={[0.28, 0.18, 0.28]} />
-        <meshStandardMaterial color="#f59e0b" emissive="#fbbf24" emissiveIntensity={0.4} roughness={0.4} />
+        <meshStandardMaterial
+          color="#f59e0b"
+          emissive="#fbbf24"
+          emissiveIntensity={0.4}
+          roughness={0.4}
+        />
       </instancedMesh>
       <instancedMesh
         ref={transferMeshRef}
@@ -340,7 +356,14 @@ export const Factory = () => {
           opacity={0.9}
         />
       </instancedMesh>
-      <pointLight ref={boostLightRef} position={[0, 2.6, 0]} color="#38bdf8" intensity={0.8} distance={10} decay={2} />
+      <pointLight
+        ref={boostLightRef}
+        position={[0, 2.6, 0]}
+        color="#38bdf8"
+        intensity={0.8}
+        distance={10}
+        decay={2}
+      />
     </group>
   );
 };

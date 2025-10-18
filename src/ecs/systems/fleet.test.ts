@@ -44,8 +44,7 @@ describe('ecs/systems/fleet', () => {
     const state = store.getState();
     const modifiers = getResourceModifiers(state.resources);
     const expectedCapacity =
-      (DEFAULT_DRONE_CAPACITY + state.modules.storage * 5) *
-      modifiers.droneCapacityMultiplier;
+      (DEFAULT_DRONE_CAPACITY + state.modules.storage * 5) * modifiers.droneCapacityMultiplier;
 
     expect(drone.capacity).toBeCloseTo(expectedCapacity, 5);
     expect(drone.cargo).toBeCloseTo(expectedCapacity, 5);

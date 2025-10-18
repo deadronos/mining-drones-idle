@@ -40,14 +40,20 @@ const migrations: Array<{ targetVersion: string; migrate: MigrationFn }> = [
     migrate: (snapshot) => {
       const migrated = { ...snapshot } as StoreSnapshot;
       // ensure showTrails exists on settings (introduced in 0.1.0)
-      migrated.settings = { ...(migrated.settings ?? {}), showTrails: migrated.settings?.showTrails ?? true };
+      migrated.settings = {
+        ...(migrated.settings ?? {}),
+        showTrails: migrated.settings?.showTrails ?? true,
+      };
       const existingSave = migrated.save ?? { lastSave: Date.now(), version: '0.0.0' };
       migrated.save = {
         ...existingSave,
         version: snapshot.save?.version ?? existingSave.version,
         lastSave: existingSave.lastSave ?? Date.now(),
       };
-      return { snapshot: migrated, description: 'ensure settings.showTrails default and save meta' };
+      return {
+        snapshot: migrated,
+        description: 'ensure settings.showTrails default and save meta',
+      };
     },
   },
   {
@@ -111,7 +117,10 @@ export const migrateSnapshot = (
 
   // Apply migrations whose targetVersion is greater than incoming and <= saveVersion
   for (const entry of migrations.sort((a, b) => semverCompare(a.targetVersion, b.targetVersion))) {
-    if (semverCompare(incoming, entry.targetVersion) < 0 && semverCompare(entry.targetVersion, saveVersion) <= 0) {
+    if (
+      semverCompare(incoming, entry.targetVersion) < 0 &&
+      semverCompare(entry.targetVersion, saveVersion) <= 0
+    ) {
       const result = entry.migrate(working);
       working = result.snapshot;
       if (result.description) report.applied.push(result.description);
@@ -120,7 +129,11 @@ export const migrateSnapshot = (
   }
 
   // Finalize
-  working.save = { ...(working.save ?? ({} as StoreSnapshot['save'])), version: saveVersion, lastSave: working.save?.lastSave ?? Date.now() };
+  working.save = {
+    ...(working.save ?? ({} as StoreSnapshot['save'])),
+    version: saveVersion,
+    lastSave: working.save?.lastSave ?? Date.now(),
+  };
   report.toVersion = saveVersion;
   return { snapshot: working, report };
 };

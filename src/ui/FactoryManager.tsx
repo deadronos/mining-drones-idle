@@ -1,7 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import { Vector3 } from 'three';
 import { useStore } from '@/state/store';
-import { createFactory, computeFactoryCost } from '@/ecs/factories';
+import { computeFactoryCost } from '@/ecs/factories';
 import type { BuildableFactory } from '@/ecs/factories';
 import './FactoryManager.css';
 
@@ -11,10 +10,12 @@ import './FactoryManager.css';
 export const FactoryManager = () => {
   const factories = useStore((state) => state.factories);
   const resources = useStore((state) => state.resources);
-  const addFactory = useStore((state) => state.addFactory);
+  const purchaseFactory = useStore((state) => state.purchaseFactory);
+  const toggleFactoryPinned = useStore((state) => state.toggleFactoryPinned);
+  const triggerAutofit = useStore((state) => state.triggerFactoryAutofit);
 
   const factoryCount = factories.length;
-  const nextCost = useMemo(() => computeFactoryCost(factoryCount), [factoryCount]);
+  const nextCost = useMemo(() => computeFactoryCost(Math.max(0, factoryCount - 1)), [factoryCount]);
 
   const canAfford = useMemo(
     () => resources.metals >= nextCost.metals && resources.crystals >= nextCost.crystals,
@@ -23,24 +24,20 @@ export const FactoryManager = () => {
 
   const handleBuyFactory = useCallback(() => {
     if (!canAfford) return;
-
-    // Generate a new factory ID
-    const id = `factory-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-
-    // Place at origin for now; in full impl, would use a placement UI
-    const position = new Vector3(0, 0, 0);
-    const newFactory = createFactory(id, position);
-
-    // Add to store (would deduct cost in real implementation)
-    addFactory(newFactory);
-  }, [canAfford, addFactory]);
+    purchaseFactory();
+  }, [canAfford, purchaseFactory]);
 
   return (
-    <div className="factory-manager">
+    <aside className="panel factory-panel">
       <h3>Factories</h3>
       <p>
         Owned: <strong>{factoryCount}</strong>
       </p>
+      <div className="factory-actions">
+        <button type="button" onClick={triggerAutofit} disabled={factoryCount === 0}>
+          Autofit Camera
+        </button>
+      </div>
 
       <div className="factory-buy">
         <div className="cost">
@@ -60,11 +57,11 @@ export const FactoryManager = () => {
         <div className="factory-list">
           <h4>Active Factories</h4>
           {factories.map((factory) => (
-            <FactoryCard key={factory.id} factory={factory} />
+            <FactoryCard key={factory.id} factory={factory} onTogglePin={toggleFactoryPinned} />
           ))}
         </div>
       )}
-    </div>
+    </aside>
   );
 };
 
@@ -73,14 +70,23 @@ export const FactoryManager = () => {
  */
 interface FactoryCardProps {
   factory: BuildableFactory;
+  onTogglePin: (factoryId: string) => void;
 }
 
-const FactoryCard = ({ factory }: FactoryCardProps) => {
+const FactoryCard = ({ factory, onTogglePin }: FactoryCardProps) => {
   return (
     <div className="factory-card">
       <div className="header">
         <strong>{factory.id}</strong>
-        {factory.pinned && <span className="pinned-badge">📌</span>}
+        <button
+          type="button"
+          className="pin-button"
+          onClick={() => onTogglePin(factory.id)}
+          aria-pressed={factory.pinned}
+          aria-label={factory.pinned ? 'Unpin factory card' : 'Pin factory card'}
+        >
+          {factory.pinned ? '📌' : '📍'}
+        </button>
       </div>
       <div className="stats">
         <div>
