@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Scene } from '@/r3f/Scene';
 import { UpgradePanel } from '@/ui/UpgradePanel';
@@ -19,6 +19,14 @@ export const App = ({ persistence }: AppProps) => {
   const resources = useStore((state) => state.resources);
   const modules = useStore((state) => state.modules);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    // Signal to e2e tests that the app has mounted and initial persistence/load is complete.
+    if (typeof window !== 'undefined') {
+      window.__appReady = true;
+    }
+    // Do not unset `window.__appReady` on unmount — test harnesses rely on a stable flag.
+  }, []);
 
   return (
     <ToastProvider>

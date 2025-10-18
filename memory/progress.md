@@ -16,7 +16,8 @@
 
 - Implemented migration helpers (`src/state/migrations.ts`) to normalize legacy snapshots on load/import; README updated with save format and migration guidance.
 
-- Upgraded factory visuals with animated conveyors, transfer FX, boost pulses, and a settings-driven performance profile backed by ECS activity signals (TASK011).
+ - Upgraded factory visuals with animated conveyors, transfer FX, boost pulses, and a settings-driven performance profile backed by ECS activity signals (TASK011).
+ - TASK008/TASK011: Visuals completed and integrated. Trails, conveyors, transfer FX, and boost pulses are implemented and gated by performance profiles. Visual snapshot tests and a perf scene were added for baseline measurements.
 
 - Kicked off TASK012 to add per-drone target variation, seeded path offsets, and save/load persistence for active flights; requirements drafted and implementation plan captured in the task log.
 - Completed TASK012 with weighted targeting, seeded bezier travel, persisted `droneFlights`, README updates, and unit/integration coverage ensuring mid-flight saves restore correctly.
@@ -27,4 +28,5 @@
 
 - Track UI follow-up for surfacing per-drone battery levels and throttle warnings in the HUD.
 - Validate seeded RNG integration across save import/export flows and plan any reset tooling.
-- Capture performance telemetry for drone trails and finalize factory snapshot/perf scene coverage for TASK011.
+ - Capture performance telemetry for drone trails and finalize factory snapshot/perf scene coverage for TASK011.
+ - Capture performance telemetry for drone trails (follow-up) and triage e2e/flaky UI tests that wait for panels to mount in CI.
