@@ -46,6 +46,7 @@ const createDrone = (position: Vector3): DroneEntity => ({
   flightSeed: null,
   targetFactoryId: null,
   cargoProfile: { ore: 0, metals: 0, crystals: 0, organics: 0, ice: 0 },
+  ownerFactoryId: null,
 });
 
 describe('assignDroneTarget', () => {

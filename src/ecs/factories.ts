@@ -18,6 +18,23 @@ export interface RefineProcess {
  * Represents a purchasable, placeable Factory building.
  * Drones dock here to unload and refine resources.
  */
+export interface FactoryResources {
+  ore: number;
+  bars: number;
+  metals: number;
+  crystals: number;
+  organics: number;
+  ice: number;
+  credits: number;
+}
+
+export interface FactoryUpgrades {
+  docking: number;
+  refine: number;
+  storage: number;
+  energy: number;
+}
+
 export interface BuildableFactory {
   id: string;
   position: Vector3;
@@ -27,9 +44,14 @@ export interface BuildableFactory {
   energyPerRefine: number;
   storageCapacity: number;
   currentStorage: number;
-  queuedDrones: string[]; // drone ids
+  queuedDrones: string[]; // queue order; first dockingCapacity entries are active docks
   activeRefines: RefineProcess[];
   pinned: boolean;
+  energy: number;
+  energyCapacity: number;
+  resources: FactoryResources;
+  ownedDrones: string[];
+  upgrades: FactoryUpgrades;
 }
 
 /**
@@ -43,6 +65,8 @@ export const FACTORY_CONFIG = {
   idleEnergyPerSec: 1,
   energyPerRefine: 5,
   storageCapacity: 300,
+  energyCapacity: 80,
+  initialEnergy: 40,
   priceScaleIncrement: 50, // linear price scaling
 } as const;
 
@@ -62,6 +86,19 @@ export const createFactory = (id: string, position: Vector3): BuildableFactory =
   queuedDrones: [],
   activeRefines: [],
   pinned: false,
+  energy: FACTORY_CONFIG.initialEnergy,
+  energyCapacity: FACTORY_CONFIG.energyCapacity,
+  resources: {
+    ore: 0,
+    bars: 0,
+    metals: 0,
+    crystals: 0,
+    organics: 0,
+    ice: 0,
+    credits: 0,
+  },
+  ownedDrones: [],
+  upgrades: { docking: 0, refine: 0, storage: 0, energy: 0 },
 });
 
 /**
@@ -89,12 +126,16 @@ export const computeFactoryEnergyUpkeep = (factoryCount: number): number =>
  * Attempts to dock a drone to a factory.
  * Returns true if successfully queued (or immediately docked).
  */
-export const attemptDockDrone = (factory: BuildableFactory, droneId: string): boolean => {
-  if (factory.queuedDrones.length >= factory.dockingCapacity) {
-    return false;
+export type DockingResult = 'docking' | 'queued' | 'exists';
+
+export const attemptDockDrone = (factory: BuildableFactory, droneId: string): DockingResult => {
+  const existingIndex = factory.queuedDrones.indexOf(droneId);
+  if (existingIndex !== -1) {
+    return existingIndex < factory.dockingCapacity ? 'docking' : 'queued';
   }
   factory.queuedDrones.push(droneId);
-  return true;
+  const position = factory.queuedDrones.length - 1;
+  return position < factory.dockingCapacity ? 'docking' : 'queued';
 };
 
 /**
@@ -108,7 +149,7 @@ export const removeDroneFromFactory = (factory: BuildableFactory, droneId: strin
  * Returns the number of docked drones (includes those in queue).
  */
 export const getDockedDroneCount = (factory: BuildableFactory): number =>
-  factory.queuedDrones.length;
+  Math.min(factory.queuedDrones.length, factory.dockingCapacity);
 
 /**
  * Returns the number of available docking slots.
@@ -127,9 +168,13 @@ export const getAvailableRefineSlots = (factory: BuildableFactory): number =>
  * Returns amount actually stored (capped by storage remaining).
  */
 export const transferOreToFactory = (factory: BuildableFactory, amount: number): number => {
-  const available = factory.storageCapacity - factory.currentStorage;
+  const available = factory.storageCapacity - factory.resources.ore;
   const transferred = Math.min(amount, available);
-  factory.currentStorage += transferred;
+  if (transferred <= 0) {
+    return 0;
+  }
+  factory.resources.ore += transferred;
+  factory.currentStorage = factory.resources.ore;
   return transferred;
 };
 
@@ -146,11 +191,11 @@ export const startRefineProcess = (
   if (factory.activeRefines.length >= factory.refineSlots) {
     return null; // All slots occupied
   }
-  if (factory.currentStorage <= 0 || amount <= 0) {
+  if (factory.resources.ore <= 0 || amount <= 0) {
     return null; // No ore to refine
   }
 
-  const toRefine = Math.min(amount, factory.currentStorage);
+  const toRefine = Math.min(amount, factory.resources.ore);
   const process: RefineProcess = {
     id: processId,
     oreType,
@@ -162,7 +207,8 @@ export const startRefineProcess = (
   };
 
   factory.activeRefines.push(process);
-  factory.currentStorage -= toRefine;
+  factory.resources.ore = Math.max(0, factory.resources.ore - toRefine);
+  factory.currentStorage = factory.resources.ore;
   return process;
 };
 

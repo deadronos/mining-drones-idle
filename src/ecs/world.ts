@@ -59,6 +59,7 @@ export interface DroneEntity {
   lastDockingFrom: Vector3 | null;
   flightSeed: number | null;
   cargoProfile: ResourceWeights;
+  ownerFactoryId: string | null;
 }
 
 export interface AsteroidEntity {
@@ -174,6 +175,7 @@ const createDrone = (origin: Vector3): DroneEntity => ({
   lastDockingFrom: null,
   flightSeed: null,
   cargoProfile: { ore: 0, metals: 0, crystals: 0, organics: 0, ice: 0 },
+  ownerFactoryId: null,
 });
 
 const isDrone = (entity: Entity): entity is DroneEntity => entity.kind === 'drone';

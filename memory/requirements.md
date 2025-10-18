@@ -99,3 +99,15 @@ WHEN factory storage contains ore and refine slots are free, THE SYSTEM SHALL st
 ## RQ-025 Camera Autofit Trigger
 
 WHEN the player clicks the Autofit Factories control, THE SYSTEM SHALL animate the camera to encompass all factory positions within the configured margin and zoom limits. [Acceptance: Hook unit test or integration harness fires the trigger and inspects the computed camera state for expected bounds.]
+
+## RQ-026 Factory Return Distribution
+
+WHEN a drone enters the returning phase with cargo, THE SYSTEM SHALL select a destination factory by weighting nearest open bays most heavily while retaining a non-zero probability for other factories, queuing at the chosen site if docks are occupied. [Acceptance: Drone AI unit test seeds repeated returns and asserts distribution favours nearest while allowing alternates and that queue length never exceeds docking capacity.]
+
+## RQ-027 Per-Factory Energy and Resources
+
+WHEN factories consume or receive resources, THE SYSTEM SHALL track ore, refined outputs, and energy on each factory independently, applying idle and refine drains against that factory's energy store and refusing new processes when depleted. [Acceptance: Store-level tests simulate energy drain/refill per factory and confirm processes pause when energy hits zero while other factories continue.]
+
+## RQ-028 Factory Upgrade & Ownership Panel
+
+WHEN the player opens the factory management UI, THE SYSTEM SHALL provide arrow controls to cycle through factories, show the selected factory's stats, and allow buying upgrades and assigning drones that persist to whichever factory they last landed on. [Acceptance: React component test verifies arrow cycling updates the display, upgrade buttons consume per-factory currency, and docking swaps drone ownership to the most recent factory.]

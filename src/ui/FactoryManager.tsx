@@ -1,31 +1,73 @@
-import { useCallback, useMemo } from 'react';
-import { useStore } from '@/state/store';
-import { computeFactoryCost } from '@/ecs/factories';
-import type { BuildableFactory } from '@/ecs/factories';
+import { useEffect, useMemo } from 'react';
+import { computeFactoryCost, type BuildableFactory } from '@/ecs/factories';
+import {
+  useStore,
+  factoryUpgradeDefinitions,
+  getFactoryUpgradeCost,
+  type FactoryUpgradeId,
+} from '@/state/store';
 import './FactoryManager.css';
 
+const isFiniteCostEntry = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value !== 0;
+
+const formatCost = (cost: Partial<Record<string, number>>) =>
+  Object.entries(cost)
+    .filter((entry): entry is [string, number] => isFiniteCostEntry(entry[1]))
+    .map(([key, value]) => `${Math.ceil(value)} ${key}`)
+    .join(' + ');
+
+const hasResources = (factory: BuildableFactory, cost: Partial<Record<string, number>>) =>
+  Object.entries(cost).every(([key, value]) => {
+    if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+      return true;
+    }
+    const ledgerValue = factory.resources[key as keyof BuildableFactory['resources']];
+    return (ledgerValue ?? 0) >= value;
+  });
+
 /**
- * Factory Manager UI: displays existing factories and allows purchasing new ones.
+ * Factory Manager UI: selector-driven inspector with per-factory upgrades.
  */
 export const FactoryManager = () => {
   const factories = useStore((state) => state.factories);
   const resources = useStore((state) => state.resources);
+  const selectedFactoryId = useStore((state) => state.selectedFactoryId);
+  const setSelectedFactory = useStore((state) => state.setSelectedFactory);
+  const cycleFactory = useStore((state) => state.cycleSelectedFactory);
   const purchaseFactory = useStore((state) => state.purchaseFactory);
+  const upgradeFactory = useStore((state) => state.upgradeFactory);
   const toggleFactoryPinned = useStore((state) => state.toggleFactoryPinned);
   const triggerAutofit = useStore((state) => state.triggerFactoryAutofit);
 
   const factoryCount = factories.length;
   const nextCost = useMemo(() => computeFactoryCost(Math.max(0, factoryCount - 1)), [factoryCount]);
 
-  const canAfford = useMemo(
+  const canAffordPurchase = useMemo(
     () => resources.metals >= nextCost.metals && resources.crystals >= nextCost.crystals,
     [resources, nextCost],
   );
 
-  const handleBuyFactory = useCallback(() => {
-    if (!canAfford) return;
-    purchaseFactory();
-  }, [canAfford, purchaseFactory]);
+  useEffect(() => {
+    if (factoryCount === 0) {
+      setSelectedFactory(null);
+      return;
+    }
+    if (!selectedFactoryId || !factories.some((factory) => factory.id === selectedFactoryId)) {
+      setSelectedFactory(factories[0]?.id ?? null);
+    }
+  }, [factoryCount, factories, selectedFactoryId, setSelectedFactory]);
+
+  const selectedIndex = selectedFactoryId
+    ? factories.findIndex((factory) => factory.id === selectedFactoryId)
+    : 0;
+  const safeIndex = selectedIndex >= 0 ? selectedIndex : 0;
+  const selectedFactory = factories[safeIndex] ?? null;
+
+  const handleUpgrade = (upgradeId: FactoryUpgradeId) => {
+    if (!selectedFactory) return;
+    upgradeFactory(selectedFactory.id, upgradeId);
+  };
 
   return (
     <aside className="panel factory-panel">
@@ -45,39 +87,75 @@ export const FactoryManager = () => {
         </div>
         <button
           type="button"
-          disabled={!canAfford}
-          onClick={handleBuyFactory}
+          disabled={!canAffordPurchase}
+          onClick={() => canAffordPurchase && purchaseFactory()}
           className="buy-factory-btn"
         >
           Buy Factory
         </button>
       </div>
 
-      {factories.length > 0 && (
-        <div className="factory-list">
-          <h4>Active Factories</h4>
-          {factories.map((factory) => (
-            <FactoryCard key={factory.id} factory={factory} onTogglePin={toggleFactoryPinned} />
-          ))}
-        </div>
+      {selectedFactory ? (
+        <SelectedFactoryCard
+          factory={selectedFactory}
+          index={safeIndex}
+          total={factoryCount}
+          onPrev={() => cycleFactory(-1)}
+          onNext={() => cycleFactory(1)}
+          onUpgrade={handleUpgrade}
+          onTogglePin={toggleFactoryPinned}
+        />
+      ) : (
+        <p className="factory-empty">Construct a factory to begin routing drones.</p>
       )}
     </aside>
   );
 };
 
-/**
- * Display a single factory's status (docking queue, active refines, storage).
- */
-interface FactoryCardProps {
+interface SelectedFactoryCardProps {
   factory: BuildableFactory;
+  index: number;
+  total: number;
+  onPrev: () => void;
+  onNext: () => void;
+  onUpgrade: (upgrade: FactoryUpgradeId) => void;
   onTogglePin: (factoryId: string) => void;
 }
 
-const FactoryCard = ({ factory, onTogglePin }: FactoryCardProps) => {
+const SelectedFactoryCard = ({
+  factory,
+  index,
+  total,
+  onPrev,
+  onNext,
+  onUpgrade,
+  onTogglePin,
+}: SelectedFactoryCardProps) => {
+  const queueCount = factory.queuedDrones.length;
+  const docked = Math.min(queueCount, factory.dockingCapacity);
+  const waiting = Math.max(0, queueCount - docked);
+  const energyPercent = factory.energyCapacity > 0 ? factory.energy / factory.energyCapacity : 0;
+
   return (
-    <div className="factory-card">
-      <div className="header">
-        <strong>{factory.id}</strong>
+    <div className="factory-card selected">
+      <div className="factory-card-header">
+        <div className="factory-card-meta">
+          <button
+            type="button"
+            onClick={onPrev}
+            aria-label="Previous factory"
+            disabled={total <= 1}
+          >
+            ◀
+          </button>
+          <span className="factory-card-title">{factory.id}</span>
+          <button type="button" onClick={onNext} aria-label="Next factory" disabled={total <= 1}>
+            ▶
+          </button>
+          <span className="factory-card-index">
+            {Math.min(index + 1, total)} / {total}
+          </span>
+        </div>
         <button
           type="button"
           className="pin-button"
@@ -88,25 +166,104 @@ const FactoryCard = ({ factory, onTogglePin }: FactoryCardProps) => {
           {factory.pinned ? '📌' : '📍'}
         </button>
       </div>
-      <div className="stats">
+
+      <div className="factory-grid">
         <div>
-          Docking: {factory.queuedDrones.length}/{factory.dockingCapacity}
+          <h4>Docking</h4>
+          <p>
+            {docked}/{factory.dockingCapacity} docks
+            {waiting > 0 ? ` (${waiting} waiting)` : ''}
+          </p>
+          <ul className="factory-queue">
+            {factory.queuedDrones.slice(0, factory.dockingCapacity).map((droneId) => (
+              <li key={droneId} className="factory-queue-item">
+                🛬 {droneId}
+              </li>
+            ))}
+            {factory.queuedDrones.slice(factory.dockingCapacity).map((droneId) => (
+              <li key={droneId} className="factory-queue-item waiting">
+                ⏳ {droneId}
+              </li>
+            ))}
+          </ul>
         </div>
         <div>
-          Refining: {factory.activeRefines.length}/{factory.refineSlots}
+          <h4>Energy</h4>
+          <p>
+            {Math.round(factory.energy).toLocaleString()} /{' '}
+            {factory.energyCapacity.toLocaleString()}
+          </p>
+          <div className="factory-bar">
+            <div
+              className="factory-bar-fill"
+              style={{ width: `${Math.min(1, energyPercent) * 100}%` }}
+            />
+          </div>
         </div>
         <div>
-          Storage: {Math.floor(factory.currentStorage)}/{factory.storageCapacity} ore
+          <h4>Storage</h4>
+          <p>
+            {Math.floor(factory.currentStorage).toLocaleString()} /{' '}
+            {factory.storageCapacity.toLocaleString()} ore
+          </p>
+          <p>{Math.floor(factory.resources.bars).toLocaleString()} bars ready</p>
         </div>
       </div>
-      {factory.activeRefines.length > 0 && (
-        <div className="refines">
-          {factory.activeRefines.map((p) => (
-            <div key={p.id} className="refine-item">
-              {p.oreType}: {Math.round(p.progress * 100)}%
+
+      <section className="factory-upgrades">
+        <h4>Upgrades</h4>
+        {(
+          Object.entries(factoryUpgradeDefinitions) as [
+            FactoryUpgradeId,
+            (typeof factoryUpgradeDefinitions)[FactoryUpgradeId],
+          ][]
+        ).map(([upgradeId, definition]) => {
+          const level = factory.upgrades[upgradeId] ?? 0;
+          const cost = getFactoryUpgradeCost(upgradeId, level);
+          const affordable = hasResources(factory, cost);
+          return (
+            <div key={upgradeId} className="factory-upgrade-row">
+              <div>
+                <strong>{definition.label}</strong> <span className="muted">Lv {level}</span>
+                <div className="desc">{definition.description}</div>
+              </div>
+              <button
+                type="button"
+                disabled={!affordable}
+                onClick={() => onUpgrade(upgradeId)}
+                className="upgrade-button"
+              >
+                Upgrade ({formatCost(cost) || 'free'})
+              </button>
             </div>
-          ))}
-        </div>
+          );
+        })}
+      </section>
+
+      <section className="factory-roster">
+        <h4>Owned Drones</h4>
+        {factory.ownedDrones.length === 0 ? (
+          <p className="muted">No drones assigned yet.</p>
+        ) : (
+          <ul className="factory-roster-list">
+            {factory.ownedDrones.map((droneId) => (
+              <li key={droneId}>{droneId}</li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {factory.activeRefines.length > 0 && (
+        <section className="factory-refines">
+          <h4>Active Refining</h4>
+          <ul>
+            {factory.activeRefines.map((process) => (
+              <li key={process.id}>
+                {process.oreType} — {Math.round(process.progress * 100)}%
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 import { Vector3 } from 'three';
 import type { GameWorld } from '@/ecs/world';
-import type { Resources, StoreApiType } from '@/state/store';
+import type { FactoryResources, Resources, StoreApiType } from '@/state/store';
 import { RESOURCE_KEYS } from '@/lib/biomes';
 
 const TRANSFER_EVENT_LIMIT = 48;
@@ -46,7 +46,15 @@ export const createUnloadSystem = (world: GameWorld, store: StoreApiType) => {
         }
         const resourceKeys = Object.keys(delta) as (keyof Resources)[];
         if (resourceKeys.length > 0) {
-          state.addResources(delta);
+          if (targetFactoryId) {
+            const factoryDelta: Partial<FactoryResources> = {};
+            for (const key of resourceKeys) {
+              factoryDelta[key as keyof FactoryResources] = delta[key];
+            }
+            state.addResourcesToFactory(targetFactoryId, factoryDelta);
+          } else {
+            state.addResources(delta);
+          }
         }
         const timestamp = now();
         const transfer = {
@@ -62,7 +70,10 @@ export const createUnloadSystem = (world: GameWorld, store: StoreApiType) => {
         }
         factory.activity.lastTransferAt = timestamp;
         if (targetFactoryId) {
-          state.undockDroneFromFactory(targetFactoryId, drone.id);
+          state.undockDroneFromFactory(targetFactoryId, drone.id, { transferOwnership: true });
+          drone.ownerFactoryId = targetFactoryId;
+        } else {
+          drone.ownerFactoryId = null;
         }
       }
       drone.cargo = 0;
