@@ -44,11 +44,11 @@ export const computeBoundingBox = (
 };
 
 /**
- * Compute camera position and zoom to fit all factories with margin.
+ * Compute camera position to fit all factories with margin.
  * Returns { position, zoom } target for camera.
  * 
- * For perspective cameras, zoom is actually the distance from the target.
- * We calculate the distance needed to fit the bounding sphere in view.
+ * For perspective cameras, we calculate the distance needed to fit all
+ * factories in the viewport, considering FOV and aspect ratio.
  */
 export const computeAutofitCamera = (
   positions: Vector3[],
@@ -61,42 +61,40 @@ export const computeAutofitCamera = (
   const bb = computeBoundingBox(positions);
   if (!bb) return null;
 
-  // For perspective camera, we need to calculate the distance from center
-  // to fit the bounding sphere (radius + margin) in the viewport
+  // Calculate the required distance to fit the bounding sphere
   const boundingSphereRadius = bb.radius + config.margin;
   
-  // Convert FOV to radians and calculate vertical FOV
+  // Convert vertical FOV to radians
   const vFOV = (fov * Math.PI) / 180;
   
-  // Account for aspect ratio - use the smaller FOV dimension
+  // Calculate distance needed to fit sphere vertically
+  const distanceVertical = boundingSphereRadius / Math.tan(vFOV / 2);
+  
+  // Calculate horizontal FOV based on aspect ratio
   const hFOV = 2 * Math.atan(Math.tan(vFOV / 2) * aspect);
-  const effectiveFOV = Math.min(vFOV, hFOV);
   
-  // Calculate distance needed to fit bounding sphere
-  // distance = radius / tan(fov/2)
-  const distance = boundingSphereRadius / Math.tan(effectiveFOV / 2);
+  // Calculate distance needed to fit sphere horizontally
+  const distanceHorizontal = boundingSphereRadius / Math.tan(hFOV / 2);
   
-  // Apply maxZoom constraint (for perspective, smaller zoom = farther away)
-  // Minimum distance based on maxZoom (interpret maxZoom as minimum allowed distance multiplier)
-  const minDistance = 10; // minimum distance to prevent getting too close
-  const finalDistance = Math.max(distance, minDistance);
+  // Use the larger distance to ensure everything fits
+  const distance = Math.max(distanceVertical, distanceHorizontal);
   
-  // Camera position: center of bounding box + offset in viewing direction
-  // Assuming camera looks down at an angle (like original setup)
+  // Camera position: center of bounding box + offset based on viewing angle
+  // Original camera setup: position: [0, 9, 22] gives an elevation angle
+  // We maintain this angle but scale the distance
   const position = bb.center.clone();
   
-  // Position camera at calculated distance, maintaining the viewing angle
-  // Original camera: position: [0, 9, 22] - that's roughly 40 degrees elevation
-  const elevationRatio = 9 / 22; // y/z ratio from original camera
-  const horizontalRatio = 0; // x/z ratio (camera centered)
+  // Original camera ratios from [0, 9, 22]
+  const originalDistance = Math.sqrt(0*0 + 9*9 + 22*22); // ≈ 23.77
+  const yRatio = 9 / originalDistance; // ≈ 0.378
+  const zRatio = 22 / originalDistance; // ≈ 0.925
   
-  position.z += finalDistance;
-  position.y += finalDistance * elevationRatio;
-  position.x += finalDistance * horizontalRatio;
+  // Apply the calculated distance while maintaining the viewing angle
+  position.y += distance * yRatio;
+  position.z += distance * zRatio;
 
-  // Return distance as 'zoom' for compatibility with existing interface
-  // Lower zoom value = camera is farther away
-  return { position, zoom: 1 / finalDistance };
+  // Return distance as inverse 'zoom' for compatibility (not actually used for perspective camera)
+  return { position, zoom: 1 / distance };
 };
 
 /**
