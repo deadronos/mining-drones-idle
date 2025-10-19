@@ -256,6 +256,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
         const selectedFactoryId = factories[0]?.id ?? null;
         return {
           resources: { ...initialResources },
+          modules: { ...initialModules },
           save: { ...initialSave, lastSave: Date.now() },
           settings: { ...currentSettings },
           rngSeed: generateSeed(),
