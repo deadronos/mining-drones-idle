@@ -135,3 +135,7 @@ WHEN a drone's state is neither `returning` nor `unloading`, THE SYSTEM SHALL cl
 ## RQ-034 Factory Energy Charging
 
 WHEN a docked drone requires energy and its owning factory still has stored energy, THE SYSTEM SHALL charge the drone from that factory pool when the global grid cannot supply enough energy, deducting the matching amount from the factory. [Acceptance: Power system test drains global energy, leaves factory energy available, ticks the system, and confirms the drone battery increases while factory energy decreases by the charged amount.]
+
+## RQ-035 Factory Solar Regeneration
+
+WHEN a factory has at least one solar collector upgrade active during a power system tick, THE SYSTEM SHALL add `baseRegen + perLevel * upgradeLevel` energy to that factory's local store without exceeding its energy capacity. [Acceptance: Power system unit test advances ticks with varying upgrade levels and asserts factory energy increases accordingly while clamping at capacity.]

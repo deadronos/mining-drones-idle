@@ -34,7 +34,7 @@
 
 ## Open Items
 
-- Evaluate scope/timing for optional factory solar regeneration upgrade once core energy resilience lands.
+- Execute TASK021 to deliver the factory solar regeneration upgrade and surface regen telemetry in the inspector.
 - Track UI follow-up for surfacing per-drone battery levels and throttle warnings in the HUD.
 - Validate seeded RNG integration across save import/export flows and plan any reset tooling.
  - Capture performance telemetry for drone trails and finalize factory snapshot/perf scene coverage for TASK011.
