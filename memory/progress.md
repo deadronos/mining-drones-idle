@@ -24,6 +24,7 @@
 - Added hauler maintenance drain (0.5 energy/sec per hauler) to factory processing to balance sustained logistics usage.
 - Paginated docking and owned-drone lists in the factory inspector to stabilize layout and improve usability.
 - Updated factory storage display to surface local inventories across all resources.
+- Ensured drones removed from the fleet also clear factory queues to prevent inflated docking/waiting counts.
 - Kicked off TASK012 to add per-drone target variation, seeded path offsets, and save/load persistence for active flights; requirements drafted and implementation plan captured in the task log.
 - Completed TASK012 with weighted targeting, seeded bezier travel, persisted `droneFlights`, README updates, and unit/integration coverage ensuring mid-flight saves restore correctly.
 

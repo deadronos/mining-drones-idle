@@ -51,6 +51,15 @@ const updateDroneStats = (
 
 export const createFleetSystem = (world: GameWorld, store: StoreApiType) => {
   const { droneQuery, factory } = world;
+  const removeDroneReferences = (droneId: string) => {
+    const state = store.getState();
+    for (const candidate of state.factories) {
+      if (candidate.queuedDrones.includes(droneId)) {
+        state.undockDroneFromFactory(candidate.id, droneId);
+      }
+    }
+  };
+
   return (_dt: number) => {
     const { modules, resources } = store.getState();
     const modifiers = getResourceModifiers(resources);
@@ -62,6 +71,7 @@ export const createFleetSystem = (world: GameWorld, store: StoreApiType) => {
     }
     while (droneQuery.size > target) {
       const drone = droneQuery.entities[droneQuery.size - 1];
+      removeDroneReferences(drone.id);
       removeDrone(world, drone);
     }
     for (const drone of droneQuery) {
