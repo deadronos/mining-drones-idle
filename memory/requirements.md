@@ -159,3 +159,15 @@ WHEN refinery batches or drone unloads produce resources at a factory, THE SYSTE
 ## RQ-040 Prestige Warehouse Reset
 
 WHEN the player activates prestige, THE SYSTEM SHALL compute earned cores from the warehouse inventory available at trigger time and then reset both warehouse and factory inventories to their starting values. [Acceptance: Prestige flow test confirms cores awarded match warehouse stock and all post-prestige inventories reset.]
+
+## RQ-041 Settings Multi-Column Layout
+
+WHEN the viewport width is at least 1280px and the Settings panel is open, THE SYSTEM SHALL arrange top-level settings sections into at least two columns while preserving reading order left-to-right, top-to-bottom, and without introducing horizontal overflow. [Acceptance: Manual resize at 1440px width shows two columns rendered with no clipped text or horizontal scrollbars.]
+
+## RQ-042 Settings Panel Height Clamp
+
+WHEN the Settings panel content height exceeds the available viewport height minus its modal margins, THE SYSTEM SHALL clamp the panel height and expose an internal vertical scrollbar so the browser window itself does not overflow. [Acceptance: Manual resize to 720px height verifies panel max-height clamps and an internal scrollbar appears while the window stays static.]
+
+## RQ-043 Settings Narrow View Layout
+
+WHEN the viewport width shrinks below 1024px, THE SYSTEM SHALL collapse the Settings panel to a single column, reducing horizontal padding as needed so that the panel fits within the viewport without spawning horizontal scrollbars. [Acceptance: Manual resize at 900px width confirms a single column layout with no horizontal scrolling.]

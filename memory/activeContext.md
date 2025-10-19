@@ -2,17 +2,14 @@
 
 ## Current Focus
 
-🟡 **TASK025 – Warehouse Reconciliation**: Standing up the warehouse-first resource model. Key objectives for this pass:
+🟡 **TASK026 – Settings Panel Responsive Layout**: Implement DES022 to stop the Settings modal from overflowing the viewport. Priorities are widening the panel, introducing the CSS grid wrapper for sections, and clamping height with internal scrolling only when the dialog would otherwise spill out of view.
 
-- Formalize the warehouse as the canonical global bank (rename semantics, capacity helpers, constants).
-- Seed Factory 0 with an onboarding hauler and starter stock so players see logistics immediately.
-- Redirect production/unload flows so factories hold ore/bars locally and haulers regulate movement to the warehouse.
-- Extend logistics scheduling + arrivals to support warehouse exports/imports without duplicating inventory.
-
-Confidence is medium; plan is to deliver incremental slices (state model → logistics → UI/tests) with validation after each step.
+🟡 **TASK025 – Warehouse Reconciliation**: Standing up the warehouse-first resource model remains in soak; continue validating transfers and polish once the Settings work lands.
 
 ## Recent Changes
 
+- Captured RQ-041–RQ-043 covering multi-column Settings behavior, panel height clamping, and narrow layout regressions.
+- Authored DES022 and TASK026 to define the responsive Settings approach and implementation steps.
 - Reviewed DES021 and TASK025 plan, noted dual-inventory pain points and buffer/warehouse design decisions.
 - Audited store slices, logistics scheduler, unload system, and processing loops to map current duplication paths.
 - Prepared implementation plan emphasizing phased delivery (state/model changes first, logistics next, UI/tests afterward).
@@ -23,6 +20,7 @@ Confidence is medium; plan is to deliver incremental slices (state model → log
 
 ## Next Steps
 
-1. Capture tutorial/tooling follow-up (tutorial overlay or HUD tooltip) once UI teams provide direction.
-2. Monitor migration telemetry after new save version ships; stage any fixes for edge-case imports.
-3. Prepare final TASK025 wrap-up notes and identify residual polish items for warehouse UX.
+1. Update Settings markup to wrap sections in the grid container and mark primer copy to span full width.
+2. Revise `.settings-panel` sizing/padding plus new grid CSS so columns scale between 1–3 safely.
+3. Manually validate the dialog at 900/1280/1440/1920px widths and ~720px tall to confirm scroll behavior.
+4. Continue monitoring warehouse reconciliation metrics and log any regressions surfaced during Settings QA.
