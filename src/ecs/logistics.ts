@@ -118,14 +118,13 @@ export const matchSurplusToNeed = (
 ): Omit<PendingTransfer, 'id'>[] => {
   const transfers: Omit<PendingTransfer, 'id'>[] = [];
 
-  // Filter factories that have non-zero resources of this type
-  const activeFactories = factories.filter((f) => {
-    const amount = f.resources[resource as keyof typeof f.resources];
-    return typeof amount === 'number' && amount > 0;
-  });
+  if (factories.length < 2) {
+    return transfers;
+  }
 
-  if (activeFactories.length < 2) {
-    return transfers; // Need at least 2 factories
+  const networkHasHaulers = factories.some((factory) => (factory.haulersAssigned ?? 0) > 0);
+  if (!networkHasHaulers) {
+    return transfers; // No active haulers anywhere
   }
 
   // Compute needs and surpluses
@@ -143,17 +142,18 @@ export const matchSurplusToNeed = (
   const needs: NeedEntry[] = [];
   const surpluses: SurplusEntry[] = [];
 
-  for (const factory of activeFactories) {
-    if ((factory.haulersAssigned ?? 0) === 0) {
-      continue; // Skip if no haulers assigned
-    }
-
+  for (const factory of factories) {
     const target = computeBufferTarget(factory, resource);
     const current = factory.resources[resource as keyof typeof factory.resources] ?? 0;
     const need = Math.max(0, target - current);
 
     if (need > 0) {
       needs.push({ factory, need, config: factory.haulerConfig });
+    }
+
+    const haulersAssigned = factory.haulersAssigned ?? 0;
+    if (haulersAssigned <= 0) {
+      continue;
     }
 
     const minReserve = computeMinReserve(factory, resource);

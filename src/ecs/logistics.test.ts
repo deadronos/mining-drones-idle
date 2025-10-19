@@ -1,11 +1,14 @@
 import { describe, it, expect } from 'vitest';
+import { Vector3 } from 'three';
 import {
   generateTransferId,
   LOGISTICS_CONFIG,
   RESOURCE_TYPES,
   computeHaulerCost,
   computeHaulerMaintenanceCost,
+  matchSurplusToNeed,
 } from '@/ecs/logistics';
+import { createFactory } from '@/ecs/factories';
 
 describe('Logistics System - Core Functions', () => {
   describe('ID Generation', () => {
@@ -28,6 +31,44 @@ describe('Logistics System - Core Functions', () => {
         ids.add(generateTransferId());
       }
       expect(ids.size).toBe(10); // All unique
+    });
+  });
+
+  describe('Scheduler', () => {
+    const buildFactory = (id: string, ore: number, haulers: number, position: Vector3) => {
+      const factory = createFactory(id, position);
+      factory.resources.ore = ore;
+      factory.haulersAssigned = haulers;
+      return factory;
+    };
+
+    it('transfers ore from surplus to starving factory even if consumer has no haulers', () => {
+      const producer = buildFactory('producer', 200, 4, new Vector3(0, 0, 0));
+      const consumer = buildFactory('consumer', 0, 0, new Vector3(10, 0, 0));
+
+      const transfers = matchSurplusToNeed([producer, consumer], 'ore', 0);
+
+      expect(transfers.length).toBeGreaterThan(0);
+      const transfer = transfers[0];
+      expect(transfer.fromFactoryId).toBe('producer');
+      expect(transfer.toFactoryId).toBe('consumer');
+      expect(transfer.amount).toBeGreaterThan(0);
+    });
+
+    it('skips scheduling when no factory has surplus', () => {
+      const factoryA = buildFactory('A', 10, 3, new Vector3(0, 0, 0));
+      const factoryB = buildFactory('B', 5, 0, new Vector3(5, 0, 0));
+
+      const transfers = matchSurplusToNeed([factoryA, factoryB], 'ore', 0);
+      expect(transfers).toHaveLength(0);
+    });
+
+    it('skips scheduling entirely when no haulers are assigned anywhere', () => {
+      const factoryA = buildFactory('A', 200, 0, new Vector3(0, 0, 0));
+      const factoryB = buildFactory('B', 0, 0, new Vector3(5, 0, 0));
+
+      const transfers = matchSurplusToNeed([factoryA, factoryB], 'ore', 0);
+      expect(transfers).toHaveLength(0);
     });
   });
 

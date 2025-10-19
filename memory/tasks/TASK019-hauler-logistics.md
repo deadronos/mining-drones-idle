@@ -139,7 +139,10 @@ The phased approach allows us to deliver core value quickly while leaving room f
 ### 2025-10-24 - Scheduler Bug Fix
 
 - ✅ Restored `processLogistics` cadence to respect `LOGISTICS_CONFIG.scheduling_interval`, fixing dormant hauler transfers.
+- ✅ Updated `matchSurplusToNeed` to consider starved factories (0 inventory) so auto-balancing can trigger.
+- ✅ Relaxed participation rules so suppliers need haulers but receivers can be serviced without them.
 - 🧪 Ran `npm run test -- --run src/ecs/logistics.test.ts` to confirm logistics module remains stable.
+- 🧪 Added coverage ensuring scheduler moves ore from surplus to starving factories and skips networks with zero haulers.
 - ✅ Corrected factory ID field usage (`fromFactoryId`/`toFactoryId`) so visuals track real transfers.
 - ✅ Highlighted active transfers with emissive material response and ran `npm run typecheck` to verify.
 

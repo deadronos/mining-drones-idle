@@ -34,6 +34,7 @@ Next: Evaluate balance post-TASK021 solar regen release. Consider TASK019 hauler
 ## Recent Changes
 
 - 🔄 Fixed logistics scheduler gating so haulers run every `LOGISTICS_CONFIG.scheduling_interval` (`src/state/store.ts`, `src/state/processing/logisticsProcessing.ts`); transfers resume balancing factory inventories.
+- 🔄 Updated `matchSurplusToNeed` so suppliers need haulers but receivers can still be serviced when starving, keeping auto-balancing responsive without breaking capacity/reserve constraints (`src/ecs/logistics.ts`, `src/ecs/logistics.test.ts`).
 - ✅ **Serialization Refactoring (TASK024)**: Decomposed 603-line monolithic serialization.ts into 7 domain modules + extracted game logic.
 - ✅ **Factory Energy Resilience**: Implemented unload reset for zero-cargo drones, added DroneAI queue cleanup, enabled factory-assisted charging with new vitest coverage (`unload.test.ts`, `droneAI.test.ts`, `power.test.ts`).
 - 📝 **DES019/TASK020 Authored**: Captured requirements RQ-032..RQ-034, drafted DES019 design, and logged TASK020 plan targeting unload reset, DroneAI cleanup, and factory-assisted charging.
