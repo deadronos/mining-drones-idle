@@ -6,6 +6,7 @@ import {
   getFactoryUpgradeCost,
   type FactoryUpgradeId,
 } from '@/state/store';
+import { computeHaulerCost } from '@/ecs/logistics';
 import './FactoryManager.css';
 
 const isFiniteCostEntry = (value: unknown): value is number =>
@@ -284,9 +285,16 @@ const SelectedFactoryCard = ({
           <div className="hauler-buttons">
             <button
               type="button"
-              onClick={() => onAssignHaulers(factory.id, 1)}
+              onClick={() => {
+                const nextCost = computeHaulerCost(factory.haulersAssigned ?? 0);
+                const canAfford = factory.resources.ore >= nextCost;
+                if (canAfford) {
+                  onAssignHaulers(factory.id, 1);
+                }
+              }}
               className="hauler-btn"
               aria-label="Add hauler"
+              title={`Cost: ${Math.ceil(computeHaulerCost(factory.haulersAssigned ?? 0))} ore`}
             >
               +
             </button>
@@ -306,16 +314,21 @@ const SelectedFactoryCard = ({
             </button>
           </div>
         </div>
-        {(factory.haulersAssigned ?? 0) > 0 ? (
-          <div className="hauler-info">
-            <p className="desc">
-              This factory has {factory.haulersAssigned} hauler{factory.haulersAssigned === 1 ? '' : 's'} assigned for
-              resource redistribution.
+        {(() => {
+          const nextCost = computeHaulerCost(factory.haulersAssigned ?? 0);
+          return (factory.haulersAssigned ?? 0) > 0 ? (
+            <div className="hauler-info">
+              <p className="desc">
+                This factory has {factory.haulersAssigned} hauler{factory.haulersAssigned === 1 ? '' : 's'} assigned.
+              </p>
+              <p className="next-cost">Next: {Math.ceil(nextCost)} ore</p>
+            </div>
+          ) : (
+            <p className="muted small">
+              Next: {Math.ceil(nextCost)} ore · Assign haulers to enable automatic resource transfers.
             </p>
-          </div>
-        ) : (
-          <p className="muted small">Assign haulers to enable automatic resource transfers to other factories.</p>
-        )}
+          );
+        })()}
       </section>
     </div>
   );

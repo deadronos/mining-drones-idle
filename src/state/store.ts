@@ -5,6 +5,7 @@ import {
   type StoreApi,
 } from 'zustand/vanilla';
 import { Vector3 } from 'three';
+import { gameWorld } from '@/ecs/world';
 import { getResourceModifiers, type ResourceModifierSnapshot } from '@/lib/resourceModifiers';
 import type {
   BuildableFactory,
@@ -1681,6 +1682,21 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
               ...transfer,
               resource,
             });
+
+            // Emit visual transfer event to game world for FX
+            try {
+              const fromPos = sourceFactory.position.clone().add(new Vector3(0, 0.6, 0));
+              const toPos = destFactory.position.clone().add(new Vector3(0, 0.6, 0));
+              const duration = Math.max(0.1, transfer.eta - state.gameTime);
+              const event = { id: transferId, amount: transfer.amount, from: fromPos, to: toPos, duration };
+              // keep recent events bounded
+              gameWorld.events.transfers.push(event as any);
+              if (gameWorld.events.transfers.length > 48) {
+                gameWorld.events.transfers.splice(0, gameWorld.events.transfers.length - 48);
+              }
+            } catch (e) {
+              // best-effort: do not crash the scheduler if FX can't be emitted
+            }
           }
         }
 

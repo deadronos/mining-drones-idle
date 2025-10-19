@@ -19,6 +19,7 @@ import { Factory } from '@/r3f/Factory';
 import { Asteroids } from '@/r3f/Asteroids';
 import { Drones } from '@/r3f/Drones';
 import { DroneTrails } from '@/r3f/DroneTrails';
+import { TransferLines } from '@/r3f/TransferLines';
 import { useFactoryAutofit } from '@/hooks/useFactoryAutofit';
 import { useCameraReset } from '@/hooks/useCameraReset';
 import { computeAutofitCamera, computeBoundingBox, DEFAULT_AUTOFIT_CONFIG } from '@/lib/camera';
@@ -112,6 +113,7 @@ export const Scene = () => {
         <Asteroids />
         <Drones />
         {showTrails ? <DroneTrails /> : null}
+        <TransferLines />
       </Suspense>
     </>
   );
