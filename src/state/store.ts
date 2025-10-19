@@ -192,10 +192,10 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
         return;
       }
 
-      const { logisticsQueues, logisticsTick } = processLogistics(state);
+      const { logisticsQueues } = processLogistics(state);
       set({
         logisticsQueues,
-        logisticsTick,
+        logisticsTick: newLogisticsTick - LOGISTICS_CONFIG.scheduling_interval,
       });
     },
 
