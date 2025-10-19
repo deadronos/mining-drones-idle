@@ -105,7 +105,7 @@ The phased approach allows us to deliver core value quickly while leaving room f
 
 ## Progress Tracking
 
-**Overall Status:** Phase 6 complete - 78% (Phases 1-6 delivered; cost gating in progress, tests/polish pending)
+**Overall Status:** Phase 6 complete - 80% (Phases 1-6 delivered; cost & maintenance active, tests/polish pending)
 
 ### Subtasks
 
@@ -126,7 +126,7 @@ The phased approach allows us to deliver core value quickly while leaving room f
 | 7.1 | Write unit tests for scheduler                | Complete    | 2025-10-19 | ✅    |
 | 7.2 | Write integration tests                       | Complete    | 2025-10-19 | ✅    |
 | 7.3 | Performance testing                           | Not Started | 2025-10-19 |       |
-| 8.1 | Implement cost and maintenance                | In Progress | 2025-10-23 | Hauler purchases now consume factory bars; maintenance TBD |
+| 8.1 | Implement cost and maintenance                | Complete    | 2025-10-23 | Bar cost + energy maintenance drain wired into store |
 | 8.2 | Tune parameters and add polish                | Not Started | 2025-10-19 |       |
 
 ## Progress Log
@@ -143,7 +143,18 @@ The phased approach allows us to deliver core value quickly while leaving room f
 - ✅ Switched hauler purchase cost to consume factory bars (base 10 bars, 1.15x growth) with UI gating (`src/ui/FactoryManager.tsx`).
 - ✅ `assignHaulers` now treats the count parameter as a delta, validates affordability per hauler, and deducts bars atomically (`src/state/store.ts`).
 - ✅ Added regression coverage asserting the default hauler cost baseline in `src/ecs/logistics.test.ts`.
-- ⚠️ Maintenance drain remains pending (tracked under Phase 8.1).
+- ℹ️ Maintenance drain handled separately (see entry below).
+
+### 2025-10-23 - Phase 8 Maintenance Drain Implemented
+
+- ✅ Integrated hauler maintenance energy drain into `processFactories`, subtracting 0.5 energy/sec per hauler (`src/state/store.ts`).
+- ✅ Imported `computeHaulerMaintenanceCost` for in-store calculations, sharing the logistic helper across systems.
+- ⚙️ `npm run typecheck` verifies updated store/resource wiring.
+
+### 2025-10-23 - Factory Manager Drone Pagination
+
+- ✅ Added dynamic pagination for docking/waiting and owned drone rosters to keep the inspector height stable (`src/ui/FactoryManager.tsx`, `src/ui/FactoryManager.css`).
+- ✅ Introduced shared pagination controls with accessibility labels for list navigation.
 
 ### 2025-10-23 - Phase 6 & 8a (earlier placeholder, superseded)
 

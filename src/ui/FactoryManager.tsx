@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { computeFactoryCost, type BuildableFactory } from '@/ecs/factories';
 import {
   useStore,
@@ -8,6 +8,9 @@ import {
 } from '@/state/store';
 import { computeHaulerCost } from '@/ecs/logistics';
 import './FactoryManager.css';
+
+const DOCKING_PAGE_SIZE = 6;
+const ROSTER_PAGE_SIZE = 8;
 
 const isFiniteCostEntry = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value !== 0;
@@ -140,6 +143,43 @@ const SelectedFactoryCard = ({
   onTogglePin,
   onAssignHaulers,
 }: SelectedFactoryCardProps) => {
+  const [dockPage, setDockPage] = useState(0);
+  const [rosterPage, setRosterPage] = useState(0);
+
+  useEffect(() => {
+    setDockPage(0);
+    setRosterPage(0);
+  }, [factory.id]);
+
+  const dockingEntries = useMemo(
+    () =>
+      factory.queuedDrones.map((droneId, idx) => ({
+        droneId,
+        status: idx < factory.dockingCapacity ? 'docked' : 'waiting',
+      })),
+    [factory.queuedDrones, factory.dockingCapacity],
+  );
+
+  const totalDockPages = Math.max(1, Math.ceil(dockingEntries.length / DOCKING_PAGE_SIZE));
+
+  useEffect(() => {
+    setDockPage((current) => Math.min(current, totalDockPages - 1));
+  }, [totalDockPages]);
+
+  const safeDockPage = Math.min(dockPage, totalDockPages - 1);
+  const dockStart = safeDockPage * DOCKING_PAGE_SIZE;
+  const visibleDockEntries = dockingEntries.slice(dockStart, dockStart + DOCKING_PAGE_SIZE);
+
+  const totalRosterPages = Math.max(1, Math.ceil(factory.ownedDrones.length / ROSTER_PAGE_SIZE));
+
+  useEffect(() => {
+    setRosterPage((current) => Math.min(current, totalRosterPages - 1));
+  }, [totalRosterPages]);
+
+  const safeRosterPage = Math.min(rosterPage, totalRosterPages - 1);
+  const rosterStart = safeRosterPage * ROSTER_PAGE_SIZE;
+  const visibleRoster = factory.ownedDrones.slice(rosterStart, rosterStart + ROSTER_PAGE_SIZE);
+
   const queueCount = factory.queuedDrones.length;
   const docked = Math.min(queueCount, factory.dockingCapacity);
   const waiting = Math.max(0, queueCount - docked);
@@ -184,17 +224,44 @@ const SelectedFactoryCard = ({
             {waiting > 0 ? ` (${waiting} waiting)` : ''}
           </p>
           <ul className="factory-queue">
-            {factory.queuedDrones.slice(0, factory.dockingCapacity).map((droneId) => (
-              <li key={droneId} className="factory-queue-item">
-                🛬 {droneId}
-              </li>
-            ))}
-            {factory.queuedDrones.slice(factory.dockingCapacity).map((droneId) => (
-              <li key={droneId} className="factory-queue-item waiting">
-                ⏳ {droneId}
-              </li>
-            ))}
+            {visibleDockEntries.length === 0 ? (
+              <li className="factory-queue-item empty">No drones docked</li>
+            ) : (
+              visibleDockEntries.map((entry) => (
+                <li
+                  key={entry.droneId}
+                  className={`factory-queue-item${entry.status === 'waiting' ? ' waiting' : ''}`}
+                >
+                  {entry.status === 'waiting' ? '⏳' : '🛬'} {entry.droneId}
+                </li>
+              ))
+            )}
           </ul>
+          {totalDockPages > 1 ? (
+            <div className="factory-pagination">
+              <button
+                type="button"
+                className="factory-page-btn"
+                onClick={() => setDockPage((page) => Math.max(0, page - 1))}
+                disabled={safeDockPage === 0}
+                aria-label="Previous docking page"
+              >
+                ◀
+              </button>
+              <span className="factory-page-indicator">
+                {safeDockPage + 1} / {totalDockPages}
+              </span>
+              <button
+                type="button"
+                className="factory-page-btn"
+                onClick={() => setDockPage((page) => Math.min(totalDockPages - 1, page + 1))}
+                disabled={safeDockPage >= totalDockPages - 1}
+                aria-label="Next docking page"
+              >
+                ▶
+              </button>
+            </div>
+          ) : null}
         </div>
         <div>
           <h4>Energy</h4>
@@ -254,11 +321,38 @@ const SelectedFactoryCard = ({
         {factory.ownedDrones.length === 0 ? (
           <p className="muted">No drones assigned yet.</p>
         ) : (
-          <ul className="factory-roster-list">
-            {factory.ownedDrones.map((droneId) => (
-              <li key={droneId}>{droneId}</li>
-            ))}
-          </ul>
+          <>
+            <ul className="factory-roster-list">
+              {visibleRoster.map((droneId) => (
+                <li key={droneId}>{droneId}</li>
+              ))}
+            </ul>
+            {totalRosterPages > 1 ? (
+              <div className="factory-pagination roster">
+                <button
+                  type="button"
+                  className="factory-page-btn"
+                  onClick={() => setRosterPage((page) => Math.max(0, page - 1))}
+                  disabled={safeRosterPage === 0}
+                  aria-label="Previous owned drones page"
+                >
+                  ◀
+                </button>
+                <span className="factory-page-indicator">
+                  {safeRosterPage + 1} / {totalRosterPages}
+                </span>
+                <button
+                  type="button"
+                  className="factory-page-btn"
+                  onClick={() => setRosterPage((page) => Math.min(totalRosterPages - 1, page + 1))}
+                  disabled={safeRosterPage >= totalRosterPages - 1}
+                  aria-label="Next owned drones page"
+                >
+                  ▶
+                </button>
+              </div>
+            ) : null}
+          </>
         )}
       </section>
 

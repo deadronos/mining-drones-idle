@@ -21,6 +21,8 @@
 
 - Finalized Phase 6 hauler logistics visuals with arrowed transfer meshes, resource-aware coloring, and hover tooltips tied to live ETAs.
 - Shifted hauler purchasing to bar-based costs with store-level affordability checks and UI gating, laying groundwork for Phase 8 balance work.
+- Added hauler maintenance drain (0.5 energy/sec per hauler) to factory processing to balance sustained logistics usage.
+- Paginated docking and owned-drone lists in the factory inspector to stabilize layout and improve usability.
 - Kicked off TASK012 to add per-drone target variation, seeded path offsets, and save/load persistence for active flights; requirements drafted and implementation plan captured in the task log.
 - Completed TASK012 with weighted targeting, seeded bezier travel, persisted `droneFlights`, README updates, and unit/integration coverage ensuring mid-flight saves restore correctly.
 

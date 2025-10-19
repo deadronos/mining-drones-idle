@@ -176,6 +176,54 @@
   color: #94a3b8;
 }
 
+.factory-queue-item.empty {
+  background: rgba(148, 163, 184, 0.12);
+  color: #cbd5f5;
+  font-style: italic;
+}
+
+.factory-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin-top: clamp(0.3rem, 0.25rem + 0.15vw, 0.45rem);
+}
+
+.factory-pagination.roster {
+  margin-top: clamp(0.4rem, 0.3rem + 0.2vw, 0.55rem);
+}
+
+.factory-page-btn {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(30, 41, 59, 0.65);
+  color: #e2e8f0;
+  width: clamp(1.5rem, 1.3rem + 0.3vw, 1.8rem);
+  height: clamp(1.5rem, 1.3rem + 0.3vw, 1.8rem);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.factory-page-btn:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.25);
+  border-color: rgba(59, 130, 246, 0.55);
+}
+
+.factory-page-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.factory-page-indicator {
+  font-size: clamp(0.68rem, 0.64rem + 0.14vw, 0.8rem);
+  color: #cbd5f5;
+}
+
 .factory-upgrades {
   margin-top: clamp(0.6rem, 0.45rem + 0.25vw, 0.85rem);
   padding-top: clamp(0.35rem, 0.25rem + 0.2vw, 0.6rem);

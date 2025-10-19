@@ -18,6 +18,7 @@ import {
   RESOURCE_TYPES,
   generateTransferId,
   computeHaulerCost,
+  computeHaulerMaintenanceCost,
   matchSurplusToNeed,
   reserveOutbound,
   executeArrival,
@@ -1799,6 +1800,14 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
           const idleDrain = working.idleEnergyPerSec * dt;
           if (idleDrain > 0) {
             working.energy = Math.max(0, working.energy - idleDrain);
+          }
+
+          const haulerDrain =
+            (working.haulersAssigned ?? 0) > 0
+              ? computeHaulerMaintenanceCost(working.haulersAssigned ?? 0) * dt
+              : 0;
+          if (haulerDrain > 0) {
+            working.energy = Math.max(0, working.energy - haulerDrain);
           }
 
           while (
