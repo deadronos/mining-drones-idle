@@ -52,6 +52,25 @@ export interface BuildableFactory {
   resources: FactoryResources;
   ownedDrones: string[];
   upgrades: FactoryUpgrades;
+  haulersAssigned?: number;
+  haulerConfig?: {
+    capacity: number;
+    speed: number;
+    pickupOverhead: number;
+    dropoffOverhead: number;
+    resourceFilters: string[];
+    mode: 'auto' | 'manual' | 'demand-first' | 'supply-first';
+    priority: number;
+  };
+  logisticsState?: {
+    outboundReservations: Record<string, number>;
+    inboundSchedules: Array<{
+      fromFactoryId: string;
+      resource: string;
+      amount: number;
+      eta: number;
+    }>;
+  };
 }
 
 /**
@@ -99,6 +118,20 @@ export const createFactory = (id: string, position: Vector3): BuildableFactory =
   },
   ownedDrones: [],
   upgrades: { docking: 0, refine: 0, storage: 0, energy: 0 },
+  haulersAssigned: 0,
+  haulerConfig: {
+    capacity: 50,
+    speed: 1.0,
+    pickupOverhead: 1.0,
+    dropoffOverhead: 1.0,
+    resourceFilters: [],
+    mode: 'auto',
+    priority: 5,
+  },
+  logisticsState: {
+    outboundReservations: {},
+    inboundSchedules: [],
+  },
 });
 
 /**

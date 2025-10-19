@@ -27,7 +27,7 @@ import {
 
 export type { FactoryResources, FactoryUpgrades };
 
-const SAVE_VERSION = '0.2.0';
+const SAVE_VERSION = '0.3.0';
 
 const GROWTH = 1.15;
 export const PRESTIGE_THRESHOLD = 5_000;
@@ -101,6 +101,43 @@ export interface FactorySnapshot {
   resources: FactoryResourceSnapshot;
   ownedDrones: string[];
   upgrades: FactoryUpgradeSnapshot;
+  haulersAssigned?: number;
+  haulerConfig?: HaulerConfig;
+  logisticsState?: FactoryLogisticsState;
+}
+
+export interface HaulerConfig {
+  capacity: number;
+  speed: number;
+  pickupOverhead: number;
+  dropoffOverhead: number;
+  resourceFilters: string[];
+  mode: 'auto' | 'manual' | 'demand-first' | 'supply-first';
+  priority: number;
+}
+
+export interface FactoryLogisticsState {
+  outboundReservations: Record<string, number>;
+  inboundSchedules: Array<{
+    fromFactoryId: string;
+    resource: string;
+    amount: number;
+    eta: number;
+  }>;
+}
+
+export interface PendingTransfer {
+  id: string;
+  fromFactoryId: string;
+  toFactoryId: string;
+  resource: string;
+  amount: number;
+  status: 'scheduled' | 'in-transit' | 'completed';
+  eta: number;
+}
+
+export interface LogisticsQueues {
+  pendingTransfers: PendingTransfer[];
 }
 
 export type DroneFlightPhase = 'toAsteroid' | 'returning';
@@ -354,6 +391,7 @@ export interface StoreSnapshot {
   factories?: FactorySnapshot[];
   selectedFactoryId?: string | null;
   droneOwners?: Record<string, string | null>;
+  logisticsQueues?: LogisticsQueues;
 }
 
 export interface StoreState {
@@ -365,10 +403,12 @@ export interface StoreState {
   rngSeed: number;
   droneFlights: DroneFlightState[];
   factories: BuildableFactory[];
+  logisticsQueues: LogisticsQueues;
   factoryProcessSequence: number;
   factoryRoundRobin: number;
   factoryAutofitSequence: number;
   cameraResetSequence: number;
+  logisticsTick: number;
   selectedAsteroidId: string | null;
   selectedFactoryId: string | null;
   droneOwners: Record<string, string | null>;
@@ -409,6 +449,10 @@ export interface StoreState {
   addResourcesToFactory(this: void, factoryId: string, delta: Partial<FactoryResources>): void;
   allocateFactoryEnergy(this: void, factoryId: string, amount: number): number;
   upgradeFactory(this: void, factoryId: string, upgrade: keyof FactoryUpgrades): boolean;
+  assignHaulers(this: void, factoryId: string, count: number): boolean;
+  updateHaulerConfig(this: void, factoryId: string, config: Partial<HaulerConfig>): void;
+  getLogisticsStatus(this: void, factoryId: string): { haulersAssigned: number; config?: HaulerConfig; state?: FactoryLogisticsState } | null;
+  processLogistics(this: void, dt: number): void;
   processFactories(this: void, dt: number): void;
   triggerFactoryAutofit(this: void): void;
   resetCamera(this: void): void;
@@ -763,6 +807,41 @@ const normalizeFactorySnapshot = (value: unknown): FactorySnapshot | null => {
       ? raw.ownedDrones.filter((id): id is string => typeof id === 'string')
       : [],
     upgrades: normalizeFactoryUpgrades(raw.upgrades),
+    haulersAssigned: Math.max(0, Math.floor(coerceNumber(raw.haulersAssigned, 0))),
+    haulerConfig: raw.haulerConfig && typeof raw.haulerConfig === 'object'
+      ? {
+          capacity: Math.max(1, Math.floor(coerceNumber((raw.haulerConfig as any).capacity, 50))),
+          speed: Math.max(0.1, coerceNumber((raw.haulerConfig as any).speed, 1.0)),
+          pickupOverhead: Math.max(0, coerceNumber((raw.haulerConfig as any).pickupOverhead, 1.0)),
+          dropoffOverhead: Math.max(0, coerceNumber((raw.haulerConfig as any).dropoffOverhead, 1.0)),
+          resourceFilters: Array.isArray((raw.haulerConfig as any).resourceFilters)
+            ? (raw.haulerConfig as any).resourceFilters.filter((val: unknown): val is string => typeof val === 'string')
+            : [],
+          mode: ['auto', 'manual', 'demand-first', 'supply-first'].includes((raw.haulerConfig as any).mode)
+            ? ((raw.haulerConfig as any).mode as 'auto' | 'manual' | 'demand-first' | 'supply-first')
+            : 'auto',
+          priority: Math.min(10, Math.max(0, Math.floor(coerceNumber((raw.haulerConfig as any).priority, 5)))),
+        }
+      : undefined,
+    logisticsState: raw.logisticsState && typeof raw.logisticsState === 'object'
+      ? {
+          outboundReservations: typeof (raw.logisticsState as any).outboundReservations === 'object'
+            ? Object.entries((raw.logisticsState as any).outboundReservations).reduce((acc: Record<string, number>, [key, val]: [unknown, unknown]) => {
+                const amount = coerceNumber(val, 0);
+                if (amount > 0) acc[key as string] = amount;
+                return acc;
+              }, {})
+            : {},
+          inboundSchedules: Array.isArray((raw.logisticsState as any).inboundSchedules)
+            ? (raw.logisticsState as any).inboundSchedules.map((schedule: any) => ({
+                fromFactoryId: typeof schedule.fromFactoryId === 'string' ? schedule.fromFactoryId : '',
+                resource: typeof schedule.resource === 'string' ? schedule.resource : '',
+                amount: Math.max(0, coerceNumber(schedule.amount, 0)),
+                eta: Math.max(0, coerceNumber(schedule.eta, 0)),
+              })).filter((s: any) => s.fromFactoryId && s.resource)
+            : [],
+        }
+      : undefined,
   };
 };
 
@@ -783,6 +862,12 @@ const cloneFactory = (factory: BuildableFactory): BuildableFactory => ({
   resources: { ...factory.resources },
   ownedDrones: [...factory.ownedDrones],
   upgrades: { ...factory.upgrades },
+  haulersAssigned: factory.haulersAssigned,
+  haulerConfig: factory.haulerConfig ? { ...factory.haulerConfig } : undefined,
+  logisticsState: factory.logisticsState ? {
+    outboundReservations: { ...factory.logisticsState.outboundReservations },
+    inboundSchedules: [...factory.logisticsState.inboundSchedules],
+  } : undefined,
 });
 
 const snapshotToFactory = (snapshot: FactorySnapshot): BuildableFactory => ({
@@ -802,6 +887,12 @@ const snapshotToFactory = (snapshot: FactorySnapshot): BuildableFactory => ({
   resources: { ...snapshot.resources },
   ownedDrones: [...snapshot.ownedDrones],
   upgrades: { ...snapshot.upgrades },
+  haulersAssigned: snapshot.haulersAssigned,
+  haulerConfig: snapshot.haulerConfig ? { ...snapshot.haulerConfig } : undefined,
+  logisticsState: snapshot.logisticsState ? {
+    outboundReservations: { ...snapshot.logisticsState.outboundReservations },
+    inboundSchedules: [...snapshot.logisticsState.inboundSchedules],
+  } : undefined,
 });
 
 const factoryToSnapshot = (factory: BuildableFactory): FactorySnapshot => ({
@@ -821,6 +912,12 @@ const factoryToSnapshot = (factory: BuildableFactory): FactorySnapshot => ({
   resources: { ...factory.resources },
   ownedDrones: [...factory.ownedDrones],
   upgrades: { ...factory.upgrades },
+  haulersAssigned: factory.haulersAssigned,
+  haulerConfig: factory.haulerConfig ? { ...factory.haulerConfig } : undefined,
+  logisticsState: factory.logisticsState ? {
+    outboundReservations: { ...factory.logisticsState.outboundReservations },
+    inboundSchedules: [...factory.logisticsState.inboundSchedules],
+  } : undefined,
 });
 
 const cloneDroneFlight = (flight: DroneFlightState): DroneFlightState => ({
@@ -960,7 +1057,45 @@ const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapshot => (
     snapshot.droneOwners && typeof snapshot.droneOwners === 'object'
       ? normalizeDroneOwners(snapshot.droneOwners)
       : undefined,
+  logisticsQueues: snapshot.logisticsQueues || { pendingTransfers: [] },
 });
+
+/**
+ * Apply save version migrations to snapshot before loading
+ * Ensures backward compatibility with older save formats
+ */
+const applyMigrations = (snapshot: Partial<StoreSnapshot>): Partial<StoreSnapshot> => {
+  const currentVersion = snapshot.save?.version ?? '0.2.0';
+  
+  // Migration from 0.2.0 to 0.3.0: Add hauler logistics fields
+  if (currentVersion < '0.3.0') {
+    if (Array.isArray(snapshot.factories)) {
+      snapshot.factories = snapshot.factories.map((factory: any) => ({
+        ...factory,
+        haulersAssigned: factory.haulersAssigned ?? 0,
+        haulerConfig: factory.haulerConfig ?? {
+          capacity: 50,
+          speed: 1.0,
+          pickupOverhead: 1.0,
+          dropoffOverhead: 1.0,
+          resourceFilters: [],
+          mode: 'auto',
+          priority: 5,
+        },
+        logisticsState: factory.logisticsState ?? {
+          outboundReservations: {},
+          inboundSchedules: [],
+        },
+      }));
+    }
+    
+    if (!snapshot.logisticsQueues) {
+      snapshot.logisticsQueues = { pendingTransfers: [] };
+    }
+  }
+
+  return snapshot;
+};
 
 export const serializeStore = (state: StoreState): StoreSnapshot => ({
   resources: { ...state.resources },
@@ -973,6 +1108,7 @@ export const serializeStore = (state: StoreState): StoreSnapshot => ({
   factories: state.factories.map(factoryToSnapshot),
   selectedFactoryId: state.selectedFactoryId,
   droneOwners: { ...state.droneOwners },
+  logisticsQueues: { pendingTransfers: [...state.logisticsQueues.pendingTransfers] },
 });
 
 export const stringifySnapshot = (snapshot: StoreSnapshot) => JSON.stringify(snapshot);
@@ -980,7 +1116,8 @@ export const stringifySnapshot = (snapshot: StoreSnapshot) => JSON.stringify(sna
 export const parseSnapshot = (payload: string): StoreSnapshot | null => {
   try {
     const parsed = JSON.parse(payload) as Partial<StoreSnapshot>;
-    return normalizeSnapshot(parsed);
+    const migrated = applyMigrations(parsed);
+    return normalizeSnapshot(migrated);
   } catch (error) {
     console.warn('Failed to parse snapshot payload', error);
     return null;
@@ -999,10 +1136,12 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
     rngSeed: generateSeed(),
     droneFlights: [],
     factories: createDefaultFactories(),
+    logisticsQueues: { pendingTransfers: [] },
     factoryProcessSequence: 0,
     factoryRoundRobin: 0,
     factoryAutofitSequence: 0,
     cameraResetSequence: 0,
+    logisticsTick: 0,
     selectedAsteroidId: null,
     selectedFactoryId: initialSelectedFactory,
     droneOwners: {},
@@ -1036,6 +1175,8 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
     tick: (dt) => {
       if (dt <= 0) return;
       get().processRefinery(dt);
+      get().processLogistics(dt);
+      get().processFactories(dt);
     },
 
     processRefinery: (dt) => {
@@ -1123,10 +1264,12 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
           rngSeed: restoredRng,
           droneFlights: (normalized.droneFlights ?? []).map(cloneDroneFlight),
           factories: restoredFactories,
+          logisticsQueues: normalized.logisticsQueues || { pendingTransfers: [] },
           factoryProcessSequence: deriveProcessSequence(restoredFactories),
           factoryRoundRobin: 0,
           factoryAutofitSequence: 0,
           cameraResetSequence: 0,
+          logisticsTick: 0,
           selectedAsteroidId: null,
           selectedFactoryId,
           droneOwners: normalizeDroneOwners(normalized.droneOwners ?? {}),
@@ -1443,6 +1586,57 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
         return { factories, resources };
       });
       return true;
+    },
+
+    assignHaulers: (factoryId, count) => {
+      const state = get();
+      const index = state.factories.findIndex((f) => f.id === factoryId);
+      if (index === -1) return false;
+      
+      set((current) => {
+        const factory = cloneFactory(current.factories[index]);
+        factory.haulersAssigned = Math.max(0, count);
+        const factories = current.factories.map((f, idx) => (idx === index ? factory : f));
+        return { factories };
+      });
+      return true;
+    },
+
+    updateHaulerConfig: (factoryId, config) => {
+      const state = get();
+      const index = state.factories.findIndex((f) => f.id === factoryId);
+      if (index === -1) return;
+      
+      set((current) => {
+        const factory = cloneFactory(current.factories[index]);
+        const currentConfig = factory.haulerConfig || {
+          capacity: 50,
+          speed: 1.0,
+          pickupOverhead: 1.0,
+          dropoffOverhead: 1.0,
+          resourceFilters: [],
+          mode: 'auto',
+          priority: 5,
+        };
+        factory.haulerConfig = { ...currentConfig, ...config };
+        const factories = current.factories.map((f, idx) => (idx === index ? factory : f));
+        return { factories };
+      });
+    },
+
+    getLogisticsStatus: (factoryId) => {
+      const factory = get().getFactory(factoryId);
+      if (!factory) return null;
+      return {
+        haulersAssigned: factory.haulersAssigned ?? 0,
+        config: factory.haulerConfig,
+        state: factory.logisticsState,
+      };
+    },
+
+    processLogistics: (_dt) => {
+      // Placeholder: Will be implemented in Phase 2
+      // This will be called from the main tick method
     },
 
     processFactories: (dt) => {
