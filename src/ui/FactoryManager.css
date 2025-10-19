@@ -54,6 +54,52 @@
   color: #cbd5f5;
 }
 
+.warehouse-summary {
+  margin: clamp(0.45rem, 0.35rem + 0.2vw, 0.65rem) 0;
+  padding: clamp(0.35rem, 0.28rem + 0.15vw, 0.5rem);
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: clamp(0.3rem, 0.25rem + 0.1vw, 0.45rem);
+}
+
+.warehouse-summary h4 {
+  margin: 0 0 clamp(0.3rem, 0.25rem + 0.15vw, 0.45rem) 0;
+  font-size: clamp(0.76rem, 0.7rem + 0.18vw, 0.9rem);
+}
+
+.warehouse-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(0.18rem, 0.15rem + 0.1vw, 0.25rem);
+}
+
+.warehouse-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.35rem;
+  font-size: clamp(0.68rem, 0.64rem + 0.14vw, 0.8rem);
+  color: #e2e8f0;
+}
+
+.warehouse-row .warehouse-name {
+  color: #cbd5f5;
+}
+
+.warehouse-row .warehouse-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.warehouse-row.muted {
+  color: #94a3b8;
+}
+
+.warehouse-row.muted .warehouse-name {
+  color: #94a3b8;
+}
+
 .buy-factory-btn {
   width: 100%;
   padding: clamp(0.45rem, 0.35rem + 0.2vw, 0.65rem);

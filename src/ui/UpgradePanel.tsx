@@ -43,7 +43,7 @@ export const UpgradePanel = () => {
             </div>
             <div className="right">
               <button type="button" disabled={!affordable} onClick={() => buy(id)}>
-                Buy ({cost.toLocaleString()} bars)
+                Buy ({cost.toLocaleString()} warehouse bars)
               </button>
             </div>
           </div>
@@ -52,7 +52,7 @@ export const UpgradePanel = () => {
       <hr />
       <h3>Prestige</h3>
       <div className="prestige-info">
-        Bars: {Math.floor(resources.bars).toLocaleString()} → Next Cores:{' '}
+        Warehouse Bars: {Math.floor(resources.bars).toLocaleString()} → Next Cores:{' '}
         {nextCores.toLocaleString()}
       </div>
       <button type="button" disabled={prestigeDisabled} onClick={doPrestige}>

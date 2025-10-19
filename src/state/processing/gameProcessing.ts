@@ -52,7 +52,6 @@ export function processFactories(
 
   let processesStarted = 0;
   let remainingEnergy = Math.max(0, state.resources.energy);
-  let totalBarsProduced = 0;
 
   const updatedFactories = state.factories.map((factory) => {
     const working = cloneFactory(factory);
@@ -114,7 +113,6 @@ export function processFactories(
       const refined = tickRefineProcess(working, process, dt);
       if (refined > 0) {
         working.resources.bars += refined;
-        totalBarsProduced += refined;
       }
     }
 
@@ -127,7 +125,6 @@ export function processFactories(
   const resources = {
     ...state.resources,
     energy: remainingEnergy,
-    bars: state.resources.bars + totalBarsProduced,
   };
 
   return {

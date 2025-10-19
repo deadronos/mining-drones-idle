@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { FACTORY_MAX_DISTANCE, FACTORY_MIN_DISTANCE, createStoreInstance } from '@/state/store';
 import { FACTORY_CONFIG, computeFactoryCost } from '@/ecs/factories';
+import { WAREHOUSE_CONFIG } from '@/state/constants';
 
 describe('store factory integration', () => {
   let store = createStoreInstance();
@@ -11,6 +12,22 @@ describe('store factory integration', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('initial factory seeds onboarding hauler and stock', () => {
+    const state = store.getState();
+    const factory = state.factories[0];
+
+    expect(factory.haulersAssigned).toBe(WAREHOUSE_CONFIG.starterFactoryHaulers);
+    expect(factory.resources.ore).toBeGreaterThanOrEqual(
+      WAREHOUSE_CONFIG.starterFactoryStock.ore,
+    );
+    expect(factory.resources.bars).toBeGreaterThanOrEqual(
+      WAREHOUSE_CONFIG.starterFactoryStock.bars,
+    );
+    expect(factory.currentStorage).toBe(factory.resources.ore);
+    expect(state.resources.ore).toBe(0);
+    expect(state.resources.bars).toBe(0);
   });
 
   it('deducts resources and adds factory when purchasing', () => {
@@ -80,7 +97,7 @@ describe('store factory integration', () => {
     expect(queued).toEqual(['drone-a', 'drone-b']);
   });
 
-  it('processes factory storage into bars and drains global energy into factories', () => {
+  it('processes factory storage into local bars and drains global energy into factories', () => {
     const state = store.getState();
     const factoryId = state.factories[0].id;
     store.getState().transferOreToFactory(factoryId, 60);
@@ -89,7 +106,7 @@ describe('store factory integration', () => {
     const resources = store.getState().resources;
     const factory = store.getState().factories[0];
     expect(factory.resources.bars).toBeGreaterThan(0);
-    expect(resources.bars).toBeGreaterThan(0);
+    expect(resources.bars).toBeCloseTo(0, 5);
     const expectedTransfer = Math.min(
       energyBefore,
       FACTORY_CONFIG.energyCapacity - FACTORY_CONFIG.initialEnergy,
@@ -97,14 +114,19 @@ describe('store factory integration', () => {
     expect(resources.energy).toBeCloseTo(energyBefore - expectedTransfer, 5);
   });
 
-  it('adds resources to a factory ledger and mirrors to global totals', () => {
+  it('adds resources to a factory ledger without modifying warehouse totals', () => {
     const factoryId = store.getState().factories[0].id;
+    const initialFactoryMetals = store.getState().factories[0].resources.metals;
+    const initialFactoryBars = store.getState().factories[0].resources.bars;
+    const initialWarehouseMetals = store.getState().resources.metals;
+    const initialWarehouseBars = store.getState().resources.bars;
+
     store.getState().addResourcesToFactory(factoryId, { metals: 25, bars: 10 });
     const { factories, resources } = store.getState();
-    expect(factories[0].resources.metals).toBeCloseTo(25);
-    expect(factories[0].resources.bars).toBeCloseTo(10);
-    expect(resources.metals).toBeCloseTo(25);
-    expect(resources.bars).toBeCloseTo(10);
+    expect(factories[0].resources.metals).toBeCloseTo(initialFactoryMetals + 25);
+    expect(factories[0].resources.bars).toBeCloseTo(initialFactoryBars + 10);
+    expect(resources.metals).toBeCloseTo(initialWarehouseMetals);
+    expect(resources.bars).toBeCloseTo(initialWarehouseBars);
   });
 
   it('upgrades factories using local resources', () => {
@@ -142,7 +164,8 @@ describe('store factory integration', () => {
     expect(afterDock.dockingCapacity).toBe(before.dockingCapacity + 1);
     expect(afterDock.resources.metals).toBeLessThan(before.resources.metals);
     expect(afterDock.resources.crystals).toBeLessThan(before.resources.crystals);
-    expect(store.getState().resources.metals).toBeLessThan(100);
+    expect(store.getState().resources.metals).toBe(100);
+    expect(store.getState().resources.crystals).toBe(100);
 
     const solarUpgrade = store.getState().upgradeFactory(factoryId, 'solar');
     expect(solarUpgrade).toBe(true);

@@ -1,6 +1,6 @@
 import type { Resources, Modules } from '@/state/types';
 import { getResourceModifiers } from './resourceModifiers';
-import { getStorageCapacity } from '@/state/utils';
+import { computeWarehouseCapacity } from '@/state/utils';
 import { rawResourceKeys } from '@/state/constants';
 
 /**
@@ -40,7 +40,7 @@ export const mergeResourceDelta = (
     return next;
   }
   const modifiers = getResourceModifiers(next, prestigeCores);
-  const capacity = getStorageCapacity(modules, modifiers);
+  const capacity = computeWarehouseCapacity(modules, modifiers);
   for (const key of rawResourceKeys) {
     const value = next[key];
     if (typeof value !== 'number' || !Number.isFinite(value)) {

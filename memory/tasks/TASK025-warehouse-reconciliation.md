@@ -1,13 +1,21 @@
 # TASK025: Warehouse Reconciliation Implementation
 
-**Status**: Not Started  
+**Status**: In Progress  
 **Added**: 2025-10-19  
-**Updated**: 2025-10-19  
+**Updated**: 2025-10-24  
 **Related Design**: `memory/designs/DES021-warehouse-reconciliation.md`
 
 ## Original Request
 
 Implement a warehouse-based resource accounting system to fix the dual-inventory problem (global `state.resources` vs. local `factory.resources`). The warehouse becomes the canonical global resource hub; factories retain a local buffer and export surplus; haulers distribute resources between factories and the warehouse. Start the first factory with 1 free hauler to onboard players to the logistics system early.
+
+## Requirements (EARS)
+
+- WHEN a new run initializes, THE SYSTEM SHALL assign Factory 0 a single hauler and starter resource buffer so logistics activity is visible within the first tick. [Acceptance: store initialization test confirms `haulersAssigned === 1` and local stock seeded.]
+- WHEN a factory's inventory for a warehoused resource exceeds its buffer target plus reserve, THE SYSTEM SHALL schedule an export transfer to the warehouse that increases global inventory only after the transfer completes. [Acceptance: logistics scheduler test verifies surplus factory triggers warehouse export and global totals update once arrival executes.]
+- WHEN a factory's inventory falls below its buffer target and the warehouse holds that resource, THE SYSTEM SHALL schedule an import transfer that never reduces warehouse stock below zero nor the factory below its minimum reserve. [Acceptance: scheduler/import test confirms warehouse dispatch obeys reserve constraints.]
+- WHEN refinery production or drone unloads complete at a factory, THE SYSTEM SHALL retain output locally until logistics exports it, preventing simultaneous increments to both factory and warehouse pools. [Acceptance: process factories/unload tests assert global resources remain unchanged until hauler export.]
+- WHEN a prestige reset occurs, THE SYSTEM SHALL clear warehouse and factory inventories while computing earned cores from the warehouse totals available at trigger time. [Acceptance: prestige store test validates resets and earned cores.]
 
 ## Thought Process
 
@@ -181,36 +189,38 @@ The five design questions were resolved toward clarity and player onboarding:
 
 ## Progress Tracking
 
-| ID  | Description                                              | Status      | Updated | Notes |
+**Overall Status:** In Progress - 40%
+
+| ID  | Description                                              | Status      | Updated     | Notes |
 | --- | -------------------------------------------------------- | ----------- | ------- | ----- |
-| 1.1 | Update `createDefaultFactories()` for 1st factory hauler | Not Started |         |       |
-| 1.2 | Add startup resources to 1st factory                     | Not Started |         |       |
+| 1.1 | Update `createDefaultFactories()` for 1st factory hauler | Completed   | 2025-10-24 | Seeded onboarding hauler |
+| 1.2 | Add startup resources to 1st factory                     | Completed   | 2025-10-24 | Starter ore/bars applied |
 | 1.3 | Serialization updates for startup state                  | Not Started |         |       |
-| 1.4 | Unit test: 1st factory has 1 hauler                      | Not Started |         |       |
+| 1.4 | Unit test: 1st factory has 1 hauler                      | Completed   | 2025-10-24 | Coverage in `store.factories.test.ts` |
 | 2.1 | Alias warehouse terminology                              | Not Started |         |       |
-| 2.2 | Update capacity logic & WAREHOUSE_MULTIPLIER             | Not Started |         |       |
-| 2.3 | Add WAREHOUSE_CONFIG constant                            | Not Started |         |       |
-| 2.4 | Utility: computeWarehouseCapacity()                      | Not Started |         |       |
-| 2.5 | Unit test: capacity scales with modules                  | Not Started |         |       |
-| 3.1 | Update matchSurplusToNeed for warehouse transfers        | Not Started |         |       |
-| 3.2 | Update computeBufferTarget logic                         | Not Started |         |       |
-| 3.3 | Update computeMinReserve logic                           | Not Started |         |       |
-| 3.4 | Update reserveOutbound & executeArrival                  | Not Started |         |       |
-| 3.5 | Unit tests: buffer & export logic                        | Not Started |         |       |
-| 4.1 | Audit unload.ts ore routing                              | Not Started |         |       |
-| 4.2 | Update non-ore unload routing                            | Not Started |         |       |
-| 4.3 | No-factory fallback to warehouse                         | Not Started |         |       |
-| 4.4 | Unit test: unload routing                                | Not Started |         |       |
-| 5.1 | Audit global refinery (no change)                        | Not Started |         |       |
-| 5.2 | Audit processFactories production                        | Not Started |         |       |
-| 5.3 | Remove totalBarsProduced duplication                     | Not Started |         |       |
-| 5.4 | Unit test: factory production is local only              | Not Started |         |       |
-| 6.1 | Update doPrestige behavior                               | Not Started |         |       |
-| 6.2 | Update prestige screen display                           | Not Started |         |       |
-| 6.3 | Unit test: prestige reset                                | Not Started |         |       |
-| 7.1 | Update HUD labels                                        | Not Started |         |       |
-| 7.2 | Update factory inspector display                         | Not Started |         |       |
-| 7.3 | Update logistics panel                                   | Not Started |         |       |
+| 2.2 | Update capacity logic & WAREHOUSE_MULTIPLIER             | Completed   | 2025-10-24 | `mergeResourceDelta` clamps via warehouse capacity |
+| 2.3 | Add WAREHOUSE_CONFIG constant                            | Completed   | 2025-10-24 | Config captured in `state/constants.ts` |
+| 2.4 | Utility: computeWarehouseCapacity()                      | Completed   | 2025-10-24 | Helper added in `state/utils.ts` |
+| 2.5 | Unit test: capacity scales with modules                  | Completed   | 2025-10-24 | `utils.warehouse.test.ts` |
+| 3.1 | Update matchSurplusToNeed for warehouse transfers        | Completed   | 2025-10-24 | Warehouse routing handled in `processLogistics` scheduler |
+| 3.2 | Update computeBufferTarget logic                         | Completed   | 2025-10-24 | Buffer targets aligned with warehouse constants (LOGISTICS_CONFIG) |
+| 3.3 | Update computeMinReserve logic                           | Completed   | 2025-10-24 | Reserve calculations use shared warehouse thresholds |
+| 3.4 | Update reserveOutbound & executeArrival                  | Completed   | 2025-10-24 | Warehouse arrivals handled via custom scheduler pathway |
+| 3.5 | Unit tests: buffer & export logic                        | Completed   | 2025-10-24 | Added `logisticsProcessing.test.ts` coverage |
+| 4.1 | Audit unload.ts ore routing                              | Completed   | 2025-10-24 | Ore remains local; warehouse exports handle surplus |
+| 4.2 | Update non-ore unload routing                            | Completed   | 2025-10-24 | Factory ledger only; warehouse fed in scheduler/fallback |
+| 4.3 | No-factory fallback to warehouse                         | Completed   | 2025-10-24 | Confirmed direct warehouse deposit when no dock |
+| 4.4 | Unit test: unload routing                                | Completed   | 2025-10-24 | Added unload tests covering local vs warehouse |
+| 5.1 | Audit global refinery (no change)                        | Completed   | 2025-10-24 | Global refinery flow left intact for warehouse operations |
+| 5.2 | Audit processFactories production                        | Completed   | 2025-10-24 | Local-only bar production verified |
+| 5.3 | Remove totalBarsProduced duplication                     | Completed   | 2025-10-24 | `processFactories` no longer increments warehouse bars |
+| 5.4 | Unit test: factory production is local only              | Completed   | 2025-10-24 | Updated store test asserts warehouse bars unchanged |
+| 6.1 | Update doPrestige behavior                               | Completed   | 2025-10-24 | Verified prestige resets to new default factory with starter hauler/resources |
+| 6.2 | Update prestige screen display                           | Completed   | 2025-10-24 | Upgrade panel now labels warehouse bars for prestige readiness |
+| 6.3 | Unit test: prestige reset                                | Completed   | 2025-10-24 | Adjusted store test to expect starter hauler after reset |
+| 7.1 | Update HUD labels                                        | Completed   | 2025-10-24 | Upgrade panel buttons reference warehouse bars explicitly |
+| 7.2 | Update factory inspector display                         | Completed   | 2025-10-24 | Factory view shows Warehouse Inventory vs Factory Storage |
+| 7.3 | Update logistics panel                                   | Completed   | 2025-10-24 | Panel now highlights warehouse node and stock in summary |
 | 7.4 | Add tutorial/settings note                               | Not Started |         |       |
 | 8.1 | Add migration (backwards compat)                         | Not Started |         |       |
 | 8.2 | Update save version if needed                            | Not Started |         |       |
@@ -254,3 +264,16 @@ None identified. Work can proceed immediately.
 
 - Prestige-upgradeable "Prestige Bank" module (future, buyable with cores).
 - Warehouse UI panel (future, if visible warehouse becomes desired).
+
+## Progress Log
+
+### 2025-10-24
+
+- Switched TASK025 status to In Progress and captured warehouse EARS requirements to anchor acceptance.
+- Reviewed DES021 and current state/logistics code to map duplication points and confirm plan feasibility.
+- Drafted phased execution plan prioritizing state/model adjustments ahead of logistics and UI changes.
+- Implemented starter hauler/resources for Factory 0 plus WAREHOUSE_CONFIG + warehouse capacity helper to formalize the model.
+- Updated factory processing to keep bars local, wired mergeResourceDelta to warehouse capacity, and added unit coverage for both the onboarding stock and capacity scaling.
+- Extended logistics scheduler to reserve factory→warehouse exports and warehouse→factory imports, clamp arrivals against capacity, and covered both flows with targeted tests.
+- Stopped factory resource helper from mirroring into the warehouse, adjusted unload flow for non-ore handling, and added regression tests for factory-local vs warehouse fallback paths.
+- Ran `npm test` to confirm warehouse scheduling, unload routing, and UI updates pass existing suites.

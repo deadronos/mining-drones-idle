@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@/state/store';
+import { WAREHOUSE_NODE_ID } from '@/ecs/logistics';
 import './LogisticsPanel.css';
 
 /**
@@ -7,6 +8,7 @@ import './LogisticsPanel.css';
  */
 export const LogisticsPanel = () => {
   const factories = useStore((state) => state.factories);
+  const resources = useStore((state) => state.resources);
   const logisticsQueues = useStore((state) => state.logisticsQueues);
   const gameTime = useStore((state) => state.gameTime);
   const [, forceUpdate] = useState(0);
@@ -41,6 +43,10 @@ export const LogisticsPanel = () => {
           <span className="label">Completed:</span>
           <span className="value">{completedTransfers}</span>
         </div>
+        <div className="summary-item">
+          <span className="label">Warehouse Bars:</span>
+          <span className="value">{Math.floor(resources.bars).toLocaleString()}</span>
+        </div>
       </div>
 
       {transfers.length === 0 ? (
@@ -55,12 +61,32 @@ export const LogisticsPanel = () => {
               const remainingTime = Math.max(0, transfer.eta - (gameTime ?? 0));
               const sourceFactory = factories.find((f) => f.id === transfer.fromFactoryId);
               const destFactory = factories.find((f) => f.id === transfer.toFactoryId);
+              const sourceName =
+                transfer.fromFactoryId === WAREHOUSE_NODE_ID
+                  ? 'Warehouse'
+                  : sourceFactory?.id ?? transfer.fromFactoryId;
+              const destName =
+                transfer.toFactoryId === WAREHOUSE_NODE_ID
+                  ? 'Warehouse'
+                  : destFactory?.id ?? transfer.toFactoryId;
+              const sourceLabel =
+                transfer.fromFactoryId === WAREHOUSE_NODE_ID
+                  ? 'WH'
+                  : sourceFactory?.id.slice(0, 4) ?? '???';
+              const destLabel =
+                transfer.toFactoryId === WAREHOUSE_NODE_ID
+                  ? 'WH'
+                  : destFactory?.id.slice(0, 4) ?? '???';
               return (
                 <div key={transfer.id} className="transfer-item">
                   <div className="transfer-route">
-                    <span className="factory-short">{sourceFactory?.id.slice(0, 4)}</span>
+                    <span className="factory-short" title={sourceName}>
+                      {sourceLabel}
+                    </span>
                     <span className="arrow">→</span>
-                    <span className="factory-short">{destFactory?.id.slice(0, 4)}</span>
+                    <span className="factory-short" title={destName}>
+                      {destLabel}
+                    </span>
                   </div>
                   <div className="transfer-details">
                     <span className="resource">

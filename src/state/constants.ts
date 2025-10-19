@@ -31,6 +31,17 @@ export const FACTORY_MAX_DISTANCE = 50;
 export const FACTORY_PLACEMENT_ATTEMPTS = 100;
 export const FACTORY_UPGRADE_GROWTH = 1.35;
 
+export const WAREHOUSE_CONFIG = {
+  storageMultiplier: 1,
+  starterFactoryHaulers: 1,
+  starterFactoryStock: {
+    ore: 50,
+    bars: 10,
+  },
+  bufferSeconds: 30,
+  minReserveSeconds: 5,
+} as const;
+
 export const initialSettings: StoreSettings = {
   autosaveEnabled: true,
   autosaveInterval: 10,

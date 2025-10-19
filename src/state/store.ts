@@ -90,6 +90,7 @@ export {
   computePrestigeGain,
   computePrestigeBonus,
   getStorageCapacity,
+  computeWarehouseCapacity,
   getEnergyCapacity,
   getEnergyGeneration,
   getEnergyConsumption,

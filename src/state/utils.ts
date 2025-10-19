@@ -28,6 +28,7 @@ import {
   factoryUpgradeDefinitions,
   FACTORY_SOLAR_BASE_REGEN,
   FACTORY_SOLAR_REGEN_PER_LEVEL,
+  WAREHOUSE_CONFIG,
 } from './constants';
 
 export const vector3ToTuple = (vector: Vector3): VectorTuple => [vector.x, vector.y, vector.z];
@@ -188,6 +189,11 @@ export const getStorageCapacity = (modules: Modules, modifiers?: ResourceModifie
   const base = BASE_STORAGE + modules.storage * STORAGE_PER_LEVEL;
   return base * (modifiers?.storageCapacityMultiplier ?? 1);
 };
+
+export const computeWarehouseCapacity = (
+  modules: Modules,
+  modifiers?: ResourceModifierSnapshot,
+) => getStorageCapacity(modules, modifiers) * WAREHOUSE_CONFIG.storageMultiplier;
 
 export const getEnergyCapacity = (modules: Modules, modifiers?: ResourceModifierSnapshot) => {
   const base = BASE_ENERGY_CAP + modules.solar * ENERGY_PER_SOLAR;

@@ -10,7 +10,6 @@ import {
 } from '@/ecs/factories';
 import { computeFactoryUpgradeCost, computeFactoryPlacement } from '../utils';
 import { cloneFactory } from '../serialization';
-import { mergeResourceDelta } from '@/lib/resourceMerging';
 import { factoryUpgradeDefinitions } from '../constants';
 
 export interface FactorySliceState {
@@ -218,7 +217,6 @@ export const createFactorySlice: StateCreator<
         'ice',
         'credits',
       ];
-      const globalDelta: Partial<typeof state.resources> = {};
       let changed = false;
       for (const key of keys) {
         const amount = delta[key];
@@ -229,9 +227,6 @@ export const createFactorySlice: StateCreator<
         updated.resources[key] = nextValue;
         if (key === 'ore') {
           updated.currentStorage = updated.resources.ore;
-        } else if (key in state.resources) {
-          const resourceKey = key as keyof typeof state.resources;
-          globalDelta[resourceKey] = (globalDelta[resourceKey] ?? 0) + amount;
         }
         changed = true;
       }
@@ -241,17 +236,7 @@ export const createFactorySlice: StateCreator<
       const factories = state.factories.map((factory, idx) =>
         idx === index ? updated : factory,
       );
-      const resources =
-        Object.keys(globalDelta).length > 0
-          ? mergeResourceDelta(
-              state.resources,
-              globalDelta,
-              state.modules,
-              false,
-              state.prestige.cores,
-            )
-          : state.resources;
-      return { factories, resources };
+      return { factories };
     });
   },
 
@@ -313,15 +298,11 @@ export const createFactorySlice: StateCreator<
       }
     }
     const updated = cloneFactory(base);
-    const globalDelta: Partial<typeof state.resources> = {};
     for (const [key, value] of Object.entries(cost) as [keyof FactoryResources, number][]) {
       if (value <= 0) continue;
       updated.resources[key] = Math.max(0, (updated.resources[key] ?? 0) - value);
       if (key === 'ore') {
         updated.currentStorage = updated.resources.ore;
-      } else if (key in state.resources) {
-        const resourceKey = key as keyof typeof state.resources;
-        globalDelta[resourceKey] = (globalDelta[resourceKey] ?? 0) - value;
       }
     }
     definition.apply(updated);
@@ -329,17 +310,7 @@ export const createFactorySlice: StateCreator<
       const factories = current.factories.map((factory, idx) =>
         idx === index ? updated : factory,
       );
-      const resources =
-        Object.keys(globalDelta).length > 0
-          ? mergeResourceDelta(
-              current.resources,
-              globalDelta,
-              current.modules,
-              false,
-              current.prestige.cores,
-            )
-          : current.resources;
-      return { factories, resources };
+      return { factories };
     });
     return true;
   },

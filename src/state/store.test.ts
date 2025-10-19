@@ -116,7 +116,7 @@ describe('state/store', () => {
     expect(after.modules.droneBay).toBe(1);
     expect(after.factories).toHaveLength(1);
     expect(after.factories[0]?.id).toBe('factory-0');
-    expect(after.factories[0]?.haulersAssigned ?? 0).toBe(0);
+    expect(after.factories[0]?.haulersAssigned ?? 0).toBe(1);
     expect(after.logisticsQueues.pendingTransfers).toHaveLength(0);
     expect(after.droneFlights).toHaveLength(0);
     expect(Object.keys(after.droneOwners)).toHaveLength(0);

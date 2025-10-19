@@ -7,11 +7,12 @@
 
 import type { BuildableFactory } from './factories';
 import type { PendingTransfer, HaulerConfig } from '@/state/store';
+import { WAREHOUSE_CONFIG } from '@/state/constants';
 
 // Configuration constants (can be moved to config file later)
 export const LOGISTICS_CONFIG = {
-  buffer_seconds: 30,           // Target inventory level (30s worth of consumption)
-  min_reserve_seconds: 5,       // Never drop below 5s worth of resources
+  buffer_seconds: WAREHOUSE_CONFIG.bufferSeconds, // Target inventory level
+  min_reserve_seconds: WAREHOUSE_CONFIG.minReserveSeconds, // Never drop below min reserve
   hauler_capacity: 50,          // Default items per trip
   hauler_speed: 1.0,            // Default tiles per second
   pickup_overhead: 1.0,         // Default seconds for pickup
@@ -32,6 +33,8 @@ export const RESOURCE_TYPES = [
 ] as const;
 
 export type TransportableResource = typeof RESOURCE_TYPES[number];
+
+export const WAREHOUSE_NODE_ID = 'warehouse' as const;
 
 /**
  * Generates a unique transfer ID using timestamp and random component

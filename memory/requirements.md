@@ -139,3 +139,23 @@ WHEN a docked drone requires energy and its owning factory still has stored ener
 ## RQ-035 Factory Solar Regeneration
 
 WHEN a factory has at least one solar collector upgrade active during a power system tick, THE SYSTEM SHALL add `baseRegen + perLevel * upgradeLevel` energy to that factory's local store without exceeding its energy capacity. [Acceptance: Power system unit test advances ticks with varying upgrade levels and asserts factory energy increases accordingly while clamping at capacity.]
+
+## RQ-036 Warehouse Onboarding Hauler
+
+WHEN a new game run initializes, THE SYSTEM SHALL spawn Factory 0 with one assigned hauler and a starter cache of ore and bars so that logistics activity is visible within the first tick. [Acceptance: Store initialization test confirms `haulersAssigned === 1` on Factory 0 and local stock values exceed zero.]
+
+## RQ-037 Warehouse Export Scheduling
+
+WHEN a factory holds a warehoused resource above its buffer target plus reserve, THE SYSTEM SHALL schedule an export transfer to the warehouse and only increase warehouse inventory when the transfer completes. [Acceptance: Logistics scheduler test verifies surplus factories enqueue warehouse-bound transfers and warehouse totals change after `executeArrival`.]
+
+## RQ-038 Warehouse Import Scheduling
+
+WHEN a factory's warehoused resource level drops below its buffer target and the warehouse has available inventory, THE SYSTEM SHALL schedule an import transfer that maintains warehouse totals above zero and respects the factory's minimum reserve threshold. [Acceptance: Scheduler/import test confirms warehouse dispatch obeys reserves and updates both inventories correctly.]
+
+## RQ-039 Local Production Isolation
+
+WHEN refinery batches or drone unloads produce resources at a factory, THE SYSTEM SHALL retain the output in that factory's local inventory until logistics exports it, preventing concurrent increments to warehouse totals. [Acceptance: Factory processing and unload tests assert global warehouse resources remain unchanged until an export transfer arrives.]
+
+## RQ-040 Prestige Warehouse Reset
+
+WHEN the player activates prestige, THE SYSTEM SHALL compute earned cores from the warehouse inventory available at trigger time and then reset both warehouse and factory inventories to their starting values. [Acceptance: Prestige flow test confirms cores awarded match warehouse stock and all post-prestige inventories reset.]

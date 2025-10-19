@@ -32,6 +32,21 @@ const STORAGE_LABELS: Record<keyof BuildableFactory['resources'], string> = {
   credits: 'Credits',
 };
 
+const WAREHOUSE_RESOURCE_ORDER: Array<
+  'ore' | 'bars' | 'metals' | 'crystals' | 'organics' | 'ice' | 'energy' | 'credits'
+> = ['ore', 'bars', 'metals', 'crystals', 'organics', 'ice', 'energy', 'credits'];
+
+const WAREHOUSE_LABELS: Record<(typeof WAREHOUSE_RESOURCE_ORDER)[number], string> = {
+  ore: 'Ore',
+  bars: 'Bars',
+  metals: 'Metals',
+  crystals: 'Crystals',
+  organics: 'Organics',
+  ice: 'Ice',
+  energy: 'Energy',
+  credits: 'Credits',
+};
+
 const isFiniteCostEntry = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value !== 0;
 
@@ -89,6 +104,15 @@ export const FactoryManager = () => {
     : 0;
   const safeIndex = selectedIndex >= 0 ? selectedIndex : 0;
   const selectedFactory = factories[safeIndex] ?? null;
+  const warehouseEntries = useMemo(
+    () =>
+      WAREHOUSE_RESOURCE_ORDER.map((key) => ({
+        key,
+        label: WAREHOUSE_LABELS[key],
+        amount: resources[key],
+      })),
+    [resources],
+  );
 
   const handleUpgrade = (upgradeId: FactoryUpgradeId) => {
     if (!selectedFactory) return;
@@ -123,6 +147,18 @@ export const FactoryManager = () => {
           Buy Factory
         </button>
       </div>
+
+      <section className="warehouse-summary">
+        <h4>Warehouse Inventory</h4>
+        <ul className="warehouse-list">
+          {warehouseEntries.map(({ key, label, amount }) => (
+            <li key={key} className={amount > 0 ? 'warehouse-row' : 'warehouse-row muted'}>
+              <span className="warehouse-name">{label}</span>
+              <span className="warehouse-value">{Math.floor(amount).toLocaleString()}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       {selectedFactory ? (
         <SelectedFactoryCard
@@ -321,7 +357,7 @@ const SelectedFactoryCard = ({
           ) : null}
         </div>
         <div>
-          <h4>Storage</h4>
+          <h4>Factory Storage</h4>
           <ul className="factory-storage-list">
             {storageEntries.map((entry) => (
               <li
