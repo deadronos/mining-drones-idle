@@ -426,31 +426,33 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
       let factories = state.factories;
 
       if (options?.transferOwnership) {
+        // Ensure single ownership: remove drone from all factories' ownedDrones first
         const previousOwnerId = state.droneOwners[droneId];
         nextDroneOwners = { ...state.droneOwners, [droneId]: factoryId };
 
-        factories = state.factories.map((factory, idx) => {
-          const working = cloneFactory(factory);
-          if (working.ownedDrones.includes(droneId)) {
-            working.ownedDrones = working.ownedDrones.filter((id) => id !== droneId);
+        // Step 1: Remove drone from all factories' ownedDrones
+        factories = state.factories.map((factory) => {
+          if (factory.ownedDrones.includes(droneId)) {
+            return {
+              ...factory,
+              ownedDrones: factory.ownedDrones.filter((id) => id !== droneId),
+            };
           }
-          return idx === index
-            ? {
-                ...updated,
-                ownedDrones: Array.from(
-                  new Set([...updated.ownedDrones.filter((id) => id !== droneId), droneId]),
-                ),
-              }
-            : working;
+          return factory;
         });
 
-        if (previousOwnerId && previousOwnerId !== factoryId) {
-          factories = factories.map((factory) =>
-            factory.id === previousOwnerId
-              ? { ...factory, ownedDrones: factory.ownedDrones.filter((id) => id !== droneId) }
-              : factory,
-          );
-        }
+        // Step 2: Add drone to target factory's ownedDrones
+        factories = factories.map((factory, idx) => {
+          if (idx === index) {
+            // Use Set to prevent duplicates, then convert back to array
+            const newOwned = Array.from(new Set([...factory.ownedDrones, droneId]));
+            return {
+              ...updated,
+              ownedDrones: newOwned,
+            };
+          }
+          return factory;
+        });
       } else {
         factories = state.factories.map((factory, idx) => (idx === index ? updated : factory));
       }
