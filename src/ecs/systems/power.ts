@@ -3,6 +3,7 @@ import {
   DRONE_ENERGY_COST,
   getEnergyCapacity,
   getEnergyGeneration,
+  getFactorySolarRegen,
   type StoreApiType,
 } from '@/state/store';
 import { getResourceModifiers } from '@/lib/resourceModifiers';
@@ -19,7 +20,21 @@ export const createPowerSystem = (world: GameWorld, store: StoreApiType) => {
 
     const chargeRate = DRONE_ENERGY_COST * 2;
     const factoryEnergyUse = new Map<string, number>();
+    const factorySolarGain = new Map<string, number>();
     const factoriesById = new Map(state.factories.map((factory) => [factory.id, factory] as const));
+
+    for (const factory of state.factories) {
+      const solarLevel = factory.upgrades?.solar ?? 0;
+      if (solarLevel <= 0) continue;
+      const regenPerSec = getFactorySolarRegen(solarLevel);
+      if (regenPerSec <= 0) continue;
+      const availableCapacity = Math.max(0, factory.energyCapacity - factory.energy);
+      if (availableCapacity <= 1e-6) continue;
+      const gain = Math.min(regenPerSec * dt, availableCapacity);
+      if (gain <= 1e-6) continue;
+      factorySolarGain.set(factory.id, gain);
+    }
+
     for (const drone of droneQuery) {
       const isChargingCandidate =
         (drone.state === 'idle' || drone.state === 'unloading') &&
@@ -49,7 +64,12 @@ export const createPowerSystem = (world: GameWorld, store: StoreApiType) => {
           const dockingFactory = factoriesById.get(dockingFactoryId);
           if (dockingFactory) {
             const alreadyUsed = factoryEnergyUse.get(dockingFactoryId) ?? 0;
-            const available = Math.max(0, dockingFactory.energy - alreadyUsed);
+            const available = Math.max(
+              0,
+              dockingFactory.energy +
+                (factorySolarGain.get(dockingFactoryId) ?? 0) -
+                alreadyUsed,
+            );
             const fromFactory = Math.min(remainingNeed, available);
             if (fromFactory > 0) {
               factoryEnergyUse.set(dockingFactoryId, alreadyUsed + fromFactory);
@@ -75,17 +95,22 @@ export const createPowerSystem = (world: GameWorld, store: StoreApiType) => {
 
     const finalStored = Math.min(cap, Math.max(0, stored));
     const resourceChanged = Math.abs(finalStored - state.resources.energy) > 1e-4;
-    const factoriesChanged = factoryEnergyUse.size > 0;
+    const factoriesChanged = factoryEnergyUse.size > 0 || factorySolarGain.size > 0;
     if (factoriesChanged || resourceChanged) {
       store.setState((current) => {
         const partial: Partial<typeof current> = {};
         if (factoriesChanged) {
           partial.factories = current.factories.map((factory) => {
+            const gain = factorySolarGain.get(factory.id) ?? 0;
             const usage = factoryEnergyUse.get(factory.id);
-            if (!usage || usage <= 1e-8) {
+            const netDelta = gain - (usage ?? 0);
+            if (Math.abs(netDelta) <= 1e-8) {
               return factory;
             }
-            const nextEnergy = Math.max(0, factory.energy - usage);
+            const nextEnergy = Math.min(
+              factory.energyCapacity,
+              Math.max(0, factory.energy + netDelta),
+            );
             if (Math.abs(nextEnergy - factory.energy) <= 1e-10) {
               return factory;
             }

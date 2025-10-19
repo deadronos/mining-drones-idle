@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { createPowerSystem } from '@/ecs/systems/power';
 import { createGameWorld, spawnDrone } from '@/ecs/world';
-import { createStoreInstance, getEnergyCapacity, getEnergyGeneration } from '@/state/store';
+import {
+  createStoreInstance,
+  getEnergyCapacity,
+  getEnergyGeneration,
+  getFactorySolarRegen,
+} from '@/state/store';
 import { getResourceModifiers } from '@/lib/resourceModifiers';
 
 const addDrones = (world: ReturnType<typeof createGameWorld>, count: number) => {
@@ -112,5 +117,32 @@ describe('ecs/systems/power', () => {
     expect(snapshot.factories[0]?.energy).toBeCloseTo(7.8, 5);
     expect(snapshot.resources.energy).toBeCloseTo(0, 5);
     expect(third.charging).toBe(true);
+  });
+
+  it('regenerates factory energy via solar upgrades', () => {
+    const world = createGameWorld({ asteroidCount: 0 });
+    const store = createStoreInstance();
+    const [factory] = store.getState().factories;
+    if (!factory) throw new Error('expected default factory');
+
+    store.setState((state) => ({
+      factories: state.factories.map((entry, index) =>
+        index === 0
+          ? {
+              ...entry,
+              energy: 10,
+              energyCapacity: 50,
+              upgrades: { ...entry.upgrades, solar: 2 },
+            }
+          : entry,
+      ),
+    }));
+
+    const system = createPowerSystem(world, store);
+    system(1);
+
+    const snapshot = store.getState().factories[0];
+    const expectedGain = getFactorySolarRegen(2);
+    expect(snapshot?.energy).toBeCloseTo(10 + expectedGain, 5);
   });
 });

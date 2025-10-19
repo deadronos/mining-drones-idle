@@ -9,7 +9,7 @@ import type {
   FactoryUpgradeDefinition,
 } from './types';
 
-export const SAVE_VERSION = '0.3.0';
+export const SAVE_VERSION = '0.3.1';
 export const saveVersion = SAVE_VERSION;
 
 export const GROWTH = 1.15;
@@ -23,6 +23,8 @@ export const BASE_ENERGY_CAP = 100;
 export const ENERGY_PER_SOLAR = 25;
 export const SOLAR_BASE_GEN = 5;
 export const DRONE_ENERGY_COST = 1.2;
+export const FACTORY_SOLAR_BASE_REGEN = 0.25;
+export const FACTORY_SOLAR_REGEN_PER_LEVEL = 0.5;
 
 export const FACTORY_MIN_DISTANCE = 10;
 export const FACTORY_MAX_DISTANCE = 50;
@@ -111,6 +113,14 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
       factory.energyCapacity += 30;
       factory.upgrades.energy += 1;
       factory.energy = Math.min(factory.energy, factory.energyCapacity);
+    },
+  },
+  solar: {
+    label: 'Solar Collectors',
+    description: 'Regenerates local energy each second',
+    baseCost: { metals: 30, crystals: 15 },
+    apply: (factory) => {
+      factory.upgrades.solar += 1;
     },
   },
 };

@@ -1,6 +1,6 @@
 # TASK021 — Factory Solar Regeneration Upgrade
 
-**Status:** Pending  
+**Status:** Completed  
 **Added:** 2025-10-23  
 **Updated:** 2025-10-23
 
@@ -25,17 +25,17 @@ Evaluate the optional factory solar regeneration upgrade identified in DES019/TA
 
 ## Progress Tracking
 
-**Overall Status:** Not Started — 0%
+**Overall Status:** Completed — 100%
 
 ### Subtasks
 
-| ID  | Description                                              | Status       | Updated    | Notes |
-| --- | -------------------------------------------------------- | ------------ | ---------- | ----- |
-| 1.1 | Add solar upgrade field to factories + migrations        | Not Started  | —          | — |
-| 2.1 | Register solar collector upgrade and UI controls         | Not Started  | —          | — |
-| 3.1 | Implement solar regen in power system with constants     | Not Started  | —          | — |
-| 4.1 | Add unit/persistence tests for solar regen and upgrades  | Not Started  | —          | — |
-| 5.1 | Update UI/tooltips/documentation (optional polish)       | Not Started  | —          | — |
+| ID  | Description                                              | Status     | Updated    | Notes |
+| --- | -------------------------------------------------------- | ---------- | ---------- | ----- |
+| 1.1 | Add solar upgrade field to factories + migrations        | Completed  | 2025-10-23 | Added `solar` to upgrades, serialization, and new 0.3.1 migration. |
+| 2.1 | Register solar collector upgrade and UI controls         | Completed  | 2025-10-23 | Added `solar` definition, costs, and FactoryManager display. |
+| 3.1 | Implement solar regen in power system with constants     | Completed  | 2025-10-23 | Power system applies passive regen mapped per factory. |
+| 4.1 | Add unit/persistence tests for solar regen and upgrades  | Completed  | 2025-10-23 | New vitest coverage for power system regen and upgrade flow. |
+| 5.1 | Update UI/tooltips/documentation (optional polish)       | Completed  | 2025-10-23 | Factory panel shows solar regen rate; design notes updated. |
 
 ## Progress Log
 
@@ -43,3 +43,5 @@ Evaluate the optional factory solar regeneration upgrade identified in DES019/TA
 
 - Recorded RQ-035 and authored DES020 outlining architecture, interfaces, and validation strategy for per-factory solar regeneration.
 - Logged TASK021 to track model, UI, power system, and testing work needed to deliver the upgrade.
+- Implemented solar collector upgrade: schema/migrations, upgrade definitions, UI presentation, and power system regen flow.
+- Added vitest coverage for solar charging and upgrade purchasing; full suite (`npm run test`) passes post-change.

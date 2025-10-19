@@ -8,6 +8,7 @@
 - Added requirement status table flagging the persistence manager store gaps and differentiating implemented vs. planned systems.
 - Kicked off Milestone 2 by migrating refinery processing into an ECS system with shared helpers and new parity unit tests.
 - Completed TASK020 (Factory Energy Resilience) with DES019 delivering unload resets, DroneAI reassignment cleanup, and factory-assisted charging coverage after energy outage reports.
+- Completed TASK021 (Factory Solar Regeneration) introducing solar collector upgrades, passive factory regen, UI visibility, and new migration/test coverage.
 - Finalized offline catch-up alignment by iterating on snapshot data and adding regression coverage for untouched resources.
 - Expanded the implementation roadmap with error handling and testing strategy sections to de-risk upcoming persistence and ECS work.
 - Refined offline catch-up to reuse the store's refinery logic directly, emit telemetry for ore/bars processed, and surface load-time summaries via persistence logging.

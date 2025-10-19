@@ -33,6 +33,7 @@ export interface FactoryUpgrades {
   refine: number;
   storage: number;
   energy: number;
+  solar: number;
 }
 
 export interface BuildableFactory {
@@ -117,7 +118,7 @@ export const createFactory = (id: string, position: Vector3): BuildableFactory =
     credits: 0,
   },
   ownedDrones: [],
-  upgrades: { docking: 0, refine: 0, storage: 0, energy: 0 },
+  upgrades: { docking: 0, refine: 0, storage: 0, energy: 0, solar: 0 },
   haulersAssigned: 0,
   haulerConfig: {
     capacity: 50,

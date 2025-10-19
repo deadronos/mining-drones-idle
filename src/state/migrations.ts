@@ -122,6 +122,28 @@ const migrations: Array<{ targetVersion: string; migrate: MigrationFn }> = [
       return { snapshot: migrated, description: 'add hauler logistics fields' };
     },
   },
+  {
+    targetVersion: '0.3.1',
+    migrate: (snapshot) => {
+      const migrated = { ...snapshot } as StoreSnapshot;
+      if (Array.isArray(migrated.factories)) {
+        migrated.factories = migrated.factories.map((factory: any) => {
+          const upgrades = factory.upgrades ?? {};
+          return {
+            ...factory,
+            upgrades: {
+              docking: upgrades.docking ?? 0,
+              refine: upgrades.refine ?? 0,
+              storage: upgrades.storage ?? 0,
+              energy: upgrades.energy ?? 0,
+              solar: upgrades.solar ?? 0,
+            },
+          };
+        });
+      }
+      return { snapshot: migrated, description: 'ensure factory solar upgrade defaults' };
+    },
+  },
 ];
 
 /**

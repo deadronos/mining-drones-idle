@@ -26,6 +26,8 @@ import {
   FACTORY_UPGRADE_GROWTH,
   emptyRefineryStats,
   factoryUpgradeDefinitions,
+  FACTORY_SOLAR_BASE_REGEN,
+  FACTORY_SOLAR_REGEN_PER_LEVEL,
 } from './constants';
 
 export const vector3ToTuple = (vector: Vector3): VectorTuple => [vector.x, vector.y, vector.z];
@@ -132,6 +134,11 @@ export const getFactoryUpgradeCost = (
   upgrade: FactoryUpgradeId,
   level: number,
 ): Partial<FactoryResources> => computeFactoryUpgradeCost(upgrade, level);
+
+export const getFactorySolarRegen = (level: number): number => {
+  if (level <= 0) return 0;
+  return FACTORY_SOLAR_BASE_REGEN + FACTORY_SOLAR_REGEN_PER_LEVEL * (level - 1);
+};
 
 export const computeRefineryProduction = (
   state: Pick<StoreState, 'resources' | 'modules' | 'prestige'>,

@@ -183,7 +183,7 @@ export const normalizeFactoryResources = (value: unknown): FactoryResourceSnapsh
 
 export const normalizeFactoryUpgrades = (value: unknown): FactoryUpgradeSnapshot => {
   if (typeof value !== 'object' || value === null) {
-    return { docking: 0, refine: 0, storage: 0, energy: 0 };
+    return { docking: 0, refine: 0, storage: 0, energy: 0, solar: 0 };
   }
   const raw = value as Partial<FactoryUpgradeSnapshot>;
   return {
@@ -191,6 +191,7 @@ export const normalizeFactoryUpgrades = (value: unknown): FactoryUpgradeSnapshot
     refine: Math.max(0, Math.floor(coerceNumber(raw.refine, 0))),
     storage: Math.max(0, Math.floor(coerceNumber(raw.storage, 0))),
     energy: Math.max(0, Math.floor(coerceNumber(raw.energy, 0))),
+    solar: Math.max(0, Math.floor(coerceNumber(raw.solar, 0))),
   };
 };
 

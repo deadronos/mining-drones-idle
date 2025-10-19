@@ -136,13 +136,20 @@ describe('store factory integration', () => {
     }));
 
     const before = store.getState().factories[0];
-    const upgraded = store.getState().upgradeFactory(factoryId, 'docking');
-    expect(upgraded).toBe(true);
-    const after = store.getState().factories[0];
-    expect(after.dockingCapacity).toBe(before.dockingCapacity + 1);
-    expect(after.resources.metals).toBeLessThan(before.resources.metals);
-    expect(after.resources.crystals).toBeLessThan(before.resources.crystals);
+    const dockUpgrade = store.getState().upgradeFactory(factoryId, 'docking');
+    expect(dockUpgrade).toBe(true);
+    const afterDock = store.getState().factories[0];
+    expect(afterDock.dockingCapacity).toBe(before.dockingCapacity + 1);
+    expect(afterDock.resources.metals).toBeLessThan(before.resources.metals);
+    expect(afterDock.resources.crystals).toBeLessThan(before.resources.crystals);
     expect(store.getState().resources.metals).toBeLessThan(100);
+
+    const solarUpgrade = store.getState().upgradeFactory(factoryId, 'solar');
+    expect(solarUpgrade).toBe(true);
+    const afterSolar = store.getState().factories[0];
+    expect(afterSolar.upgrades.solar).toBe((before.upgrades.solar ?? 0) + 1);
+    expect(afterSolar.resources.metals).toBeLessThan(afterDock.resources.metals);
+    expect(afterSolar.resources.crystals).toBeLessThan(afterDock.resources.crystals);
   });
 
   it('places purchased factories with randomized spacing within bounds', () => {

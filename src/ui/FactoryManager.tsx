@@ -4,6 +4,7 @@ import {
   useStore,
   factoryUpgradeDefinitions,
   getFactoryUpgradeCost,
+  getFactorySolarRegen,
   type FactoryUpgradeId,
 } from '@/state/store';
 import { computeHaulerCost } from '@/ecs/logistics';
@@ -203,6 +204,8 @@ const SelectedFactoryCard = ({
   const docked = Math.min(queueCount, factory.dockingCapacity);
   const waiting = Math.max(0, queueCount - docked);
   const energyPercent = factory.energyCapacity > 0 ? factory.energy / factory.energyCapacity : 0;
+  const solarLevel = factory.upgrades?.solar ?? 0;
+  const solarRegen = getFactorySolarRegen(solarLevel);
 
   const storageEntries = useMemo(() => {
     return STORAGE_RESOURCE_ORDER.map((key) => {
@@ -311,6 +314,11 @@ const SelectedFactoryCard = ({
               style={{ width: `${Math.min(1, energyPercent) * 100}%` }}
             />
           </div>
+          {solarRegen > 0 ? (
+            <p className="muted" aria-label={`Solar regeneration ${solarRegen.toFixed(2)} per second`}>
+              Solar regen: {solarRegen.toFixed(2)}/s
+            </p>
+          ) : null}
         </div>
         <div>
           <h4>Storage</h4>

@@ -1,6 +1,6 @@
 # DES020 — Factory Solar Regeneration Upgrade
 
-**Status:** Draft  
+**Status:** Completed  
 **Date Created:** 2025-10-23  
 **Date Last Updated:** 2025-10-23
 
@@ -71,3 +71,5 @@ Power tick
 4. Update power system to apply per-factory solar regen before drone charging; wire constants for tuning.
 5. Write unit tests covering regen math, upgrade purchase, and persistence snapshots.
 6. Update documentation/tooltip strings and optionally expose regen rate in the inspector.
+
+**Implementation Notes:** Delivered with TASK021 on 2025-10-23 — solar upgrade defaults now migrate automatically, power system blends passive regen, and FactoryManager surfaces regen rates.

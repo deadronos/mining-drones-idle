@@ -41,6 +41,7 @@ export interface FactoryUpgradeSnapshot {
   refine: number;
   storage: number;
   energy: number;
+  solar: number;
 }
 
 export interface FactorySnapshot {
