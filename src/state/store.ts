@@ -141,7 +141,6 @@ import {
   parseSnapshot,
 } from './serialization';
 import { createDefaultFactories } from './factory';
-import { createFactory } from '@/ecs/factories';
 
 const storeCreator: StateCreator<StoreState> = (set, get) => {
   const defaultFactories = createDefaultFactories();
