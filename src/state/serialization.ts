@@ -1,6 +1,5 @@
 import { FACTORY_CONFIG } from '@/ecs/factories';
 import type { BuildableFactory, RefineProcess } from '@/ecs/factories';
-import { getResourceModifiers } from '@/lib/resourceModifiers';
 import type {
   VectorTuple,
   TravelSnapshot,
@@ -26,13 +25,11 @@ import {
   initialPrestige,
   initialSave,
   initialSettings,
-  rawResourceKeys,
 } from './constants';
 import {
   coerceNumber,
   vector3ToTuple,
   tupleToVector3,
-  getStorageCapacity,
 } from './utils';
 
 export const normalizeVectorTuple = (value: unknown): VectorTuple | null => {
@@ -444,44 +441,6 @@ export const cloneDroneFlight = (flight: DroneFlightState): DroneFlightState => 
   travel: cloneTravelSnapshot(flight.travel),
 });
 
-export const mergeResourceDelta = (
-  base: Resources,
-  delta: Partial<Resources>,
-  modules: Modules,
-  capacityAware: boolean,
-  prestigeCores = 0,
-): Resources => {
-  const next: Resources = { ...base };
-  for (const key of rawResourceKeys) {
-    const amount = delta[key];
-    if (typeof amount !== 'number' || !Number.isFinite(amount) || amount === 0) continue;
-    next[key] = base[key] + amount;
-  }
-  if (typeof delta.bars === 'number' && Number.isFinite(delta.bars) && delta.bars !== 0) {
-    next.bars = Math.max(0, next.bars + delta.bars);
-  }
-  if (typeof delta.energy === 'number' && Number.isFinite(delta.energy) && delta.energy !== 0) {
-    next.energy = Math.max(0, next.energy + delta.energy);
-  }
-  if (typeof delta.credits === 'number' && Number.isFinite(delta.credits) && delta.credits !== 0) {
-    next.credits = Math.max(0, next.credits + delta.credits);
-  }
-  if (!capacityAware) {
-    return next;
-  }
-  const modifiers = getResourceModifiers(next, prestigeCores);
-  const capacity = getStorageCapacity(modules, modifiers);
-  for (const key of rawResourceKeys) {
-    const value = next[key];
-    if (typeof value !== 'number' || !Number.isFinite(value)) {
-      next[key] = Math.max(0, Math.min(capacity, base[key]));
-    } else {
-      next[key] = Math.min(capacity, Math.max(0, value));
-    }
-  }
-  return next;
-};
-
 export const normalizeResources = (snapshot?: Partial<Resources>): Resources => ({
   ore: coerceNumber(snapshot?.ore, initialResources.ore),
   ice: coerceNumber(snapshot?.ice, initialResources.ice),
@@ -600,3 +559,9 @@ export const parseSnapshot = (payload: string): StoreSnapshot | null => {
     return null;
   }
 };
+
+// Re-export from new modularized serialization modules for backwards compatibility
+export * from './serialization/index';
+
+// Re-export game logic for resource merging (extracted to lib/)
+export { mergeResourceDelta } from '@/lib/resourceMerging';

@@ -9,7 +9,8 @@ import {
   transferOreToFactory,
 } from '@/ecs/factories';
 import { computeFactoryUpgradeCost, computeFactoryPlacement } from '../utils';
-import { cloneFactory, mergeResourceDelta } from '../serialization';
+import { cloneFactory } from '../serialization';
+import { mergeResourceDelta } from '@/lib/resourceMerging';
 import { factoryUpgradeDefinitions } from '../constants';
 
 export interface FactorySliceState {

@@ -8,7 +8,7 @@ import {
   moduleDefinitions,
 } from '../constants';
 import { costForLevel, computePrestigeGain } from '../utils';
-import { mergeResourceDelta } from '../serialization';
+import { mergeResourceDelta } from '@/lib/resourceMerging';
 
 export interface ResourceSliceState {
   resources: Resources;

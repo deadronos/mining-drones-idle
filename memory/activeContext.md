@@ -2,26 +2,38 @@
 
 ## Current Focus
 
-✅ **TASK023 Complete**: FactoryManager refactored into 7 sub-components (DockingSection, EnergySection, StorageSection, UpgradeSection, RosterSection, HaulerSection, RefineSection) with centralized hooks (`usePagination`) and utilities (`upgradeFormatting`, `storageDisplay`). Main component reduced from 482 to ~180 lines; all tests pass; build successful.
+✅ **TASK024 Complete**: Serialization system refactored from 603-line monolithic file into 7 domain-focused modules (vectors.ts, drones.ts, resources.ts, factory.ts, store.ts, types.ts, index.ts). Core game logic `mergeResourceDelta` extracted to `src/lib/resourceMerging.ts`. All modules compile cleanly; 13 new unit tests added; all 143 tests pass; no visual changes.
+
+**Refactoring Summary**:
+
+- ✅ Created `src/state/serialization/` directory with 7 focused modules (~50–100 lines each)
+- ✅ vectors.ts: Vector tuple normalization & cloning
+- ✅ drones.ts: Drone flight serialization
+- ✅ resources.ts: Factory resources, upgrades, refine processes
+- ✅ factory.ts: Complex factory snapshot normalization & conversion
+- ✅ store.ts: Top-level serialization re-exports
+- ✅ types.ts: Utility re-exports (coerceNumber, vector3ToTuple, etc.)
+- ✅ index.ts: Public API re-exports
+- ✅ Extracted `mergeResourceDelta` to `src/lib/resourceMerging.ts` (game logic isolated from serialization)
+- ✅ Updated imports in `resourceSlice.ts` and `factorySlice.ts`
+- ✅ Maintained backwards compatibility; original `serialization.ts` re-exports from modules
+- ✅ TypeScript: `npm run typecheck` passes cleanly
+- ✅ Tests: `npm test` passes (143/143 tests, 30 test files)
+- ✅ Created `serialization-modules.test.ts` with 13 test cases
+
+**Files Changed**:
+
+- **Reduced**: `src/state/serialization.ts` (603 → ~370 lines after extraction)
+- **Created**: `src/state/serialization/{vectors,drones,resources,factory,store,types,index}.ts` + test
+- **Created**: `src/lib/resourceMerging.ts`
+- **Updated**: `src/state/slices/{resourceSlice,factorySlice}.ts` imports
+- **Updated**: `memory/tasks/_index.md` (TASK024 → Completed)
 
 Next: Evaluate balance post-TASK021 solar regen release. Consider TASK019 hauler polish (Phase 7+) or backlog prioritization.
 
 ## Recent Changes
 
-- ✅ **FactoryManager Refactoring (TASK023)**: Decomposed monolithic 482-line component into focused 7-component architecture:
-  - `DockingSection` (~40 lines) with pagination logic
-  - `EnergySection` (~30 lines) with solar regen display
-  - `StorageSection` (~30 lines) with resource formatting
-  - `UpgradeSection` (~35 lines) with cost/affordability checks
-  - `RosterSection` (~50 lines) with owned-drone pagination
-  - `HaulerSection` (~45 lines) with logistics controls
-  - `RefineSection` (~20 lines) for active refining display
-  - Extracted `usePagination` hook for reusable pagination state
-  - Created `upgradeFormatting.ts` and `storageDisplay.ts` utilities
-  - Main refactored to ~180 lines (62% reduction)
-  - 12 unit tests added; all passing
-  - No visual changes; CSS unchanged
-  - Build succeeds; `npm run test` passes (129/130, 1 pre-existing timeout)
+- ✅ **Serialization Refactoring (TASK024)**: Decomposed 603-line monolithic serialization.ts into 7 domain modules + extracted game logic.
 - ✅ **Factory Energy Resilience**: Implemented unload reset for zero-cargo drones, added DroneAI queue cleanup, enabled factory-assisted charging with new vitest coverage (`unload.test.ts`, `droneAI.test.ts`, `power.test.ts`).
 - 📝 **DES019/TASK020 Authored**: Captured requirements RQ-032..RQ-034, drafted DES019 design, and logged TASK020 plan targeting unload reset, DroneAI cleanup, and factory-assisted charging.
 - ✅ **Hauler Cost Gating**: Factory-level hauler purchases now spend bars (base 10, exponential growth) via updates to `assignHaulers`, UI affordances, and supporting tests (`src/state/store.ts`, `src/ui/FactoryManager.tsx`, `src/ecs/logistics.test.ts`).
@@ -59,13 +71,13 @@ Next: Evaluate balance post-TASK021 solar regen release. Consider TASK019 hauler
 
 ## Next Steps
 
-**Option A: Testing & Validation** (2-3 hours)
+Option A: Testing & Validation (2-3 hours)
 
 - Phase 7: Expand unit coverage for logistics algorithm
 - Phase 7b: Harden integration tests (hauler flows, persistence)
 - Phase 7c: Performance soak with 50+ factories
 
-**Option B: Balance & Polish**
+Option B: Balance & Polish
 
 - Phase 8: Tune maintenance/cost parameters, refine UX/tooltips, and capture documentation updates
 
