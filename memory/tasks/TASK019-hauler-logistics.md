@@ -2,7 +2,7 @@
 
 **Status:** In Progress  
 **Added:** 2025-10-19  
-**Updated:** 2025-10-23  
+**Updated:** 2025-10-24  
 **Design Reference:** [DES018: Per-Factory Upgrades & Hauler Logistics](../designs/DES018-per-factory-upgrades-hauler-logistics.md)
 
 ## Original Request
@@ -135,6 +135,11 @@ The phased approach allows us to deliver core value quickly while leaving room f
 
 - ✅ Rebuilt `src/r3f/TransferLines.tsx` to render per-transfer meshes with thickness scaling and arrowheads.
 - ✅ Added hover tooltips via Drei `Html` overlay showing route, resource amount, and live ETA.
+
+### 2025-10-24 - Scheduler Bug Fix
+
+- ✅ Restored `processLogistics` cadence to respect `LOGISTICS_CONFIG.scheduling_interval`, fixing dormant hauler transfers.
+- 🧪 Ran `npm run test -- --run src/ecs/logistics.test.ts` to confirm logistics module remains stable.
 - ✅ Corrected factory ID field usage (`fromFactoryId`/`toFactoryId`) so visuals track real transfers.
 - ✅ Highlighted active transfers with emissive material response and ran `npm run typecheck` to verify.
 

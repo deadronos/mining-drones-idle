@@ -1,13 +1,6 @@
 import { Vector3 } from 'three';
 import type { StoreState, LogisticsQueues } from '../types';
-import {
-  LOGISTICS_CONFIG,
-  RESOURCE_TYPES,
-  generateTransferId,
-  matchSurplusToNeed,
-  reserveOutbound,
-  executeArrival,
-} from '@/ecs/logistics';
+import { RESOURCE_TYPES, generateTransferId, matchSurplusToNeed, reserveOutbound, executeArrival } from '@/ecs/logistics';
 import { gameWorld } from '@/ecs/world';
 
 /**
@@ -21,15 +14,6 @@ export function processLogistics(
   logisticsQueues: LogisticsQueues;
   logisticsTick: number;
 } {
-  const newLogisticsTick = state.logisticsTick + 0; // dt is not needed for this calculation
-  if (newLogisticsTick < LOGISTICS_CONFIG.scheduling_interval) {
-    // Not yet time to run scheduler
-    return {
-      logisticsQueues: state.logisticsQueues,
-      logisticsTick: newLogisticsTick,
-    };
-  }
-
   // Clone queues to avoid mutating input
   const updatedQueues: LogisticsQueues = {
     pendingTransfers: [...state.logisticsQueues.pendingTransfers],

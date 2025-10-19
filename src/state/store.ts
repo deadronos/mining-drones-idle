@@ -10,6 +10,7 @@ import {
 } from './slices';
 import { processRefinery, processFactories } from './processing/gameProcessing';
 import { processLogistics } from './processing/logisticsProcessing';
+import { LOGISTICS_CONFIG } from '@/ecs/logistics';
 import {
   normalizeSnapshot,
   snapshotToFactory,
@@ -181,14 +182,20 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
 
     // Process logistics (called from tick)
     processLogistics: (dt) => {
+      if (dt <= 0) return;
       const state = get();
       const newLogisticsTick = state.logisticsTick + dt;
-      if (newLogisticsTick >= 1.0) {
-        const { logisticsQueues, logisticsTick } = processLogistics(state);
-        set({ logisticsQueues, logisticsTick });
-      } else {
+
+      if (newLogisticsTick < LOGISTICS_CONFIG.scheduling_interval) {
         set({ logisticsTick: newLogisticsTick });
+        return;
       }
+
+      const { logisticsQueues, logisticsTick } = processLogistics(state);
+      set({
+        logisticsQueues,
+        logisticsTick,
+      });
     },
 
     // Snapshot and import/export
@@ -275,4 +282,3 @@ export const createStoreInstance = () => createVanillaStore<StoreState>(storeCre
 export const useStore = create<StoreState>()(storeCreator);
 
 export const storeApi = useStore as unknown as StoreApiType;
-
