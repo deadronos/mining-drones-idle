@@ -1066,7 +1066,7 @@ const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapshot => (
  */
 const applyMigrations = (snapshot: Partial<StoreSnapshot>): Partial<StoreSnapshot> => {
   const currentVersion = snapshot.save?.version ?? '0.2.0';
-  
+
   // Migration from 0.2.0 to 0.3.0: Add hauler logistics fields
   if (currentVersion < '0.3.0') {
     if (Array.isArray(snapshot.factories)) {
@@ -1088,7 +1088,7 @@ const applyMigrations = (snapshot: Partial<StoreSnapshot>): Partial<StoreSnapsho
         },
       }));
     }
-    
+
     if (!snapshot.logisticsQueues) {
       snapshot.logisticsQueues = { pendingTransfers: [] };
     }
@@ -1592,7 +1592,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
       const state = get();
       const index = state.factories.findIndex((f) => f.id === factoryId);
       if (index === -1) return false;
-      
+
       set((current) => {
         const factory = cloneFactory(current.factories[index]);
         factory.haulersAssigned = Math.max(0, count);
@@ -1606,7 +1606,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
       const state = get();
       const index = state.factories.findIndex((f) => f.id === factoryId);
       if (index === -1) return;
-      
+
       set((current) => {
         const factory = cloneFactory(current.factories[index]);
         const currentConfig = factory.haulerConfig || {

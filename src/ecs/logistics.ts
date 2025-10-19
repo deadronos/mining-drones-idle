@@ -1,6 +1,6 @@
 /**
  * Hauler Logistics System
- * 
+ *
  * Manages resource distribution between factories using configurable hauler drones.
  * Uses reservation-based scheduling to prevent double-booking and ensure deterministic behavior.
  */
@@ -44,7 +44,7 @@ export const generateTransferId = (): string => {
 
 /**
  * Computes the target buffer level (in items) for a factory's consumption of a given resource
- * 
+ *
  * @param factory Factory to compute buffer for
  * @param resource Resource type
  * @param bufferSeconds Number of seconds worth of resources to maintain (default 30s)
@@ -58,7 +58,7 @@ export const computeBufferTarget = (
   // Simplified: assume ore is consumed at a predictable rate based on refine slots
   // For now, return a fixed target. Actual consumption rate should be computed from factory state
   // This is a placeholder that will be improved when consumption rate data is available
-  
+
   // Base consumption depends on refine slots and current activity
   // Conservative estimate: assume ~50 ore per minute per active slot
   const orePerMinute = 50;
@@ -69,7 +69,7 @@ export const computeBufferTarget = (
 /**
  * Computes the minimum reserve level (in items) for a factory
  * Should never transfer resources below this level
- * 
+ *
  * @param _factory Factory to compute reserve for
  * @param _resource Resource type
  * @param minReserveSeconds Seconds worth of resources to keep in reserve (default 5s)
@@ -86,7 +86,7 @@ export const computeMinReserve = (
 /**
  * Computes travel time between two factories
  * Includes pickup overhead, travel, and dropoff overhead
- * 
+ *
  * @param sourcePos Position of source factory
  * @param destPos Position of destination factory
  * @param config Hauler configuration for speed and overhead
@@ -105,7 +105,7 @@ export const computeTravelTime = (
 /**
  * Matches factories with surplus to factories with need
  * Greedily pairs highest need with closest/fastest supplier
- * 
+ *
  * @param factories All factories in the network
  * @param resource Resource type to transfer
  * @param gameTime Current game time (for ETA calculation)
@@ -175,12 +175,12 @@ export const matchSurplusToNeed = (
       if (surplusEntry.surplus <= 0) continue;
 
       // Respect resource filters if set
-      const needHasFilters = needEntry.config && needEntry.config.resourceFilters && needEntry.config.resourceFilters.length > 0;
+      const needHasFilters = needEntry.config?.resourceFilters && needEntry.config.resourceFilters.length > 0;
       if (needHasFilters && needEntry.config && !needEntry.config.resourceFilters.includes(resource)) {
         continue;
       }
 
-      const surplusHasFilters = surplusEntry.config && surplusEntry.config.resourceFilters && surplusEntry.config.resourceFilters.length > 0;
+      const surplusHasFilters = surplusEntry.config?.resourceFilters && surplusEntry.config.resourceFilters.length > 0;
       if (surplusHasFilters && surplusEntry.config && !surplusEntry.config.resourceFilters.includes(resource)) {
         continue;
       }
@@ -228,7 +228,7 @@ export const matchSurplusToNeed = (
 
 /**
  * Validates that a proposed transfer is safe and doesn't violate invariants
- * 
+ *
  * @param factory Source factory
  * @param resource Resource to transfer
  * @param amount Amount to transfer
@@ -241,7 +241,7 @@ export const validateTransfer = (
 ): boolean => {
   if (amount <= 0) return false;
 
-  const current = (factory.resources[resource as keyof typeof factory.resources] as number) ?? 0;
+  const current = (factory.resources[resource as keyof typeof factory.resources]) ?? 0;
   const reserved = factory.logisticsState?.outboundReservations[resource] ?? 0;
   const available = Math.max(0, current - reserved);
 
@@ -260,7 +260,7 @@ export const validateTransfer = (
 /**
  * Books a reservation for an outbound transfer
  * Updates the factory's outbound reservations immediately to prevent double-booking
- * 
+ *
  * @param factory Source factory
  * @param resource Resource to reserve
  * @param amount Amount to reserve
@@ -296,7 +296,7 @@ export const reserveOutbound = (
 
 /**
  * Releases an outbound reservation (e.g., if transfer was canceled)
- * 
+ *
  * @param factory Source factory
  * @param resource Resource to release
  * @param amount Amount to release
@@ -314,7 +314,7 @@ export const releaseReservation = (
 
 /**
  * Executes an arrival (finalizes a transfer at destination)
- * 
+ *
  * @param sourceFactory Factory where resources came from
  * @param destFactory Factory where resources arrive
  * @param resource Resource type
