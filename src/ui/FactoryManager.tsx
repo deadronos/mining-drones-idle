@@ -11,6 +11,25 @@ import './FactoryManager.css';
 
 const DOCKING_PAGE_SIZE = 6;
 const ROSTER_PAGE_SIZE = 8;
+const STORAGE_RESOURCE_ORDER: Array<keyof BuildableFactory['resources']> = [
+  'ore',
+  'bars',
+  'metals',
+  'crystals',
+  'organics',
+  'ice',
+  'credits',
+];
+
+const STORAGE_LABELS: Record<keyof BuildableFactory['resources'], string> = {
+  ore: 'Ore',
+  bars: 'Bars',
+  metals: 'Metals',
+  crystals: 'Crystals',
+  organics: 'Organics',
+  ice: 'Ice',
+  credits: 'Credits',
+};
 
 const isFiniteCostEntry = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value !== 0;
@@ -185,6 +204,23 @@ const SelectedFactoryCard = ({
   const waiting = Math.max(0, queueCount - docked);
   const energyPercent = factory.energyCapacity > 0 ? factory.energy / factory.energyCapacity : 0;
 
+  const storageEntries = useMemo(() => {
+    return STORAGE_RESOURCE_ORDER.map((key) => {
+      const amount = factory.resources[key] ?? 0;
+      const formattedAmount =
+        key === 'ore'
+          ? `${Math.floor(amount).toLocaleString()} / ${factory.storageCapacity.toLocaleString()}`
+          : Math.floor(amount).toLocaleString();
+
+      return {
+        key,
+        label: STORAGE_LABELS[key] ?? key,
+        amount,
+        display: formattedAmount,
+      };
+    });
+  }, [factory.resources, factory.storageCapacity]);
+
   return (
     <div className="factory-card selected">
       <div className="factory-card-header">
@@ -278,11 +314,18 @@ const SelectedFactoryCard = ({
         </div>
         <div>
           <h4>Storage</h4>
-          <p>
-            {Math.floor(factory.currentStorage).toLocaleString()} /{' '}
-            {factory.storageCapacity.toLocaleString()} ore
-          </p>
-          <p>{Math.floor(factory.resources.bars).toLocaleString()} bars ready</p>
+          <ul className="factory-storage-list">
+            {storageEntries.map((entry) => (
+              <li
+                key={entry.key}
+                className={entry.amount > 0 ? 'storage-row' : 'storage-row muted'}
+                aria-label={`${entry.label}: ${entry.display}`}
+              >
+                <span className="storage-name">{entry.label}</span>
+                <span className="storage-value">{entry.display}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 

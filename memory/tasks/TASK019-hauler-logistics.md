@@ -155,6 +155,7 @@ The phased approach allows us to deliver core value quickly while leaving room f
 
 - ✅ Added dynamic pagination for docking/waiting and owned drone rosters to keep the inspector height stable (`src/ui/FactoryManager.tsx`, `src/ui/FactoryManager.css`).
 - ✅ Introduced shared pagination controls with accessibility labels for list navigation.
+- ✅ Storage panel now surfaces all local resources (ore, bars, metals, crystals, organics, ice, credits) to match factory-state visibility.
 
 ### 2025-10-23 - Phase 6 & 8a (earlier placeholder, superseded)
 
