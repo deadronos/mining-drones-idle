@@ -592,7 +592,7 @@ export const stringifySnapshot = (snapshot: StoreSnapshot) => JSON.stringify(sna
 export const parseSnapshot = (payload: string): StoreSnapshot | null => {
   try {
     const parsed = JSON.parse(payload) as Partial<StoreSnapshot>;
-    // Note: migrations are applied separately in store.ts during import
+    // Note: migrations are applied during import in store.ts, using migration logic defined in migrations.ts
     return normalizeSnapshot(parsed);
   } catch (error) {
     console.warn('Failed to parse snapshot payload', error);
