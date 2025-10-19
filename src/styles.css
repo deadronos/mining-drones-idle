@@ -454,6 +454,27 @@ button:disabled {
   color: rgba(94, 234, 212, 0.85);
 }
 
+.settings-note {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: rgba(203, 213, 225, 0.88);
+}
+
+.settings-note-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: rgba(203, 213, 225, 0.88);
+}
+
+.settings-note-list li {
+  list-style: disc;
+}
+
 .settings-row {
   display: grid;
   grid-template-columns: 1fr auto;

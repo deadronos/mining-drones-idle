@@ -189,7 +189,7 @@ The five design questions were resolved toward clarity and player onboarding:
 
 ## Progress Tracking
 
-**Overall Status:** In Progress - 40%
+**Overall Status:** In Progress - 75%
 
 | ID  | Description                                              | Status      | Updated     | Notes |
 | --- | -------------------------------------------------------- | ----------- | ------- | ----- |
@@ -221,14 +221,14 @@ The five design questions were resolved toward clarity and player onboarding:
 | 7.1 | Update HUD labels                                        | Completed   | 2025-10-24 | Upgrade panel buttons reference warehouse bars explicitly |
 | 7.2 | Update factory inspector display                         | Completed   | 2025-10-24 | Factory view shows Warehouse Inventory vs Factory Storage |
 | 7.3 | Update logistics panel                                   | Completed   | 2025-10-24 | Panel now highlights warehouse node and stock in summary |
-| 7.4 | Add tutorial/settings note                               | Not Started |         |       |
-| 8.1 | Add migration (backwards compat)                         | Not Started |         |       |
-| 8.2 | Update save version if needed                            | Not Started |         |       |
-| 8.3 | Unit test: old save import                               | Not Started |         |       |
-| 9.1 | Integration: ore → refine → export to warehouse          | Not Started |         |       |
-| 9.2 | Integration: starving factory import from warehouse      | Not Started |         |       |
-| 9.3 | Integration: prestige run reset                          | Not Started |         |       |
-| 9.4 | Integration: save/load cycle                             | Not Started |         |       |
+| 7.4 | Add tutorial/settings note                               | Completed   | 2025-10-24 | Warehouse primer added to Settings copy |
+| 8.1 | Add migration (backwards compat)                         | Completed   | 2025-10-24 | Migration `0.3.2` normalizes logistics data |
+| 8.2 | Update save version if needed                            | Completed   | 2025-10-24 | `SAVE_VERSION` bumped to `0.3.2` |
+| 8.3 | Unit test: old save import                               | Completed   | 2025-10-24 | Added coverage in `migrations.test.ts` |
+| 9.1 | Integration: ore → refine → export to warehouse          | Completed   | 2025-10-24 | Warehouse/export scenario in `store.warehouse.integration.test.ts` |
+| 9.2 | Integration: starving factory import from warehouse      | Completed   | 2025-10-24 | Warehouse import scenario verified via integration test |
+| 9.3 | Integration: prestige run reset                          | Completed   | 2025-10-24 | Integration test checks prestige reset invariants |
+| 9.4 | Integration: save/load cycle                             | Completed   | 2025-10-24 | Export/import round-trip covered in integration test |
 
 ## Estimated Effort
 
@@ -277,3 +277,4 @@ None identified. Work can proceed immediately.
 - Extended logistics scheduler to reserve factory→warehouse exports and warehouse→factory imports, clamp arrivals against capacity, and covered both flows with targeted tests.
 - Stopped factory resource helper from mirroring into the warehouse, adjusted unload flow for non-ore handling, and added regression tests for factory-local vs warehouse fallback paths.
 - Ran `npm test` to confirm warehouse scheduling, unload routing, and UI updates pass existing suites.
+- Added Warehouse primer copy in Settings, introduced v0.3.2 migration/test harness, and built end-to-end warehouse integration tests (export/import, prestige reset, save/load).

@@ -144,6 +144,80 @@ const migrations: Array<{ targetVersion: string; migrate: MigrationFn }> = [
       return { snapshot: migrated, description: 'ensure factory solar upgrade defaults' };
     },
   },
+  {
+    targetVersion: '0.3.2',
+    migrate: (snapshot) => {
+      const migrated = { ...snapshot } as StoreSnapshot;
+
+      if (Array.isArray(migrated.factories)) {
+        migrated.factories = migrated.factories.map((factory: any) => {
+          const resources = factory.resources ?? {};
+          const normalizedOre = Number(resources.ore) || 0;
+          const inboundSchedules = Array.isArray(factory.logisticsState?.inboundSchedules)
+            ? factory.logisticsState.inboundSchedules
+                .map((schedule: any) => ({
+                  fromFactoryId: schedule?.fromFactoryId ?? null,
+                  resource: schedule?.resource,
+                  amount: Number(schedule?.amount) || 0,
+                  eta: Number(schedule?.eta) || 0,
+                }))
+                .filter(
+                  (schedule) =>
+                    typeof schedule.resource === 'string' &&
+                    schedule.amount > 0 &&
+                    Number.isFinite(schedule.eta),
+                )
+            : [];
+          return {
+            ...factory,
+            resources: {
+              ore: Number(resources.ore) || 0,
+              bars: Number(resources.bars) || 0,
+              metals: Number(resources.metals) || 0,
+              crystals: Number(resources.crystals) || 0,
+              organics: Number(resources.organics) || 0,
+              ice: Number(resources.ice) || 0,
+              credits: Number(resources.credits) || 0,
+            },
+            currentStorage: typeof factory.currentStorage === 'number' ? factory.currentStorage : normalizedOre,
+            logisticsState: {
+              outboundReservations:
+                factory.logisticsState?.outboundReservations && typeof factory.logisticsState.outboundReservations === 'object'
+                  ? factory.logisticsState.outboundReservations
+                  : {},
+              inboundSchedules,
+            },
+          };
+        });
+      }
+
+      const pendingTransfers = migrated.logisticsQueues?.pendingTransfers;
+      migrated.logisticsQueues = {
+        pendingTransfers: Array.isArray(pendingTransfers)
+          ? pendingTransfers
+              .map((transfer: any) => ({
+                id: transfer?.id ?? `migration-${Date.now()}`,
+                fromFactoryId: transfer?.fromFactoryId,
+                toFactoryId: transfer?.toFactoryId,
+                resource: transfer?.resource,
+                amount: Number(transfer?.amount) || 0,
+                eta: Number(transfer?.eta) || 0,
+                status: transfer?.status === 'in-transit' ? 'in-transit' : 'scheduled',
+              }))
+              .filter(
+                (transfer) =>
+                  typeof transfer.fromFactoryId === 'string' &&
+                  typeof transfer.toFactoryId === 'string' &&
+                  typeof transfer.resource === 'string' &&
+                  transfer.amount > 0 &&
+                  Number.isFinite(transfer.eta),
+              )
+          : [],
+      };
+
+      return { snapshot: migrated, description: 'normalize logistics data for warehouse routing' };
+    },
+  },
 ];
 
 /**

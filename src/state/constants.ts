@@ -9,7 +9,7 @@ import type {
   FactoryUpgradeDefinition,
 } from './types';
 
-export const SAVE_VERSION = '0.3.1';
+export const SAVE_VERSION = '0.3.2';
 export const saveVersion = SAVE_VERSION;
 
 export const GROWTH = 1.15;

@@ -19,9 +19,10 @@ Confidence is medium; plan is to deliver incremental slices (state model → log
 - Seeded Factory 0 with onboarding hauler + starter stock, added `WAREHOUSE_CONFIG`/capacity helpers, and adjusted factory processing/tests to keep production local.
 - Implemented warehouse-aware logistics scheduling with reservations, warehouse capacity clamping, and bidirectional transfer tests.
 - Reworked `addResourcesToFactory`/unload path so non-ore stays local unless no dock, eliminating immediate warehouse duplication and adding coverage for both routes.
+- Added Settings primer copy explaining warehouse vs. factory ledgers, delivered 0.3.2 migration & regression coverage, and landed warehouse-focused integration tests (export/import, prestige, save/load).
 
 ## Next Steps
 
-1. Draft tutorial/settings copy that explains warehouse vs. factory ledgers for players (TASK025 §7.4).
-2. Plan Phase 8/9 follow-ups: migrations/back-compat validation and end-to-end integration scenarios.
-3. Review remaining UI copy/performance polish needs ahead of final handoff.
+1. Capture tutorial/tooling follow-up (tutorial overlay or HUD tooltip) once UI teams provide direction.
+2. Monitor migration telemetry after new save version ships; stage any fixes for edge-case imports.
+3. Prepare final TASK025 wrap-up notes and identify residual polish items for warehouse UX.

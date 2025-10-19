@@ -72,4 +72,88 @@ describe('migrations', () => {
     expect(migrated.settings.showTrails).toBe(false);
     expect(migrated.droneFlights).toEqual([]);
   });
+
+  it('normalizes logistics state for warehouse routing', () => {
+    const legacy: StoreSnapshot = {
+      resources: {
+        ore: 0,
+        ice: 0,
+        metals: 0,
+        crystals: 0,
+        organics: 0,
+        bars: 0,
+        energy: 100,
+        credits: 0,
+      },
+      modules: { droneBay: 1, refinery: 0, storage: 0, solar: 0, scanner: 0 },
+      prestige: { cores: 0 },
+      save: { lastSave: Date.now() - 1_000_000, version: '0.3.1' },
+      settings: {
+        autosaveEnabled: true,
+        autosaveInterval: 10,
+        offlineCapHours: 8,
+        notation: 'standard',
+        throttleFloor: 0.25,
+        showTrails: true,
+        performanceProfile: 'medium',
+      },
+      factories: [
+        {
+          id: 'factory-0',
+          position: [0, 0, 0],
+          resources: { ore: '25', bars: '0', metals: '0', crystals: '0', organics: '0', ice: '0', credits: '0' },
+          currentStorage: undefined,
+          logisticsState: {
+            outboundReservations: null,
+            inboundSchedules: [
+              { fromFactoryId: 'factory-1', resource: 'ore', amount: '15', eta: '6' },
+              { fromFactoryId: null, resource: 'bars', amount: '0', eta: '3' },
+            ],
+          },
+        },
+      ],
+      logisticsQueues: {
+        pendingTransfers: [
+          {
+            id: 'transfer-legacy',
+            fromFactoryId: 'factory-0',
+            toFactoryId: null,
+            resource: 'ore',
+            amount: '50',
+            eta: '5',
+            status: 'completed',
+          },
+          {
+            id: 'transfer-valid',
+            fromFactoryId: 'factory-0',
+            toFactoryId: 'factory-1',
+            resource: 'ore',
+            amount: '10',
+            eta: '4',
+            status: 'in-transit',
+          },
+        ],
+      },
+      logisticsQueuesVersion: 1,
+      droneFlights: [],
+    };
+
+    const { snapshot: migrated, report } = migrateSnapshot(legacy);
+
+    expect(report.migrated).toBe(true);
+    expect(migrated.save.version).toBe(saveVersion);
+    expect(Array.isArray(migrated.logisticsQueues?.pendingTransfers)).toBe(true);
+    expect(migrated.logisticsQueues?.pendingTransfers).toHaveLength(1);
+    const [transfer] = migrated.logisticsQueues?.pendingTransfers ?? [];
+    expect(transfer.fromFactoryId).toBe('factory-0');
+    expect(transfer.toFactoryId).toBe('factory-1');
+    expect(transfer.amount).toBe(10);
+    expect(transfer.status).toBe('in-transit');
+
+    expect(migrated.factories?.[0]?.currentStorage).toBe(25);
+    expect(migrated.factories?.[0]?.resources?.ore).toBe(25);
+    expect(migrated.factories?.[0]?.logisticsState?.outboundReservations).toEqual({});
+    expect(migrated.factories?.[0]?.logisticsState?.inboundSchedules).toHaveLength(1);
+    expect(migrated.factories?.[0]?.logisticsState?.inboundSchedules?.[0]?.amount).toBe(15);
+  });
 });
