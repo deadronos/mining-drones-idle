@@ -109,25 +109,25 @@ The phased approach allows us to deliver core value quickly while leaving room f
 
 ### Subtasks
 
-| ID  | Description                                   | Status      | Updated    | Notes |
-| --- | --------------------------------------------- | ----------- | ---------- | ----- |
-| 1.1 | Extend type definitions                       | Complete    | 2025-10-19 | ✅    |
-| 1.2 | Update serialization                          | Complete    | 2025-10-19 | ✅    |
-| 2.1 | Create logistics.ts with core functions       | Complete    | 2025-10-19 | ✅    |
-| 2.2 | Implement processLogistics method             | Complete    | 2025-10-19 | ✅    |
-| 3.1 | Add store logistics methods                   | Complete    | 2025-10-19 | ✅    |
-| 3.2 | Hook into game loop                           | Complete    | 2025-10-19 | ✅    |
-| 4.1 | Bump save version and add migration           | Complete    | 2025-10-19 | ✅    |
-| 4.2 | Update persistence tests                      | Not Started | 2025-10-19 |       |
-| 5.1 | Create LogisticsPanel component               | Complete    | 2025-10-19 | ✅    |
-| 5.2 | Extend Factory Inspector with hauler controls | Complete    | 2025-10-19 | ✅    |
-| 6.1 | Add 3D transfer visualization                 | Complete    | 2025-10-23 | Arrow meshes with thickness & arrowheads |
-| 6.2 | Add hover tooltips                            | Complete    | 2025-10-23 | Html overlay with route/ETA |
-| 7.1 | Write unit tests for scheduler                | Complete    | 2025-10-19 | ✅    |
-| 7.2 | Write integration tests                       | Complete    | 2025-10-19 | ✅    |
-| 7.3 | Performance testing                           | Not Started | 2025-10-19 |       |
+| ID  | Description                                   | Status      | Updated    | Notes                                                |
+| --- | --------------------------------------------- | ----------- | ---------- | ---------------------------------------------------- |
+| 1.1 | Extend type definitions                       | Complete    | 2025-10-19 | ✅                                                   |
+| 1.2 | Update serialization                          | Complete    | 2025-10-19 | ✅                                                   |
+| 2.1 | Create logistics.ts with core functions       | Complete    | 2025-10-19 | ✅                                                   |
+| 2.2 | Implement processLogistics method             | Complete    | 2025-10-19 | ✅                                                   |
+| 3.1 | Add store logistics methods                   | Complete    | 2025-10-19 | ✅                                                   |
+| 3.2 | Hook into game loop                           | Complete    | 2025-10-19 | ✅                                                   |
+| 4.1 | Bump save version and add migration           | Complete    | 2025-10-19 | ✅                                                   |
+| 4.2 | Update persistence tests                      | Not Started | 2025-10-19 |                                                      |
+| 5.1 | Create LogisticsPanel component               | Complete    | 2025-10-19 | ✅                                                   |
+| 5.2 | Extend Factory Inspector with hauler controls | Complete    | 2025-10-19 | ✅                                                   |
+| 6.1 | Add 3D transfer visualization                 | Complete    | 2025-10-23 | Arrow meshes with thickness & arrowheads             |
+| 6.2 | Add hover tooltips                            | Complete    | 2025-10-23 | Html overlay with route/ETA                          |
+| 7.1 | Write unit tests for scheduler                | Complete    | 2025-10-19 | ✅                                                   |
+| 7.2 | Write integration tests                       | Complete    | 2025-10-19 | ✅                                                   |
+| 7.3 | Performance testing                           | Not Started | 2025-10-19 |                                                      |
 | 8.1 | Implement cost and maintenance                | Complete    | 2025-10-23 | Bar cost + energy maintenance drain wired into store |
-| 8.2 | Tune parameters and add polish                | Not Started | 2025-10-19 |       |
+| 8.2 | Tune parameters and add polish                | Not Started | 2025-10-19 |                                                      |
 
 ## Progress Log
 
@@ -302,6 +302,18 @@ The phased approach allows us to deliver core value quickly while leaving room f
 - Broke implementation into 8 phases with 35 discrete steps
 - Identified key challenges: performance, migration, reservation logic
 - Status: Planning complete, ready for implementation
+
+### 2025-10-19 - Verification
+
+- Local verification performed on 2025-10-19:
+  - `npm run typecheck` completed with no TypeScript errors.
+  - `npm run test` (Vitest) executed successfully as part of the full test suite run (143 tests passed across project); logistics unit tests passed.
+  - `npm run build` completed successfully and produced `dist/` artifacts.
+
+Remaining items:
+
+- Performance testing for 50+ factories (not started); add a scripted harness and measure tick time to ensure <16ms/tick target under reasonable settings.
+- Persistence/integration migration tests marked Not Started: ensure snapshot migration test coverage for `SAVE_VERSION` bump is present.
 
 ## Technical Notes
 

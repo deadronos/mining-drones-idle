@@ -74,3 +74,12 @@ Implement weighted drone return routing, per-factory energy/resource ledgers, an
 ## Status Log
 
 - 2025-10-21 — Initialized task, captured requirements and design draft. Implementation pending.
+
+### 2025-10-19 - Verification
+
+- Local verification performed on 2025-10-19:
+  - `npm run typecheck` completed with no TypeScript errors.
+  - `npm run test` executed successfully as part of the full test suite run; relevant factory/drone tests passed.
+  - `npm run build` completed successfully.
+
+Next steps: add concrete migration plan and per-factory snapshot examples; define upgrade cost table and routing weighting constants in code.
