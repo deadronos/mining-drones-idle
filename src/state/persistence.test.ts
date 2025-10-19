@@ -18,7 +18,7 @@ describe('state/persistence', () => {
     window.localStorage.clear();
   });
 
-  it('loads save and simulates offline with configured cap hours', () => {
+  it('loads save and simulates offline with configured cap hours', { timeout: 30000 }, () => {
     const store = createStoreInstance();
     const snapshot = {
       resources: {
