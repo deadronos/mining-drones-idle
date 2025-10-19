@@ -1,11 +1,6 @@
-/* eslint-disable */
-// @ts-nocheck
-// This module is ported from the original serialization.ts which has similar linting issues.
-// The issues are deferred to a later refactoring when we have time to fix the type system holistically.
-
 import { FACTORY_CONFIG } from '@/ecs/factories';
 import type { BuildableFactory } from '@/ecs/factories';
-import type { FactorySnapshot } from '../types';
+import type { FactorySnapshot, HaulerConfig, FactoryLogisticsState } from '../types';
 import { normalizeVectorTuple } from './vectors';
 import {
   normalizeFactoryResources,
@@ -17,6 +12,30 @@ import {
 } from './resources';
 import { coerceNumber, vector3ToTuple, tupleToVector3 } from '../utils';
 
+// Type guard for hauler config objects
+function isHaulerConfig(value: unknown): value is Partial<HaulerConfig> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    ('capacity' in value ||
+      'speed' in value ||
+      'pickupOverhead' in value ||
+      'dropoffOverhead' in value ||
+      'resourceFilters' in value ||
+      'mode' in value ||
+      'priority' in value)
+  );
+}
+
+// Type guard for logistics state objects
+function isLogisticsState(value: unknown): value is Partial<FactoryLogisticsState> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    ('outboundReservations' in value || 'inboundSchedules' in value)
+  );
+}
+
 export const normalizeFactorySnapshot = (value: unknown): FactorySnapshot | null => {
   if (typeof value !== 'object' || value === null) {
     return null;
@@ -26,6 +45,81 @@ export const normalizeFactorySnapshot = (value: unknown): FactorySnapshot | null
   if (!position) {
     return null;
   }
+
+  // Normalize activeRefines
+  const activeRefines: FactorySnapshot['activeRefines'] = [];
+  if (Array.isArray(raw.activeRefines)) {
+    for (const entry of raw.activeRefines) {
+      const normalized = normalizeRefineSnapshot(entry);
+      if (normalized !== null) {
+        activeRefines.push(normalized);
+      }
+    }
+  }
+
+  // Normalize haulerConfig
+  let haulerConfig: HaulerConfig | undefined;
+  if (isHaulerConfig(raw.haulerConfig)) {
+    const hc = raw.haulerConfig;
+    haulerConfig = {
+      capacity: Math.max(1, Math.floor(coerceNumber(hc.capacity, 50))),
+      speed: Math.max(0.1, coerceNumber(hc.speed, 1.0)),
+      pickupOverhead: Math.max(0, coerceNumber(hc.pickupOverhead, 1.0)),
+      dropoffOverhead: Math.max(0, coerceNumber(hc.dropoffOverhead, 1.0)),
+      resourceFilters: Array.isArray(hc.resourceFilters)
+        ? hc.resourceFilters.filter((val): val is string => typeof val === 'string')
+        : [],
+      mode: ['auto', 'manual', 'demand-first', 'supply-first'].includes(
+        String(hc.mode),
+      )
+        ? (hc.mode as unknown as 'auto' | 'manual' | 'demand-first' | 'supply-first')
+        : 'auto',
+      priority: Math.min(10, Math.max(0, Math.floor(coerceNumber(hc.priority, 5)))),
+    };
+  }
+
+  // Normalize logisticsState
+  let logisticsState: FactoryLogisticsState | undefined;
+  if (isLogisticsState(raw.logisticsState)) {
+    const ls = raw.logisticsState;
+    const outboundReservations: Record<string, number> = {};
+    if (typeof ls.outboundReservations === 'object' && ls.outboundReservations !== null) {
+      for (const [key, val] of Object.entries(ls.outboundReservations)) {
+        const amount = coerceNumber(val, 0);
+        if (amount > 0) {
+          outboundReservations[key] = amount;
+        }
+      }
+    }
+
+    const inboundSchedules: FactoryLogisticsState['inboundSchedules'] = [];
+    if (Array.isArray(ls.inboundSchedules)) {
+      for (const schedule of ls.inboundSchedules) {
+        if (
+          typeof schedule === 'object' &&
+          schedule !== null &&
+          typeof (schedule as Partial<FactoryLogisticsState['inboundSchedules'][number]>)
+            .fromFactoryId === 'string' &&
+          typeof (schedule as Partial<FactoryLogisticsState['inboundSchedules'][number]>)
+            .resource === 'string'
+        ) {
+          const sched = schedule as Partial<FactoryLogisticsState['inboundSchedules'][number]>;
+          inboundSchedules.push({
+            fromFactoryId: sched.fromFactoryId ?? '',
+            resource: sched.resource ?? '',
+            amount: Math.max(0, coerceNumber(sched.amount, 0)),
+            eta: Math.max(0, coerceNumber(sched.eta, 0)),
+          });
+        }
+      }
+    }
+
+    logisticsState = {
+      outboundReservations,
+      inboundSchedules,
+    };
+  }
+
   return {
     id: typeof raw.id === 'string' && raw.id.length > 0 ? raw.id : `factory-${Date.now()}`,
     position,
@@ -44,11 +138,7 @@ export const normalizeFactorySnapshot = (value: unknown): FactorySnapshot | null
     queuedDrones: Array.isArray(raw.queuedDrones)
       ? raw.queuedDrones.filter((id): id is string => typeof id === 'string')
       : [],
-    activeRefines: Array.isArray(raw.activeRefines)
-      ? raw.activeRefines
-          .map((entry) => normalizeRefineSnapshot(entry))
-          .filter((entry): entry is any => entry !== null)
-      : [],
+    activeRefines,
     pinned: Boolean(raw.pinned),
     energy: Math.max(0, coerceNumber(raw.energy, FACTORY_CONFIG.initialEnergy)),
     energyCapacity: Math.max(1, coerceNumber(raw.energyCapacity, FACTORY_CONFIG.energyCapacity)),
@@ -58,66 +148,8 @@ export const normalizeFactorySnapshot = (value: unknown): FactorySnapshot | null
       : [],
     upgrades: normalizeFactoryUpgrades(raw.upgrades),
     haulersAssigned: Math.max(0, Math.floor(coerceNumber(raw.haulersAssigned, 0))),
-    haulerConfig:
-      raw.haulerConfig && typeof raw.haulerConfig === 'object'
-        ? {
-            capacity: Math.max(1, Math.floor(coerceNumber((raw.haulerConfig as any).capacity, 50))),
-            speed: Math.max(0.1, coerceNumber((raw.haulerConfig as any).speed, 1.0)),
-            pickupOverhead: Math.max(
-              0,
-              coerceNumber((raw.haulerConfig as any).pickupOverhead, 1.0),
-            ),
-            dropoffOverhead: Math.max(
-              0,
-              coerceNumber((raw.haulerConfig as any).dropoffOverhead, 1.0),
-            ),
-            resourceFilters: Array.isArray((raw.haulerConfig as any).resourceFilters)
-              ? (raw.haulerConfig as any).resourceFilters.filter(
-                  (val: unknown): val is string => typeof val === 'string',
-                )
-              : [],
-            mode: ['auto', 'manual', 'demand-first', 'supply-first'].includes(
-              (raw.haulerConfig as any).mode,
-            )
-              ? ((raw.haulerConfig as any).mode as
-                  | 'auto'
-                  | 'manual'
-                  | 'demand-first'
-                  | 'supply-first')
-              : 'auto',
-            priority: Math.min(
-              10,
-              Math.max(0, Math.floor(coerceNumber((raw.haulerConfig as any).priority, 5))),
-            ),
-          }
-        : undefined,
-    logisticsState:
-      raw.logisticsState && typeof raw.logisticsState === 'object'
-        ? {
-            outboundReservations:
-              typeof (raw.logisticsState as any).outboundReservations === 'object'
-                ? Object.entries((raw.logisticsState as any).outboundReservations).reduce(
-                    (acc: Record<string, number>, [key, val]: [unknown, unknown]) => {
-                      const amount = coerceNumber(val, 0);
-                      if (amount > 0) acc[key as string] = amount;
-                      return acc;
-                    },
-                    {},
-                  )
-                : {},
-            inboundSchedules: Array.isArray((raw.logisticsState as any).inboundSchedules)
-              ? (raw.logisticsState as any).inboundSchedules
-                  .map((schedule: any) => ({
-                    fromFactoryId:
-                      typeof schedule.fromFactoryId === 'string' ? schedule.fromFactoryId : '',
-                    resource: typeof schedule.resource === 'string' ? schedule.resource : '',
-                    amount: Math.max(0, coerceNumber(schedule.amount, 0)),
-                    eta: Math.max(0, coerceNumber(schedule.eta, 0)),
-                  }))
-                  .filter((s: any) => s.fromFactoryId && s.resource)
-              : [],
-          }
-        : undefined,
+    haulerConfig,
+    logisticsState,
   };
 };
 
