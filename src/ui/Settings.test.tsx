@@ -1,3 +1,4 @@
+import '@testing-library/jest-dom/vitest';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SettingsPanel } from '@/ui/Settings';
@@ -145,7 +146,7 @@ describe('ui/Settings', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /reset game/i }));
     expect(screen.getByRole('alertdialog', { name: /reset game progress/i })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /reset everything/i }));
+    fireEvent.click(screen.getByRole('button', { name: /confirm reset game/i }));
 
     expect(persistence.saveNow).toHaveBeenCalled();
     const state = storeApi.getState();

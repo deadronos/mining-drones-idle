@@ -123,3 +123,15 @@ WHEN the available viewport height is less than 900px, THE SYSTEM SHALL constrai
 ## RQ-031 Inspector & Sidebar Coexistence
 
 WHEN the viewport width drops below 1280px, THE SYSTEM SHALL adjust inspector and sidebar widths using clamped sizing to prevent overlap or horizontal overflow while keeping all controls visible. [Acceptance: Manual verification at 1180px width confirms the sidebar and inspector remain within the window with no clipped buttons or text.]
+
+## RQ-032 Unload Idle Reset
+
+WHEN a drone completes an unload system tick, THE SYSTEM SHALL release its docking slot and transition the drone to `idle` even if the cargo amount is zero. [Acceptance: Store/ECS test runs the unload system with zero-cargo drones and asserts the drone leaves the queue, enters `idle`, and clears `targetFactoryId`.]
+
+## RQ-033 Factory Assignment Cleanup
+
+WHEN a drone's state is neither `returning` nor `unloading`, THE SYSTEM SHALL clear any lingering `targetFactoryId` and remove the drone from that factory's queue so the AI can assign a fresh destination. [Acceptance: Drone AI unit test forces a state mismatch and verifies the drone is removed from the factory queue and `targetFactoryId` becomes null within one tick.]
+
+## RQ-034 Factory Energy Charging
+
+WHEN a docked drone requires energy and its owning factory still has stored energy, THE SYSTEM SHALL charge the drone from that factory pool when the global grid cannot supply enough energy, deducting the matching amount from the factory. [Acceptance: Power system test drains global energy, leaves factory energy available, ticks the system, and confirms the drone battery increases while factory energy decreases by the charged amount.]

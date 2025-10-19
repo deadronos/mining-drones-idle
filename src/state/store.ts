@@ -13,6 +13,7 @@ import {
   executeArrival,
 } from '@/ecs/logistics';
 import {
+  createFactory,
   attemptDockDrone,
   computeFactoryCost,
   enforceMinOneRefining,

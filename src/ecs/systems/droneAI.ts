@@ -362,6 +362,20 @@ export const createDroneAISystem = (world: GameWorld, store: StoreApiType) => {
         synchronizeDroneFlight(drone, storedFlight, world, store);
       }
 
+      if (
+        drone.targetFactoryId &&
+        drone.state !== 'returning' &&
+        drone.state !== 'unloading'
+      ) {
+        const stuckFactoryId = drone.targetFactoryId;
+        const stateApi = store.getState();
+        const factory = stateApi.getFactory(stuckFactoryId);
+        if (factory?.queuedDrones.includes(drone.id)) {
+          stateApi.undockDroneFromFactory(stuckFactoryId, drone.id);
+        }
+        drone.targetFactoryId = null;
+      }
+
       if (drone.state === 'idle') {
         drone.flightSeed = null;
         drone.targetRegionId = null;

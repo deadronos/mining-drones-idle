@@ -199,7 +199,15 @@ export const createGameWorld = (options: CreateWorldOptions = {}): GameWorld => 
   return { world, factory, droneQuery, asteroidQuery, rng, events };
 };
 
-const initialSeed = storeApi.getState().rngSeed;
+let initialSeed = Date.now();
+try {
+  if (storeApi && typeof storeApi.getState === 'function') {
+    initialSeed = storeApi.getState().rngSeed;
+  }
+} catch (_err) {
+  // Fallback to time-based seed if store API is not yet initialized (e.g., during tests).
+  initialSeed = Date.now();
+}
 
 export const gameWorld = createGameWorld({ rng: createRng(initialSeed) });
 

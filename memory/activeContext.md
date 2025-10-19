@@ -2,10 +2,12 @@
 
 ## Current Focus
 
-Execute TASK019 (Hauler Logistics Implementation) — Phase 6 visuals landed; prepping validation/polish follow-up after integrating 3D transfer cues.
+Task020 complete; monitor post-release energy behaviour and, if stable, resume Task019 hauler polish (Phase 7+) while capturing follow-up needs like optional solar regen.
 
 ## Recent Changes
 
+- ✅ **Factory Energy Resilience**: Implemented unload reset for zero-cargo drones, added DroneAI queue cleanup, enabled factory-assisted charging with new vitest coverage (`unload.test.ts`, `droneAI.test.ts`, `power.test.ts`).
+- 📝 **DES019/TASK020 Authored**: Captured requirements RQ-032..RQ-034, drafted DES019 design, and logged TASK020 plan targeting unload reset, DroneAI cleanup, and factory-assisted charging.
 - ✅ **Hauler Cost Gating**: Factory-level hauler purchases now spend bars (base 10, exponential growth) via updates to `assignHaulers`, UI affordances, and supporting tests (`src/state/store.ts`, `src/ui/FactoryManager.tsx`, `src/ecs/logistics.test.ts`).
 - ✅ **Hauler Maintenance Drain**: Each assigned hauler now consumes 0.5 energy/sec, deducted during `processFactories` to balance sustained logistics loads (`src/state/store.ts`).
 - ✅ **Inspector Pagination & Storage Detail**: Docking/owned-drone lists paginate, storage now lists all local resources, and despawned drones no longer leave ghost queue entries (`src/ui/FactoryManager.tsx`, `src/ui/FactoryManager.css`, `src/ecs/systems/fleet.ts`).

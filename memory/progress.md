@@ -7,6 +7,7 @@
 - Spec refreshed (DES002/TASK003) to document current implementation, persistence utilities, and remaining roadmap gaps.
 - Added requirement status table flagging the persistence manager store gaps and differentiating implemented vs. planned systems.
 - Kicked off Milestone 2 by migrating refinery processing into an ECS system with shared helpers and new parity unit tests.
+- Completed TASK020 (Factory Energy Resilience) with DES019 delivering unload resets, DroneAI reassignment cleanup, and factory-assisted charging coverage after energy outage reports.
 - Finalized offline catch-up alignment by iterating on snapshot data and adding regression coverage for untouched resources.
 - Expanded the implementation roadmap with error handling and testing strategy sections to de-risk upcoming persistence and ECS work.
 - Refined offline catch-up to reuse the store's refinery logic directly, emit telemetry for ore/bars processed, and surface load-time summaries via persistence logging.
@@ -33,6 +34,7 @@
 
 ## Open Items
 
+- Evaluate scope/timing for optional factory solar regeneration upgrade once core energy resilience lands.
 - Track UI follow-up for surfacing per-drone battery levels and throttle warnings in the HUD.
 - Validate seeded RNG integration across save import/export flows and plan any reset tooling.
  - Capture performance telemetry for drone trails and finalize factory snapshot/perf scene coverage for TASK011.

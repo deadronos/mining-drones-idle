@@ -18,6 +18,10 @@ export const createUnloadSystem = (world: GameWorld, store: StoreApiType) => {
     for (const drone of droneQuery) {
       if (drone.state !== 'unloading') continue;
       const amount = drone.cargo;
+      const state = store.getState();
+      const fallbackFactoryId = state.factories[0]?.id ?? null;
+      const dockingFactoryId = drone.targetFactoryId ?? fallbackFactoryId;
+      const dockingFactory = dockingFactoryId ? state.getFactory(dockingFactoryId) : undefined;
       if (amount > 0) {
         const breakdown: Record<string, number> = {};
         let delivered = 0;
@@ -33,25 +37,21 @@ export const createUnloadSystem = (world: GameWorld, store: StoreApiType) => {
         const delta = { ...breakdown } as Partial<Resources>;
         delete delta.ore;
 
-        const state = store.getState();
-        const fallbackFactoryId = state.factories[0]?.id ?? null;
-        const targetFactoryId = drone.targetFactoryId ?? fallbackFactoryId;
-        const targetFactory = targetFactoryId ? state.getFactory(targetFactoryId) : undefined;
         if (oreForFactory > 0) {
-          if (targetFactory) {
-            state.transferOreToFactory(targetFactory.id, oreForFactory);
+          if (dockingFactory) {
+            state.transferOreToFactory(dockingFactory.id, oreForFactory);
           } else {
             state.addResources({ ore: oreForFactory });
           }
         }
         const resourceKeys = Object.keys(delta) as (keyof Resources)[];
         if (resourceKeys.length > 0) {
-          if (targetFactoryId) {
+          if (dockingFactoryId) {
             const factoryDelta: Partial<FactoryResources> = {};
             for (const key of resourceKeys) {
               factoryDelta[key as keyof FactoryResources] = delta[key];
             }
-            state.addResourcesToFactory(targetFactoryId, factoryDelta);
+            state.addResourcesToFactory(dockingFactoryId, factoryDelta);
           } else {
             state.addResources(delta);
           }
@@ -61,7 +61,7 @@ export const createUnloadSystem = (world: GameWorld, store: StoreApiType) => {
           id: `${drone.id}-${timestamp.toString(16)}`,
           amount,
           from: (drone.lastDockingFrom ?? drone.position).clone().add(TRANSFER_OFFSET),
-          to: (targetFactory?.position ?? factory.position).clone().add(TRANSFER_OFFSET),
+          to: (dockingFactory?.position ?? factory.position).clone().add(TRANSFER_OFFSET),
           duration: TRANSFER_DURATION,
         };
         events.transfers.push(transfer);
@@ -69,12 +69,12 @@ export const createUnloadSystem = (world: GameWorld, store: StoreApiType) => {
           events.transfers.splice(0, events.transfers.length - TRANSFER_EVENT_LIMIT);
         }
         factory.activity.lastTransferAt = timestamp;
-        if (targetFactoryId) {
-          state.undockDroneFromFactory(targetFactoryId, drone.id, { transferOwnership: true });
-          drone.ownerFactoryId = targetFactoryId;
-        } else {
-          drone.ownerFactoryId = null;
-        }
+      }
+      if (dockingFactoryId) {
+        state.undockDroneFromFactory(dockingFactoryId, drone.id, { transferOwnership: true });
+        drone.ownerFactoryId = dockingFactoryId;
+      } else {
+        drone.ownerFactoryId = null;
       }
       drone.cargo = 0;
       for (const key of RESOURCE_KEYS) {
@@ -86,8 +86,8 @@ export const createUnloadSystem = (world: GameWorld, store: StoreApiType) => {
       drone.travel = null;
       const fallbackPosition = factory.position;
       const afterState = store.getState();
-      const targetFactory = drone.targetFactoryId
-        ? afterState.getFactory(drone.targetFactoryId)
+      const targetFactory = dockingFactoryId
+        ? afterState.getFactory(dockingFactoryId)
         : afterState.factories[0];
       drone.position.copy(targetFactory?.position ?? fallbackPosition);
       drone.lastDockingFrom = null;

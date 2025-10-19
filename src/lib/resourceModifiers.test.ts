@@ -20,10 +20,20 @@ describe('lib/resourceModifiers', () => {
       buildResources({ metals: 5, ice: 3, crystals: 2, organics: 4 }),
     );
     const high = getResourceModifiers(
-      buildResources({ metals: 80, ice: 80, crystals: 80, organics: 80 }),
+      buildResources({
+        metals: 6000,
+        ice: 40000,
+        crystals: 30000,
+        organics: 50000,
+      }),
     );
     const veryHigh = getResourceModifiers(
-      buildResources({ metals: 200, ice: 200, crystals: 200, organics: 200 }),
+      buildResources({
+        metals: 12000,
+        ice: 80000,
+        crystals: 60000,
+        organics: 100000,
+      }),
     );
 
     expect(low.metalsBonus).toBeGreaterThan(0);

@@ -79,4 +79,38 @@ describe('ecs/systems/power', () => {
     const { resources } = store.getState();
     expect(resources.energy).toBeCloseTo(Math.min(expectedCapacity, expectedGeneration), 5);
   });
+
+  it('pulls from factory energy when global supply is exhausted', () => {
+    const world = createGameWorld({ asteroidCount: 0 });
+    addDrones(world, 3);
+    const drones = [...world.droneQuery.entities];
+    const store = createStoreInstance();
+    const [factory] = store.getState().factories;
+    if (!factory) throw new Error('expected default factory');
+
+    drones.forEach((drone) => {
+      drone.state = 'idle';
+      drone.battery = 0;
+      drone.charging = false;
+      drone.ownerFactoryId = factory.id;
+    });
+    const third = drones[drones.length - 1];
+    if (!third) throw new Error('expected third drone');
+
+    store.setState((state) => ({
+      resources: { ...state.resources, energy: 0 },
+      factories: state.factories.map((item, index) =>
+        index === 0 ? { ...item, energy: 10 } : item,
+      ),
+    }));
+
+    const system = createPowerSystem(world, store);
+    system(1);
+
+    const snapshot = store.getState();
+    expect(third.battery).toBeCloseTo(2.4, 5);
+    expect(snapshot.factories[0]?.energy).toBeCloseTo(7.8, 5);
+    expect(snapshot.resources.energy).toBeCloseTo(0, 5);
+    expect(third.charging).toBe(true);
+  });
 });
