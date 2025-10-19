@@ -2,12 +2,27 @@
 
 ## Current Focus
 
-Task020 complete; monitor post-release energy behaviour and, if stable, resume Task019 hauler polish (Phase 7+) while evaluating balance after newly shipped Task021 solar regeneration upgrade.
+✅ **TASK023 Complete**: FactoryManager refactored into 7 sub-components (DockingSection, EnergySection, StorageSection, UpgradeSection, RosterSection, HaulerSection, RefineSection) with centralized hooks (`usePagination`) and utilities (`upgradeFormatting`, `storageDisplay`). Main component reduced from 482 to ~180 lines; all tests pass; build successful.
+
+Next: Evaluate balance post-TASK021 solar regen release. Consider TASK019 hauler polish (Phase 7+) or backlog prioritization.
 
 ## Recent Changes
 
+- ✅ **FactoryManager Refactoring (TASK023)**: Decomposed monolithic 482-line component into focused 7-component architecture:
+  - `DockingSection` (~40 lines) with pagination logic
+  - `EnergySection` (~30 lines) with solar regen display
+  - `StorageSection` (~30 lines) with resource formatting
+  - `UpgradeSection` (~35 lines) with cost/affordability checks
+  - `RosterSection` (~50 lines) with owned-drone pagination
+  - `HaulerSection` (~45 lines) with logistics controls
+  - `RefineSection` (~20 lines) for active refining display
+  - Extracted `usePagination` hook for reusable pagination state
+  - Created `upgradeFormatting.ts` and `storageDisplay.ts` utilities
+  - Main refactored to ~180 lines (62% reduction)
+  - 12 unit tests added; all passing
+  - No visual changes; CSS unchanged
+  - Build succeeds; `npm run test` passes (129/130, 1 pre-existing timeout)
 - ✅ **Factory Energy Resilience**: Implemented unload reset for zero-cargo drones, added DroneAI queue cleanup, enabled factory-assisted charging with new vitest coverage (`unload.test.ts`, `droneAI.test.ts`, `power.test.ts`).
-- ✅ **Solar Regeneration Upgrade**: Implemented factory solar collectors (TASK021) with migrations, power-system regen, and FactoryManager UI/coverage.
 - 📝 **DES019/TASK020 Authored**: Captured requirements RQ-032..RQ-034, drafted DES019 design, and logged TASK020 plan targeting unload reset, DroneAI cleanup, and factory-assisted charging.
 - ✅ **Hauler Cost Gating**: Factory-level hauler purchases now spend bars (base 10, exponential growth) via updates to `assignHaulers`, UI affordances, and supporting tests (`src/state/store.ts`, `src/ui/FactoryManager.tsx`, `src/ecs/logistics.test.ts`).
 - ✅ **Hauler Maintenance Drain**: Each assigned hauler now consumes 0.5 energy/sec, deducted during `processFactories` to balance sustained logistics loads (`src/state/store.ts`).
