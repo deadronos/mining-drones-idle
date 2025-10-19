@@ -157,6 +157,7 @@ The phased approach allows us to deliver core value quickly while leaving room f
 - ✅ Introduced shared pagination controls with accessibility labels for list navigation.
 - ✅ Storage panel now surfaces all local resources (ore, bars, metals, crystals, organics, ice, credits) to match factory-state visibility.
 - ✅ Fixed ghost queue entries when drones are despawned by trimming factory queues before removal (`src/ecs/systems/fleet.ts`).
+- ✅ Added Settings reset flow with confirmation modal plus store-level `resetGame()` helper to clear progress safely (`src/ui/Settings.tsx`, `src/styles.css`, `src/state/store.ts`).
 
 ### 2025-10-23 - Phase 6 & 8a (earlier placeholder, superseded)
 

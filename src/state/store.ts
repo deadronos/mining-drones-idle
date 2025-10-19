@@ -469,6 +469,7 @@ export interface StoreState {
   processFactories(this: void, dt: number): void;
   triggerFactoryAutofit(this: void): void;
   resetCamera(this: void): void;
+  resetGame(this: void): void;
 }
 
 export type StoreApiType = StoreApi<StoreState>;
@@ -1867,6 +1868,34 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
       set((state) => ({ factoryAutofitSequence: state.factoryAutofitSequence + 1 })),
 
     resetCamera: () => set((state) => ({ cameraResetSequence: state.cameraResetSequence + 1 })),
+
+    resetGame: () => {
+      const currentSettings = get().settings;
+      set(() => {
+        const factories = createDefaultFactories();
+        const selectedFactoryId = factories[0]?.id ?? null;
+        return {
+          resources: { ...initialResources },
+          modules: { ...initialModules },
+          prestige: { ...initialPrestige },
+          save: { ...initialSave, lastSave: Date.now() },
+          settings: { ...currentSettings },
+          rngSeed: generateSeed(),
+          droneFlights: [],
+          factories,
+          logisticsQueues: { pendingTransfers: [] },
+          gameTime: 0,
+          factoryProcessSequence: 0,
+          factoryRoundRobin: 0,
+          factoryAutofitSequence: 0,
+          cameraResetSequence: 0,
+          logisticsTick: 0,
+          selectedAsteroidId: null,
+          selectedFactoryId,
+          droneOwners: {},
+        };
+      });
+    },
   };
 };
 

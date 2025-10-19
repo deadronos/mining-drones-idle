@@ -9,6 +9,7 @@ Execute TASK019 (Hauler Logistics Implementation) — Phase 6 visuals landed; pr
 - ✅ **Hauler Cost Gating**: Factory-level hauler purchases now spend bars (base 10, exponential growth) via updates to `assignHaulers`, UI affordances, and supporting tests (`src/state/store.ts`, `src/ui/FactoryManager.tsx`, `src/ecs/logistics.test.ts`).
 - ✅ **Hauler Maintenance Drain**: Each assigned hauler now consumes 0.5 energy/sec, deducted during `processFactories` to balance sustained logistics loads (`src/state/store.ts`).
 - ✅ **Inspector Pagination & Storage Detail**: Docking/owned-drone lists paginate, storage now lists all local resources, and despawned drones no longer leave ghost queue entries (`src/ui/FactoryManager.tsx`, `src/ui/FactoryManager.css`, `src/ecs/systems/fleet.ts`).
+- ✅ **Settings Reset Flow**: Added reset confirmation modal and store-side reset helper so players can wipe progress safely (`src/ui/Settings.tsx`, `src/styles.css`, `src/state/store.ts`).
 - ✅ **Phase 6 Visual Indicators**: Transfer lines now render as thickness-scaled meshes with arrowheads and hover tooltips tied to live ETAs (`src/r3f/TransferLines.tsx`), with `npm run typecheck` verification.
 - ✅ **Phase 5a & 5b Complete**: Full UI implementation delivered
   - Created `src/ui/LogisticsPanel.tsx` with global logistics overview

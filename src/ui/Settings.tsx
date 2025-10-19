@@ -24,13 +24,16 @@ const formatTimestamp = (value: number) => {
 export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
   const settings = useStore((state) => state.settings);
   const updateSettings = useStore((state) => state.updateSettings);
+  const resetGame = useStore((state) => state.resetGame);
   const lastSave = useStore((state) => state.save.lastSave);
   const [importError, setImportError] = useState<string | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
   const toastApi = useToast();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleClose = useCallback(() => {
     setImportError(null);
+    setConfirmReset(false);
     onClose();
   }, [onClose]);
 
@@ -38,12 +41,16 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
+        if (confirmReset) {
+          setConfirmReset(false);
+          return;
+        }
         handleClose();
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [handleClose]);
+  }, [handleClose, confirmReset]);
 
   const formattedLastSave = useMemo(() => formatTimestamp(lastSave), [lastSave]);
 
@@ -102,6 +109,23 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
         console.warn('Failed to import save file', error);
         setImportError('Unable to read the selected file.');
       });
+  };
+
+  const handleResetRequest = () => {
+    setConfirmReset(true);
+  };
+
+  const handleCancelReset = () => {
+    setConfirmReset(false);
+  };
+
+  const handleConfirmReset = () => {
+    resetGame();
+    persistence.saveNow();
+    toastApi.push('Game reset. Fresh factories deployed.');
+    setConfirmReset(false);
+    setImportError(null);
+    handleClose();
   };
 
   const handleAutosaveToggle: ChangeEventHandler<HTMLInputElement> = (event) => {
@@ -263,6 +287,13 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
             >
               Import JSON
             </button>
+            <button
+              type="button"
+              onClick={handleResetRequest}
+              aria-label="Reset game progress"
+            >
+              Reset Game
+            </button>
             <input
               ref={fileInputRef}
               type="file"
@@ -275,6 +306,36 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
           {importError ? <p className="settings-error">{importError}</p> : null}
         </section>
       </div>
+      {confirmReset ? (
+        <div className="settings-confirm-backdrop" role="presentation">
+          <div
+            className="settings-confirm"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="reset-confirm-title"
+            aria-describedby="reset-confirm-description"
+          >
+            <h4 id="reset-confirm-title">Reset game progress?</h4>
+            <p id="reset-confirm-description">
+              This will erase all factories, resources, and progress. Export your save first if you
+              want a backup.
+            </p>
+            <div className="settings-confirm-actions">
+              <button type="button" onClick={handleCancelReset} aria-label="Cancel reset">
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="settings-danger"
+                onClick={handleConfirmReset}
+                aria-label="Confirm reset game"
+              >
+                Reset Everything
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };
