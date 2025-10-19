@@ -40,6 +40,9 @@ export const FactoryManager = () => {
   const toggleFactoryPinned = useStore((state) => state.toggleFactoryPinned);
   const triggerAutofit = useStore((state) => state.triggerFactoryAutofit);
   const resetCamera = useStore((state) => state.resetCamera);
+  const assignHaulers = useStore((state) => state.assignHaulers);
+  const updateHaulerConfig = useStore((state) => state.updateHaulerConfig);
+  const getLogisticsStatus = useStore((state) => state.getLogisticsStatus);
 
   const factoryCount = factories.length;
   const nextCost = useMemo(() => computeFactoryCost(Math.max(0, factoryCount - 1)), [factoryCount]);
@@ -108,6 +111,9 @@ export const FactoryManager = () => {
           onNext={() => cycleFactory(1)}
           onUpgrade={handleUpgrade}
           onTogglePin={toggleFactoryPinned}
+          onAssignHaulers={assignHaulers}
+          onUpdateHaulerConfig={updateHaulerConfig}
+          onGetLogisticsStatus={getLogisticsStatus}
         />
       ) : (
         <p className="factory-empty">Construct a factory to begin routing drones.</p>
@@ -124,6 +130,9 @@ interface SelectedFactoryCardProps {
   onNext: () => void;
   onUpgrade: (upgrade: FactoryUpgradeId) => void;
   onTogglePin: (factoryId: string) => void;
+  onAssignHaulers: (factoryId: string, count: number) => boolean;
+  onUpdateHaulerConfig: (factoryId: string, config: Record<string, unknown>) => void;
+  onGetLogisticsStatus: (factoryId: string) => { haulersAssigned: number } | null;
 }
 
 const SelectedFactoryCard = ({
@@ -134,6 +143,9 @@ const SelectedFactoryCard = ({
   onNext,
   onUpgrade,
   onTogglePin,
+  onAssignHaulers,
+  onUpdateHaulerConfig,
+  onGetLogisticsStatus,
 }: SelectedFactoryCardProps) => {
   const queueCount = factory.queuedDrones.length;
   const docked = Math.min(queueCount, factory.dockingCapacity);
@@ -269,6 +281,50 @@ const SelectedFactoryCard = ({
           </ul>
         </section>
       )}
+
+      <section className="factory-haulers">
+        <h4>Hauler Logistics</h4>
+        <div className="hauler-controls">
+          <div className="hauler-count">
+            <span className="label">Assigned Haulers:</span>
+            <span className="count">{factory.haulersAssigned ?? 0}</span>
+          </div>
+          <div className="hauler-buttons">
+            <button
+              type="button"
+              onClick={() => onAssignHaulers(factory.id, 1)}
+              className="hauler-btn"
+              aria-label="Add hauler"
+            >
+              +
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const current = factory.haulersAssigned ?? 0;
+                if (current > 0) {
+                  onAssignHaulers(factory.id, -1);
+                }
+              }}
+              className="hauler-btn"
+              aria-label="Remove hauler"
+              disabled={(factory.haulersAssigned ?? 0) === 0}
+            >
+              -
+            </button>
+          </div>
+        </div>
+        {(factory.haulersAssigned ?? 0) > 0 ? (
+          <div className="hauler-info">
+            <p className="desc">
+              This factory has {factory.haulersAssigned} hauler{factory.haulersAssigned === 1 ? '' : 's'} assigned for
+              resource redistribution.
+            </p>
+          </div>
+        ) : (
+          <p className="muted small">Assign haulers to enable automatic resource transfers to other factories.</p>
+        )}
+      </section>
     </div>
   );
 };

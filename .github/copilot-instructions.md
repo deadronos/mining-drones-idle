@@ -67,7 +67,7 @@ Quality expectations
 If blocked
 
 - Re-run the ANALYZE → DESIGN loop from `.github/instructions/spec-driven-workflow-v1.instructions.md`.
-- If external information is required, document the exact missing piece and propose a safe fallback or ask the maintainers.
+- If external information is required, document the exact missing piece and propose a safe fallback or ask the maintainers. You can also pull in information with `context7`.
 
 Contact & review
 

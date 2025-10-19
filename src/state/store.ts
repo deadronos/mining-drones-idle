@@ -13,6 +13,15 @@ import type {
   RefineProcess,
 } from '@/ecs/factories';
 import {
+  LOGISTICS_CONFIG,
+  RESOURCE_TYPES,
+  generateTransferId,
+  matchSurplusToNeed,
+  reserveOutbound,
+  executeArrival,
+  type TransportableResource,
+} from '@/ecs/logistics';
+import {
   FACTORY_CONFIG,
   attemptDockDrone,
   createFactory,
@@ -130,7 +139,7 @@ export interface PendingTransfer {
   id: string;
   fromFactoryId: string;
   toFactoryId: string;
-  resource: string;
+  resource: TransportableResource;
   amount: number;
   status: 'scheduled' | 'in-transit' | 'completed';
   eta: number;
@@ -404,6 +413,7 @@ export interface StoreState {
   droneFlights: DroneFlightState[];
   factories: BuildableFactory[];
   logisticsQueues: LogisticsQueues;
+  gameTime: number;
   factoryProcessSequence: number;
   factoryRoundRobin: number;
   factoryAutofitSequence: number;
@@ -1137,6 +1147,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
     droneFlights: [],
     factories: createDefaultFactories(),
     logisticsQueues: { pendingTransfers: [] },
+    gameTime: 0,
     factoryProcessSequence: 0,
     factoryRoundRobin: 0,
     factoryAutofitSequence: 0,
@@ -1174,6 +1185,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
 
     tick: (dt) => {
       if (dt <= 0) return;
+      set((state) => ({ gameTime: state.gameTime + dt }));
       get().processRefinery(dt);
       get().processLogistics(dt);
       get().processFactories(dt);
@@ -1634,9 +1646,65 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
       };
     },
 
-    processLogistics: (_dt) => {
-      // Placeholder: Will be implemented in Phase 2
-      // This will be called from the main tick method
+    processLogistics: (dt: number) => {
+      set((state) => {
+        // Only run scheduler every N seconds to avoid excessive overhead
+        const newLogisticsTick = state.logisticsTick + dt;
+        if (newLogisticsTick < LOGISTICS_CONFIG.scheduling_interval) {
+          return { logisticsTick: newLogisticsTick };
+        }
+
+        // For each resource type, match surplus to need
+        for (const resource of RESOURCE_TYPES) {
+          // Skip if no pending transfers possible
+          if (state.factories.length < 2) continue;
+
+          // Match factories: greedy pairing of high need with high surplus
+          const proposedTransfers = matchSurplusToNeed(state.factories, resource, state.gameTime);
+
+          // Apply reservations and schedule transfers
+          for (const transfer of proposedTransfers) {
+            const sourceFactory = state.factories.find((f) => f.id === transfer.fromFactoryId);
+            const destFactory = state.factories.find((f) => f.id === transfer.toFactoryId);
+
+            if (!sourceFactory || !destFactory) continue;
+
+            // Try to reserve at source
+            if (!reserveOutbound(sourceFactory, resource, transfer.amount)) {
+              continue; // Cannot reserve, skip this transfer
+            }
+
+            // Add to pending transfers queue
+            const transferId = generateTransferId();
+            state.logisticsQueues.pendingTransfers.push({
+              id: transferId,
+              ...transfer,
+              resource,
+            });
+          }
+        }
+
+        // Execute arrivals (transfers that have completed travel)
+        const completedTransfers: string[] = [];
+        for (const transfer of state.logisticsQueues.pendingTransfers) {
+          if (state.gameTime >= transfer.eta && transfer.status === 'scheduled') {
+            const sourceFactory = state.factories.find((f) => f.id === transfer.fromFactoryId);
+            const destFactory = state.factories.find((f) => f.id === transfer.toFactoryId);
+
+            if (sourceFactory && destFactory) {
+              executeArrival(sourceFactory, destFactory, transfer.resource, transfer.amount);
+              completedTransfers.push(transfer.id);
+            }
+          }
+        }
+
+        // Clean up completed transfers
+        state.logisticsQueues.pendingTransfers = state.logisticsQueues.pendingTransfers.filter(
+          (t) => !completedTransfers.includes(t.id),
+        );
+
+        return { logisticsTick: 0 };
+      });
     },
 
     processFactories: (dt) => {

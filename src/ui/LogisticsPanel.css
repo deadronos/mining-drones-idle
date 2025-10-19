@@ -1,0 +1,124 @@
+.logistics-panel {
+  padding: var(--panel-padding-y) var(--panel-padding-x);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: var(--card-radius);
+  background: rgba(15, 23, 42, 0.72);
+  margin-bottom: clamp(0.6rem, 0.45rem + 0.25vw, 0.85rem);
+}
+
+.logistics-panel h4 {
+  margin: 0 0 0.6rem 0;
+  font-size: clamp(0.82rem, 0.75rem + 0.2vw, 0.95rem);
+  color: #e2e8f0;
+}
+
+.logistics-panel h5 {
+  margin: 0.4rem 0 0.3rem 0;
+  font-size: clamp(0.74rem, 0.68rem + 0.18vw, 0.88rem);
+  color: #cbd5f5;
+}
+
+.logistics-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: clamp(0.45rem, 0.35rem + 0.2vw, 0.65rem);
+  margin-bottom: clamp(0.55rem, 0.45rem + 0.2vw, 0.8rem);
+  padding: clamp(0.35rem, 0.25rem + 0.2vw, 0.6rem);
+  background: rgba(30, 41, 59, 0.5);
+  border-radius: clamp(0.3rem, 0.25rem + 0.1vw, 0.45rem);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: clamp(0.72rem, 0.66rem + 0.16vw, 0.84rem);
+}
+
+.summary-item .label {
+  color: #cbd5f5;
+}
+
+.summary-item .value {
+  font-weight: 600;
+  color: #fbbf24;
+  font-size: clamp(0.78rem, 0.72rem + 0.18vw, 0.92rem);
+}
+
+.transfers-list {
+  margin-top: 0.4rem;
+}
+
+.transfer-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: clamp(0.35rem, 0.3rem + 0.15vw, 0.55rem);
+  padding: clamp(0.28rem, 0.22rem + 0.12vw, 0.4rem) clamp(0.32rem, 0.28rem + 0.1vw, 0.45rem);
+  margin-bottom: clamp(0.25rem, 0.2rem + 0.1vw, 0.35rem);
+  background: rgba(37, 99, 235, 0.08);
+  border-left: 2px solid rgba(59, 130, 246, 0.4);
+  border-radius: clamp(0.25rem, 0.2rem + 0.08vw, 0.4rem);
+}
+
+.transfer-route {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: clamp(0.68rem, 0.62rem + 0.16vw, 0.8rem);
+  color: #cbd5f5;
+  font-weight: 500;
+}
+
+.factory-short {
+  background: rgba(59, 130, 246, 0.12);
+  padding: 0.12rem 0.24rem;
+  border-radius: 0.2rem;
+  font-family: monospace;
+}
+
+.arrow {
+  color: #94a3b8;
+}
+
+.transfer-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.08rem;
+  font-size: clamp(0.68rem, 0.62rem + 0.16vw, 0.8rem);
+}
+
+.transfer-details .resource {
+  color: #86efac;
+  font-weight: 600;
+}
+
+.transfer-details .eta {
+  color: #94a3b8;
+  font-size: clamp(0.64rem, 0.58rem + 0.14vw, 0.76rem);
+}
+
+.logistics-hint {
+  margin-top: 0.4rem;
+  padding: clamp(0.28rem, 0.22rem + 0.12vw, 0.4rem) clamp(0.32rem, 0.28rem + 0.1vw, 0.45rem);
+  background: rgba(148, 163, 184, 0.08);
+  border-left: 2px solid rgba(148, 163, 184, 0.3);
+  border-radius: clamp(0.25rem, 0.2rem + 0.08vw, 0.4rem);
+}
+
+.logistics-hint p {
+  margin: 0;
+  font-size: clamp(0.68rem, 0.62rem + 0.16vw, 0.8rem);
+  color: #94a3b8;
+}
+
+.muted {
+  color: #94a3b8;
+  font-size: clamp(0.68rem, 0.62rem + 0.16vw, 0.8rem);
+}
+
+.muted.small {
+  font-size: clamp(0.64rem, 0.58rem + 0.14vw, 0.76rem);
+}

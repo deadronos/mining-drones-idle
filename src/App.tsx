@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { Scene } from '@/r3f/Scene';
 import { UpgradePanel } from '@/ui/UpgradePanel';
 import { FactoryManager } from '@/ui/FactoryManager';
+import { LogisticsPanel } from '@/ui/LogisticsPanel';
 import { useStore } from '@/state/store';
 import { SettingsPanel } from '@/ui/Settings';
 import type { PersistenceManager } from '@/state/persistence';
@@ -50,6 +51,7 @@ export const App = ({ persistence }: AppProps) => {
         </div>
         <div className="sidebar">
           <UpgradePanel />
+          <LogisticsPanel />
           <FactoryManager />
         </div>
         <AsteroidInspector />
