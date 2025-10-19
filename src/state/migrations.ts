@@ -91,6 +91,37 @@ const migrations: Array<{ targetVersion: string; migrate: MigrationFn }> = [
       return { snapshot: migrated, description: 'ensure module keys exist' };
     },
   },
+  {
+    targetVersion: '0.3.0',
+    migrate: (snapshot) => {
+      // Add hauler logistics fields
+      const migrated = { ...snapshot } as StoreSnapshot;
+      if (Array.isArray(migrated.factories)) {
+        migrated.factories = migrated.factories.map((factory: any) => ({
+          ...factory,
+          haulersAssigned: factory.haulersAssigned ?? 0,
+          haulerConfig: factory.haulerConfig ?? {
+            capacity: 50,
+            speed: 1.0,
+            pickupOverhead: 1.0,
+            dropoffOverhead: 1.0,
+            resourceFilters: [],
+            mode: 'auto',
+            priority: 5,
+          },
+          logisticsState: factory.logisticsState ?? {
+            outboundReservations: {},
+            inboundSchedules: [],
+          },
+        }));
+      }
+
+      if (!migrated.logisticsQueues) {
+        migrated.logisticsQueues = { pendingTransfers: [] };
+      }
+      return { snapshot: migrated, description: 'add hauler logistics fields' };
+    },
+  },
 ];
 
 /**
@@ -136,6 +167,14 @@ export const migrateSnapshot = (
   };
   report.toVersion = saveVersion;
   return { snapshot: working, report };
+};
+
+/**
+ * Simple wrapper for applyMigrations that returns just the migrated snapshot (for backward compatibility).
+ */
+export const applyMigrations = (snapshot: Partial<StoreSnapshot>): Partial<StoreSnapshot> => {
+  const result = migrateSnapshot(snapshot as StoreSnapshot);
+  return result.snapshot;
 };
 
 export default migrateSnapshot;
