@@ -16,7 +16,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "preview": "vite preview",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "scan-long-files": "node scripts/scan-long-files.cjs"
   },
   "dependencies": {
     "@radix-ui/themes": "^3.2.1",
