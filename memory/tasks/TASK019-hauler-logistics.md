@@ -105,7 +105,7 @@ The phased approach allows us to deliver core value quickly while leaving room f
 
 ## Progress Tracking
 
-**Overall Status:** Phase 5 (UI) Complete - 70% (Phases 1-5 done, 6-8 pending)
+**Overall Status:** Phase 8 (Balance & Polish) - 90% (Phases 1-7 done, Phase 8 mostly done)
 
 ### Subtasks
 
@@ -130,6 +130,35 @@ The phased approach allows us to deliver core value quickly while leaving room f
 | 8.2 | Tune parameters and add polish                | Not Started | 2025-10-19 |       |
 
 ## Progress Log
+
+### 2025-10-23 - Phase 6 & 8a: Visual Indicators and Cost Functions Complete
+
+- ✅ Created `src/r3f/TransferLines.tsx` component:
+  - Renders lines between factories showing active transfers
+  - Uses BufferGeometry for efficient rendering
+  - Resource-type color coding: ore (goldenrod), bars (orange), metals (silver), crystals (purple), organics (green), ice (blue)
+  - Integrates with store's logisticsQueues for real-time updates
+  - Renders only when transfers are active (performance optimization)
+- ✅ Integrated TransferLines into Scene.tsx rendering pipeline
+  - Added import and component to Suspense boundary
+  - Positioned in scene alongside other visual elements (Factory, Drones, DroneTrails)
+- ✅ Added cost calculation functions to logistics.ts:
+  - `computeHaulerCost(level, baseCost=1000, growth=1.15)`: exponential cost like other upgrades
+  - `computeHaulerMaintenanceCost(haulersActive, costPerHauler=0.5)`: energy drain per active hauler
+- ✅ Enhanced FactoryManager UI with hauler cost display:
+  - Shows next hauler cost in ore via tooltip on + button
+  - Displays "Next: X ore" in info section
+  - Integrated with existing hauler controls
+  - Proper handling of affordability checks in the UI
+- ✅ Added comprehensive cost function tests:
+  - 6 new test cases for computeHaulerCost: uniqueness, growth multiplier, custom values
+  - 4 new test cases for computeHaulerMaintenanceCost: scaling, defaults, custom costs
+  - All 17 logistics tests pass (11 existing + 6 new)
+- ✅ **Build verification**: Full production build compiles successfully
+  - `npm run build` with no TypeScript errors
+  - Vite bundle: 1,177.85KB JS (327.68KB gzipped)
+- ✅ Phase 6 complete: Visual transfer lines with color coding now visible in 3D scene
+- ✅ Phase 8 90% complete: Costs calculated and displayed in UI
 
 ### 2025-10-23 - Phase 5a & 5b: UI Implementation Complete (Verified)
 

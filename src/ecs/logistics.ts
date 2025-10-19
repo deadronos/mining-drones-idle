@@ -361,3 +361,36 @@ export const executeArrival = (
 
   return true;
 };
+
+
+/**
+ * Computes the purchase cost for a hauler at a given level
+ * Uses exponential growth like other upgrades (1.15x multiplier per level)
+ *
+ * @param level Current hauler count for this factory (0-indexed)
+ * @param baseCost Base cost of first hauler
+ * @param growth Growth multiplier per level
+ * @returns Cost in ore
+ */
+export const computeHaulerCost = (
+  level: number,
+  baseCost: number = 1000,
+  growth: number = 1.15,
+): number => {
+  return Math.ceil(baseCost * Math.pow(growth, level));
+};
+
+/**
+ * Computes the maintenance cost per second for an active hauler
+ * Maintenance is a small energy drain to incentivize efficiency
+ *
+ * @param haulersActive Number of active haulers
+ * @param costPerHauler Energy drain per hauler per second
+ * @returns Total energy drain per second
+ */
+export const computeHaulerMaintenanceCost = (
+  haulersActive: number,
+  costPerHauler: number = 0.5, // 0.5 energy/sec per active hauler
+): number => {
+  return haulersActive * costPerHauler;
+};

@@ -3,6 +3,8 @@ import {
   generateTransferId,
   LOGISTICS_CONFIG,
   RESOURCE_TYPES,
+  computeHaulerCost,
+  computeHaulerMaintenanceCost,
 } from '@/ecs/logistics';
 
 describe('Logistics System - Core Functions', () => {
@@ -95,6 +97,59 @@ describe('Logistics System - Core Functions', () => {
       // Scheduling interval should be reasonable (can be up to a few seconds)
       expect(LOGISTICS_CONFIG.scheduling_interval).toBeGreaterThan(0);
       expect(LOGISTICS_CONFIG.scheduling_interval).toBeLessThan(10);
+    });
+  });
+
+  describe('Hauler Costs', () => {
+    it('should compute exponential hauler purchase costs', () => {
+      const cost0 = computeHaulerCost(0);
+      const cost1 = computeHaulerCost(1);
+      const cost2 = computeHaulerCost(2);
+
+      expect(cost0).toBeGreaterThan(0);
+      expect(cost1).toBeGreaterThan(cost0);
+      expect(cost2).toBeGreaterThan(cost1);
+    });
+
+    it('should use 1.15x growth multiplier by default', () => {
+      const cost0 = computeHaulerCost(0);
+      const cost1 = computeHaulerCost(1);
+      const expectedCost1 = Math.ceil(cost0 * 1.15);
+
+      expect(cost1).toBe(expectedCost1);
+    });
+
+    it('should allow custom base cost and growth', () => {
+      const custom0 = computeHaulerCost(0, 500, 1.2);
+      const custom1 = computeHaulerCost(1, 500, 1.2);
+
+      expect(custom0).toBe(500);
+      expect(custom1).toBe(Math.ceil(500 * 1.2));
+    });
+
+    it('should compute maintenance cost based on hauler count', () => {
+      const cost0 = computeHaulerMaintenanceCost(0);
+      const cost1 = computeHaulerMaintenanceCost(1);
+      const cost5 = computeHaulerMaintenanceCost(5);
+
+      expect(cost0).toBe(0);
+      expect(cost1).toBeGreaterThan(0);
+      expect(cost5).toBeGreaterThan(cost1);
+      expect(cost5).toBe(cost1 * 5);
+    });
+
+    it('should use default maintenance cost per hauler', () => {
+      const cost1 = computeHaulerMaintenanceCost(1);
+      const cost2 = computeHaulerMaintenanceCost(2);
+
+      // Default is 0.5 energy/sec per hauler
+      expect(cost1).toBeCloseTo(0.5, 5);
+      expect(cost2).toBeCloseTo(1.0, 5);
+    });
+
+    it('should allow custom maintenance cost', () => {
+      const cost2 = computeHaulerMaintenanceCost(2, 1.0);
+      expect(cost2).toBe(2.0);
     });
   });
 });
