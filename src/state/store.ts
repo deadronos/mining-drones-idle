@@ -2,8 +2,6 @@ import { create } from 'zustand';
 import { createStore as createVanillaStore, type StateCreator } from 'zustand/vanilla';
 import { Vector3 } from 'three';
 import { gameWorld } from '@/ecs/world';
-import { getResourceModifiers, type ResourceModifierSnapshot } from '@/lib/resourceModifiers';
-import type { BuildableFactory } from '@/ecs/factories';
 import {
   LOGISTICS_CONFIG,
   RESOURCE_TYPES,
@@ -15,7 +13,6 @@ import {
   executeArrival,
 } from '@/ecs/logistics';
 import {
-  FACTORY_CONFIG,
   attemptDockDrone,
   computeFactoryCost,
   enforceMinOneRefining,
@@ -23,7 +20,6 @@ import {
   startRefineProcess,
   tickRefineProcess,
   transferOreToFactory as factoryTransferOre,
-  type DockingResult,
 } from '@/ecs/factories';
 
 // Type exports
@@ -101,14 +97,10 @@ export { createDefaultFactories } from './factory';
 // Internal imports for store implementation
 import type {
   StoreState,
-  RefineryStats,
-  ModuleId,
   Resources,
   Modules,
   FactoryResources,
   StoreApiType,
-  DroneFlightState,
-  StoreSnapshot,
 } from './types';
 import {
   PRESTIGE_THRESHOLD,
@@ -128,12 +120,6 @@ import {
   deriveProcessSequence,
   costForLevel,
   computePrestigeGain,
-  computePrestigeBonus,
-  getStorageCapacity,
-  getEnergyCapacity,
-  getEnergyGeneration,
-  getEnergyConsumption,
-  computeEnergyThrottle,
   computeRefineryProduction,
   applyRefineryProduction,
   computeFactoryPlacement,
@@ -142,7 +128,6 @@ import {
 import {
   cloneFactory,
   snapshotToFactory,
-  factoryToSnapshot,
   cloneDroneFlight,
   mergeResourceDelta,
   normalizeSnapshot,
@@ -155,7 +140,6 @@ import {
   stringifySnapshot,
   parseSnapshot,
 } from './serialization';
-import { applyMigrations } from './migrations';
 import { createDefaultFactories } from './factory';
 import { createFactory } from '@/ecs/factories';
 

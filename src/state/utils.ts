@@ -4,7 +4,6 @@ import type { BuildableFactory } from '@/ecs/factories';
 import type {
   VectorTuple,
   StoreState,
-  Resources,
   Modules,
   RefineryStats,
   FactoryUpgradeId,
