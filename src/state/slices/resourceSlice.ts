@@ -6,9 +6,12 @@ import {
   initialModules,
   BASE_ENERGY_CAP,
   moduleDefinitions,
+  initialSave,
 } from '../constants';
 import { costForLevel, computePrestigeGain } from '../utils';
 import { mergeResourceDelta } from '@/lib/resourceMerging';
+import { createDefaultFactories } from '../factory';
+import { generateSeed, deriveProcessSequence } from '../utils';
 
 export interface ResourceSliceState {
   resources: Resources;
@@ -89,11 +92,26 @@ export const createResourceSlice: StateCreator<
       }
       const gain = computePrestigeGain(state.resources.bars);
       const prestige = { cores: state.prestige.cores + gain };
+      const factories = createDefaultFactories();
+      const selectedFactoryId = factories[0]?.id ?? null;
       return {
         prestige,
         resources: { ...initialResources, energy: BASE_ENERGY_CAP },
         modules: { ...initialModules },
         droneFlights: [],
+        droneOwners: {},
+        factories,
+        logisticsQueues: { pendingTransfers: [] },
+        logisticsTick: 0,
+        gameTime: 0,
+        factoryProcessSequence: deriveProcessSequence(factories),
+        factoryRoundRobin: 0,
+        factoryAutofitSequence: 0,
+        cameraResetSequence: 0,
+        selectedAsteroidId: null,
+        selectedFactoryId,
+        rngSeed: generateSeed(),
+        save: { ...initialSave, lastSave: Date.now() },
       };
     });
   },

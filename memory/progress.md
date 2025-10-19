@@ -28,6 +28,7 @@
 - Updated factory storage display to surface local inventories across all resources.
 - Ensured drones removed from the fleet also clear factory queues to prevent inflated docking/waiting counts.
 - Added a Settings reset workflow with confirmation modal and store-level reset to let players wipe progress safely.
+- Brought prestige resets back in line with design by rebuilding factories/logistics/drone state and timers on each prestige while preserving earned cores.
 - Kicked off TASK012 to add per-drone target variation, seeded path offsets, and save/load persistence for active flights; requirements drafted and implementation plan captured in the task log.
 - Completed TASK012 with weighted targeting, seeded bezier travel, persisted `droneFlights`, README updates, and unit/integration coverage ensuring mid-flight saves restore correctly.
 
