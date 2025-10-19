@@ -2,7 +2,7 @@
 
 ## Summary
 
-- Began TASK026 (Settings responsive layout): drafted DES022, added RQ-041–RQ-043 requirements, refactored the panel into a grid-based layout, and verified the full Vitest suite after CSS updates.
+- Completed TASK026 (Settings responsive layout): drafted DES022, added RQ-041–RQ-043 requirements, refactored the panel into a grid-based layout, verified the full Vitest suite, and manually confirmed responsive behavior.
 - Core MVP implemented with store, ECS loop, rendering, UI, and tests.
 - Persistence foundation landed: store settings slice, persistence bootstrap, and Settings UI shipped with tests.
 - Spec refreshed (DES002/TASK003) to document current implementation, persistence utilities, and remaining roadmap gaps.
