@@ -74,4 +74,36 @@ describe('processLogistics warehouse integration', () => {
     expect(state.resources.ore).toBeLessThan(initialWarehouseOre);
     expect(factory.resources.ore).toBeGreaterThan(initialFactoryOre);
   });
+
+  it('exports surplus bars to the warehouse with resource-specific buffer', () => {
+    const factory = state.factories[0];
+    factory.resources.bars = 74;
+    factory.haulersAssigned = 1;
+
+    const firstPass = processLogistics(state);
+    const exportTransfer = firstPass.logisticsQueues.pendingTransfers.find(
+      (transfer) =>
+        transfer.toFactoryId === WAREHOUSE_NODE_ID &&
+        transfer.resource === 'bars',
+    );
+
+    expect(exportTransfer).toBeDefined();
+    expect(exportTransfer?.resource).toBe('bars');
+    // With bars target = 5, minReserve = 25, available should be ~44
+    expect(exportTransfer?.amount).toBeGreaterThan(0);
+
+    const initialFactoryBars = factory.resources.bars;
+    const initialWarehouseBars = state.resources.bars;
+
+    state.logisticsQueues = firstPass.logisticsQueues;
+    state.gameTime = exportTransfer!.eta + 0.01;
+
+    const secondPass = processLogistics(state);
+
+    expect(secondPass.logisticsQueues.pendingTransfers).not.toContainEqual(
+      expect.objectContaining({ id: exportTransfer!.id }),
+    );
+    expect(factory.resources.bars).toBeLessThan(initialFactoryBars);
+    expect(state.resources.bars).toBeGreaterThan(initialWarehouseBars);
+  });
 });

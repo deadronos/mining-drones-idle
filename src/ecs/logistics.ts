@@ -55,18 +55,35 @@ export const generateTransferId = (): string => {
  */
 export const computeBufferTarget = (
   factory: BuildableFactory,
-  _resource: TransportableResource,
+  resource: TransportableResource,
   bufferSeconds: number = LOGISTICS_CONFIG.buffer_seconds,
 ): number => {
-  // Simplified: assume ore is consumed at a predictable rate based on refine slots
-  // For now, return a fixed target. Actual consumption rate should be computed from factory state
-  // This is a placeholder that will be improved when consumption rate data is available
-
-  // Base consumption depends on refine slots and current activity
-  // Conservative estimate: assume ~50 ore per minute per active slot
-  const orePerMinute = 50;
-  const orePerSecond = orePerMinute / 60;
-  return bufferSeconds * orePerSecond * Math.max(1, factory.refineSlots);
+  // Resource-specific buffer targets based on consumption/production patterns
+  switch (resource) {
+    case 'ore': {
+      // Ore is consumed by refineries to produce bars
+      // Base consumption ~50 ore per minute per active refine slot
+      const orePerMinute = 50;
+      const orePerSecond = orePerMinute / 60;
+      return bufferSeconds * orePerSecond * Math.max(1, factory.refineSlots);
+    }
+    case 'bars': {
+      // Bars are produced (output), not consumed at this factory
+      // Keep only minimal working buffer for local operations
+      return 5;
+    }
+    case 'metals':
+    case 'crystals':
+    case 'organics':
+    case 'ice': {
+      // Intermediate resources: conservative buffer for processing
+      return 20;
+    }
+    default: {
+      // Fallback for unknown resources
+      return 15;
+    }
+  }
 };
 
 /**
