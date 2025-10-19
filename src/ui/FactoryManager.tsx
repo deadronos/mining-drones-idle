@@ -287,14 +287,15 @@ const SelectedFactoryCard = ({
               type="button"
               onClick={() => {
                 const nextCost = computeHaulerCost(factory.haulersAssigned ?? 0);
-                const canAfford = factory.resources.ore >= nextCost;
+                const canAfford = factory.resources.bars >= nextCost;
                 if (canAfford) {
                   onAssignHaulers(factory.id, 1);
                 }
               }}
               className="hauler-btn"
               aria-label="Add hauler"
-              title={`Cost: ${Math.ceil(computeHaulerCost(factory.haulersAssigned ?? 0))} ore`}
+              title={`Cost: ${Math.ceil(computeHaulerCost(factory.haulersAssigned ?? 0))} bars`}
+              disabled={factory.resources.bars < computeHaulerCost(factory.haulersAssigned ?? 0)}
             >
               +
             </button>
@@ -321,11 +322,11 @@ const SelectedFactoryCard = ({
               <p className="desc">
                 This factory has {factory.haulersAssigned} hauler{factory.haulersAssigned === 1 ? '' : 's'} assigned.
               </p>
-              <p className="next-cost">Next: {Math.ceil(nextCost)} ore</p>
+              <p className="next-cost">Next: {Math.ceil(nextCost)} bars</p>
             </div>
           ) : (
             <p className="muted small">
-              Next: {Math.ceil(nextCost)} ore · Assign haulers to enable automatic resource transfers.
+              Next: {Math.ceil(nextCost)} bars · Assign haulers to enable automatic resource transfers.
             </p>
           );
         })()}

@@ -6,6 +6,7 @@ Execute TASK019 (Hauler Logistics Implementation) — Phase 6 visuals landed; pr
 
 ## Recent Changes
 
+- ✅ **Hauler Cost Gating**: Factory-level hauler purchases now spend bars (base 10, exponential growth) via updates to `assignHaulers`, UI affordances, and supporting tests (`src/state/store.ts`, `src/ui/FactoryManager.tsx`, `src/ecs/logistics.test.ts`).
 - ✅ **Phase 6 Visual Indicators**: Transfer lines now render as thickness-scaled meshes with arrowheads and hover tooltips tied to live ETAs (`src/r3f/TransferLines.tsx`), with `npm run typecheck` verification.
 - ✅ **Phase 5a & 5b Complete**: Full UI implementation delivered
   - Created `src/ui/LogisticsPanel.tsx` with global logistics overview
@@ -45,10 +46,10 @@ Execute TASK019 (Hauler Logistics Implementation) — Phase 6 visuals landed; pr
 
 **Option B: Balance & Polish**
 
-- Phase 8: Add hauler cost/maintenance hooks, parameter tuning, UX polish
+- Phase 8: Finish hauler maintenance energy drain, tune cost curves, and refine UX/tooltips
 
 ## References
 
 - Task details: `memory/tasks/TASK019-hauler-logistics.md`
 - Design: `memory/designs/DES018-per-factory-upgrades-hauler-logistics.md`
-- Progress tracking: Phase 6 (75% complete, Phases 1-6 done)
+- Progress tracking: Phase 6 (78% complete, Phases 1-6 done, Phase 8 cost work underway)

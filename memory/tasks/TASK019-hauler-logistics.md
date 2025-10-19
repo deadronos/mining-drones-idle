@@ -105,7 +105,7 @@ The phased approach allows us to deliver core value quickly while leaving room f
 
 ## Progress Tracking
 
-**Overall Status:** Phase 6 complete - 75% (Phases 1-6 delivered; testing/polish pending)
+**Overall Status:** Phase 6 complete - 78% (Phases 1-6 delivered; cost gating in progress, tests/polish pending)
 
 ### Subtasks
 
@@ -126,7 +126,7 @@ The phased approach allows us to deliver core value quickly while leaving room f
 | 7.1 | Write unit tests for scheduler                | Complete    | 2025-10-19 | ✅    |
 | 7.2 | Write integration tests                       | Complete    | 2025-10-19 | ✅    |
 | 7.3 | Performance testing                           | Not Started | 2025-10-19 |       |
-| 8.1 | Implement cost and maintenance                | Not Started | 2025-10-19 |       |
+| 8.1 | Implement cost and maintenance                | In Progress | 2025-10-23 | Hauler purchases now consume factory bars; maintenance TBD |
 | 8.2 | Tune parameters and add polish                | Not Started | 2025-10-19 |       |
 
 ## Progress Log
@@ -137,6 +137,13 @@ The phased approach allows us to deliver core value quickly while leaving room f
 - ✅ Added hover tooltips via Drei `Html` overlay showing route, resource amount, and live ETA.
 - ✅ Corrected factory ID field usage (`fromFactoryId`/`toFactoryId`) so visuals track real transfers.
 - ✅ Highlighted active transfers with emissive material response and ran `npm run typecheck` to verify.
+
+### 2025-10-23 - Phase 8 Cost Flow Update
+
+- ✅ Switched hauler purchase cost to consume factory bars (base 10 bars, 1.15x growth) with UI gating (`src/ui/FactoryManager.tsx`).
+- ✅ `assignHaulers` now treats the count parameter as a delta, validates affordability per hauler, and deducts bars atomically (`src/state/store.ts`).
+- ✅ Added regression coverage asserting the default hauler cost baseline in `src/ecs/logistics.test.ts`.
+- ⚠️ Maintenance drain remains pending (tracked under Phase 8.1).
 
 ### 2025-10-23 - Phase 6 & 8a (earlier placeholder, superseded)
 

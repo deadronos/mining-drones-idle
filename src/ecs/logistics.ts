@@ -374,7 +374,7 @@ export const executeArrival = (
  */
 export const computeHaulerCost = (
   level: number,
-  baseCost: number = 1000,
+  baseCost: number = 10,
   growth: number = 1.15,
 ): number => {
   return Math.ceil(baseCost * Math.pow(growth, level));

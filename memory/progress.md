@@ -20,6 +20,7 @@
  - TASK008/TASK011: Visuals completed and integrated. Trails, conveyors, transfer FX, and boost pulses are implemented and gated by performance profiles. Visual snapshot tests and a perf scene were added for baseline measurements.
 
 - Finalized Phase 6 hauler logistics visuals with arrowed transfer meshes, resource-aware coloring, and hover tooltips tied to live ETAs.
+- Shifted hauler purchasing to bar-based costs with store-level affordability checks and UI gating, laying groundwork for Phase 8 balance work.
 - Kicked off TASK012 to add per-drone target variation, seeded path offsets, and save/load persistence for active flights; requirements drafted and implementation plan captured in the task log.
 - Completed TASK012 with weighted targeting, seeded bezier travel, persisted `droneFlights`, README updates, and unit/integration coverage ensuring mid-flight saves restore correctly.
 

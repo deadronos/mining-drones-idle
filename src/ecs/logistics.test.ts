@@ -111,6 +111,10 @@ describe('Logistics System - Core Functions', () => {
       expect(cost2).toBeGreaterThan(cost1);
     });
 
+    it('should default the first hauler to a 10-bar cost', () => {
+      expect(computeHaulerCost(0)).toBe(10);
+    });
+
     it('should use 1.15x growth multiplier by default', () => {
       const cost0 = computeHaulerCost(0);
       const cost1 = computeHaulerCost(1);

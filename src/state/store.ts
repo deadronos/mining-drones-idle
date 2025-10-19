@@ -17,6 +17,7 @@ import {
   LOGISTICS_CONFIG,
   RESOURCE_TYPES,
   generateTransferId,
+  computeHaulerCost,
   matchSurplusToNeed,
   reserveOutbound,
   executeArrival,
@@ -460,7 +461,7 @@ export interface StoreState {
   addResourcesToFactory(this: void, factoryId: string, delta: Partial<FactoryResources>): void;
   allocateFactoryEnergy(this: void, factoryId: string, amount: number): number;
   upgradeFactory(this: void, factoryId: string, upgrade: keyof FactoryUpgrades): boolean;
-  assignHaulers(this: void, factoryId: string, count: number): boolean;
+  assignHaulers(this: void, factoryId: string, delta: number): boolean;
   updateHaulerConfig(this: void, factoryId: string, config: Partial<HaulerConfig>): void;
   getLogisticsStatus(this: void, factoryId: string): { haulersAssigned: number; config?: HaulerConfig; state?: FactoryLogisticsState } | null;
   processLogistics(this: void, dt: number): void;
@@ -1601,18 +1602,72 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
       return true;
     },
 
-    assignHaulers: (factoryId, count) => {
-      const state = get();
-      const index = state.factories.findIndex((f) => f.id === factoryId);
-      if (index === -1) return false;
+    assignHaulers: (factoryId, delta) => {
+      if (!Number.isFinite(delta) || delta === 0) {
+        return false;
+      }
 
+      if (delta > 0) {
+        let purchaseSuccessful = false;
+        set((current) => {
+          const index = current.factories.findIndex((factory) => factory.id === factoryId);
+          if (index === -1) {
+            return current;
+          }
+
+          const factory = cloneFactory(current.factories[index]);
+          let remaining = Math.trunc(delta);
+          let nextCount = factory.haulersAssigned ?? 0;
+          let barsAvailable = factory.resources.bars;
+
+          while (remaining > 0) {
+            const cost = computeHaulerCost(nextCount);
+            if (barsAvailable < cost) {
+              purchaseSuccessful = false;
+              return current;
+            }
+            barsAvailable -= cost;
+            nextCount += 1;
+            remaining -= 1;
+          }
+
+          factory.haulersAssigned = nextCount;
+          factory.resources = { ...factory.resources, bars: barsAvailable };
+          purchaseSuccessful = true;
+
+          const factories = current.factories.map((candidate, idx) =>
+            idx === index ? factory : candidate,
+          );
+          return { factories };
+        });
+        return purchaseSuccessful;
+      }
+
+      let updated = false;
       set((current) => {
+        const index = current.factories.findIndex((factory) => factory.id === factoryId);
+        if (index === -1) {
+          return current;
+        }
+
         const factory = cloneFactory(current.factories[index]);
-        factory.haulersAssigned = Math.max(0, count);
-        const factories = current.factories.map((f, idx) => (idx === index ? factory : f));
+        const currentCount = factory.haulersAssigned ?? 0;
+        const nextCount = Math.max(0, currentCount + Math.trunc(delta));
+
+        if (nextCount === currentCount) {
+          updated = false;
+          return current;
+        }
+
+        factory.haulersAssigned = nextCount;
+        updated = true;
+
+        const factories = current.factories.map((candidate, idx) =>
+          idx === index ? factory : candidate,
+        );
         return { factories };
       });
-      return true;
+      return updated;
     },
 
     updateHaulerConfig: (factoryId, config) => {
