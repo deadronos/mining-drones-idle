@@ -41,8 +41,6 @@ export const FactoryManager = () => {
   const triggerAutofit = useStore((state) => state.triggerFactoryAutofit);
   const resetCamera = useStore((state) => state.resetCamera);
   const assignHaulers = useStore((state) => state.assignHaulers);
-  const updateHaulerConfig = useStore((state) => state.updateHaulerConfig);
-  const getLogisticsStatus = useStore((state) => state.getLogisticsStatus);
 
   const factoryCount = factories.length;
   const nextCost = useMemo(() => computeFactoryCost(Math.max(0, factoryCount - 1)), [factoryCount]);
@@ -112,8 +110,6 @@ export const FactoryManager = () => {
           onUpgrade={handleUpgrade}
           onTogglePin={toggleFactoryPinned}
           onAssignHaulers={assignHaulers}
-          onUpdateHaulerConfig={updateHaulerConfig}
-          onGetLogisticsStatus={getLogisticsStatus}
         />
       ) : (
         <p className="factory-empty">Construct a factory to begin routing drones.</p>
@@ -131,8 +127,6 @@ interface SelectedFactoryCardProps {
   onUpgrade: (upgrade: FactoryUpgradeId) => void;
   onTogglePin: (factoryId: string) => void;
   onAssignHaulers: (factoryId: string, count: number) => boolean;
-  onUpdateHaulerConfig: (factoryId: string, config: Record<string, unknown>) => void;
-  onGetLogisticsStatus: (factoryId: string) => { haulersAssigned: number } | null;
 }
 
 const SelectedFactoryCard = ({
@@ -144,8 +138,6 @@ const SelectedFactoryCard = ({
   onUpgrade,
   onTogglePin,
   onAssignHaulers,
-  onUpdateHaulerConfig,
-  onGetLogisticsStatus,
 }: SelectedFactoryCardProps) => {
   const queueCount = factory.queuedDrones.length;
   const docked = Math.min(queueCount, factory.dockingCapacity);

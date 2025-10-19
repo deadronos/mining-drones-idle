@@ -2,7 +2,7 @@
 
 **Status:** In Progress  
 **Added:** 2025-10-19  
-**Updated:** 2025-10-19  
+**Updated:** 2025-10-23  
 **Design Reference:** [DES018: Per-Factory Upgrades & Hauler Logistics](../designs/DES018-per-factory-upgrades-hauler-logistics.md)
 
 ## Original Request
@@ -19,6 +19,7 @@ The hauler logistics system is a critical feature for scaling the multi-factory 
 4. **Minimal global state changes** to keep migration low-risk
 
 Key implementation challenges:
+
 - Performance at scale (50+ factories with O(N²) matching)
 - Save/load migration without breaking existing saves
 - UI that's intuitive for both new and advanced players
@@ -104,31 +105,55 @@ The phased approach allows us to deliver core value quickly while leaving room f
 
 ## Progress Tracking
 
-**Overall Status:** Phase 7 Complete - 85% (Phases 1-7 done, 8 pending)
+**Overall Status:** Phase 5 (UI) Complete - 70% (Phases 1-5 done, 6-8 pending)
 
 ### Subtasks
 
-| ID   | Description                                    | Status      | Updated    | Notes |
-| ---- | ---------------------------------------------- | ----------- | ---------- | ----- |
-| 1.1  | Extend type definitions                        | Complete    | 2025-10-19 | ✅    |
-| 1.2  | Update serialization                           | Complete    | 2025-10-19 | ✅    |
-| 2.1  | Create logistics.ts with core functions        | Complete    | 2025-10-19 | ✅    |
-| 2.2  | Implement processLogistics method              | Complete    | 2025-10-19 | ✅    |
-| 3.1  | Add store logistics methods                    | Complete    | 2025-10-19 | ✅    |
-| 3.2  | Hook into game loop                            | Complete    | 2025-10-19 | ✅    |
-| 4.1  | Bump save version and add migration            | Complete    | 2025-10-19 | ✅    |
-| 4.2  | Update persistence tests                       | Not Started | 2025-10-19 |       |
-| 5.1  | Create LogisticsPanel component                | Complete    | 2025-10-19 | ✅    |
-| 5.2  | Extend Factory Inspector with hauler controls  | Complete    | 2025-10-19 | ✅    |
-| 6.1  | Add 3D transfer visualization                  | Not Started | 2025-10-19 |       |
-| 6.2  | Add hover tooltips                             | Not Started | 2025-10-19 |       |
-| 7.1  | Write unit tests for scheduler                 | Complete    | 2025-10-19 | ✅    |
-| 7.2  | Write integration tests                        | Complete    | 2025-10-19 | ✅    |
-| 7.3  | Performance testing                            | Not Started | 2025-10-19 |       |
-| 8.1  | Implement cost and maintenance                 | Not Started | 2025-10-19 |       |
-| 8.2  | Tune parameters and add polish                 | Not Started | 2025-10-19 |       |
+| ID  | Description                                   | Status      | Updated    | Notes |
+| --- | --------------------------------------------- | ----------- | ---------- | ----- |
+| 1.1 | Extend type definitions                       | Complete    | 2025-10-19 | ✅    |
+| 1.2 | Update serialization                          | Complete    | 2025-10-19 | ✅    |
+| 2.1 | Create logistics.ts with core functions       | Complete    | 2025-10-19 | ✅    |
+| 2.2 | Implement processLogistics method             | Complete    | 2025-10-19 | ✅    |
+| 3.1 | Add store logistics methods                   | Complete    | 2025-10-19 | ✅    |
+| 3.2 | Hook into game loop                           | Complete    | 2025-10-19 | ✅    |
+| 4.1 | Bump save version and add migration           | Complete    | 2025-10-19 | ✅    |
+| 4.2 | Update persistence tests                      | Not Started | 2025-10-19 |       |
+| 5.1 | Create LogisticsPanel component               | Complete    | 2025-10-19 | ✅    |
+| 5.2 | Extend Factory Inspector with hauler controls | Complete    | 2025-10-19 | ✅    |
+| 6.1 | Add 3D transfer visualization                 | Not Started | 2025-10-19 |       |
+| 6.2 | Add hover tooltips                            | Not Started | 2025-10-19 |       |
+| 7.1 | Write unit tests for scheduler                | Complete    | 2025-10-19 | ✅    |
+| 7.2 | Write integration tests                       | Complete    | 2025-10-19 | ✅    |
+| 7.3 | Performance testing                           | Not Started | 2025-10-19 |       |
+| 8.1 | Implement cost and maintenance                | Not Started | 2025-10-19 |       |
+| 8.2 | Tune parameters and add polish                | Not Started | 2025-10-19 |       |
 
 ## Progress Log
+
+### 2025-10-23 - Phase 5a & 5b: UI Implementation Complete (Verified)
+
+- ✅ Verified Phase 5a: LogisticsPanel.tsx global overview
+  - Component correctly displays in App.tsx sidebar
+  - Shows total haulers, active transfers, completed transfers summary
+  - Real-time transfer list with source→dest routes and ETAs
+  - Auto-updates every 500ms for current ETA display
+  - Responsive styling in LogisticsPanel.css
+  - Proper empty/hint messaging for UX clarity
+- ✅ Verified Phase 5b: FactoryManager hauler controls
+  - Hauler Logistics section in SelectedFactoryCard component
+  - +/- buttons for assigning/removing haulers per factory
+  - Current hauler count display with conditional info message
+  - Proper integration with `assignHaulers()` store method
+  - Styling in FactoryManager.css with proper hover/disabled states
+- ✅ Cleaned up unused component props and store hooks
+  - Removed `onUpdateHaulerConfig` and `onGetLogisticsStatus` from SelectedFactoryCardProps
+  - Removed unused store selectors `updateHaulerConfig` and `getLogisticsStatus`
+  - All TypeScript errors resolved
+- ✅ **Build verification**: Full production build completes successfully
+  - `npm run build` compiles with no TypeScript errors
+  - Vite bundle produces 1,175KB JS (326KB gzipped), 19.64KB CSS (4.3KB gzipped)
+  - Ready for deployment
 
 ### 2025-10-19 - Phase 7: Testing Complete
 
