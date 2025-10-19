@@ -105,7 +105,7 @@ The phased approach allows us to deliver core value quickly while leaving room f
 
 ## Progress Tracking
 
-**Overall Status:** Phase 8 (Balance & Polish) - 90% (Phases 1-7 done, Phase 8 mostly done)
+**Overall Status:** Phase 6 complete - 75% (Phases 1-6 delivered; testing/polish pending)
 
 ### Subtasks
 
@@ -121,8 +121,8 @@ The phased approach allows us to deliver core value quickly while leaving room f
 | 4.2 | Update persistence tests                      | Not Started | 2025-10-19 |       |
 | 5.1 | Create LogisticsPanel component               | Complete    | 2025-10-19 | ✅    |
 | 5.2 | Extend Factory Inspector with hauler controls | Complete    | 2025-10-19 | ✅    |
-| 6.1 | Add 3D transfer visualization                 | Not Started | 2025-10-19 |       |
-| 6.2 | Add hover tooltips                            | Not Started | 2025-10-19 |       |
+| 6.1 | Add 3D transfer visualization                 | Complete    | 2025-10-23 | Arrow meshes with thickness & arrowheads |
+| 6.2 | Add hover tooltips                            | Complete    | 2025-10-23 | Html overlay with route/ETA |
 | 7.1 | Write unit tests for scheduler                | Complete    | 2025-10-19 | ✅    |
 | 7.2 | Write integration tests                       | Complete    | 2025-10-19 | ✅    |
 | 7.3 | Performance testing                           | Not Started | 2025-10-19 |       |
@@ -131,7 +131,16 @@ The phased approach allows us to deliver core value quickly while leaving room f
 
 ## Progress Log
 
-### 2025-10-23 - Phase 6 & 8a: Visual Indicators and Cost Functions Complete
+### 2025-10-23 - Phase 6 Visual Indicators Finalized
+
+- ✅ Rebuilt `src/r3f/TransferLines.tsx` to render per-transfer meshes with thickness scaling and arrowheads.
+- ✅ Added hover tooltips via Drei `Html` overlay showing route, resource amount, and live ETA.
+- ✅ Corrected factory ID field usage (`fromFactoryId`/`toFactoryId`) so visuals track real transfers.
+- ✅ Highlighted active transfers with emissive material response and ran `npm run typecheck` to verify.
+
+### 2025-10-23 - Phase 6 & 8a (earlier placeholder, superseded)
+
+- ℹ️ Recorded prior notes before final visual work; see entry above for shipping details.
 
 - ✅ Created `src/r3f/TransferLines.tsx` component:
   - Renders lines between factories showing active transfers
@@ -157,7 +166,7 @@ The phased approach allows us to deliver core value quickly while leaving room f
 - ✅ **Build verification**: Full production build compiles successfully
   - `npm run build` with no TypeScript errors
   - Vite bundle: 1,177.85KB JS (327.68KB gzipped)
-- ✅ Phase 6 complete: Visual transfer lines with color coding now visible in 3D scene
+- ✅ (Initial stub) Phase 6 complete: Visual transfer lines with color coding now visible in 3D scene
 - ✅ Phase 8 90% complete: Costs calculated and displayed in UI
 
 ### 2025-10-23 - Phase 5a & 5b: UI Implementation Complete (Verified)

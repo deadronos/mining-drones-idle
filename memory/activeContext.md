@@ -2,10 +2,11 @@
 
 ## Current Focus
 
-Execute TASK019 (Hauler Logistics Implementation Phase 5 Complete): UI components created and integrated - LogisticsPanel provides global overview, FactoryManager extended with hauler controls.
+Execute TASK019 (Hauler Logistics Implementation) — Phase 6 visuals landed; prepping validation/polish follow-up after integrating 3D transfer cues.
 
 ## Recent Changes
 
+- ✅ **Phase 6 Visual Indicators**: Transfer lines now render as thickness-scaled meshes with arrowheads and hover tooltips tied to live ETAs (`src/r3f/TransferLines.tsx`), with `npm run typecheck` verification.
 - ✅ **Phase 5a & 5b Complete**: Full UI implementation delivered
   - Created `src/ui/LogisticsPanel.tsx` with global logistics overview
     - Displays total haulers, active transfers, completed transfers
@@ -32,26 +33,22 @@ Execute TASK019 (Hauler Logistics Implementation Phase 5 Complete): UI component
 6. ✅ Phase 2b: Full processLogistics() orchestration
 7. ✅ Phase 5a: LogisticsPanel.tsx (global overview)
 8. ✅ Phase 5b: FactoryManager hauler controls (per-factory UI)
+9. ✅ Phase 6: TransferLines visual pass (thickness, arrowheads, tooltips)
 
 ## Next Steps
 
-**Option A: Continue 3D Visualization** (2-3 hours)
+**Option A: Testing & Validation** (2-3 hours)
 
-- Phase 6a: Add transfer lines/arrows in 3D scene
-- Phase 6b: Implement resource color coding and hover tooltips
+- Phase 7: Expand unit coverage for logistics algorithm
+- Phase 7b: Harden integration tests (hauler flows, persistence)
+- Phase 7c: Performance soak with 50+ factories
 
-**Option B: Add/Complete Tests** (2-3 hours)
+**Option B: Balance & Polish**
 
-- Phase 7: Write unit tests for logistics algorithm (partial done)
-- Phase 7b: Write integration tests (partial done)
-- Phase 7c: Performance testing with 50+ factories
-
-### Option C: Balance & Polish
-
-- Phase 8: Add hauler cost calculations, maintenance energy, parameter tuning
+- Phase 8: Add hauler cost/maintenance hooks, parameter tuning, UX polish
 
 ## References
 
 - Task details: `memory/tasks/TASK019-hauler-logistics.md`
 - Design: `memory/designs/DES018-per-factory-upgrades-hauler-logistics.md`
-- Progress tracking: Phase 5 (60% complete, Phases 1-5 done)
+- Progress tracking: Phase 6 (75% complete, Phases 1-6 done)
