@@ -20,11 +20,11 @@ Prioritize deterministic unit tests for newly added systems and add Playwright s
 
 ## Subtasks
 
-| ID | Description | Status | Updated | Notes |
-| --- | ----------- | ------ | ------- | ----- |
-| 9.1 | Unit test coverage | Partially Completed | 2025-02-18 | Vitest unit tests exist for store, persistence, refinery, power, and mining systems (`src/**/*.test.ts`). |
+| ID  | Description          | Status              | Updated    | Notes                                                                                                                |
+| --- | -------------------- | ------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------- |
+| 9.1 | Unit test coverage   | Partially Completed | 2025-02-18 | Vitest unit tests exist for store, persistence, refinery, power, and mining systems (`src/**/*.test.ts`).            |
 | 9.2 | Playwright scenarios | Partially Completed | 2025-02-14 | Playwright e2e exists in `tests/e2e/basic.spec.ts` but targeted scenarios for import/export/offline should be added. |
-| 9.3 | CI workflow | Not Started | 2025-10-16 | No `.github/workflows` present in repository; CI workflow should be added. |
+| 9.3 | CI workflow          | Not Started         | 2025-10-16 | No `.github/workflows` present in repository; CI workflow should be added.                                           |
 
 ## Acceptance Criteria
 
@@ -41,3 +41,12 @@ Prioritize deterministic unit tests for newly added systems and add Playwright s
 
 - Added initial CI workflow `.github/workflows/ci.yml` that runs lint, Vitest unit tests, and Playwright e2e. Uses caching and uploads artifacts on failures. Next: run CI on branch, add targeted Playwright scenarios, and improve artifact collection (junit/coverage outputs).
 
+### 2025-10-19 - Verification
+
+- Verified presence of `.github/workflows/ci.yml` in repository and reviewed its steps (install, lint, unit tests, Playwright e2e, artifact uploads).
+- Ran local verification on 2025-10-19:
+  - `npm run typecheck` (tsc build) completed with no reported errors.
+  - `npm run test` (Vitest) executed: 143 tests passed (30 files), several real-time stderr logs noted during tests but no failures.
+  - `npm run build` (tsc + vite build) completed successfully and produced `dist/` artifacts.
+
+Notes: Add explicit artifact output paths in Acceptance Criteria (coverage/junit) and add missing targeted Playwright scenarios for persistence/import/export. See recommendations in task file.

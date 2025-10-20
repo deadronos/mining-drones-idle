@@ -46,6 +46,7 @@ export interface DroneEntity {
   state: DroneState;
   targetId: string | null;
   targetRegionId: string | null;
+  targetFactoryId: string | null;
   cargo: number;
   capacity: number;
   speed: number;
@@ -58,6 +59,7 @@ export interface DroneEntity {
   lastDockingFrom: Vector3 | null;
   flightSeed: number | null;
   cargoProfile: ResourceWeights;
+  ownerFactoryId: string | null;
 }
 
 export interface AsteroidEntity {
@@ -160,6 +162,7 @@ const createDrone = (origin: Vector3): DroneEntity => ({
   state: 'idle',
   targetId: null,
   targetRegionId: null,
+  targetFactoryId: null,
   cargo: 0,
   capacity: DEFAULT_DRONE_CAPACITY,
   speed: DEFAULT_DRONE_SPEED,
@@ -172,6 +175,7 @@ const createDrone = (origin: Vector3): DroneEntity => ({
   lastDockingFrom: null,
   flightSeed: null,
   cargoProfile: { ore: 0, metals: 0, crystals: 0, organics: 0, ice: 0 },
+  ownerFactoryId: null,
 });
 
 const isDrone = (entity: Entity): entity is DroneEntity => entity.kind === 'drone';
@@ -195,7 +199,15 @@ export const createGameWorld = (options: CreateWorldOptions = {}): GameWorld => 
   return { world, factory, droneQuery, asteroidQuery, rng, events };
 };
 
-const initialSeed = storeApi.getState().rngSeed;
+let initialSeed = Date.now();
+try {
+  if (storeApi && typeof storeApi.getState === 'function') {
+    initialSeed = storeApi.getState().rngSeed;
+  }
+} catch (_err) {
+  // Fallback to time-based seed if store API is not yet initialized (e.g., during tests).
+  initialSeed = Date.now();
+}
 
 export const gameWorld = createGameWorld({ rng: createRng(initialSeed) });
 

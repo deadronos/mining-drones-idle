@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { Vector3 } from 'three';
-import { assignDroneTarget } from '@/ecs/systems/droneAI';
+import { Quaternion, Vector3 } from 'three';
+import { assignDroneTarget, createDroneAISystem } from '@/ecs/systems/droneAI';
 import { computeWaypointWithOffset } from '@/ecs/systems/travel';
 import type { AsteroidEntity, DroneEntity } from '@/ecs/world';
 import { createRng } from '@/lib/rng';
@@ -44,7 +44,9 @@ const createDrone = (position: Vector3): DroneEntity => ({
   charging: false,
   lastDockingFrom: null,
   flightSeed: null,
+  targetFactoryId: null,
   cargoProfile: { ore: 0, metals: 0, crystals: 0, organics: 0, ice: 0 },
+  ownerFactoryId: null,
 });
 
 describe('assignDroneTarget', () => {
@@ -75,5 +77,64 @@ describe('computeWaypointWithOffset', () => {
     expect(base.equals(new Vector3(10, 1, -3))).toBe(true);
     const different = computeWaypointWithOffset(base, 12345, 1);
     expect(first.equals(different)).toBe(false);
+  });
+});
+
+describe('createDroneAISystem', () => {
+  it('clears stale factory assignments when drone state is idle', () => {
+    const drone = createDrone(new Vector3(0, 0, 0));
+    const factoryId = 'factory-stub';
+    const factory = {
+      id: factoryId,
+      dockingCapacity: 1,
+      queuedDrones: [drone.id],
+      position: new Vector3(5, 0, 0),
+    };
+    const state = {
+      factories: [factory],
+      droneFlights: [] as any[],
+      getFactory: (id: string) => (id === factory.id ? factory : undefined),
+      undockDroneFromFactory: (_factoryId: string, droneId: string) => {
+        factory.queuedDrones = factory.queuedDrones.filter((id) => id !== droneId);
+      },
+      clearDroneFlight: (_droneId: string) => {},
+    };
+    const store = {
+      getState: () => state,
+    };
+    const world = {
+      droneQuery: {
+        entities: [drone],
+        [Symbol.iterator]: function* () {
+          yield drone;
+        },
+      },
+      asteroidQuery: {
+        entities: [] as AsteroidEntity[],
+        [Symbol.iterator]: function* () {
+          return;
+        },
+      },
+      rng: createRng(1),
+      events: { transfers: [] },
+      factory: {
+        id: factoryId,
+        kind: 'factory',
+        position: factory.position.clone(),
+        orientation: new Quaternion(),
+        activity: { processing: 0, throughput: 0, boost: 0, lastTransferAt: 0 },
+      },
+      world: {} as unknown,
+    };
+    const aiSystem = createDroneAISystem(world as any, store as any);
+
+    drone.state = 'idle';
+    drone.targetFactoryId = factory.id;
+
+    aiSystem(0.016);
+
+    expect(drone.targetFactoryId).toBeNull();
+    expect(factory.queuedDrones.includes(drone.id)).toBe(false);
+    expect(drone.state).toBe('idle');
   });
 });

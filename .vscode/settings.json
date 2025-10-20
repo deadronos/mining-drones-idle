@@ -9,4 +9,6 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   },
+  "agentMemory.storageBackend": "disk",
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
 }

@@ -23,14 +23,14 @@ Factory visuals require art assets (sprites/meshes), cheap GPU techniques (UV-sc
 
 ## Subtasks
 
-| ID   | Description                                | Status      | Updated    |
-| ---- | ------------------------------------------ | ----------- | ---------- |
-| 11.1 | FactoryModel placeholder & materials       | Completed   | 2025-10-17 |
-| 11.2 | ConveyorSystem + UV-scroll shader          | Completed   | 2025-10-17 |
-| 11.3 | TransferFX pool + event wiring             | Completed   | 2025-10-17 |
-| 11.4 | Boost emissive pulse                       | Completed   | 2025-10-17 |
+| ID   | Description                                  | Status      | Updated    |
+| ---- | -------------------------------------------- | ----------- | ---------- |
+| 11.1 | FactoryModel placeholder & materials         | Completed   | 2025-10-17 |
+| 11.2 | ConveyorSystem + UV-scroll shader            | Completed   | 2025-10-17 |
+| 11.3 | TransferFX pool + event wiring               | Completed   | 2025-10-17 |
+| 11.4 | Boost emissive pulse                         | Completed   | 2025-10-17 |
 | 11.5 | Settings integration for performance profile | Completed   | 2025-10-17 |
-| 11.6 | Visual snapshot tests + perf scene         | In Progress | 2025-10-17 |
+| 11.6 | Visual snapshot tests + perf scene           | Completed   | 2025-10-18 |
 
 ## Acceptance Criteria
 
@@ -48,3 +48,6 @@ Factory visuals require art assets (sprites/meshes), cheap GPU techniques (UV-sc
 
 - Implemented factory activity tracking, conveyor animation, transfer FX, and boost pulse wired into the ECS; added profile-aware visuals and unit coverage for unload/refinery systems. Snapshot/perf scene follow-up remains open.
 
+### 2025-10-18
+
+- Created visual snapshot tests and a `tests/perf/factory-stress` scene used to measure frame impact across performance profiles. Ran smoke perf runs and recorded baseline frame timings; 'low' profile disables expensive FX as expected. Marking TASK011 completed.

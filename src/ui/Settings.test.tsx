@@ -1,8 +1,11 @@
+import '@testing-library/jest-dom/vitest';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { SettingsPanel } from '@/ui/Settings';
 import { storeApi } from '@/state/store';
 import type { PersistenceManager } from '@/state/persistence';
+import { createFactory } from '@/ecs/factories';
+import { Vector3 } from 'three';
 
 const createPersistenceMock = () => {
   const persistence: PersistenceManager = {
@@ -126,5 +129,29 @@ describe('ui/Settings', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /close settings/i }));
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('resets game state after confirmation', () => {
+    const persistence = createPersistenceMock();
+    storeApi.setState((state) => ({
+      ...state,
+      resources: { ...state.resources, ore: 123, bars: 45 },
+      factories: [
+        ...state.factories,
+        createFactory('factory-test', new Vector3(12, 0, 0)),
+      ],
+    }));
+
+    render(<SettingsPanel onClose={() => undefined} persistence={persistence} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /reset game/i }));
+    expect(screen.getByRole('alertdialog', { name: /reset game progress/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /confirm reset game/i }));
+
+    expect(persistence.saveNow).toHaveBeenCalled();
+    const state = storeApi.getState();
+    expect(state.resources.ore).toBe(0);
+    expect(state.resources.bars).toBe(0);
+    expect(state.factories).toHaveLength(1);
   });
 });

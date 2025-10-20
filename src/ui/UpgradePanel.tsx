@@ -3,6 +3,7 @@ import {
   moduleDefinitions,
   costForLevel,
   computePrestigeBonus,
+  PRESTIGE_THRESHOLD,
   type ModuleId,
   useStore,
 } from '@/state/store';
@@ -17,13 +18,14 @@ export const UpgradePanel = () => {
   const resources = useStore((state) => state.resources);
   const prestige = useStore((state) => state.prestige);
   const buy = useStore((state) => state.buy);
-  const prestigeReady = useStore((state) => state.prestigeReady);
+  const bars = useStore((state) => state.resources.bars);
   const preview = useStore((state) => state.preview);
   const doPrestige = useStore((state) => state.doPrestige);
 
   const rows = useMemo(() => moduleRows, []);
   const nextCores = Math.floor(preview());
-  const prestigeDisabled = !prestigeReady();
+  // derive readiness directly from bars so the button updates reactively
+  const prestigeDisabled = !(bars >= PRESTIGE_THRESHOLD);
   const bonusPercent = Math.round((computePrestigeBonus(prestige.cores) - 1) * 100);
 
   return (
@@ -41,7 +43,7 @@ export const UpgradePanel = () => {
             </div>
             <div className="right">
               <button type="button" disabled={!affordable} onClick={() => buy(id)}>
-                Buy ({cost.toLocaleString()} bars)
+                Buy ({cost.toLocaleString()} warehouse bars)
               </button>
             </div>
           </div>
@@ -50,7 +52,7 @@ export const UpgradePanel = () => {
       <hr />
       <h3>Prestige</h3>
       <div className="prestige-info">
-        Bars: {Math.floor(resources.bars).toLocaleString()} → Next Cores:{' '}
+        Warehouse Bars: {Math.floor(resources.bars).toLocaleString()} → Next Cores:{' '}
         {nextCores.toLocaleString()}
       </div>
       <button type="button" disabled={prestigeDisabled} onClick={doPrestige}>

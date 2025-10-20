@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { Vector3 } from 'three';
 import {
   computeEnergyThrottle,
   computeRefineryProduction,
@@ -14,6 +15,7 @@ import {
   serializeStore,
 } from '@/state/store';
 import { getResourceModifiers } from '@/lib/resourceModifiers';
+import { createFactory } from '@/ecs/factories';
 
 describe('state/store', () => {
   it('converts ore into bars using refinery and prestige multipliers', () => {
@@ -62,9 +64,49 @@ describe('state/store', () => {
     const base = store.getState();
     const bars = 5_500;
     const preview = computePrestigeGain(bars);
+    const factoryA = createFactory('factory-a', new Vector3(0, 0, 0));
+    factoryA.resources.ore = 250;
+    factoryA.haulersAssigned = 3;
+    const factoryB = createFactory('factory-b', new Vector3(10, 0, 0));
+    factoryB.haulersAssigned = 1;
     store.setState({
       resources: { ...base.resources, bars },
       prestige: { cores: 3 },
+      factories: [factoryA, factoryB],
+      selectedFactoryId: factoryB.id,
+      logisticsQueues: {
+        pendingTransfers: [
+          {
+            id: 'transfer-test',
+            fromFactoryId: factoryA.id,
+            toFactoryId: factoryB.id,
+            resource: 'ore',
+            amount: 25,
+            status: 'scheduled',
+            eta: base.gameTime + 5,
+          },
+        ],
+      },
+      droneFlights: [
+        {
+          droneId: 'drone-1',
+          state: 'toAsteroid',
+          targetAsteroidId: 'asteroid-1',
+          targetRegionId: null,
+          targetFactoryId: factoryA.id,
+          pathSeed: 42,
+          travel: {
+            from: [0, 0, 0],
+            to: [10, 0, 0],
+            control: [4, 1, 0],
+            elapsed: 0.25,
+            duration: 1,
+          },
+        },
+      ],
+      droneOwners: { 'drone-1': factoryA.id },
+      gameTime: 42,
+      logisticsTick: 1.5,
     });
     expect(store.getState().preview()).toBe(preview);
     store.getState().doPrestige();
@@ -72,6 +114,16 @@ describe('state/store', () => {
     expect(after.prestige.cores).toBe(3 + preview);
     expect(after.resources.bars).toBe(0);
     expect(after.modules.droneBay).toBe(1);
+    expect(after.factories).toHaveLength(1);
+    expect(after.factories[0]?.id).toBe('factory-0');
+    expect(after.factories[0]?.haulersAssigned ?? 0).toBe(1);
+    expect(after.logisticsQueues.pendingTransfers).toHaveLength(0);
+    expect(after.droneFlights).toHaveLength(0);
+    expect(Object.keys(after.droneOwners)).toHaveLength(0);
+    expect(after.selectedFactoryId).toBe(after.factories[0]?.id ?? null);
+    expect(after.selectedAsteroidId).toBeNull();
+    expect(after.gameTime).toBe(0);
+    expect(after.logisticsTick).toBe(0);
   });
 
   it('updates settings with normalization and export/import roundtrips', () => {
@@ -183,6 +235,7 @@ describe('state/store', () => {
       state: 'toAsteroid',
       targetAsteroidId: 'asteroid-1',
       targetRegionId: 'region-1',
+      targetFactoryId: null,
       pathSeed: 42,
       travel: {
         from: [0, 0, 0],

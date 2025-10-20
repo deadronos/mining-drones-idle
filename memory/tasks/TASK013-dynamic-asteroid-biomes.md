@@ -44,17 +44,26 @@ Introduce biome-aware asteroids per `/plan/dynamic-asteroid-biomes-plan.md`: det
 
 ### Subtasks
 
-| ID   | Description                                       | Status       | Updated    | Notes |
-| ---- | ------------------------------------------------- | ------------ | ---------- | ----- |
-| 1.1  | Biome data module & store resource extensions     | Not Started  | 2025-10-18 |       |
-| 1.2  | Entity updates & deterministic biome assignment   | Not Started  | 2025-10-18 |       |
-| 1.3  | Fracture system & drone heuristics                | Not Started  | 2025-10-18 |       |
-| 1.4  | Mining/travel/unload integration                  | Not Started  | 2025-10-18 |       |
-| 1.5  | UI updates for resources & asteroid inspector     | Not Started  | 2025-10-18 |       |
-| 1.6  | Unit/UI tests for deterministic biome behaviors   | Not Started  | 2025-10-18 |       |
+| ID  | Description                                     | Status      | Updated    | Notes |
+| --- | ----------------------------------------------- | ----------- | ---------- | ----- |
+| 1.1 | Biome data module & store resource extensions   | Not Started | 2025-10-18 |       |
+| 1.2 | Entity updates & deterministic biome assignment | Not Started | 2025-10-18 |       |
+| 1.3 | Fracture system & drone heuristics              | Not Started | 2025-10-18 |       |
+| 1.4 | Mining/travel/unload integration                | Not Started | 2025-10-18 |       |
+| 1.5 | UI updates for resources & asteroid inspector   | Not Started | 2025-10-18 |       |
+| 1.6 | Unit/UI tests for deterministic biome behaviors | Not Started | 2025-10-18 |       |
 
 ## Progress Log
 
 ### 2025-10-18
 
 - Created design document (DES012) and task plan capturing biome data flow, system integration points, and testing strategy.
+
+### 2025-10-19 - Verification
+
+- Local repo verification performed:
+  - `npm run typecheck` completed with no TypeScript errors.
+  - `npm run test` (Vitest) executed; biome-related unit tests passed.
+  - `npm run build` completed successfully.
+
+Next steps: add migration notes for new resource types and a small PoC subtask for deterministic biome assignment.

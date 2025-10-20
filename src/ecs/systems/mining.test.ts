@@ -70,8 +70,7 @@ describe('ecs/systems/mining', () => {
     }));
     const reducedSystem = createMiningSystem(reducedScenario.world, reducedScenario.store);
     reducedSystem(1);
-    const reducedConsumed =
-      reducedScenario.drone.maxBattery - reducedScenario.drone.battery;
+    const reducedConsumed = reducedScenario.drone.maxBattery - reducedScenario.drone.battery;
 
     expect(reducedConsumed).toBeLessThan(baseConsumed);
   });

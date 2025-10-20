@@ -24,13 +24,16 @@ const formatTimestamp = (value: number) => {
 export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
   const settings = useStore((state) => state.settings);
   const updateSettings = useStore((state) => state.updateSettings);
+  const resetGame = useStore((state) => state.resetGame);
   const lastSave = useStore((state) => state.save.lastSave);
   const [importError, setImportError] = useState<string | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
   const toastApi = useToast();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleClose = useCallback(() => {
     setImportError(null);
+    setConfirmReset(false);
     onClose();
   }, [onClose]);
 
@@ -38,12 +41,16 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
+        if (confirmReset) {
+          setConfirmReset(false);
+          return;
+        }
         handleClose();
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [handleClose]);
+  }, [handleClose, confirmReset]);
 
   const formattedLastSave = useMemo(() => formatTimestamp(lastSave), [lastSave]);
 
@@ -68,7 +75,10 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
       .then((content) => {
         // Prefer importStateWithReport when available so we can surface migration summaries
         const extendedPersistence = persistence as PersistenceManager & {
-          importStateWithReport?: (payload: string) => { success: boolean; report?: MigrationReport };
+          importStateWithReport?: (payload: string) => {
+            success: boolean;
+            report?: MigrationReport;
+          };
         };
         const reportResult = extendedPersistence.importStateWithReport?.(content);
         if (reportResult) {
@@ -99,6 +109,23 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
         console.warn('Failed to import save file', error);
         setImportError('Unable to read the selected file.');
       });
+  };
+
+  const handleResetRequest = () => {
+    setConfirmReset(true);
+  };
+
+  const handleCancelReset = () => {
+    setConfirmReset(false);
+  };
+
+  const handleConfirmReset = () => {
+    resetGame();
+    persistence.saveNow();
+    toastApi.push('Game reset. Fresh factories deployed.');
+    setConfirmReset(false);
+    setImportError(null);
+    handleClose();
   };
 
   const handleAutosaveToggle: ChangeEventHandler<HTMLInputElement> = (event) => {
@@ -149,129 +176,189 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
             Close
           </button>
         </header>
-        <section className="settings-section">
-          <h3>Persistence</h3>
-          <label className="settings-row">
-            <span>
-              Autosave
-              <small>Automatically persist progress in the background.</small>
-            </span>
-            <input
-              type="checkbox"
-              checked={settings.autosaveEnabled}
-              onChange={handleAutosaveToggle}
-              aria-label="Toggle autosave"
-            />
-          </label>
-          <label className="settings-row">
-            <span>
-              Autosave interval (seconds)
-              <small>Minimum 1 second.</small>
-            </span>
-            <input
-              type="number"
-              min={1}
-              value={settings.autosaveInterval}
-              onChange={handleAutosaveInterval}
-            />
-          </label>
-          <label className="settings-row">
-            <span>
-              Offline cap (hours)
-              <small>Catch-up simulation will not exceed this duration.</small>
-            </span>
-            <input
-              type="number"
-              min={0}
-              step={1}
-              value={settings.offlineCapHours}
-              onChange={handleOfflineCap}
-            />
-          </label>
-          <label className="settings-row">
-            <span>
-              Notation
-              <small>Controls large-number formatting.</small>
-            </span>
-            <select value={settings.notation} onChange={handleNotation}>
-              <option value="standard">Standard</option>
-              <option value="engineering">Engineering</option>
-            </select>
-          </label>
-          <label className="settings-row">
-            <span>
-              Throttle floor
-              <small>Minimum efficiency when energy-constrained.</small>
-            </span>
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.05}
-              value={settings.throttleFloor}
-              onChange={handleThrottle}
-              aria-valuemin={0}
-              aria-valuemax={1}
-              aria-valuenow={Number(settings.throttleFloor.toFixed(2))}
-            />
-            <span className="settings-value">{Math.round(settings.throttleFloor * 100)}%</span>
-          </label>
-        </section>
-        <section className="settings-section">
-          <h3>Visuals</h3>
-          <label className="settings-row">
-            <span>
-              Drone trails
-              <small>Disable for performance on lower-end GPUs.</small>
-            </span>
-            <input
-              type="checkbox"
-              checked={settings.showTrails}
-              onChange={handleTrails}
-              aria-label="Toggle drone trails"
-            />
-          </label>
-          <label className="settings-row">
-            <span>
-              Factory performance profile
-              <small>Balance factory visual effects with your device capabilities.</small>
-            </span>
-            <select
-              value={settings.performanceProfile}
-              onChange={handlePerformanceProfile}
-              aria-label="Select factory performance profile"
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
-          </label>
-        </section>
-        <section className="settings-section">
-          <h3>Data tools</h3>
-          <div className="settings-actions">
-            <button type="button" onClick={handleExport} aria-label="Export save data">
-              Export JSON
-            </button>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              aria-label="Import save data"
-            >
-              Import JSON
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="application/json"
-              onChange={handleImport}
-              style={{ display: 'none' }}
-            />
-          </div>
-          <p className="settings-meta">Last saved: {formattedLastSave}</p>
-          {importError ? <p className="settings-error">{importError}</p> : null}
-        </section>
+        <div className="settings-content">
+          <section className="settings-section settings-section--wide">
+            <h3>Warehouse Primer</h3>
+            <p className="settings-note">
+              Your warehouse is the global ledger for spendable inventory. It fuels prestige, module purchases,
+              and exports when haulers find surplus at any factory.
+            </p>
+            <ul className="settings-note-list">
+              <li>
+                <strong>Warehouse totals</strong> are the numbers shown in the HUD and Upgrade panel—they rise only
+                when haulers or unloads deliver to the warehouse.
+              </li>
+              <li>
+                <strong>Factory storage</strong> is local working stock that keeps refineries running; haulers export
+                excess above the buffer and import when a factory is starving.
+              </li>
+              <li>
+                When resources look “missing,” check the selected factory card—if the buffer is full, haulers will
+                route the overflow to the warehouse on their next run.
+              </li>
+            </ul>
+          </section>
+          <section className="settings-section">
+            <h3>Persistence</h3>
+            <label className="settings-row">
+              <span>
+                Autosave
+                <small>Automatically persist progress in the background.</small>
+              </span>
+              <input
+                type="checkbox"
+                checked={settings.autosaveEnabled}
+                onChange={handleAutosaveToggle}
+                aria-label="Toggle autosave"
+              />
+            </label>
+            <label className="settings-row">
+              <span>
+                Autosave interval (seconds)
+                <small>Minimum 1 second.</small>
+              </span>
+              <input
+                type="number"
+                min={1}
+                value={settings.autosaveInterval}
+                onChange={handleAutosaveInterval}
+              />
+            </label>
+            <label className="settings-row">
+              <span>
+                Offline cap (hours)
+                <small>Catch-up simulation will not exceed this duration.</small>
+              </span>
+              <input
+                type="number"
+                min={0}
+                step={1}
+                value={settings.offlineCapHours}
+                onChange={handleOfflineCap}
+              />
+            </label>
+            <label className="settings-row">
+              <span>
+                Notation
+                <small>Controls large-number formatting.</small>
+              </span>
+              <select value={settings.notation} onChange={handleNotation}>
+                <option value="standard">Standard</option>
+                <option value="engineering">Engineering</option>
+              </select>
+            </label>
+            <label className="settings-row">
+              <span>
+                Throttle floor
+                <small>Minimum efficiency when energy-constrained.</small>
+              </span>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={settings.throttleFloor}
+                onChange={handleThrottle}
+                aria-valuemin={0}
+                aria-valuemax={1}
+                aria-valuenow={Number(settings.throttleFloor.toFixed(2))}
+              />
+              <span className="settings-value">{Math.round(settings.throttleFloor * 100)}%</span>
+            </label>
+          </section>
+          <section className="settings-section">
+            <h3>Visuals</h3>
+            <label className="settings-row">
+              <span>
+                Drone trails
+                <small>Disable for performance on lower-end GPUs.</small>
+              </span>
+              <input
+                type="checkbox"
+                checked={settings.showTrails}
+                onChange={handleTrails}
+                aria-label="Toggle drone trails"
+              />
+            </label>
+            <label className="settings-row">
+              <span>
+                Factory performance profile
+                <small>Balance factory visual effects with your device capabilities.</small>
+              </span>
+              <select
+                value={settings.performanceProfile}
+                onChange={handlePerformanceProfile}
+                aria-label="Select factory performance profile"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </label>
+          </section>
+          <section className="settings-section">
+            <h3>Data tools</h3>
+            <div className="settings-actions">
+              <button type="button" onClick={handleExport} aria-label="Export save data">
+                Export JSON
+              </button>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                aria-label="Import save data"
+              >
+                Import JSON
+              </button>
+              <button
+                type="button"
+                onClick={handleResetRequest}
+                aria-label="Reset game progress"
+              >
+                Reset Game
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/json"
+                onChange={handleImport}
+                style={{ display: 'none' }}
+              />
+            </div>
+            <p className="settings-meta">Last saved: {formattedLastSave}</p>
+            {importError ? <p className="settings-error">{importError}</p> : null}
+          </section>
+        </div>
       </div>
+      {confirmReset ? (
+        <div className="settings-confirm-backdrop" role="presentation">
+          <div
+            className="settings-confirm"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="reset-confirm-title"
+            aria-describedby="reset-confirm-description"
+          >
+            <h4 id="reset-confirm-title">Reset game progress?</h4>
+            <p id="reset-confirm-description">
+              This will erase all factories, resources, and progress. Export your save first if you
+              want a backup.
+            </p>
+            <div className="settings-confirm-actions">
+              <button type="button" onClick={handleCancelReset} aria-label="Cancel reset">
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="settings-danger"
+                onClick={handleConfirmReset}
+                aria-label="Confirm reset game"
+              >
+                Reset Everything
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

@@ -9,6 +9,8 @@ also look into `.github/instructions/*.instructions.md` files and which glob pat
 the initial idea was '/idea.md'
 progressive designs are at '/memory/designs'
 
+Do not create explainer documents or other documentation unless specifically asked to.
+
 ## 🧠 Memory Bank System
 
 **CRITICAL**: This project uses a structured Memory Bank for context preservation. Review these files before starting work:

@@ -6,7 +6,6 @@ updated: 2025-10-16
 author: automation-agent
 ---
 
-
 # ## DES010 — Factory Visuals
 
 Purpose: Improve the visual quality and feedback of the in-world factory component to better communicate activity, throughput, and machine state while preserving performance for WebGL / r3f rendering.

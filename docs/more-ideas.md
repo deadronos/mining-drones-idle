@@ -71,6 +71,12 @@ Compact drone cards with one-click actions (send home, prioritize, join convoy, 
 
 Assistive suggestions (one-click) to resolve common bottlenecks with transparent cost/effect.
 
+### Desktop responsive scaling
+
+- Use fluid typography and clamped panel widths to keep HUD/inspector readable between 960px and 4K widths.
+- Introduce scrollable sidebar stacks when viewport height shrinks below 900px so buttons remain reachable.
+- For mobile/tablet follow-up, consider collapsing HUD/inspector/upgrade stacks into switchable tabs or segmented controls (future design task).
+
 ---
 
 ## Prototype & technical notes (quick wins)

@@ -1,6 +1,8 @@
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { Suspense, useMemo } from 'react';
 import { Stars } from '@react-three/drei';
+import { Vector3 } from 'three';
+import type { PerspectiveCamera } from 'three';
 import { gameWorld } from '@/ecs/world';
 import { storeApi, useStore } from '@/state/store';
 import { createTimeSystem } from '@/ecs/systems/time';
@@ -17,12 +19,51 @@ import { Factory } from '@/r3f/Factory';
 import { Asteroids } from '@/r3f/Asteroids';
 import { Drones } from '@/r3f/Drones';
 import { DroneTrails } from '@/r3f/DroneTrails';
+import { TransferLines } from '@/r3f/TransferLines';
+import { useFactoryAutofit } from '@/hooks/useFactoryAutofit';
+import { useCameraReset } from '@/hooks/useCameraReset';
+import { computeAutofitCamera, computeBoundingBox, DEFAULT_AUTOFIT_CONFIG } from '@/lib/camera';
+
+const FOG_COLOR = '#040713';
+const DEFAULT_FOG_RANGE = { near: 20, far: 90 } as const;
 
 type SystemRunner = (dt: number) => void;
 
 export const Scene = () => {
   const time = useMemo(() => createTimeSystem(0.1), []);
   const showTrails = useStore((state) => state.settings.showTrails);
+  const factories = useStore((state) => state.factories);
+  const { camera, size } = useThree();
+  useFactoryAutofit();
+  useCameraReset();
+  const fogRange = useMemo(() => {
+    if (!factories.length) {
+      return DEFAULT_FOG_RANGE;
+    }
+
+    const positions = factories.map(
+      (factory) => new Vector3(factory.position.x, factory.position.y, factory.position.z),
+    );
+    const boundingBox = computeBoundingBox(positions);
+    if (!boundingBox) {
+      return DEFAULT_FOG_RANGE;
+    }
+
+    const perspectiveCamera = camera as PerspectiveCamera;
+    const fov = 'fov' in perspectiveCamera ? perspectiveCamera.fov : 52;
+    const aspect = size.width / size.height;
+    const targetState = computeAutofitCamera(positions, DEFAULT_AUTOFIT_CONFIG, fov, aspect);
+    if (!targetState?.distance) {
+      return DEFAULT_FOG_RANGE;
+    }
+
+    const expandedRadius = boundingBox.radius + DEFAULT_AUTOFIT_CONFIG.margin;
+    const far = Math.max(DEFAULT_FOG_RANGE.far, targetState.distance + expandedRadius * 1.5);
+    const nearBase = targetState.distance - expandedRadius * 1.25;
+    const near = Math.max(DEFAULT_FOG_RANGE.near, Math.min(far - 30, nearBase));
+
+    return { near, far };
+  }, [factories, camera, size]);
   const systems = useMemo(() => {
     const store = storeApi;
     return {
@@ -41,6 +82,7 @@ export const Scene = () => {
   useFrame((_state, delta) => {
     const clamped = Math.min(delta, 0.25);
     time.update(clamped, (step) => {
+      // ECS-specific systems
       systems.fleet(step);
       systems.biomes(step);
       systems.asteroids(step);
@@ -49,14 +91,21 @@ export const Scene = () => {
       systems.mining(step);
       systems.unload(step);
       systems.power(step);
-      systems.refinery(step);
+      systems.refinery(step); // Calls processRefinery + updates visual activity
+      // Store orchestrator for gameTime, logistics, and factories
+      // Note: processRefinery is called by systems.refinery above
+      // tick() will call it again, but that's OK - it's idempotent for this frame
+      storeApi.getState().processLogistics(step);
+      storeApi.getState().processFactories(step);
+      // Update gameTime
+      storeApi.setState((state) => ({ gameTime: state.gameTime + step }));
     });
   });
 
   return (
     <>
-      <color attach="background" args={['#040713']} />
-      <fog attach="fog" args={['#040713', 20, 90]} />
+      <color attach="background" args={[FOG_COLOR]} />
+      <fog attach="fog" args={[FOG_COLOR, fogRange.near, fogRange.far]} />
       <ambientLight intensity={0.35} />
       <directionalLight
         position={[6, 12, 8]}
@@ -71,6 +120,7 @@ export const Scene = () => {
         <Asteroids />
         <Drones />
         {showTrails ? <DroneTrails /> : null}
+        <TransferLines />
       </Suspense>
     </>
   );

@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Scene } from '@/r3f/Scene';
 import { UpgradePanel } from '@/ui/UpgradePanel';
+import { FactoryManager } from '@/ui/FactoryManager';
+import { LogisticsPanel } from '@/ui/LogisticsPanel';
 import { useStore } from '@/state/store';
 import { SettingsPanel } from '@/ui/Settings';
 import type { PersistenceManager } from '@/state/persistence';
@@ -18,6 +20,14 @@ export const App = ({ persistence }: AppProps) => {
   const resources = useStore((state) => state.resources);
   const modules = useStore((state) => state.modules);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    // Signal to e2e tests that the app has mounted and initial persistence/load is complete.
+    if (typeof window !== 'undefined') {
+      window.__appReady = true;
+    }
+    // Do not unset `window.__appReady` on unmount — test harnesses rely on a stable flag.
+  }, []);
 
   return (
     <ToastProvider>
@@ -39,7 +49,11 @@ export const App = ({ persistence }: AppProps) => {
             Settings
           </button>
         </div>
-        <UpgradePanel />
+        <div className="sidebar">
+          <UpgradePanel />
+          <LogisticsPanel />
+          <FactoryManager />
+        </div>
         <AsteroidInspector />
         {settingsOpen ? (
           <SettingsPanel onClose={() => setSettingsOpen(false)} persistence={persistence} />

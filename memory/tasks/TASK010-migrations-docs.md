@@ -20,11 +20,11 @@ Create migration pipeline in persistence, add readable migration logs for UI, an
 
 ## Subtasks
 
-| ID | Description | Status | Updated | Notes |
-| --- | ----------- | ------ | ------- | ----- |
-| 10.1 | Migration pipeline | Not Started | 2025-10-16 | `src/state/store.ts` includes `save.version` and `saveVersion` constants; migration helpers not implemented yet. |
-| 10.2 | README updates | Not Started | 2025-10-16 | README.md contains project overview but save/import/export docs could be expanded. |
-| 10.3 | Memory Bank updates | Not Started | 2025-10-16 | Update `memory/` docs after migration helpers are implemented. |
+| ID   | Description         | Status      | Updated    | Notes                                                                                                            |
+| ---- | ------------------- | ----------- | ---------- | ---------------------------------------------------------------------------------------------------------------- |
+| 10.1 | Migration pipeline  | Not Started | 2025-10-16 | `src/state/store.ts` includes `save.version` and `saveVersion` constants; migration helpers not implemented yet. |
+| 10.2 | README updates      | Not Started | 2025-10-16 | README.md contains project overview but save/import/export docs could be expanded.                               |
+| 10.3 | Memory Bank updates | Not Started | 2025-10-16 | Update `memory/` docs after migration helpers are implemented.                                                   |
 
 ## Acceptance Criteria
 
