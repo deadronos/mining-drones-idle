@@ -1,5 +1,6 @@
 import { Vector3 } from 'three';
 import type { StoreState, LogisticsQueues, HaulerConfig } from '../types';
+import type { FactoryTransferEvent } from '@/ecs/world';
 import {
   RESOURCE_TYPES,
   generateTransferId,
@@ -72,7 +73,7 @@ export function processLogistics(
   for (const resource of RESOURCE_TYPES) {
     if (state.factories.length === 0) continue;
 
-    const warehouseStock = (state.resources as Record<string, number>)[resource] ?? 0;
+    const warehouseStock = (state.resources as unknown as Record<string, number>)[resource] ?? 0;
     let warehouseSpace =
       warehouseCapacity - warehouseStock - (warehouseInboundReservations.get(resource) ?? 0);
     let warehouseAvailable =
@@ -109,8 +110,7 @@ export function processLogistics(
         const fromPos = sourceFactory.position.clone().add(new Vector3(0, 0.6, 0));
         const toPos = destFactory.position.clone().add(new Vector3(0, 0.6, 0));
         const duration = Math.max(0.1, transfer.eta - state.gameTime);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const event: any = {
+        const event: FactoryTransferEvent = {
           id: transferId,
           amount: transfer.amount,
           from: fromPos,
@@ -118,7 +118,6 @@ export function processLogistics(
           duration,
         };
         // keep recent events bounded
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         gameWorld.events.transfers.push(event);
         if (gameWorld.events.transfers.length > 48) {
           gameWorld.events.transfers.splice(0, gameWorld.events.transfers.length - 48);
@@ -176,8 +175,7 @@ export function processLogistics(
             const fromPos = factory.position.clone().add(new Vector3(0, 0.6, 0));
             const toPos = WAREHOUSE_POSITION.clone().add(new Vector3(0, 0.6, 0));
             const duration = Math.max(0.1, eta - state.gameTime);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const event: any = {
+            const event: FactoryTransferEvent = {
               id: transferId,
               amount: transferAmount,
               from: fromPos,
@@ -217,12 +215,10 @@ export function processLogistics(
           continue;
         }
 
-        if (!factory.logisticsState) {
-          factory.logisticsState = {
-            outboundReservations: {},
-            inboundSchedules: [],
-          };
-        }
+        factory.logisticsState ??= {
+          outboundReservations: {},
+          inboundSchedules: [],
+        };
 
         while (remainingNeed > 0 && warehouseAvailable > 0) {
           const capacity = config.capacity ?? LOGISTICS_CONFIG.hauler_capacity;
@@ -257,8 +253,7 @@ export function processLogistics(
             const fromPos = WAREHOUSE_POSITION.clone().add(new Vector3(0, 0.6, 0));
             const toPos = factory.position.clone().add(new Vector3(0, 0.6, 0));
             const duration = Math.max(0.1, eta - state.gameTime);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const event: any = {
+            const event: FactoryTransferEvent = {
               id: transferId,
               amount: transferAmount,
               from: fromPos,
@@ -297,12 +292,12 @@ export function processLogistics(
           }
 
           const currentWarehouse =
-            (state.resources as Record<string, number>)[transfer.resource] ?? 0;
+            (state.resources as unknown as Record<string, number>)[transfer.resource] ?? 0;
           const updatedWarehouse = Math.min(
             warehouseCapacity,
             currentWarehouse + transfer.amount,
           );
-          (state.resources as Record<string, number>)[transfer.resource] = updatedWarehouse;
+          (state.resources as unknown as Record<string, number>)[transfer.resource] = updatedWarehouse;
 
           completedTransfers.push(transfer.id);
         }
@@ -310,8 +305,8 @@ export function processLogistics(
         const destFactory = state.factories.find((f) => f.id === transfer.toFactoryId);
         if (destFactory) {
           const currentWarehouse =
-            (state.resources as Record<string, number>)[transfer.resource] ?? 0;
-          (state.resources as Record<string, number>)[transfer.resource] = Math.max(
+            (state.resources as unknown as Record<string, number>)[transfer.resource] ?? 0;
+          (state.resources as unknown as Record<string, number>)[transfer.resource] = Math.max(
             0,
             currentWarehouse - transfer.amount,
           );

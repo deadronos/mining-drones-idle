@@ -1,6 +1,7 @@
 import type { StoreApi } from 'zustand/vanilla';
-import type { BuildableFactory, FactoryResources, FactoryUpgrades } from '@/ecs/factories';
+import type { BuildableFactory, FactoryResources, FactoryUpgrades, DockingResult } from '@/ecs/factories';
 import type { TransportableResource } from '@/ecs/logistics';
+import type { moduleDefinitions } from './constants';
 
 export type { FactoryResources, FactoryUpgrades };
 
@@ -221,7 +222,7 @@ export interface StoreState {
     this: void,
     factoryId: string,
     droneId: string,
-  ): import('@/ecs/factories').DockingResult;
+  ): DockingResult;
   undockDroneFromFactory(
     this: void,
     factoryId: string,
@@ -247,7 +248,7 @@ export interface StoreState {
 
 export type StoreApiType = StoreApi<StoreState>;
 
-export type ModuleId = keyof typeof import('./constants').moduleDefinitions;
+export type ModuleId = keyof typeof moduleDefinitions;
 
 export type FactoryUpgradeId = keyof FactoryUpgrades;
 

@@ -290,7 +290,7 @@ describe('store factory integration', () => {
     store.getState().purchaseFactory();
 
     const updatedFactories = store.getState().factories;
-    const [fA, fB, fC, _fD] = updatedFactories;
+    const [fA, fB, fC] = updatedFactories;
 
     // Simulate drone visiting multiple factories
     store.getState().dockDroneAtFactory(fA.id, 'drone-3');

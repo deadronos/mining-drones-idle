@@ -122,20 +122,24 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
   const initialSelectedFactory = defaultFactories[0]?.id ?? null;
 
   // Build composed state from slices
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sliceSet = set as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sliceGet = get as any;
+  const sliceSet = set as unknown;
+
+  const sliceGet = get as unknown;
 
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
+
   const resourceSlice = createResourceSlice(sliceSet, sliceGet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
+
   const settingsSlice = createSettingsSlice(sliceSet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
+
   const factorySlice = createFactorySlice(sliceSet, sliceGet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
+
   const droneSlice = createDroneSlice(sliceSet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
+
   const logisticsSlice = createLogisticsSlice(sliceSet, sliceGet);
 
   return {

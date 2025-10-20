@@ -96,7 +96,7 @@ describe('store warehouse integration flows', () => {
       (transfer) => transfer.fromFactoryId === WAREHOUSE_NODE_ID,
     );
     expect(transferToFactory).toBeDefined();
-    store.setState((state) => ({
+    store.setState(() => ({
       gameTime: transferToFactory!.eta,
       logisticsTick: 0,
     }));

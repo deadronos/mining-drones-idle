@@ -25,16 +25,11 @@ export const LogisticsPanel = () => {
   }, []);
 
   const transfers = logisticsQueues.pendingTransfers;
-  const totalHaulers = factories.reduce((sum: number, f) => sum + ((f.haulersAssigned as number | undefined) ?? 0), 0);
+  const totalHaulers = factories.reduce((sum: number, f) => sum + ((f.haulersAssigned) ?? 0), 0);
   const activeTransfers = transfers.filter((t) => t.status === 'scheduled' || t.status === 'in-transit');
   const completedTransfers = transfers.filter((t) => t.status === 'completed').length;
 
   const totalTransferPages = Math.max(1, Math.ceil(activeTransfers.length / TRANSFERS_PAGE_SIZE));
-
-  useEffect(() => {
-    setTransferPage((current) => Math.min(current, totalTransferPages - 1));
-  }, [totalTransferPages]);
-
   const safeTransferPage = Math.min(transferPage, totalTransferPages - 1);
   const transferStart = safeTransferPage * TRANSFERS_PAGE_SIZE;
   const visibleTransfers = activeTransfers.slice(transferStart, transferStart + TRANSFERS_PAGE_SIZE);

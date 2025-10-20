@@ -13,10 +13,16 @@ test('import rejects invalid payloads gracefully', async ({ page }) => {
 
   // Provide an intentionally invalid payload
   const invalidPayload = 'not-json';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const bufferObj = (globalThis as any).Buffer
+    ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (globalThis as any).Buffer.from(invalidPayload)
+    : { type: 'Buffer', data: Array.from(new TextEncoder().encode(invalidPayload)) };
+
   await fileInput.setInputFiles({
     name: 'invalid.json',
     mimeType: 'application/json',
-    buffer: Buffer.from(invalidPayload),
+    buffer: bufferObj,
   });
 
   // The app should handle this gracefully: either show an error toast or not crash

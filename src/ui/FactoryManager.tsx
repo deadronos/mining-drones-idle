@@ -202,11 +202,6 @@ const SelectedFactoryCard = ({
   const [dockPage, setDockPage] = useState(0);
   const [rosterPage, setRosterPage] = useState(0);
 
-  useEffect(() => {
-    setDockPage(0);
-    setRosterPage(0);
-  }, [factory.id]);
-
   const dockingEntries = useMemo(
     () =>
       factory.queuedDrones.map((droneId, idx) => ({
@@ -217,21 +212,11 @@ const SelectedFactoryCard = ({
   );
 
   const totalDockPages = Math.max(1, Math.ceil(dockingEntries.length / DOCKING_PAGE_SIZE));
-
-  useEffect(() => {
-    setDockPage((current) => Math.min(current, totalDockPages - 1));
-  }, [totalDockPages]);
-
   const safeDockPage = Math.min(dockPage, totalDockPages - 1);
   const dockStart = safeDockPage * DOCKING_PAGE_SIZE;
   const visibleDockEntries = dockingEntries.slice(dockStart, dockStart + DOCKING_PAGE_SIZE);
 
   const totalRosterPages = Math.max(1, Math.ceil(factory.ownedDrones.length / ROSTER_PAGE_SIZE));
-
-  useEffect(() => {
-    setRosterPage((current) => Math.min(current, totalRosterPages - 1));
-  }, [totalRosterPages]);
-
   const safeRosterPage = Math.min(rosterPage, totalRosterPages - 1);
   const rosterStart = safeRosterPage * ROSTER_PAGE_SIZE;
   const visibleRoster = factory.ownedDrones.slice(rosterStart, rosterStart + ROSTER_PAGE_SIZE);

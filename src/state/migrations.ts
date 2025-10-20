@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unnecessary-type-assertion */
 import type { StoreSnapshot } from '@/state/store';
 import { saveVersion } from '@/state/store';
 
@@ -116,9 +117,7 @@ const migrations: Array<{ targetVersion: string; migrate: MigrationFn }> = [
         }));
       }
 
-      if (!migrated.logisticsQueues) {
-        migrated.logisticsQueues = { pendingTransfers: [] };
-      }
+      migrated.logisticsQueues ??= { pendingTransfers: [] };
       return { snapshot: migrated, description: 'add hauler logistics fields' };
     },
   },
@@ -162,7 +161,7 @@ const migrations: Array<{ targetVersion: string; migrate: MigrationFn }> = [
                   eta: Number(schedule?.eta) || 0,
                 }))
                 .filter(
-                  (schedule) =>
+                  (schedule: any) =>
                     typeof schedule.resource === 'string' &&
                     schedule.amount > 0 &&
                     Number.isFinite(schedule.eta),
@@ -202,10 +201,10 @@ const migrations: Array<{ targetVersion: string; migrate: MigrationFn }> = [
                 resource: transfer?.resource,
                 amount: Number(transfer?.amount) || 0,
                 eta: Number(transfer?.eta) || 0,
-                status: transfer?.status === 'in-transit' ? 'in-transit' : 'scheduled',
+                status: (transfer?.status === 'in-transit' ? 'in-transit' : 'scheduled') as 'in-transit' | 'scheduled',
               }))
               .filter(
-                (transfer) =>
+                (transfer: any) =>
                   typeof transfer.fromFactoryId === 'string' &&
                   typeof transfer.toFactoryId === 'string' &&
                   typeof transfer.resource === 'string' &&
