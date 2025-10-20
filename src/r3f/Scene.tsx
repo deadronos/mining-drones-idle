@@ -82,6 +82,7 @@ export const Scene = () => {
   useFrame((_state, delta) => {
     const clamped = Math.min(delta, 0.25);
     time.update(clamped, (step) => {
+      // ECS-specific systems
       systems.fleet(step);
       systems.biomes(step);
       systems.asteroids(step);
@@ -90,8 +91,14 @@ export const Scene = () => {
       systems.mining(step);
       systems.unload(step);
       systems.power(step);
-      systems.refinery(step);
+      systems.refinery(step); // Calls processRefinery + updates visual activity
+      // Store orchestrator for gameTime, logistics, and factories
+      // Note: processRefinery is called by systems.refinery above
+      // tick() will call it again, but that's OK - it's idempotent for this frame
+      storeApi.getState().processLogistics(step);
       storeApi.getState().processFactories(step);
+      // Update gameTime
+      storeApi.setState((state) => ({ gameTime: state.gameTime + step }));
     });
   });
 
