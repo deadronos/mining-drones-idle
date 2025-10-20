@@ -44,4 +44,4 @@ export {
 } from './store';
 
 // Utility types and functions
-export { coerceNumber, vector3ToTuple, tupleToVector3, getStorageCapacity } from './types';
+export { coerceNumber, vector3ToTuple, tupleToVector3 } from './types';

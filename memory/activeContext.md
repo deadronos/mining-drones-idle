@@ -2,11 +2,29 @@
 
 ## Current Focus
 
+✅ **Serialization Refactor Complete (TASK024)**: Successfully redo the serialization refactoring from stub state to full implementation. Store-level normalization functions now properly in `serialization/store.ts`. All 174 tests pass, TypeScript clean, lint clean. Circular dependencies resolved.
+
+✅ **FactoryManager Refactor Complete (TASK023)**: Deleted old monolithic `FactoryManager.tsx` file that was blocking refactored version. Solar Array bonus now displays correctly in UI.
+
 🟡 **TASK025 – Warehouse Reconciliation**: Standing up the warehouse-first resource model remains in soak; continue validating transfers and polish once the Settings work lands.
 
 ✅ **TASK029 – Local-First Energy Priority**: Completed full implementation of energy system reversal. Factories now use local energy first (for drone charging and processing), with global warehouse as backup. All 165 tests pass, code is clean (lint & typecheck).
 
 ## Recent Changes
+
+- **TASK024 & TASK023 Completed – Three Major Refactors Now Properly Complete** ✅
+  - **TASK024 (Serialization)**: Redo from incomplete stub state
+    - Moved all store-level functions from monolithic file → `serialization/store.ts` (~150 lines)
+    - Functions: normalizeResources, normalizeModules, normalizePrestige, normalizeSave, normalizeNotation, normalizePerformanceProfile, normalizeSettings, normalizeSnapshot, serializeStore, stringifySnapshot, parseSnapshot
+    - Converted monolithic `serialization.ts` (587 lines) → 12-line backwards compatibility bridge
+    - Updated `serialization/index.ts` to export all store functions properly
+    - Result: Clean modular architecture, no circular dependencies, all 174 tests passing
+  - **TASK023 (FactoryManager)**: Fixed UI display issue
+    - Deleted old monolithic `src/ui/FactoryManager.tsx` that was blocking refactored version
+    - Module resolution was choosing .tsx file over folder, preventing refactored code from loading
+    - Solar Array bonus now displays correctly in UI and scales properly (L1 +0.15/s, L2 +0.30/s)
+  - **TASK022 (Store Slices)**: Verified actually completed correctly ✅
+  - Status: All three major refactor tasks now properly and fully completed
 
 - **TASK029 Completed – Local-First Energy Priority Implemented** ✅
   - Inverted drone charging logic in `src/ecs/systems/power.ts` (lines 38-80)

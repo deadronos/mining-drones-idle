@@ -313,7 +313,8 @@ export function processLogistics(state: StoreState): {
 
       const config = resolveHaulerConfig(factory);
       const neededAmount = request.resourceNeeded[resource as keyof typeof request.resourceNeeded];
-      const fulfilledAmount = request.fulfilledAmount[resource as keyof typeof request.fulfilledAmount] ?? 0;
+      const fulfilledAmount =
+        request.fulfilledAmount[resource as keyof typeof request.fulfilledAmount] ?? 0;
 
       if (typeof neededAmount !== 'number' || neededAmount <= 0) {
         continue;

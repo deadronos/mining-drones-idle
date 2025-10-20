@@ -2,6 +2,8 @@
 
 Mining Drones Idle is a small idle/automation prototype built with React, Three.js, and an ECS-driven simulation loop. The factory mines asteroids, refines ore into bars, and gradually unlocks upgrades through prestige resets.
 
+![Screenshot](image.png)
+
 This repository contains the interactive UI, simulation logic, and persistence utilities used by the prototype.
 
 ## Getting started

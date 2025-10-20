@@ -1,6 +1,11 @@
 import { FACTORY_CONFIG } from '@/ecs/factories';
 import type { BuildableFactory, FactoryUpgradeRequest } from '@/ecs/factories';
-import type { FactorySnapshot, FactoryUpgradeRequestSnapshot, HaulerConfig, FactoryLogisticsState } from '../types';
+import type {
+  FactorySnapshot,
+  FactoryUpgradeRequestSnapshot,
+  HaulerConfig,
+  FactoryLogisticsState,
+} from '../types';
 import { normalizeVectorTuple } from './vectors';
 import {
   normalizeFactoryResources,

@@ -4,6 +4,8 @@ import {
   getEnergyCapacity,
   getEnergyGeneration,
   getFactorySolarRegen,
+  getSolarArrayLocalRegen,
+  getFactoryEffectiveEnergyCapacity,
   type StoreApiType,
 } from '@/state/store';
 import { getResourceModifiers } from '@/lib/resourceModifiers';
@@ -24,13 +26,21 @@ export const createPowerSystem = (world: GameWorld, store: StoreApiType) => {
     const factoriesById = new Map(state.factories.map((factory) => [factory.id, factory] as const));
 
     for (const factory of state.factories) {
-      const solarLevel = factory.upgrades?.solar ?? 0;
-      if (solarLevel <= 0) continue;
-      const regenPerSec = getFactorySolarRegen(solarLevel);
-      if (regenPerSec <= 0) continue;
-      const availableCapacity = Math.max(0, factory.energyCapacity - factory.energy);
+      const solarCollectorLevel = factory.upgrades?.solar ?? 0;
+      const solarArrayLevel = state.modules.solar ?? 0;
+
+      // Regen from factory-local Solar Collector upgrade
+      const factoryRegenPerSec = getFactorySolarRegen(solarCollectorLevel);
+      // Bonus regen from global Solar Array module
+      const arrayBonusRegenPerSec = getSolarArrayLocalRegen(solarArrayLevel);
+      const totalRegenPerSec = factoryRegenPerSec + arrayBonusRegenPerSec;
+
+      if (totalRegenPerSec <= 0) continue;
+      // Use effective capacity (includes Solar Array bonus)
+      const effectiveCapacity = getFactoryEffectiveEnergyCapacity(factory, solarArrayLevel);
+      const availableCapacity = Math.max(0, effectiveCapacity - factory.energy);
       if (availableCapacity <= 1e-6) continue;
-      const gain = Math.min(regenPerSec * dt, availableCapacity);
+      const gain = Math.min(totalRegenPerSec * dt, availableCapacity);
       if (gain <= 1e-6) continue;
       factorySolarGain.set(factory.id, gain);
     }
