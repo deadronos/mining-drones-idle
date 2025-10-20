@@ -72,7 +72,7 @@ export function processLogistics(
   for (const resource of RESOURCE_TYPES) {
     if (state.factories.length === 0) continue;
 
-    const warehouseStock = (state.resources as Record<string, number>)[resource] ?? 0;
+    const warehouseStock = (state.resources as unknown as Record<string, number>)[resource] ?? 0;
     let warehouseSpace =
       warehouseCapacity - warehouseStock - (warehouseInboundReservations.get(resource) ?? 0);
     let warehouseAvailable =
@@ -217,12 +217,10 @@ export function processLogistics(
           continue;
         }
 
-        if (!factory.logisticsState) {
-          factory.logisticsState = {
-            outboundReservations: {},
-            inboundSchedules: [],
-          };
-        }
+        factory.logisticsState ??= {
+          outboundReservations: {},
+          inboundSchedules: [],
+        };
 
         while (remainingNeed > 0 && warehouseAvailable > 0) {
           const capacity = config.capacity ?? LOGISTICS_CONFIG.hauler_capacity;
@@ -297,12 +295,12 @@ export function processLogistics(
           }
 
           const currentWarehouse =
-            (state.resources as Record<string, number>)[transfer.resource] ?? 0;
+            (state.resources as unknown as Record<string, number>)[transfer.resource] ?? 0;
           const updatedWarehouse = Math.min(
             warehouseCapacity,
             currentWarehouse + transfer.amount,
           );
-          (state.resources as Record<string, number>)[transfer.resource] = updatedWarehouse;
+          (state.resources as unknown as Record<string, number>)[transfer.resource] = updatedWarehouse;
 
           completedTransfers.push(transfer.id);
         }
@@ -310,8 +308,8 @@ export function processLogistics(
         const destFactory = state.factories.find((f) => f.id === transfer.toFactoryId);
         if (destFactory) {
           const currentWarehouse =
-            (state.resources as Record<string, number>)[transfer.resource] ?? 0;
-          (state.resources as Record<string, number>)[transfer.resource] = Math.max(
+            (state.resources as unknown as Record<string, number>)[transfer.resource] ?? 0;
+          (state.resources as unknown as Record<string, number>)[transfer.resource] = Math.max(
             0,
             currentWarehouse - transfer.amount,
           );

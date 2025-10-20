@@ -25,7 +25,7 @@ export const LogisticsPanel = () => {
   }, []);
 
   const transfers = logisticsQueues.pendingTransfers;
-  const totalHaulers = factories.reduce((sum: number, f) => sum + ((f.haulersAssigned as number | undefined) ?? 0), 0);
+  const totalHaulers = factories.reduce((sum: number, f) => sum + ((f.haulersAssigned) ?? 0), 0);
   const activeTransfers = transfers.filter((t) => t.status === 'scheduled' || t.status === 'in-transit');
   const completedTransfers = transfers.filter((t) => t.status === 'completed').length;
 
