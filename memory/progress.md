@@ -2,6 +2,7 @@
 
 ## Summary
 
+- Completed TASK027 (Drone Distribution & Storage Buffer Display): improved drone assignment to prefer least-filled docking slots (preventing clustering), added buffer target visibility in factory storage panel, updated RQ-023 and added RQ-044 to requirements, verified all 158 tests pass.
 - Completed TASK026 (Settings responsive layout): drafted DES022, added RQ-041–RQ-043 requirements, refactored the panel into a grid-based layout, verified the full Vitest suite, and manually confirmed responsive behavior.
 - Core MVP implemented with store, ECS loop, rendering, UI, and tests.
 - Persistence foundation landed: store settings slice, persistence bootstrap, and Settings UI shipped with tests.
@@ -19,8 +20,8 @@
 
 - Implemented migration helpers (`src/state/migrations.ts`) to normalize legacy snapshots on load/import; README updated with save format and migration guidance.
 
- - Upgraded factory visuals with animated conveyors, transfer FX, boost pulses, and a settings-driven performance profile backed by ECS activity signals (TASK011).
- - TASK008/TASK011: Visuals completed and integrated. Trails, conveyors, transfer FX, and boost pulses are implemented and gated by performance profiles. Visual snapshot tests and a perf scene were added for baseline measurements.
+- Upgraded factory visuals with animated conveyors, transfer FX, boost pulses, and a settings-driven performance profile backed by ECS activity signals (TASK011).
+- TASK008/TASK011: Visuals completed and integrated. Trails, conveyors, transfer FX, and boost pulses are implemented and gated by performance profiles. Visual snapshot tests and a perf scene were added for baseline measurements.
 
 - Finalized Phase 6 hauler logistics visuals with arrowed transfer meshes, resource-aware coloring, and hover tooltips tied to live ETAs.
 - Shifted hauler purchasing to bar-based costs with store-level affordability checks and UI gating, laying groundwork for Phase 8 balance work.
@@ -40,5 +41,5 @@
 - Execute TASK021 to deliver the factory solar regeneration upgrade and surface regen telemetry in the inspector.
 - Track UI follow-up for surfacing per-drone battery levels and throttle warnings in the HUD.
 - Validate seeded RNG integration across save import/export flows and plan any reset tooling.
- - Capture performance telemetry for drone trails and finalize factory snapshot/perf scene coverage for TASK011.
- - Capture performance telemetry for drone trails (follow-up) and triage e2e/flaky UI tests that wait for panels to mount in CI.
+- Capture performance telemetry for drone trails and finalize factory snapshot/perf scene coverage for TASK011.
+- Capture performance telemetry for drone trails (follow-up) and triage e2e/flaky UI tests that wait for panels to mount in CI.

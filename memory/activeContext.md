@@ -4,7 +4,16 @@
 
 🟡 **TASK025 – Warehouse Reconciliation**: Standing up the warehouse-first resource model remains in soak; continue validating transfers and polish once the Settings work lands.
 
+✅ **TASK027 – Drone Distribution & Storage Buffer Display**: Completed load-balancing improvements to spread drones evenly across factories and added buffer target visibility in the Inspector.
+
 ## Recent Changes
+
+- Completed TASK027: Improved drone factory assignment algorithm
+  - Changed sort criteria from distance-first to occupancy-first (least-filled docking slots)
+  - Drones now distribute evenly across all available factories instead of clustering at Factory 0
+  - Added buffer reserve target display to factory storage panel showing logistics decision thresholds
+  - Updated RQ-023 and added RQ-044 to requirements
+  - All tests pass (158 tests), TypeScript clean, linting clean
 
 - Fixed hauler logistics not exporting Bars to warehouse on fresh runs:
   - computeBufferTarget is now resource-aware (Ore uses consumption buffer; Bars keep a minimal local buffer; others conservative).
@@ -24,5 +33,7 @@
 ## Next Steps
 
 1. Continue monitoring warehouse reconciliation metrics and log any regressions surfaced during Settings QA.
-2. Capture tutorial/tooling follow-up (tutorial overlay or HUD tooltip) once UI teams provide direction.
-3. Prepare final TASK025 wrap-up notes and identify residual polish items for warehouse UX.
+2. Observe drone distribution in live play to ensure load balancing is working as expected (no single factory dominating queue).
+3. Gather player feedback on buffer target display clarity and adjust labels/formatting if needed.
+4. Capture tutorial/tooling follow-up (tutorial overlay or HUD tooltip) once UI teams provide direction.
+5. Prepare final TASK025 wrap-up notes and identify residual polish items for warehouse UX.
