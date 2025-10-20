@@ -296,12 +296,10 @@ export const reserveOutbound = (
   }
 
   // Initialize logistics state if needed
-  if (!factory.logisticsState) {
-    factory.logisticsState = {
-      outboundReservations: {},
-      inboundSchedules: [],
-    };
-  }
+  factory.logisticsState ??= {
+    outboundReservations: {},
+    inboundSchedules: [],
+  };
 
   if (!factory.logisticsState.outboundReservations) {
     factory.logisticsState.outboundReservations = {};
@@ -365,12 +363,10 @@ export const executeArrival = (
   }
 
   // Record in destination's inbound schedules for UI
-  if (!destFactory.logisticsState) {
-    destFactory.logisticsState = {
-      outboundReservations: {},
-      inboundSchedules: [],
-    };
-  }
+  destFactory.logisticsState ??= {
+    outboundReservations: {},
+    inboundSchedules: [],
+  };
 
   // Remove this transfer from inbound schedules (it's now completed)
   destFactory.logisticsState.inboundSchedules = (
@@ -394,8 +390,8 @@ export const executeArrival = (
  */
 export const computeHaulerCost = (
   level: number,
-  baseCost: number = 10,
-  growth: number = 1.15,
+  baseCost = 10,
+  growth = 1.15,
 ): number => {
   return Math.ceil(baseCost * Math.pow(growth, level));
 };
@@ -410,7 +406,7 @@ export const computeHaulerCost = (
  */
 export const computeHaulerMaintenanceCost = (
   haulersActive: number,
-  costPerHauler: number = 0.5, // 0.5 energy/sec per active hauler
+  costPerHauler = 0.5, // 0.5 energy/sec per active hauler
 ): number => {
   return haulersActive * costPerHauler;
 };

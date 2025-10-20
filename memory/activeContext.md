@@ -6,6 +6,11 @@
 
 ## Recent Changes
 
+- Fixed hauler logistics not exporting Bars to warehouse on fresh runs:
+  - computeBufferTarget is now resource-aware (Ore uses consumption buffer; Bars keep a minimal local buffer; others conservative).
+  - Scheduler tick cadence bug fixed: we now preserve fractional time instead of resetting to 0 after each run, ensuring dispatch every 2s.
+  - Added focused unit/integration tests for Bars → Warehouse transfers; full test suite passes.
+
 - Captured RQ-041–RQ-043 covering multi-column Settings behavior, panel height clamping, and narrow layout regressions.
 - Authored DES022 and TASK026 to define the responsive Settings approach and implementation steps and validated the responsive dialog manually at target sizes.
 - Reviewed DES021 and TASK025 plan, noted dual-inventory pain points and buffer/warehouse design decisions.
