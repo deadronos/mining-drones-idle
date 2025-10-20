@@ -30,10 +30,4 @@
 | TASK026 | Settings Panel Responsive Layout             | Completed   | 2025-10-24 |
 | TASK027 | Drone Distribution & Storage Buffer Display  | Completed   | 2025-10-25 |
 | TASK028 | Drone Returning Throttle Stall Investigation | Completed   | 2025-10-25 |
-
-````
-
-```
-
-```
-````
+| TASK029 | Local-First Energy Priority                  | Completed   | 2025-10-25 |

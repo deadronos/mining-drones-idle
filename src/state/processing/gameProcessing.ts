@@ -52,22 +52,17 @@ export function processFactories(
   const updatedFactories = state.factories.map((factory) => {
     const working = cloneFactory(factory);
 
-    // Pull energy from global pool
-    const energyNeeded = Math.max(0, working.energyCapacity - working.energy);
-    if (energyNeeded > 0 && remainingEnergy > 0) {
-      const pulled = Math.min(energyNeeded, remainingEnergy);
-      working.energy += pulled;
-      remainingEnergy -= pulled;
-    }
+    // Local-first: Factories consume their local energy for idle, haulers, and refining.
+    // No proactive pull from global; factories sit at zero if depleted.
+    // (Drones fall back to global charging via power system if factory is empty.)
 
-    // Apply idle energy drain
+    // Apply idle energy drain (local)
     const idleDrain = working.idleEnergyPerSec * dt;
     if (idleDrain > 0) {
       working.energy = Math.max(0, working.energy - idleDrain);
     }
 
-    // Import computeHaulerMaintenanceCost if needed
-    // Apply hauler maintenance drain
+    // Apply hauler maintenance drain (local)
     const haulerDrain =
       (working.haulersAssigned ?? 0) > 0
         ? computeHaulerMaintenanceCost(working.haulersAssigned ?? 0) * dt
@@ -100,7 +95,7 @@ export function processFactories(
       enforceMinOneRefining(working, working.energy, working.energyCapacity);
     }
 
-    // Progress refining processes
+    // Progress refining processes (consume local energy)
     for (let i = working.activeRefines.length - 1; i >= 0; i -= 1) {
       const process = working.activeRefines[i];
       const drain = working.energyPerRefine * dt * process.speedMultiplier;
