@@ -3,6 +3,8 @@ import { useStore } from '@/state/store';
 import { WAREHOUSE_NODE_ID } from '@/ecs/logistics';
 import './LogisticsPanel.css';
 
+const TRANSFERS_PAGE_SIZE = 5;
+
 /**
  * Global Logistics Panel: overview of all factory transfers and hauler allocation
  */
@@ -12,6 +14,7 @@ export const LogisticsPanel = () => {
   const logisticsQueues = useStore((state) => state.logisticsQueues);
   const gameTime = useStore((state) => state.gameTime);
   const [, forceUpdate] = useState(0);
+  const [transferPage, setTransferPage] = useState(0);
 
   // Refresh every 500ms to update ETAs
   useEffect(() => {
@@ -23,8 +26,18 @@ export const LogisticsPanel = () => {
 
   const transfers = logisticsQueues.pendingTransfers;
   const totalHaulers = factories.reduce((sum: number, f) => sum + ((f.haulersAssigned as number | undefined) ?? 0), 0);
-  const activeTransfers = transfers.filter((t) => t.status === 'scheduled' || t.status === 'in-transit').length;
+  const activeTransfers = transfers.filter((t) => t.status === 'scheduled' || t.status === 'in-transit');
   const completedTransfers = transfers.filter((t) => t.status === 'completed').length;
+
+  const totalTransferPages = Math.max(1, Math.ceil(activeTransfers.length / TRANSFERS_PAGE_SIZE));
+
+  useEffect(() => {
+    setTransferPage((current) => Math.min(current, totalTransferPages - 1));
+  }, [totalTransferPages]);
+
+  const safeTransferPage = Math.min(transferPage, totalTransferPages - 1);
+  const transferStart = safeTransferPage * TRANSFERS_PAGE_SIZE;
+  const visibleTransfers = activeTransfers.slice(transferStart, transferStart + TRANSFERS_PAGE_SIZE);
 
   return (
     <div className="logistics-panel">
@@ -37,7 +50,7 @@ export const LogisticsPanel = () => {
         </div>
         <div className="summary-item">
           <span className="label">Active Transfers:</span>
-          <span className="value">{activeTransfers}</span>
+          <span className="value">{activeTransfers.length}</span>
         </div>
         <div className="summary-item">
           <span className="label">Completed:</span>
@@ -49,15 +62,38 @@ export const LogisticsPanel = () => {
         </div>
       </div>
 
-      {transfers.length === 0 ? (
-        <p className="muted">No transfers in progress</p>
-      ) : (
-        <div className="transfers-list">
+      <div className="transfers-list">
+        <div className="transfers-header">
           <h5>Active Transfers</h5>
-          {transfers
-            .filter((t) => t.status === 'scheduled' || t.status === 'in-transit')
-            .slice(0, 10)
-            .map((transfer) => {
+          {totalTransferPages > 1 && (
+            <div className="transfers-pagination">
+              <button
+                type="button"
+                onClick={() => setTransferPage((p) => Math.max(0, p - 1))}
+                disabled={safeTransferPage === 0}
+                aria-label="Previous page"
+              >
+                ◀
+              </button>
+              <span className="page-indicator">
+                {safeTransferPage + 1} / {totalTransferPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setTransferPage((p) => Math.min(totalTransferPages - 1, p + 1))}
+                disabled={safeTransferPage >= totalTransferPages - 1}
+                aria-label="Next page"
+              >
+                ▶
+              </button>
+            </div>
+          )}
+        </div>
+        {activeTransfers.length === 0 ? (
+          <p className="muted">No transfers in progress</p>
+        ) : (
+          <>
+            {visibleTransfers.map((transfer) => {
               const remainingTime = Math.max(0, transfer.eta - (gameTime ?? 0));
               const sourceFactory = factories.find((f) => f.id === transfer.fromFactoryId);
               const destFactory = factories.find((f) => f.id === transfer.toFactoryId);
@@ -99,13 +135,9 @@ export const LogisticsPanel = () => {
                 </div>
               );
             })}
-          {transfers.filter((t) => t.status === 'scheduled' || t.status === 'in-transit').length > 10 && (
-            <p className="muted small">
-              +{transfers.filter((t) => t.status === 'scheduled' || t.status === 'in-transit').length - 10} more
-            </p>
-          )}
-        </div>
-      )}
+          </>
+        )}
+      </div>
 
       {totalHaulers === 0 && (
         <div className="logistics-hint">
