@@ -7,7 +7,7 @@ import {
   getFactorySolarRegen,
   type FactoryUpgradeId,
 } from '@/state/store';
-import { computeHaulerCost } from '@/ecs/logistics';
+import { computeHaulerCost, computeBufferTarget } from '@/ecs/logistics';
 import './FactoryManager.css';
 
 const DOCKING_PAGE_SIZE = 6;
@@ -236,14 +236,21 @@ const SelectedFactoryCard = ({
           ? `${Math.floor(amount).toLocaleString()} / ${factory.storageCapacity.toLocaleString()}`
           : Math.floor(amount).toLocaleString();
 
+      // Only show buffer target for transportable resources (not credits)
+      let bufferTarget = null;
+      if (key !== 'credits' && (key === 'ore' || key === 'bars' || key === 'metals' || key === 'crystals' || key === 'organics' || key === 'ice')) {
+        bufferTarget = Math.ceil(computeBufferTarget(factory, key));
+      }
+
       return {
         key,
         label: STORAGE_LABELS[key] ?? key,
         amount,
         display: formattedAmount,
+        bufferTarget,
       };
     });
-  }, [factory.resources, factory.storageCapacity]);
+  }, [factory]);
 
   return (
     <div className="factory-card selected">
@@ -348,10 +355,18 @@ const SelectedFactoryCard = ({
               <li
                 key={entry.key}
                 className={entry.amount > 0 ? 'storage-row' : 'storage-row muted'}
-                aria-label={`${entry.label}: ${entry.display}`}
+                aria-label={`${entry.label}: ${entry.display}${entry.bufferTarget ? ` (buffer: ${entry.bufferTarget})` : ''}`}
               >
                 <span className="storage-name">{entry.label}</span>
-                <span className="storage-value">{entry.display}</span>
+                <span className="storage-value">
+                  {entry.display}
+                  {entry.bufferTarget ? (
+                    <span className="storage-buffer" title="Buffer reserve target">
+                      {' '}
+                      <small className="muted">(buf: {entry.bufferTarget})</small>
+                    </span>
+                  ) : null}
+                </span>
               </li>
             ))}
           </ul>
