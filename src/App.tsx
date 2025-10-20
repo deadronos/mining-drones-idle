@@ -17,8 +17,15 @@ interface AppProps {
 }
 
 export const App = ({ persistence }: AppProps) => {
-  const resources = useStore((state) => state.resources);
-  const modules = useStore((state) => state.modules);
+  // Select only the specific resource fields needed for HUD display to minimize re-renders
+  const ore = useStore((state) => state.resources.ore);
+  const metals = useStore((state) => state.resources.metals);
+  const crystals = useStore((state) => state.resources.crystals);
+  const organics = useStore((state) => state.resources.organics);
+  const ice = useStore((state) => state.resources.ice);
+  const bars = useStore((state) => state.resources.bars);
+  const energy = useStore((state) => state.resources.energy);
+  const droneBay = useStore((state) => state.modules.droneBay);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
@@ -36,14 +43,14 @@ export const App = ({ persistence }: AppProps) => {
           <Scene />
         </Canvas>
         <div className="hud">
-          <div>Ore: {resources.ore.toFixed(1)}</div>
-          <div>Metals: {resources.metals.toFixed(1)}</div>
-          <div>Crystals: {resources.crystals.toFixed(1)}</div>
-          <div>Organics: {resources.organics.toFixed(1)}</div>
-          <div>Ice: {resources.ice.toFixed(1)}</div>
-          <div>Bars: {resources.bars.toFixed(1)}</div>
-          <div>Energy: {Math.round(resources.energy)}</div>
-          <div>Drones: {modules.droneBay}</div>
+          <div>Ore: {ore.toFixed(1)}</div>
+          <div>Metals: {metals.toFixed(1)}</div>
+          <div>Crystals: {crystals.toFixed(1)}</div>
+          <div>Organics: {organics.toFixed(1)}</div>
+          <div>Ice: {ice.toFixed(1)}</div>
+          <div>Bars: {bars.toFixed(1)}</div>
+          <div>Energy: {Math.round(energy)}</div>
+          <div>Drones: {droneBay}</div>
           <ResourceModifiersDebug />
           <button type="button" onClick={() => setSettingsOpen(true)} className="hud-button">
             Settings

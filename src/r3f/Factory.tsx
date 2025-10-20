@@ -2,9 +2,10 @@
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { InstancedMesh, MeshStandardMaterial, PointLight } from 'three';
-import { CanvasTexture, Color, Matrix4, Quaternion, RepeatWrapping, Vector3 } from 'three';
+import { Color, Matrix4, Quaternion, Vector3 } from 'three';
 import { gameWorld } from '@/ecs/world';
 import { useStore, type PerformanceProfile } from '@/state/store';
+import { getConveyorTexture, releaseConveyorTexture } from './assetCache';
 
 interface BeltDefinition {
   position: readonly [number, number, number];
@@ -71,42 +72,18 @@ type ItemState = {
   jitter: number;
 };
 
-const createConveyorTexture = () => {
-  if (typeof document === 'undefined') return null;
-  const size = 128;
-  const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
-  const context = canvas.getContext('2d');
-  if (context) {
-    context.fillStyle = '#0f172a';
-    context.fillRect(0, 0, size, size);
-    context.fillStyle = '#1f2937';
-    for (let x = 0; x < size; x += 16) {
-      context.fillRect(x, 0, 8, size);
-    }
-    context.fillStyle = '#38bdf8';
-    context.globalAlpha = 0.2;
-    for (let x = 0; x < size; x += 32) {
-      context.fillRect(x, 0, 4, size);
-    }
-    context.globalAlpha = 1;
-  }
-  const texture = new CanvasTexture(canvas);
-  texture.wrapS = RepeatWrapping;
-  texture.wrapT = RepeatWrapping;
-  texture.repeat.set(4, 1);
-  return texture;
-};
-
 const FactoryModel = ({ position }: { position: Vector3 }) => {
   const performanceProfile = useStore((state) => state.settings.performanceProfile);
-  const beltTextures = useMemo(() => BELTS.map(() => createConveyorTexture()), []);
+  // Use shared conveyor texture cache: all factories share the same texture resource
+  const sharedBeltTexture = useMemo(() => getConveyorTexture(), []);
+  const beltTextures = useMemo(() => BELTS.map(() => sharedBeltTexture), [sharedBeltTexture]);
+
   useEffect(
     () => () => {
-      beltTextures.forEach((texture) => texture?.dispose());
+      // Release the shared texture reference when component unmounts
+      releaseConveyorTexture();
     },
-    [beltTextures],
+    [],
   );
 
   const beltOffsets = useRef<number[]>(BELTS.map(() => 0));
