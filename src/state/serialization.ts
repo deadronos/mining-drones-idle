@@ -363,6 +363,14 @@ export const cloneFactory = (factory: BuildableFactory): BuildableFactory => ({
   resources: { ...factory.resources },
   ownedDrones: [...factory.ownedDrones],
   upgrades: { ...factory.upgrades },
+  upgradeRequests: factory.upgradeRequests.map((req) => ({
+    upgrade: req.upgrade,
+    resourceNeeded: { ...req.resourceNeeded },
+    fulfilledAmount: { ...req.fulfilledAmount },
+    status: req.status,
+    createdAt: req.createdAt,
+    expiresAt: req.expiresAt,
+  })),
   haulersAssigned: factory.haulersAssigned,
   haulerConfig: factory.haulerConfig ? { ...factory.haulerConfig } : undefined,
   logisticsState: factory.logisticsState
@@ -390,6 +398,14 @@ export const snapshotToFactory = (snapshot: FactorySnapshot): BuildableFactory =
   resources: { ...snapshot.resources },
   ownedDrones: [...snapshot.ownedDrones],
   upgrades: { ...snapshot.upgrades },
+  upgradeRequests: (snapshot.upgradeRequests ?? []).map((req) => ({
+    upgrade: req.upgrade,
+    resourceNeeded: { ...req.resourceNeeded },
+    fulfilledAmount: { ...req.fulfilledAmount },
+    status: req.status,
+    createdAt: req.createdAt,
+    expiresAt: req.expiresAt,
+  })),
   haulersAssigned: snapshot.haulersAssigned,
   haulerConfig: snapshot.haulerConfig ? { ...snapshot.haulerConfig } : undefined,
   logisticsState: snapshot.logisticsState
@@ -417,6 +433,14 @@ export const factoryToSnapshot = (factory: BuildableFactory): FactorySnapshot =>
   resources: { ...factory.resources },
   ownedDrones: [...factory.ownedDrones],
   upgrades: { ...factory.upgrades },
+  upgradeRequests: factory.upgradeRequests.map((req) => ({
+    upgrade: req.upgrade,
+    resourceNeeded: { ...req.resourceNeeded },
+    fulfilledAmount: { ...req.fulfilledAmount },
+    status: req.status,
+    createdAt: req.createdAt,
+    expiresAt: req.expiresAt,
+  })),
   haulersAssigned: factory.haulersAssigned,
   haulerConfig: factory.haulerConfig ? { ...factory.haulerConfig } : undefined,
   logisticsState: factory.logisticsState

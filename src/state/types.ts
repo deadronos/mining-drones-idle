@@ -50,6 +50,15 @@ export interface FactoryUpgradeSnapshot {
   solar: number;
 }
 
+export interface FactoryUpgradeRequestSnapshot {
+  upgrade: string;
+  resourceNeeded: Partial<FactoryResourceSnapshot>;
+  fulfilledAmount: Partial<FactoryResourceSnapshot>;
+  status: 'pending' | 'partially_fulfilled' | 'fulfilled' | 'expired';
+  createdAt: number;
+  expiresAt: number;
+}
+
 export interface FactorySnapshot {
   id: string;
   position: VectorTuple;
@@ -67,6 +76,7 @@ export interface FactorySnapshot {
   resources: FactoryResourceSnapshot;
   ownedDrones: string[];
   upgrades: FactoryUpgradeSnapshot;
+  upgradeRequests?: FactoryUpgradeRequestSnapshot[];
   haulersAssigned?: number;
   haulerConfig?: HaulerConfig;
   logisticsState?: FactoryLogisticsState;
