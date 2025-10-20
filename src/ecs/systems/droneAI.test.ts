@@ -114,7 +114,7 @@ describe('createDroneAISystem', () => {
       asteroidQuery: {
         entities: [] as AsteroidEntity[],
         [Symbol.iterator]: function* () {
-          yield;
+          return;
         },
       },
       rng: createRng(1),
