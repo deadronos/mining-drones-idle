@@ -28,8 +28,8 @@ import {
   factoryUpgradeDefinitions,
   FACTORY_SOLAR_BASE_REGEN,
   FACTORY_SOLAR_REGEN_PER_LEVEL,
-  FACTORY_SOLAR_LOCAL_REGEN_PER_LEVEL,
-  FACTORY_SOLAR_LOCAL_MAX_ENERGY_PER_LEVEL,
+  SOLAR_ARRAY_LOCAL_REGEN_PER_LEVEL,
+  SOLAR_ARRAY_LOCAL_MAX_ENERGY_PER_LEVEL,
   WAREHOUSE_CONFIG,
 } from './constants';
 
@@ -139,18 +139,28 @@ export const getFactoryUpgradeCost = (
 ): Partial<FactoryResources> => computeFactoryUpgradeCost(upgrade, level);
 
 export const getFactorySolarRegen = (level: number): number => {
-  if (level <= 0) return 0;
-  return FACTORY_SOLAR_BASE_REGEN + FACTORY_SOLAR_REGEN_PER_LEVEL * (level - 1);
+  // Base 0.25 regen available at level 0 (not purchased)
+  // Each upgrade level adds 0.5 more
+  return FACTORY_SOLAR_BASE_REGEN + FACTORY_SOLAR_REGEN_PER_LEVEL * level;
 };
 
-export const getFactorySolarLocalRegen = (level: number): number => {
+export const getSolarArrayLocalRegen = (level: number): number => {
   if (level <= 0) return 0;
-  return FACTORY_SOLAR_LOCAL_REGEN_PER_LEVEL * level;
+  return SOLAR_ARRAY_LOCAL_REGEN_PER_LEVEL * level;
 };
 
-export const getFactorySolarLocalMaxEnergy = (level: number): number => {
+export const getSolarArrayLocalMaxEnergy = (level: number): number => {
   if (level <= 0) return 0;
-  return FACTORY_SOLAR_LOCAL_MAX_ENERGY_PER_LEVEL * level;
+  return SOLAR_ARRAY_LOCAL_MAX_ENERGY_PER_LEVEL * level;
+};
+
+export const getFactoryEffectiveEnergyCapacity = (
+  factory: BuildableFactory,
+  solarArrayLevel: number,
+): number => {
+  // Base capacity from factory upgrades (stored in factory.energyCapacity)
+  // + bonus from global Solar Array module
+  return factory.energyCapacity + getSolarArrayLocalMaxEnergy(solarArrayLevel);
 };
 
 export const computeRefineryProduction = (

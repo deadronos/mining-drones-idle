@@ -23,10 +23,14 @@ export const BASE_ENERGY_CAP = 100;
 export const ENERGY_PER_SOLAR = 25;
 export const SOLAR_BASE_GEN = 5;
 export const DRONE_ENERGY_COST = 1.2;
+// Solar Collector upgrade (factory-local)
 export const FACTORY_SOLAR_BASE_REGEN = 0.25;
 export const FACTORY_SOLAR_REGEN_PER_LEVEL = 0.5;
-export const FACTORY_SOLAR_LOCAL_REGEN_PER_LEVEL = 0.15;
-export const FACTORY_SOLAR_LOCAL_MAX_ENERGY_PER_LEVEL = 3;
+export const FACTORY_SOLAR_MAX_ENERGY_PER_LEVEL = 10; // +10 max energy per Solar Collector level
+
+// Solar Array module (global, provides local bonuses to all factories)
+export const SOLAR_ARRAY_LOCAL_REGEN_PER_LEVEL = 0.15;
+export const SOLAR_ARRAY_LOCAL_MAX_ENERGY_PER_LEVEL = 3;
 
 export const FACTORY_MIN_DISTANCE = 10;
 export const FACTORY_MAX_DISTANCE = 50;
@@ -130,12 +134,12 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
   },
   solar: {
     label: 'Solar Collectors',
-    description: 'Regenerates local energy each second (+0.15/s, +3 max energy per level)',
+    description: 'Regenerates local energy each second',
     baseCost: { metals: 30, crystals: 15 },
     apply: (factory) => {
       factory.upgrades.solar += 1;
-      // Apply local bonus: +3 max energy per level
-      factory.energyCapacity += FACTORY_SOLAR_LOCAL_MAX_ENERGY_PER_LEVEL;
+      // Apply local bonus: +10 max energy per level
+      factory.energyCapacity += FACTORY_SOLAR_MAX_ENERGY_PER_LEVEL;
     },
   },
 };

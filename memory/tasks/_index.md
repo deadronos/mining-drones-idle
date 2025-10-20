@@ -24,8 +24,8 @@
 | TASK020 | Factory Energy Resilience                    | Completed   | 2025-10-23 |
 | TASK021 | Factory Solar Regeneration Upgrade           | Completed   | 2025-10-23 |
 | TASK022 | Refactor store.ts into Focused Slices        | Completed   | 2025-10-24 |
-| TASK023 | Refactor FactoryManager.tsx Sub-Components   | Pending     | 2025-10-19 |
-| TASK024 | Refactor serialization.ts Domain Modules     | Completed   | 2025-10-24 |
+| TASK023 | Refactor FactoryManager.tsx Sub-Components   | Completed   | 2025-10-25 |
+| TASK024 | Refactor serialization.ts Domain Modules     | Completed   | 2025-10-25 |
 | TASK025 | Warehouse Reconciliation Implementation      | In Progress | 2025-10-24 |
 | TASK026 | Settings Panel Responsive Layout             | Completed   | 2025-10-24 |
 | TASK027 | Drone Distribution & Storage Buffer Display  | Completed   | 2025-10-25 |

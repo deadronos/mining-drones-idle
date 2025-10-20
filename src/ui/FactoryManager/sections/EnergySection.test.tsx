@@ -38,15 +38,17 @@ describe('EnergySection', () => {
     expect(getByText(/Solar regen:/)).toBeDefined();
   });
 
-  it('hides solar regen when solar level is 0', () => {
+  it('shows base solar regen even at level 0', () => {
     const factory = createMockFactory({
       energy: 100,
       energyCapacity: 200,
       upgrades: { docking: 0, refine: 0, storage: 0, energy: 0, solar: 0 },
     });
 
-    const { queryByText } = render(<EnergySection factory={factory} />);
+    const { getByText } = render(<EnergySection factory={factory} />);
 
-    expect(queryByText(/Solar regen:/)).toBeNull();
+    // Base regen of 0.25 should be visible at level 0
+    expect(getByText(/Solar regen:/)).toBeDefined();
+    expect(getByText(/0.25\/s/)).toBeDefined();
   });
 });

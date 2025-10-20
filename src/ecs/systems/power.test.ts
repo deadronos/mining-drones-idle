@@ -6,7 +6,7 @@ import {
   getEnergyCapacity,
   getEnergyGeneration,
   getFactorySolarRegen,
-  getFactorySolarLocalRegen,
+  getSolarArrayLocalRegen,
 } from '@/state/store';
 import { getResourceModifiers } from '@/lib/resourceModifiers';
 
@@ -55,8 +55,8 @@ describe('ecs/systems/power', () => {
     const { resources, factories } = store.getState();
     // Drone charges from factory local first
     expect(drone.battery).toBeCloseTo(2.4, 5);
-    // Factory energy decreased by charge amount
-    expect(factories[0]?.energy).toBeCloseTo(17.6, 5);
+    // Factory energy: started at 20, charged drone 2.4, gained 0.25 regen = 20 - 2.4 + 0.25 = 17.85
+    expect(factories[0]?.energy).toBeCloseTo(17.85, 5);
     // Global energy stays same or gains from generation (+ ~5)
     expect(resources.energy).toBeGreaterThanOrEqual(10);
     expect(drone.charging).toBe(true);
@@ -98,13 +98,12 @@ describe('ecs/systems/power', () => {
     system(1);
 
     const { resources, factories } = store.getState();
-    // Drone charges from global (factory was empty)
+    // Drone charges from global (factory starts at 0, gains 0.25 regen, drone takes it)
     expect(drone.battery).toBeCloseTo(2.4, 5);
-    // Factory energy still zero (none available)
+    // Factory energy: 0 + 0.25 regen, all goes to drone charging = 0
     expect(factories[0]?.energy).toBeCloseTo(0, 5);
-    // Global energy decreased by charge amount (but gains from generation ~5)
-    // So: 10 - 2.4 + 5 = 12.6 (gain from global generation)
-    expect(resources.energy).toBeGreaterThan(7.6);
+    // Global energy: 10 - (2.4 - 0.25 from factory) + ~5 generation ≈ 10 - 2.15 + 5 = 12.85
+    expect(resources.energy).toBeGreaterThan(10);
     expect(drone.charging).toBe(true);
   });
 
@@ -226,13 +225,14 @@ describe('ecs/systems/power', () => {
     if (!factory) throw new Error('expected default factory');
 
     store.setState((state) => ({
+      modules: { ...state.modules, solar: 1 }, // Global Solar Array level 1
       factories: state.factories.map((entry, index) =>
         index === 0
           ? {
               ...entry,
               energy: 10,
               energyCapacity: 50,
-              upgrades: { ...entry.upgrades, solar: 2 },
+              upgrades: { ...entry.upgrades, solar: 2 }, // Factory Solar Collector level 2
             }
           : entry,
       ),
@@ -242,9 +242,9 @@ describe('ecs/systems/power', () => {
     system(1);
 
     const snapshot = store.getState().factories[0];
-    const globalGain = getFactorySolarRegen(2);
-    const localGain = getFactorySolarLocalRegen(2);
-    const expectedGain = globalGain + localGain;
+    const collectorRegen = getFactorySolarRegen(2); // Solar Collector level 2
+    const arrayBonusRegen = getSolarArrayLocalRegen(1); // Solar Array level 1
+    const expectedGain = collectorRegen + arrayBonusRegen;
     expect(snapshot?.energy).toBeCloseTo(10 + expectedGain, 5);
   });
 });
