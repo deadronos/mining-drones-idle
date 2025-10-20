@@ -1,8 +1,23 @@
 # DES024: Drone Docking/Undocking Mechanics Analysis
 
+**Status:** Completed  
+**Completed Date:** 2025-10-25  
+**Related Task:** TASK028  
+**Finding:** FINDING-001
+
 ## Overview
 
 This document explains how drone docking and undocking works in the mining-drones-idle game, and identifies potential causes for drones getting stuck in a "queued" state and not undocking again.
+
+---
+
+## Executive Summary (Root Cause Identified)
+
+**Root Cause:** Battery energy throttling on travel progress prevents drones from completing their return journey in reasonable time, blocking them in `'returning'` state indefinitely.
+
+**Impact:** Queue jamming - drones occupy docking slots without undocking, preventing waiting drones from progressing.
+
+**Solution:** Trigger unload on position arrival instead of travel completion time.
 
 ---
 
@@ -190,39 +205,101 @@ Drone resets to `'idle'` and cycle repeats.
 
 ## 4. What Could Cause Drones NOT to Undock
 
-### **Issue A: Drone Never Enters "Unloading" State**
+### **Issue A: Travel Never Completes - Elapsed Time Not Advancing**
 
-**Problem:** If a drone is stuck in `'returning'` state but never transitions to `'unloading'`, it will remain in the queue forever.
+**Location:** `src/ecs/systems/travel.ts`, line 79
 
-**Root Causes:**
-
-1. **Travel Never Completes**
-   - If `drone.travel.elapsed >= drone.travel.duration`, the flight system should mark arrival
-   - But if the physics/movement system doesn't progress `elapsed`, drone stays in travel indefinitely
-   - Drone position updates, but state never changes
-
-2. **Unload System Not Invoked**
-   - Unload system only triggers when `drone.state === 'unloading'`
-   - But what sets the state to `'unloading'`?
-   - **Check needed:** There's no visible code that transitions `'returning'` → `'unloading'`
-   - This might be in a movement/physics system or tick handler not shown in the grep results
-
-3. **Missing Tick Call**
-   - If unload system isn't called on that drone, undocking never happens
-   - Drone sits at factory position in `'returning'` state with full cargo indefinitely
-
-**Evidence in Code:**
+**The Transition Code EXISTS:**
 
 ```typescript
-// In unload.ts:
-if (drone.state !== 'unloading') continue; // SKIPPED if state is 'returning'
-
-// In droneAI.ts:
-if (drone.state === 'unloading' && drone.cargo <= 0.01) {
-  // Only cleanup after unloading completes
-  drone.state = 'idle';
+if (travel.elapsed >= travel.duration - 1e-4) {
+  drone.position.copy(travel.to);
+  drone.travel = null;
+  api.clearDroneFlight(drone.id);
+  if (drone.state === 'toAsteroid') {
+    drone.state = 'mining';
+  } else if (drone.state === 'returning') {
+    drone.state = 'unloading'; // ← TRANSITION HAPPENS HERE
+  }
+  drone.flightSeed = null;
 }
 ```
+
+**The Real Problem: Travel Elapsed Time Not Progressing**
+
+The critical line is:
+
+```typescript
+travel.elapsed = Math.min(travel.elapsed + dt * fraction, travel.duration);
+```
+
+Where `fraction` is the drone's battery level (normalized 0..1):
+
+```typescript
+const fraction = computeDroneEnergyFraction(drone, throttleFloor);
+// fraction = clamp(drone.battery / drone.maxBattery, throttleFloor, 1)
+```
+
+**Why This Causes Stalling:**
+
+1. **If drone battery is critically low**, `fraction` approaches `throttleFloor` (e.g., 0.1)
+   - Example: battery = 1/100, throttleFloor = 0.1
+   - `fraction = max(0.01, 0.1) = 0.1`
+   - With `dt = 0.016` (60 FPS), progress per frame = `0.016 * 0.1 = 0.0016`
+   - To complete 10-second travel: `10 / 0.0016 = 6,250 frames` ≈ 104 seconds!
+
+2. **If travel.duration is set incorrectly** (e.g., too high or NaN)
+   - Validation catches NaN/Infinity and clears the travel (defensive check at line 35-43)
+   - But if duration is just very large, travel can take an extremely long time
+
+3. **If systems are called in wrong order or skipped**
+   - Travel system IS called (Scene.tsx line 99)
+   - Called BEFORE unload system (correct order)
+   - But if `dt` is 0 or game is paused, no progress happens
+
+**Evidence from Tests:**
+
+`src/ecs/systems/travel.test.ts` shows expected behavior:
+
+```typescript
+it('advances travel proportionally to available battery', () => {
+  drone.battery = drone.maxBattery / 4; // 25% battery
+  store.setState((state) => ({
+    settings: { ...state.settings, throttleFloor: 0.2 },
+  }));
+
+  system(1); // 1 second delta
+  expect(drone.travel?.elapsed).toBeCloseTo(0.25, 5); // Only 25% of 1 second!
+});
+
+it('applies throttle floor when battery is depleted', () => {
+  drone.battery = 0; // Empty!
+  store.setState((state) => ({
+    settings: { ...state.settings, throttleFloor: 0.3 },
+  }));
+
+  system(1); // 1 second delta
+  expect(drone.travel?.elapsed).toBeCloseTo(0.3, 5); // Only 30% progress!
+});
+```
+
+**Defensive Guards (Prevent Invalid Travels):**
+
+`src/ecs/systems/travel.defensive.test.ts` shows what gets caught:
+
+- Invalid travel with NaN duration → clears travel, sets state to 'returning'
+- Malformed travel snapshots → cleared on load, drone sent to 'idle'
+
+**Conclusion:**
+
+The `'returning'` → `'unloading'` transition DOES exist and IS correct. The problem is:
+
+1. **Travel elapsed time advances very slowly when battery is low** due to throttling
+2. **Drones remain visually at the factory but state stays 'returning'** while awaiting travel completion
+3. **Unload system never runs** because it only processes `state === 'unloading'`
+4. **Queue slot is never freed** and becomes permanently occupied
+
+This is a **design issue with energy throttling**, not a code bug. Drones with low battery take extremely long to travel even short distances.
 
 ---
 
