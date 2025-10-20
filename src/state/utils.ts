@@ -28,6 +28,8 @@ import {
   factoryUpgradeDefinitions,
   FACTORY_SOLAR_BASE_REGEN,
   FACTORY_SOLAR_REGEN_PER_LEVEL,
+  FACTORY_SOLAR_LOCAL_REGEN_PER_LEVEL,
+  FACTORY_SOLAR_LOCAL_MAX_ENERGY_PER_LEVEL,
   WAREHOUSE_CONFIG,
 } from './constants';
 
@@ -139,6 +141,16 @@ export const getFactoryUpgradeCost = (
 export const getFactorySolarRegen = (level: number): number => {
   if (level <= 0) return 0;
   return FACTORY_SOLAR_BASE_REGEN + FACTORY_SOLAR_REGEN_PER_LEVEL * (level - 1);
+};
+
+export const getFactorySolarLocalRegen = (level: number): number => {
+  if (level <= 0) return 0;
+  return FACTORY_SOLAR_LOCAL_REGEN_PER_LEVEL * level;
+};
+
+export const getFactorySolarLocalMaxEnergy = (level: number): number => {
+  if (level <= 0) return 0;
+  return FACTORY_SOLAR_LOCAL_MAX_ENERGY_PER_LEVEL * level;
 };
 
 export const computeRefineryProduction = (

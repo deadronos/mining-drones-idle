@@ -1,5 +1,5 @@
 import type { BuildableFactory } from '@/ecs/factories';
-import { getFactorySolarRegen } from '@/state/store';
+import { getFactorySolarRegen, getFactorySolarLocalRegen } from '@/state/store';
 
 interface EnergySectionProps {
   factory: BuildableFactory;
@@ -11,7 +11,9 @@ interface EnergySectionProps {
 export const EnergySection = ({ factory }: EnergySectionProps) => {
   const energyPercent = factory.energyCapacity > 0 ? factory.energy / factory.energyCapacity : 0;
   const solarLevel = factory.upgrades?.solar ?? 0;
-  const solarRegen = getFactorySolarRegen(solarLevel);
+  const globalRegen = getFactorySolarRegen(solarLevel);
+  const localRegen = getFactorySolarLocalRegen(solarLevel);
+  const totalRegen = globalRegen + localRegen;
 
   return (
     <div>
@@ -25,9 +27,9 @@ export const EnergySection = ({ factory }: EnergySectionProps) => {
           style={{ width: `${Math.min(1, energyPercent) * 100}%` }}
         />
       </div>
-      {solarRegen > 0 ? (
-        <p className="muted" aria-label={`Solar regeneration ${solarRegen.toFixed(2)} per second`}>
-          Solar regen: {solarRegen.toFixed(2)}/s
+      {totalRegen > 0 ? (
+        <p className="muted" aria-label={`Solar regeneration ${totalRegen.toFixed(2)} per second`}>
+          Solar regen: {localRegen.toFixed(2)}/s (local) {globalRegen.toFixed(2)}/s (global)
         </p>
       ) : null}
     </div>

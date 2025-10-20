@@ -6,6 +6,7 @@ import {
   getEnergyCapacity,
   getEnergyGeneration,
   getFactorySolarRegen,
+  getFactorySolarLocalRegen,
 } from '@/state/store';
 import { getResourceModifiers } from '@/lib/resourceModifiers';
 
@@ -241,7 +242,9 @@ describe('ecs/systems/power', () => {
     system(1);
 
     const snapshot = store.getState().factories[0];
-    const expectedGain = getFactorySolarRegen(2);
+    const globalGain = getFactorySolarRegen(2);
+    const localGain = getFactorySolarLocalRegen(2);
+    const expectedGain = globalGain + localGain;
     expect(snapshot?.energy).toBeCloseTo(10 + expectedGain, 5);
   });
 });
