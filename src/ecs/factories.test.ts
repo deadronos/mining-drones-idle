@@ -62,11 +62,12 @@ describe('Factory Entity', () => {
         amount: 10,
         progress: 0,
         timeTotal: 10,
-        energyRequired: 5,
+          energyRequired: 2,
         speedMultiplier: 1,
       });
 
-      expect(computeFactoryEnergyDemand(factory)).toBe(6); // 1 idle + 5 active
+      // energyPerRefine is 2 now: idle 1 + 2 active = 3
+      expect(computeFactoryEnergyDemand(factory)).toBe(3);
     });
   });
 

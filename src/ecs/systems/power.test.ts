@@ -55,8 +55,8 @@ describe('ecs/systems/power', () => {
     const { resources, factories } = store.getState();
     // Drone charges from factory local first
     expect(drone.battery).toBeCloseTo(2.4, 5);
-    // Factory energy: started at 20, charged drone 2.4, gained 0.25 regen = 20 - 2.4 + 0.25 = 17.85
-    expect(factories[0]?.energy).toBeCloseTo(17.85, 5);
+    // Factory energy: started at 20, charged drone 2.4, gained 1.25 regen = 20 - 2.4 + 1.25 = 18.85
+    expect(factories[0]?.energy).toBeCloseTo(18.85, 5);
     // Global energy stays same or gains from generation (+ ~5)
     expect(resources.energy).toBeGreaterThanOrEqual(10);
     expect(drone.charging).toBe(true);
@@ -98,11 +98,11 @@ describe('ecs/systems/power', () => {
     system(1);
 
     const { resources, factories } = store.getState();
-    // Drone charges from global (factory starts at 0, gains 0.25 regen, drone takes it)
+    // Drone charges from global (factory starts at 0, gains 1.25 regen, drone takes it)
     expect(drone.battery).toBeCloseTo(2.4, 5);
     // Factory energy: 0 + 0.25 regen, all goes to drone charging = 0
     expect(factories[0]?.energy).toBeCloseTo(0, 5);
-    // Global energy: 10 - (2.4 - 0.25 from factory) + ~5 generation ≈ 10 - 2.15 + 5 = 12.85
+    // Global energy: 10 - (2.4 - 1.25 from factory) + ~5 generation ≈ 10 - 1.15 + 5 = 13.85
     expect(resources.energy).toBeGreaterThan(10);
     expect(drone.charging).toBe(true);
   });

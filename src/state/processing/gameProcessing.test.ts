@@ -105,7 +105,7 @@ describe('gameProcessing/processFactories', () => {
           amount: 10,
           progress: 0,
           timeTotal: 10,
-          energyRequired: 5,
+          energyRequired: 2,
           speedMultiplier: 1,
         };
         return {

@@ -47,8 +47,8 @@ describe('EnergySection', () => {
 
     const { getByText } = render(<EnergySection factory={factory} />);
 
-    // Base regen of 0.25 should be visible at level 0
+    // Base regen of 1.25 should be visible at level 0 (updated gameplay)
     expect(getByText(/Solar regen:/)).toBeDefined();
-    expect(getByText(/0.25\/s/)).toBeDefined();
+    expect(getByText(/1.25\/s/)).toBeDefined();
   });
 });

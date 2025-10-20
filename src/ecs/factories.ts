@@ -98,7 +98,7 @@ export const FACTORY_CONFIG = {
   refineSlots: 2,
   refineTime: 10, // seconds per batch
   idleEnergyPerSec: 1,
-  energyPerRefine: 5,
+  energyPerRefine: 2,
   storageCapacity: 300,
   energyCapacity: 80,
   initialEnergy: 40,
