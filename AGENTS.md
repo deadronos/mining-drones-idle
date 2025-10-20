@@ -11,6 +11,14 @@ progressive designs are at '/memory/designs'
 
 Do not create explainer documents or other documentation unless specifically asked to.
 
+## Important
+
+Run before handing off code changes:
+
+npm run typecheck
+npm run lint
+npm run test
+
 ## 🧠 Memory Bank System
 
 **CRITICAL**: This project uses a structured Memory Bank for context preservation. Review these files before starting work:
