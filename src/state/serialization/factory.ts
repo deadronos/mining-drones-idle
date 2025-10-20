@@ -54,9 +54,7 @@ function normalizeUpgradeRequest(value: unknown): FactoryUpgradeRequest | null {
     upgrade: req.upgrade,
     resourceNeeded,
     fulfilledAmount,
-    status: validStatuses.includes(req.status)
-      ? (req.status as 'pending' | 'partially_fulfilled' | 'fulfilled' | 'expired')
-      : 'pending',
+    status: validStatuses.includes(req.status) ? req.status : 'pending',
     createdAt: Math.max(0, coerceNumber(req.createdAt, Date.now())),
     expiresAt: Math.max(0, coerceNumber(req.expiresAt, Date.now() + 60000)),
   };

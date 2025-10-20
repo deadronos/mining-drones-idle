@@ -31,7 +31,7 @@
 | TASK027 | Drone Distribution & Storage Buffer Display  | Completed   | 2025-10-25 |
 | TASK028 | Drone Returning Throttle Stall Investigation | Completed   | 2025-10-25 |
 | TASK029 | Local-First Energy Priority                  | Completed   | 2025-10-25 |
-| TASK030 | Factory Upgrade Resource Reservations        | In Progress | 2025-10-25 |
+| TASK030 | Factory Upgrade Resource Reservations        | Completed   | 2025-10-25 |
 
 ```
 

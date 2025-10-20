@@ -297,6 +297,87 @@ export function processLogistics(state: StoreState): {
         }
       }
     }
+
+    // Handle upgrade requests: factories requesting resources for upgrades
+    // Sort by creation time (older requests have higher priority)
+    const upgradeRequests = state.factories
+      .flatMap((factory) =>
+        factory.upgradeRequests
+          .filter((req) => req.status === 'pending' || req.status === 'partially_fulfilled')
+          .map((req) => ({ factory, request: req })),
+      )
+      .sort((a, b) => a.request.createdAt - b.request.createdAt);
+
+    for (const { factory, request } of upgradeRequests) {
+      if (warehouseAvailable <= 0) break;
+
+      const config = resolveHaulerConfig(factory);
+      const neededAmount = request.resourceNeeded[resource as keyof typeof request.resourceNeeded];
+      const fulfilledAmount = request.fulfilledAmount[resource as keyof typeof request.fulfilledAmount] ?? 0;
+
+      if (typeof neededAmount !== 'number' || neededAmount <= 0) {
+        continue;
+      }
+
+      const remainingNeed = Math.max(0, neededAmount - fulfilledAmount);
+      if (remainingNeed <= 0) {
+        continue; // This resource is already fulfilled for this request
+      }
+
+      const capacity = config.capacity ?? LOGISTICS_CONFIG.hauler_capacity;
+      const transferAmount = Math.min(remainingNeed, capacity, warehouseAvailable);
+      if (transferAmount <= 0) continue;
+
+      const travelTime = computeTravelTime(WAREHOUSE_POSITION, factory.position, config);
+      const eta = state.gameTime + travelTime;
+      const transferId = generateTransferId();
+
+      updatedQueues.pendingTransfers.push({
+        id: transferId,
+        fromFactoryId: WAREHOUSE_NODE_ID,
+        toFactoryId: factory.id,
+        resource,
+        amount: transferAmount,
+        status: 'scheduled',
+        eta,
+      });
+
+      factory.logisticsState ??= {
+        outboundReservations: {},
+        inboundSchedules: [],
+      };
+
+      factory.logisticsState.inboundSchedules = [
+        ...(factory.logisticsState.inboundSchedules ?? []),
+        {
+          fromFactoryId: WAREHOUSE_NODE_ID,
+          resource,
+          amount: transferAmount,
+          eta,
+        },
+      ];
+
+      try {
+        const fromPos = WAREHOUSE_POSITION.clone().add(new Vector3(0, 0.6, 0));
+        const toPos = factory.position.clone().add(new Vector3(0, 0.6, 0));
+        const duration = Math.max(0.1, eta - state.gameTime);
+        const event: FactoryTransferEvent = {
+          id: transferId,
+          amount: transferAmount,
+          from: fromPos,
+          to: toPos,
+          duration,
+        };
+        gameWorld.events.transfers.push(event);
+        if (gameWorld.events.transfers.length > 48) {
+          gameWorld.events.transfers.splice(0, gameWorld.events.transfers.length - 48);
+        }
+      } catch {
+        // ignore FX failures
+      }
+
+      warehouseAvailable = Math.max(0, warehouseAvailable - transferAmount);
+    }
   }
 
   const completedTransfers: string[] = [];
@@ -345,6 +426,48 @@ export function processLogistics(state: StoreState): {
           destFactory.resources[key] = (currentValue + transfer.amount) as never;
           if (transfer.resource === 'ore') {
             destFactory.currentStorage = destFactory.resources.ore;
+          }
+
+          // Update upgrade request fulfillment with arrived resources
+          for (const request of destFactory.upgradeRequests) {
+            if (request.status === 'expired' || request.status === 'fulfilled') {
+              continue;
+            }
+
+            const neededAmount =
+              request.resourceNeeded[transfer.resource as keyof typeof request.resourceNeeded] ?? 0;
+            if (typeof neededAmount !== 'number' || neededAmount <= 0) {
+              continue;
+            }
+
+            const fulfilledAmount =
+              request.fulfilledAmount[transfer.resource as keyof typeof request.fulfilledAmount] ??
+              0;
+            const additionalFulfilled = Math.min(transfer.amount, neededAmount - fulfilledAmount);
+
+            if (additionalFulfilled > 0) {
+              request.fulfilledAmount[transfer.resource as keyof typeof request.fulfilledAmount] =
+                fulfilledAmount + additionalFulfilled;
+
+              // Check if all resources are now fulfilled
+              let allFulfilled = true;
+              for (const [res, needed] of Object.entries(request.resourceNeeded)) {
+                if (typeof needed === 'number' && needed > 0) {
+                  const fulfilled =
+                    request.fulfilledAmount[res as keyof typeof request.fulfilledAmount] ?? 0;
+                  if (fulfilled < needed) {
+                    allFulfilled = false;
+                    break;
+                  }
+                }
+              }
+
+              if (allFulfilled) {
+                request.status = 'fulfilled';
+              } else if (request.status === 'pending') {
+                request.status = 'partially_fulfilled';
+              }
+            }
           }
 
           if (destFactory.logisticsState?.inboundSchedules) {
