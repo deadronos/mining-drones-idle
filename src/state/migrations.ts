@@ -117,9 +117,7 @@ const migrations: Array<{ targetVersion: string; migrate: MigrationFn }> = [
         }));
       }
 
-      if (!migrated.logisticsQueues) {
-        migrated.logisticsQueues = { pendingTransfers: [] };
-      }
+      migrated.logisticsQueues ??= { pendingTransfers: [] };
       return { snapshot: migrated, description: 'add hauler logistics fields' };
     },
   },

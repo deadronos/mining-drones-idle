@@ -121,7 +121,9 @@ export const TransferLines = () => {
           <group
             key={visual.transfer.id}
             position={visual.midpoint.toArray()}
+            // eslint-disable-next-line react/no-unknown-property
             quaternion={visual.quaternion}
+            // eslint-disable-next-line react/no-unknown-property
             renderOrder={isHovered ? 1 : 0}
           >
             <mesh

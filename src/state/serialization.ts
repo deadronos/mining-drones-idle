@@ -344,7 +344,7 @@ export const normalizeFactorySnapshot = (value: unknown): FactorySnapshot | null
                     amount: Math.max(0, coerceNumber(schedule.amount, 0)),
                     eta: Math.max(0, coerceNumber(schedule.eta, 0)),
                   }))
-                  .filter((s: any) => s.fromFactoryId && s.resource)
+                  .filter((s: { fromFactoryId: string; resource: string; amount: number; eta: number }) => s.fromFactoryId && s.resource)
               : [],
           }
         : undefined,
@@ -531,7 +531,7 @@ export const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapsh
     snapshot.droneOwners && typeof snapshot.droneOwners === 'object'
       ? normalizeDroneOwners(snapshot.droneOwners)
       : undefined,
-  logisticsQueues: snapshot.logisticsQueues || { pendingTransfers: [] },
+  logisticsQueues: snapshot.logisticsQueues ?? { pendingTransfers: [] },
 });
 
 export const serializeStore = (state: StoreState): StoreSnapshot => ({

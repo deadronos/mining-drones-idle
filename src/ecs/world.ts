@@ -204,7 +204,7 @@ try {
   if (storeApi && typeof storeApi.getState === 'function') {
     initialSeed = storeApi.getState().rngSeed;
   }
-} catch (_err) {
+} catch {
   // Fallback to time-based seed if store API is not yet initialized (e.g., during tests).
   initialSeed = Date.now();
 }

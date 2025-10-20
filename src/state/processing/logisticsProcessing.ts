@@ -1,5 +1,6 @@
 import { Vector3 } from 'three';
 import type { StoreState, LogisticsQueues, HaulerConfig } from '../types';
+import type { FactoryTransferEvent } from '@/ecs/world';
 import {
   RESOURCE_TYPES,
   generateTransferId,
@@ -109,8 +110,7 @@ export function processLogistics(
         const fromPos = sourceFactory.position.clone().add(new Vector3(0, 0.6, 0));
         const toPos = destFactory.position.clone().add(new Vector3(0, 0.6, 0));
         const duration = Math.max(0.1, transfer.eta - state.gameTime);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const event: any = {
+        const event: FactoryTransferEvent = {
           id: transferId,
           amount: transfer.amount,
           from: fromPos,
@@ -118,7 +118,6 @@ export function processLogistics(
           duration,
         };
         // keep recent events bounded
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         gameWorld.events.transfers.push(event);
         if (gameWorld.events.transfers.length > 48) {
           gameWorld.events.transfers.splice(0, gameWorld.events.transfers.length - 48);
@@ -176,8 +175,7 @@ export function processLogistics(
             const fromPos = factory.position.clone().add(new Vector3(0, 0.6, 0));
             const toPos = WAREHOUSE_POSITION.clone().add(new Vector3(0, 0.6, 0));
             const duration = Math.max(0.1, eta - state.gameTime);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const event: any = {
+            const event: FactoryTransferEvent = {
               id: transferId,
               amount: transferAmount,
               from: fromPos,
@@ -255,8 +253,7 @@ export function processLogistics(
             const fromPos = WAREHOUSE_POSITION.clone().add(new Vector3(0, 0.6, 0));
             const toPos = factory.position.clone().add(new Vector3(0, 0.6, 0));
             const duration = Math.max(0.1, eta - state.gameTime);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const event: any = {
+            const event: FactoryTransferEvent = {
               id: transferId,
               amount: transferAmount,
               from: fromPos,

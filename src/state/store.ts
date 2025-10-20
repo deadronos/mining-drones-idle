@@ -122,20 +122,25 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
   const initialSelectedFactory = defaultFactories[0]?.id ?? null;
 
   // Build composed state from slices
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sliceSet = set as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sliceGet = get as any;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const sliceSet = set as unknown as StoreState['setState'];
+
+  const sliceGet = get as unknown as () => StoreState;
 
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   const resourceSlice = createResourceSlice(sliceSet, sliceGet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   const settingsSlice = createSettingsSlice(sliceSet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   const factorySlice = createFactorySlice(sliceSet, sliceGet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   const droneSlice = createDroneSlice(sliceSet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   const logisticsSlice = createLogisticsSlice(sliceSet, sliceGet);
 
   return {

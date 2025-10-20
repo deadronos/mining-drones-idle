@@ -92,12 +92,14 @@ describe('createDroneAISystem', () => {
     };
     const state = {
       factories: [factory],
-      droneFlights: [] as any[],
+      droneFlights: [] as Array<typeof drone>,
       getFactory: (id: string) => (id === factory.id ? factory : undefined),
       undockDroneFromFactory: (_factoryId: string, droneId: string) => {
         factory.queuedDrones = factory.queuedDrones.filter((id) => id !== droneId);
       },
-      clearDroneFlight: (_droneId: string) => {},
+      clearDroneFlight: (_droneId: string) => {
+        // Clears the drone flight state
+      },
     };
     const store = {
       getState: () => state,
@@ -112,7 +114,7 @@ describe('createDroneAISystem', () => {
       asteroidQuery: {
         entities: [] as AsteroidEntity[],
         [Symbol.iterator]: function* () {
-          return;
+          yield;
         },
       },
       rng: createRng(1),
@@ -126,6 +128,7 @@ describe('createDroneAISystem', () => {
       },
       world: {} as unknown,
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const aiSystem = createDroneAISystem(world as any, store as any);
 
     drone.state = 'idle';
