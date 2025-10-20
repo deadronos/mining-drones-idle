@@ -62,7 +62,7 @@ describe('Factory Entity', () => {
         amount: 10,
         progress: 0,
         timeTotal: 10,
-          energyRequired: 2,
+        energyRequired: 2,
         speedMultiplier: 1,
       });
 

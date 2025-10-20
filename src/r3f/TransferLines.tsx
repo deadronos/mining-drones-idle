@@ -3,6 +3,8 @@ import { useMemo, useState } from 'react';
 import { Color, MathUtils, Quaternion, Vector3 } from 'three';
 import type { PendingTransfer } from '@/state/store';
 import { useStore } from '@/state/store';
+import { WAREHOUSE_NODE_ID } from '@/ecs/logistics';
+import { WAREHOUSE_POSITION } from '@/ecs/world';
 
 const RESOURCE_COLORS: Record<string, string> = {
   ore: '#b8860b', // dark goldenrod
@@ -59,15 +61,32 @@ export const TransferLines = () => {
     return logisticsQueues.pendingTransfers
       .filter((transfer) => transfer.status === 'scheduled' || transfer.status === 'in-transit')
       .map((transfer) => {
-        const sourceFactory = factoryMap.get(transfer.fromFactoryId);
-        const destFactory = factoryMap.get(transfer.toFactoryId);
-
-        if (!sourceFactory || !destFactory) {
-          return null;
+        // Resolve source position and label
+        let start: Vector3;
+        let sourceLabel: string;
+        if (transfer.fromFactoryId === WAREHOUSE_NODE_ID) {
+          start = WAREHOUSE_POSITION.clone().add(new Vector3(0, HEIGHT_OFFSET, 0));
+          sourceLabel = 'Whse';
+        } else {
+          const sourceFactory = factoryMap.get(transfer.fromFactoryId);
+          if (!sourceFactory) return null;
+          start = sourceFactory.position.clone().add(new Vector3(0, HEIGHT_OFFSET, 0));
+          sourceLabel = sourceFactory.id.slice(0, 6);
         }
 
-        const start = sourceFactory.position.clone().add(new Vector3(0, HEIGHT_OFFSET, 0));
-        const end = destFactory.position.clone().add(new Vector3(0, HEIGHT_OFFSET, 0));
+        // Resolve destination position and label
+        let end: Vector3;
+        let destLabel: string;
+        if (transfer.toFactoryId === WAREHOUSE_NODE_ID) {
+          end = WAREHOUSE_POSITION.clone().add(new Vector3(0, HEIGHT_OFFSET, 0));
+          destLabel = 'Whse';
+        } else {
+          const destFactory = factoryMap.get(transfer.toFactoryId);
+          if (!destFactory) return null;
+          end = destFactory.position.clone().add(new Vector3(0, HEIGHT_OFFSET, 0));
+          destLabel = destFactory.id.slice(0, 6);
+        }
+
         const direction = end.clone().sub(start);
         const length = direction.length();
 
@@ -93,8 +112,8 @@ export const TransferLines = () => {
           length,
           radius,
           color,
-          sourceLabel: sourceFactory.id.slice(0, 6),
-          destLabel: destFactory.id.slice(0, 6),
+          sourceLabel,
+          destLabel,
         };
       })
       .filter((item): item is TransferVisual => item !== null);

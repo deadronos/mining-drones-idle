@@ -185,7 +185,7 @@ const createDrone = (origin: Vector3): DroneEntity => ({
   ownerFactoryId: null,
 });
 
-export const WAREHOUSE_POSITION = new Vector3(8, 0, 5);
+export const WAREHOUSE_POSITION = new Vector3(-8, -3, 3);
 
 const createWarehouse = (): WarehouseEntity => ({
   id: 'warehouse-core',
