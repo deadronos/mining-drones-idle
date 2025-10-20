@@ -51,32 +51,36 @@ export const createPowerSystem = (world: GameWorld, store: StoreApiType) => {
       }
 
       let chargeApplied = 0;
-      const fromGlobal = Math.min(maxChargeThisTick, stored);
-      if (fromGlobal > 0) {
-        stored -= fromGlobal;
-        chargeApplied += fromGlobal;
+      let remainingNeed = maxChargeThisTick;
+
+      // Local-first: Try to charge from docking factory first
+      const dockingFactoryId = drone.ownerFactoryId ?? drone.targetFactoryId ?? null;
+      if (dockingFactoryId && remainingNeed > 1e-6) {
+        const dockingFactory = factoriesById.get(dockingFactoryId);
+        if (dockingFactory) {
+          const alreadyUsed = factoryEnergyUse.get(dockingFactoryId) ?? 0;
+          const available = Math.max(
+            0,
+            dockingFactory.energy + (factorySolarGain.get(dockingFactoryId) ?? 0) - alreadyUsed,
+          );
+          const fromFactory = Math.min(remainingNeed, available);
+          if (fromFactory > 0) {
+            factoryEnergyUse.set(dockingFactoryId, alreadyUsed + fromFactory);
+            chargeApplied += fromFactory;
+            remainingNeed -= fromFactory;
+          }
+        } else {
+          drone.ownerFactoryId = null;
+        }
       }
 
-      let remainingNeed = maxChargeThisTick - fromGlobal;
+      // Fallback: Charge from global if factory cannot fulfill
       if (remainingNeed > 1e-6) {
-        const dockingFactoryId = drone.ownerFactoryId ?? drone.targetFactoryId ?? null;
-        if (dockingFactoryId) {
-          const dockingFactory = factoriesById.get(dockingFactoryId);
-          if (dockingFactory) {
-            const alreadyUsed = factoryEnergyUse.get(dockingFactoryId) ?? 0;
-            const available = Math.max(
-              0,
-              dockingFactory.energy + (factorySolarGain.get(dockingFactoryId) ?? 0) - alreadyUsed,
-            );
-            const fromFactory = Math.min(remainingNeed, available);
-            if (fromFactory > 0) {
-              factoryEnergyUse.set(dockingFactoryId, alreadyUsed + fromFactory);
-              chargeApplied += fromFactory;
-              remainingNeed -= fromFactory;
-            }
-          } else {
-            drone.ownerFactoryId = null;
-          }
+        const fromGlobal = Math.min(remainingNeed, stored);
+        if (fromGlobal > 0) {
+          stored -= fromGlobal;
+          chargeApplied += fromGlobal;
+          remainingNeed -= fromGlobal;
         }
       }
 

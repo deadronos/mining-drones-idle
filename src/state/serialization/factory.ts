@@ -1,6 +1,6 @@
 import { FACTORY_CONFIG } from '@/ecs/factories';
-import type { BuildableFactory } from '@/ecs/factories';
-import type { FactorySnapshot, HaulerConfig, FactoryLogisticsState } from '../types';
+import type { BuildableFactory, FactoryUpgradeRequest } from '@/ecs/factories';
+import type { FactorySnapshot, FactoryUpgradeRequestSnapshot, HaulerConfig, FactoryLogisticsState } from '../types';
 import { normalizeVectorTuple } from './vectors';
 import {
   normalizeFactoryResources,
@@ -34,6 +34,30 @@ function isLogisticsState(value: unknown): value is Partial<FactoryLogisticsStat
     value !== null &&
     ('outboundReservations' in value || 'inboundSchedules' in value)
   );
+}
+
+// Normalize upgrade request snapshot
+function normalizeUpgradeRequest(value: unknown): FactoryUpgradeRequest | null {
+  if (typeof value !== 'object' || value === null) {
+    return null;
+  }
+  const req = value as Partial<FactoryUpgradeRequestSnapshot>;
+  if (typeof req.upgrade !== 'string' || typeof req.status !== 'string') {
+    return null;
+  }
+
+  const resourceNeeded = normalizeFactoryResources(req.resourceNeeded);
+  const fulfilledAmount = normalizeFactoryResources(req.fulfilledAmount);
+  const validStatuses = ['pending', 'partially_fulfilled', 'fulfilled', 'expired'];
+
+  return {
+    upgrade: req.upgrade,
+    resourceNeeded,
+    fulfilledAmount,
+    status: validStatuses.includes(req.status) ? req.status : 'pending',
+    createdAt: Math.max(0, coerceNumber(req.createdAt, Date.now())),
+    expiresAt: Math.max(0, coerceNumber(req.expiresAt, Date.now() + 60000)),
+  };
 }
 
 export const normalizeFactorySnapshot = (value: unknown): FactorySnapshot | null => {
@@ -118,6 +142,17 @@ export const normalizeFactorySnapshot = (value: unknown): FactorySnapshot | null
     };
   }
 
+  // Normalize upgradeRequests
+  const upgradeRequests: FactoryUpgradeRequest[] = [];
+  if (Array.isArray(raw.upgradeRequests)) {
+    for (const req of raw.upgradeRequests) {
+      const normalized = normalizeUpgradeRequest(req);
+      if (normalized !== null) {
+        upgradeRequests.push(normalized);
+      }
+    }
+  }
+
   return {
     id: typeof raw.id === 'string' && raw.id.length > 0 ? raw.id : `factory-${Date.now()}`,
     position,
@@ -145,6 +180,7 @@ export const normalizeFactorySnapshot = (value: unknown): FactorySnapshot | null
       ? raw.ownedDrones.filter((id): id is string => typeof id === 'string')
       : [],
     upgrades: normalizeFactoryUpgrades(raw.upgrades),
+    upgradeRequests,
     haulersAssigned: Math.max(0, Math.floor(coerceNumber(raw.haulersAssigned, 0))),
     haulerConfig,
     logisticsState,
@@ -168,6 +204,14 @@ export const cloneFactory = (factory: BuildableFactory): BuildableFactory => ({
   resources: { ...factory.resources },
   ownedDrones: [...factory.ownedDrones],
   upgrades: { ...factory.upgrades },
+  upgradeRequests: factory.upgradeRequests.map((req) => ({
+    upgrade: req.upgrade,
+    resourceNeeded: { ...req.resourceNeeded },
+    fulfilledAmount: { ...req.fulfilledAmount },
+    status: req.status,
+    createdAt: req.createdAt,
+    expiresAt: req.expiresAt,
+  })),
   haulersAssigned: factory.haulersAssigned,
   haulerConfig: factory.haulerConfig ? { ...factory.haulerConfig } : undefined,
   logisticsState: factory.logisticsState
@@ -195,6 +239,14 @@ export const snapshotToFactory = (snapshot: FactorySnapshot): BuildableFactory =
   resources: { ...snapshot.resources },
   ownedDrones: [...snapshot.ownedDrones],
   upgrades: { ...snapshot.upgrades },
+  upgradeRequests: (snapshot.upgradeRequests ?? []).map((req) => ({
+    upgrade: req.upgrade,
+    resourceNeeded: { ...req.resourceNeeded },
+    fulfilledAmount: { ...req.fulfilledAmount },
+    status: req.status,
+    createdAt: req.createdAt,
+    expiresAt: req.expiresAt,
+  })),
   haulersAssigned: snapshot.haulersAssigned,
   haulerConfig: snapshot.haulerConfig ? { ...snapshot.haulerConfig } : undefined,
   logisticsState: snapshot.logisticsState
@@ -222,6 +274,14 @@ export const factoryToSnapshot = (factory: BuildableFactory): FactorySnapshot =>
   resources: { ...factory.resources },
   ownedDrones: [...factory.ownedDrones],
   upgrades: { ...factory.upgrades },
+  upgradeRequests: factory.upgradeRequests.map((req) => ({
+    upgrade: req.upgrade,
+    resourceNeeded: { ...req.resourceNeeded },
+    fulfilledAmount: { ...req.fulfilledAmount },
+    status: req.status,
+    createdAt: req.createdAt,
+    expiresAt: req.expiresAt,
+  })),
   haulersAssigned: factory.haulersAssigned,
   haulerConfig: factory.haulerConfig ? { ...factory.haulerConfig } : undefined,
   logisticsState: factory.logisticsState

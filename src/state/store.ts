@@ -7,6 +7,7 @@ import {
   createFactorySlice,
   createDroneSlice,
   createLogisticsSlice,
+  type FactorySliceMethods,
 } from './slices';
 import { processRefinery, processFactories } from './processing/gameProcessing';
 import { processLogistics } from './processing/logisticsProcessing';
@@ -191,6 +192,15 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
       const state = get();
       const { factories, resources, factoryProcessSequence } = processFactories(state, dt);
       set({ factories, resources, factoryProcessSequence });
+
+      // Detect upgrade shortfalls and create requests, then clear expired ones
+      const getState = get as () => StoreState & FactorySliceMethods;
+      for (const factory of getState().factories) {
+        getState().detectAndCreateUpgradeRequest(factory.id);
+      }
+      for (const factory of getState().factories) {
+        getState().clearExpiredUpgradeRequests(factory.id);
+      }
     },
 
     // Process logistics (called from tick)

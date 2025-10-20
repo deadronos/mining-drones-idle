@@ -4,11 +4,22 @@
 
 🟡 **TASK025 – Warehouse Reconciliation**: Standing up the warehouse-first resource model remains in soak; continue validating transfers and polish once the Settings work lands.
 
-✅ **TASK028 – Drone Returning Throttle Investigation**: Completed root cause analysis of drone queue jamming. Found that battery energy throttling on travel progress prevents drones from completing return journeys, blocking them in 'returning' state indefinitely. Created comprehensive findings document (FINDING-001) with 4 solution options.
+✅ **TASK029 – Local-First Energy Priority**: Completed full implementation of energy system reversal. Factories now use local energy first (for drone charging and processing), with global warehouse as backup. All 165 tests pass, code is clean (lint & typecheck).
 
 ## Recent Changes
 
-- **TASK028 Completed – Drone Docking Stall Root Cause Found**
+- **TASK029 Completed – Local-First Energy Priority Implemented** ✅
+  - Inverted drone charging logic in `src/ecs/systems/power.ts` (lines 38-80)
+    - Now: try factory-local first (including solar gain), then fallback to global
+    - Before: tried global first, then factory-local
+  - Removed upfront global energy pull from `src/state/processing/gameProcessing.ts`
+    - Factories consume local only; sit at zero when depleted
+    - No emergency global pull on demand
+  - Updated power system tests (6 tests) to verify local-first charging behavior
+  - Created new gameProcessing tests (6 tests) to verify factory local-only consumption
+  - All 165 tests pass, lint clean, typecheck clean
+  - Design decisions locked (DES025): factories sit at zero locally, solar ignored at capacity
+  - Behavioral impact: factories now have energy autonomy, per-factory solar upgrades are more valuable, global warehouse is backup/buffer
   - Located missing `'returning'` → `'unloading'` transition in `src/ecs/systems/travel.ts:79`
   - Transition exists and is correct; the real issue is travel completion gating
   - Root cause: battery fraction throttling on travel progress (`travel.elapsed += dt * fraction`)

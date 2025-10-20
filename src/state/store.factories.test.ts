@@ -95,7 +95,7 @@ describe('store factory integration', () => {
     expect(queued).toEqual(['drone-a', 'drone-b']);
   });
 
-  it('processes factory storage into local bars and drains global energy into factories', () => {
+  it('processes factory storage into local bars without proactive global pull', () => {
     const state = store.getState();
     const factoryId = state.factories[0].id;
     store.getState().transferOreToFactory(factoryId, 60);
@@ -105,11 +105,9 @@ describe('store factory integration', () => {
     const factory = store.getState().factories[0];
     expect(factory.resources.bars).toBeGreaterThan(0);
     expect(resources.bars).toBeCloseTo(0, 5);
-    const expectedTransfer = Math.min(
-      energyBefore,
-      FACTORY_CONFIG.energyCapacity - FACTORY_CONFIG.initialEnergy,
-    );
-    expect(resources.energy).toBeCloseTo(energyBefore - expectedTransfer, 5);
+    // With local-first: global energy is NOT pulled into factories proactively
+    // Global energy should remain unchanged (no upfront pull)
+    expect(resources.energy).toBeCloseTo(energyBefore, 5);
   });
 
   it('adds resources to a factory ledger without modifying warehouse totals', () => {

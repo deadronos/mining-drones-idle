@@ -15,6 +15,7 @@ import {
   enforceMinOneRefining,
   computeFactoryEnergyDemand,
   findNearestAvailableFactory,
+  detectUpgradeShortfall,
   type BuildableFactory,
 } from './factories';
 
@@ -233,6 +234,105 @@ describe('Factory Entity', () => {
       transferOreToFactory(factory, 100);
       startRefineProcess(factory, 'ore', 50, 'refine-1');
       expect(getAvailableRefineSlots(factory)).toBe(1);
+    });
+  });
+
+  describe('Upgrade Request Detection', () => {
+    it('detects shortfall for unaffordable upgrade', () => {
+      // Factory has 10 metals, landing bay (docking) costs 40 metals
+      factory.resources.metals = 10;
+      const request = detectUpgradeShortfall(factory, ['docking']);
+
+      expect(request).not.toBeNull();
+      expect(request?.upgrade).toBe('docking');
+      expect(request?.resourceNeeded.metals).toBe(40);
+      expect(request?.status).toBe('pending');
+    });
+
+    it('returns null if resources sufficient', () => {
+      // Docking costs 40 metals + 20 crystals
+      factory.resources.metals = 50;
+      factory.resources.crystals = 30;
+      const request = detectUpgradeShortfall(factory, ['docking']);
+
+      expect(request).toBeNull();
+    });
+
+    it('checks multiple upgrades in order', () => {
+      factory.resources.metals = 25; // Not enough for docking (40) or refine (50)
+      factory.resources.crystals = 10; // Not enough for either
+
+      const request = detectUpgradeShortfall(factory, ['docking', 'refine']);
+
+      // Should return first shortfall (docking)
+      expect(request?.upgrade).toBe('docking');
+    });
+
+    it('skips upgrades with sufficient resources', () => {
+      // Docking needs 40 metals + 20 crystals
+      // Refine needs 50 metals + 30 crystals
+      // Factory has 50 metals + 25 crystals - enough for docking, not refine
+      factory.resources.metals = 50;
+      factory.resources.crystals = 25; // Enough for docking (20), not for refine (30)
+
+      const request = detectUpgradeShortfall(factory, ['docking', 'refine']);
+
+      // Should return refine request (docking is skipped because fully affordable)
+      expect(request?.upgrade).toBe('refine');
+    });
+
+    it('respects current upgrade level in cost calculation', () => {
+      // Level 0 docking costs 40 metals
+      // If factory had docking level 1, cost would be higher
+      factory.upgrades.docking = 1;
+      factory.resources.metals = 40; // Enough for level 0, not for level 1
+
+      const request = detectUpgradeShortfall(factory, ['docking']);
+
+      expect(request).not.toBeNull();
+      expect(request?.resourceNeeded.metals).toBeGreaterThan(40);
+    });
+
+    it('does not create request if one already pending', () => {
+      factory.resources.metals = 10;
+      factory.upgradeRequests.push({
+        upgrade: 'docking',
+        resourceNeeded: { metals: 40 },
+        fulfilledAmount: {},
+        status: 'pending',
+        createdAt: Date.now(),
+        expiresAt: Date.now() + 60000,
+      });
+
+      const request = detectUpgradeShortfall(factory, ['docking']);
+
+      expect(request).toBeNull();
+    });
+
+    it('creates request with 60s expiration', () => {
+      factory.resources.metals = 10;
+      const before = Date.now();
+      const request = detectUpgradeShortfall(factory, ['docking']);
+      const after = Date.now();
+
+      expect(request?.expiresAt).toBeGreaterThanOrEqual(before + 60000);
+      expect(request?.expiresAt).toBeLessThanOrEqual(after + 60000);
+    });
+
+    it('includes all required resources in request', () => {
+      factory.resources.metals = 20;
+      factory.resources.crystals = 5;
+
+      const request = detectUpgradeShortfall(factory, ['docking']);
+
+      expect(request?.resourceNeeded.metals).toBe(40);
+      expect(request?.resourceNeeded.crystals).toBe(20);
+      expect(request?.fulfilledAmount).toEqual({});
+    });
+
+    it('returns null for empty upgrade list', () => {
+      const request = detectUpgradeShortfall(factory, []);
+      expect(request).toBeNull();
     });
   });
 });
