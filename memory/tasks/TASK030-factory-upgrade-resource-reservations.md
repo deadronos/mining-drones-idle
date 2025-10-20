@@ -1,34 +1,20 @@
 # TASK030 – Factory Upgrade Resource Reservations# TASK030 – Factory Upgrade Resource Reservations
 
+**Status:** In Progress **Status:** In Progress
 
-
-**Status:** In Progress  **Status:** In Progress  
-
-**Added:** 2025-10-25  **Added:** 2025-10-25  
+**Added:** 2025-10-25 **Added:** 2025-10-25
 
 **Updated:** 2025-10-25**Updated:** 2025-10-25
 
-
-
 ## Original Request## Original Request
-
-
 
 Implement factory upgrade resource reservations: enable factories to detect when their local resources fall short of an upgrade's cost and request resources from the warehouse. The logistics scheduler then prioritizes fulfilling these requests, allowing factories to autonomously request and receive necessary upgrade materials without manual player intervention.Implement factory upgrade resource reservations: enable factories to detect when their local resources fall short of an upgrade's cost and request resources from the warehouse. The logistics scheduler then prioritizes fulfilling these requests, allowing factories to autonomously request and receive necessary upgrade materials without manual player intervention.
 
-
-
-------
-
-
+---
 
 ## Thought Process## Thought Process
 
-
-
-**Context:****Context:**
-
-
+**Context:\*\***Context:\*\*
 
 - Current state: factories can only upgrade if they have sufficient resources locally right now- Current state: factories can only upgrade if they have sufficient resources locally right now
 
@@ -38,11 +24,7 @@ Implement factory upgrade resource reservations: enable factories to detect when
 
 - This feature layers on top of existing warehouse logistics (TASK025)- This feature layers on top of existing warehouse logistics (TASK025 – Warehouse Reconciliation)
 
-
-
-**Design approach:****Design approach:**
-
-
+**Design approach:\*\***Design approach:\*\*
 
 - Add `upgradeRequests: FactoryUpgradeRequest[]` to BuildableFactory- Add `upgradeRequests: FactoryUpgradeRequest[]` to BuildableFactory (similar to inventory structure)
 
@@ -54,11 +36,7 @@ Implement factory upgrade resource reservations: enable factories to detect when
 
 - Do not preempt buffer-target imports; instead, elevate priority- Do not preempt buffer-target imports; instead, elevate priority
 
-
-
-**Rationale:****Rationale:**
-
-
+**Rationale:\*\***Rationale:\*\*
 
 - Reuses proven reservation pattern from warehouse logistics- Reuses proven reservation pattern from warehouse logistics
 
@@ -68,69 +46,45 @@ Implement factory upgrade resource reservations: enable factories to detect when
 
 - Minimizes new complexity by layering on proven patterns- Minimizes new complexity by layering on proven patterns
 
-
-
-------
-
-
+---
 
 ## Implementation Plan## Implementation Plan
 
-
-
 ### Subtasks### Subtasks
 
-
-
-| ID  | Description                              | Status      || ID  | Description                                | Status      | Updated | Notes                                    |
+| ID | Description | Status || ID | Description | Status | Updated | Notes |
 
 | --- | ---------------------------------------- | ----------- || --- | ------------------------------------------ | ----------- | ------- | ---------------------------------------- |
 
-| 1.1 | Data Model Setup                         | Not Started || 1.1 | Data Model Setup                           | Not Started | -       | Add types & schema to factories          |
+| 1.1 | Data Model Setup | Not Started || 1.1 | Data Model Setup | Not Started | - | Add types & schema to factories |
 
-| 1.2 | Request Detection                        | Not Started || 1.2 | Request Detection                          | Not Started | -       | Factory detects shortfall & creates req  |
+| 1.2 | Request Detection | Not Started || 1.2 | Request Detection | Not Started | - | Factory detects shortfall & creates req |
 
-| 1.3 | Scheduler Integration                    | Not Started || 1.3 | Scheduler Integration                      | Not Started | -       | Extend computeScheduledTransfers         |
+| 1.3 | Scheduler Integration | Not Started || 1.3 | Scheduler Integration | Not Started | - | Extend computeScheduledTransfers |
 
-| 1.4 | Transfer Execution & Fulfillment         | Not Started || 1.4 | Transfer Execution & Fulfillment           | Not Started | -       | Mark fulfilled as resources arrive       |
+| 1.4 | Transfer Execution & Fulfillment | Not Started || 1.4 | Transfer Execution & Fulfillment | Not Started | - | Mark fulfilled as resources arrive |
 
-| 1.5 | UI Display & Controls                    | Not Started || 1.5 | UI Display & Controls                      | Not Started | -       | Show request status in UpgradeSection    |
+| 1.5 | UI Display & Controls | Not Started || 1.5 | UI Display & Controls | Not Started | - | Show request status in UpgradeSection |
 
-| 1.6 | Upgrade Purchase Integration             | Not Started || 1.6 | Upgrade Purchase Integration               | Not Started | -       | Consume reserved resources on upgrade    |
+| 1.6 | Upgrade Purchase Integration | Not Started || 1.6 | Upgrade Purchase Integration | Not Started | - | Consume reserved resources on upgrade |
 
-| 1.7 | Edge Case Handling                       | Not Started || 1.7 | Edge Case Handling                         | Not Started | -       | Expiration, prestige, conflicts          |
+| 1.7 | Edge Case Handling | Not Started || 1.7 | Edge Case Handling | Not Started | - | Expiration, prestige, conflicts |
 
-| 1.8 | Integration & Polish                     | Not Started || 1.8 | Integration & Polish                       | Not Started | -       | E2E tests, manual play-test, perf check  |
+| 1.8 | Integration & Polish | Not Started || 1.8 | Integration & Polish | Not Started | - | E2E tests, manual play-test, perf check |
 
-
-
-------
-
-
+---
 
 ## Progress Tracking## Progress Tracking
 
-
-
 **Overall Status:** Not Started – 0%**Overall Status:** Not Started – 0%
-
-
 
 ---### Step-by-Step Breakdown
 
-
-
 ## Step 1.1: Data Model Setup#### Step 1.1: Data Model Setup
-
-
 
 **Goal:** Add TypeScript types and extend BuildableFactory with upgrade request tracking.**Goal:** Add TypeScript types and extend BuildableFactory with upgrade request tracking.
 
-
-
-**Files to modify:****Files to modify:**
-
-
+**Files to modify:\*\***Files to modify:\*\*
 
 - `src/ecs/factories.ts`- `src/ecs/factories.ts` – Add `FactoryUpgradeRequest` interface and `upgradeRequests` array to `BuildableFactory`
 
@@ -138,24 +92,19 @@ Implement factory upgrade resource reservations: enable factories to detect when
 
 - `src/state/constants.ts`- `src/state/constants.ts` – Add any related configuration
 
-
-
-**Implementation checklist:****Implementation checklist:**
-
-
+**Implementation checklist:\*\***Implementation checklist:\*\*
 
 - [ ] Define `FactoryUpgradeRequest` interface with properties: upgrade, resourceNeeded, fulfilledAmount, status, createdAt, expiresAt- [ ] Define `FactoryUpgradeRequest` interface with properties:
 
-- [ ] Add `upgradeRequests: FactoryUpgradeRequest[]` to `BuildableFactory`  - `upgrade: FactoryUpgradeId` (which upgrade is requested)
+- [ ] Add `upgradeRequests: FactoryUpgradeRequest[]` to `BuildableFactory` - `upgrade: FactoryUpgradeId` (which upgrade is requested)
 
-- [ ] Update factory serialization to handle new field  - `resourceNeeded: Partial<FactoryResources>` (exact cost breakdown)
+- [ ] Update factory serialization to handle new field - `resourceNeeded: Partial<FactoryResources>` (exact cost breakdown)
 
-- [ ] Update factory normalization for backward compatibility  - `fulfilledAmount: Partial<FactoryResources>` (how much has arrived)
+- [ ] Update factory normalization for backward compatibility - `fulfilledAmount: Partial<FactoryResources>` (how much has arrived)
 
-- [ ] Add unit tests for schema round-trips  - `status: 'pending' | 'partially_fulfilled' | 'fulfilled' | 'expired'`
+- [ ] Add unit tests for schema round-trips - `status: 'pending' | 'partially_fulfilled' | 'fulfilled' | 'expired'`
 
-- [ ] Verify tests pass  - `createdAt: number` (for timeout logic)
-
+- [ ] Verify tests pass - `createdAt: number` (for timeout logic)
   - `expiresAt: number` (timestamp for 60s expiration)
 
 **Expected outcome:** Schema is in place; factories can store upgrade requests; save/load works correctly.- [ ] Add `upgradeRequests: FactoryUpgradeRequest[]` to `BuildableFactory`
@@ -168,15 +117,9 @@ Implement factory upgrade resource reservations: enable factories to detect when
 
 ## Step 1.2: Request Detection- [ ] Verify tests pass
 
-
-
 **Goal:** Implement factory logic to detect when local resources fall short of next upgrade.**Expected outcome:** Schema is in place; factories can store upgrade requests; save/load works correctly.
 
-
-
 **Files to modify:**---
-
-
 
 - `src/ecs/factories.ts`#### Step 1.2: Request Detection
 
@@ -184,11 +127,7 @@ Implement factory upgrade resource reservations: enable factories to detect when
 
 - Tests**Goal:** Implement factory logic to detect when local resources fall short of next upgrade and create request.
 
-
-
-**Implementation checklist:****Files to modify:**
-
-
+**Implementation checklist:\*\***Files to modify:\*\*
 
 - [ ] Create function `detectUpgradeShortfall(factory: BuildableFactory) → FactoryUpgradeRequest | null`- `src/ecs/factories.ts` – Add upgrade request detection function
 
@@ -204,11 +143,11 @@ Implement factory upgrade resource reservations: enable factories to detect when
 
 - [ ] Create function `detectUpgradeShortfall(factory: BuildableFactory) → FactoryUpgradeRequest | null`
 
-**Expected outcome:** Factories automatically detect upgrade shortfalls and create requests.  - Compute next affordable upgrade (iterate upgrade levels by cost)
+**Expected outcome:** Factories automatically detect upgrade shortfalls and create requests. - Compute next affordable upgrade (iterate upgrade levels by cost)
 
-  - If cost > locally available, return request object with needed amounts
+- If cost > locally available, return request object with needed amounts
 
----  - Otherwise return null
+--- - Otherwise return null
 
 - [ ] Call detection in factory processing tick (or relevant update hook)
 
@@ -221,8 +160,6 @@ Implement factory upgrade resource reservations: enable factories to detect when
 - [ ] Add unit test: "Factory with 50 metals does not create request for landing bay (cost 40 metals)"
 
 **Files to modify:**- [ ] Verify tests pass
-
-
 
 - `src/ecs/logistics.ts`**Expected outcome:** Factories automatically detect upgrade shortfalls and create requests. Detection logic is tested and working.
 
@@ -258,13 +195,13 @@ Implement factory upgrade resource reservations: enable factories to detect when
 
 ---- [ ] For each factory with pending/partially_fulfilled upgrade request:
 
-  - Compute remaining resources needed (resourceNeeded - fulfilledAmount)
+- Compute remaining resources needed (resourceNeeded - fulfilledAmount)
 
-## Step 1.4: Transfer Execution & Fulfillment  - Check warehouse availability for each resource
+## Step 1.4: Transfer Execution & Fulfillment - Check warehouse availability for each resource
 
-  - Create outbound reservation for available amounts (similar to buffer-target import logic)
+- Create outbound reservation for available amounts (similar to buffer-target import logic)
 
-**Goal:** Mark upgrade requests as fulfilled when haul drones deliver resources.  - Sort requests by priority: creation time (FIFO) + warehouse availability
+**Goal:** Mark upgrade requests as fulfilled when haul drones deliver resources. - Sort requests by priority: creation time (FIFO) + warehouse availability
 
 - [ ] Respect warehouse minimum reserves (don't drain warehouse below threshold)
 
@@ -294,15 +231,9 @@ Implement factory upgrade resource reservations: enable factories to detect when
 
 - [ ] Verify tests pass#### Step 1.4: Transfer Execution & Fulfillment
 
-
-
 **Expected outcome:** As haul drones deliver, upgrade request's fulfilled amount increases. Requests transition to fulfilled state when complete.**Goal:** Mark upgrade requests as fulfilled when haul drones deliver resources.
 
-
-
 ---**Files to modify:**
-
-
 
 ## Step 1.5: UI Display & Controls- `src/state/slices/factorySlice.ts` – Update `executeArrival` or equivalent unload path
 
@@ -354,47 +285,41 @@ Implement factory upgrade resource reservations: enable factories to detect when
 
 **Goal:** Consume reserved resources when player clicks upgrade.- Tests: Add React component test for UI display
 
-
-
-**Files to modify:****Implementation checklist:**
-
-
+**Files to modify:\*\***Implementation checklist:\*\*
 
 - `src/state/slices/factorySlice.ts`- [ ] Modify upgrade button display logic:
 
-- Tests  - If upgrade is affordable locally, show `[Upgrade (40 metals + 20 crystals)]` (enabled)
-
+- Tests - If upgrade is affordable locally, show `[Upgrade (40 metals + 20 crystals)]` (enabled)
   - If upgrade is not affordable locally but no request exists, show button + "Request Resource" action
 
-**Implementation checklist:**  - If request exists (pending/partially_fulfilled), show request status:
+**Implementation checklist:** - If request exists (pending/partially_fulfilled), show request status:
 
     - Needed: X (local: Y, reserved: Z, in-transit: W, ETA: ~Ts)
 
-- [ ] In `upgradeFactory`, consume local resources first, then fulfilled reserves  - If request is fulfilled, show `[Upgrade]` button (enabled with reserved resources marked)
+- [ ] In `upgradeFactory`, consume local resources first, then fulfilled reserves - If request is fulfilled, show `[Upgrade]` button (enabled with reserved resources marked)
 
 - [ ] Clear request after consumption- [ ] Add tooltip/expanded view showing:
 
-- [ ] Add unit tests for upgrade purchase  - Current local inventory
+- [ ] Add unit tests for upgrade purchase - Current local inventory
 
-- [ ] Verify tests pass  - Reserved resources (to be delivered)
-
+- [ ] Verify tests pass - Reserved resources (to be delivered)
   - In-flight hauls with ETA
 
-**Expected outcome:** Upgrade purchase properly consumes reserved resources. Requests are cleaned up after use.  - Request creation time
+**Expected outcome:** Upgrade purchase properly consumes reserved resources. Requests are cleaned up after use. - Request creation time
 
 - [ ] Update `canUpgrade` logic to include reserved resources:
 
 ---
 
-  ```typescript
+````typescript
 
 ## Step 1.7: Edge Case Handling  const reserved = factory.upgradeRequests
 
-    .filter(r => r.status === 'fulfilled')
+  .filter(r => r.status === 'fulfilled')
 
 **Goal:** Handle request expiration, prestige, manual upgrades, and other edge cases.    .reduce((sum, req) => sum + (req.fulfilledAmount[key] ?? 0), 0);
 
-  return local + reserved >= cost;
+return local + reserved >= cost;
 
 **Files to modify:**  ```
 
@@ -442,7 +367,7 @@ Implement factory upgrade resource reservations: enable factories to detect when
 
 **Implementation checklist:**  - Check if factory has fulfilled upgrade request for this upgrade
 
-  - If yes, consume from `fulfilledAmount` in addition to (or instead of) local inventory
+- If yes, consume from `fulfilledAmount` in addition to (or instead of) local inventory
 
 - [ ] Create E2E test scenario (detect → request → allocate → deliver → upgrade)  - Clear request after consumption
 
@@ -490,7 +415,7 @@ Implement factory upgrade resource reservations: enable factories to detect when
 
 ## Acceptance Criteria- [ ] **Expiration:** Implement request age check in scheduler
 
-  - Mark requests older than 60s as `'expired'`
+- Mark requests older than 60s as `'expired'`
 
 - ✓ Factory detects when local resources < next upgrade cost  - Periodically clean expired requests (or check on tick)
 
@@ -538,32 +463,32 @@ Implement factory upgrade resource reservations: enable factories to detect when
 **Implementation checklist:**
 
 - [ ] **E2E Test:** Create integrated test scenario
-  - Factory starts with 10 metals
-  - Landing bay upgrade costs 40 metals
-  - Factory detects shortfall → creates request
-  - Scheduler allocates warehouse metals to request
-  - Haul dispatch executes
-  - Resources arrive at factory → request fulfilled
-  - Player clicks upgrade → factory upgrades successfully
-  - Request is cleared
-  - Verify all steps with assertions
+- Factory starts with 10 metals
+- Landing bay upgrade costs 40 metals
+- Factory detects shortfall → creates request
+- Scheduler allocates warehouse metals to request
+- Haul dispatch executes
+- Resources arrive at factory → request fulfilled
+- Player clicks upgrade → factory upgrades successfully
+- Request is cleared
+- Verify all steps with assertions
 - [ ] **Manual Play-Test:** Run in-game for 5–10 minutes
-  - Check that factories request resources when needed
-  - Verify haul drones deliver to requesting factories
-  - Observe UI updates for request status
-  - Confirm upgrades complete successfully
-  - Watch for any visual glitches or delays
-  - Test with multiple factories requesting simultaneously
+- Check that factories request resources when needed
+- Verify haul drones deliver to requesting factories
+- Observe UI updates for request status
+- Confirm upgrades complete successfully
+- Watch for any visual glitches or delays
+- Test with multiple factories requesting simultaneously
 - [ ] **Performance Check:**
-  - Run perf profiler on warehouse scheduler with 10+ factories + upgrade requests
-  - Ensure no frame drops or slowdowns
-  - Check memory usage (no leaks from request objects)
+- Run perf profiler on warehouse scheduler with 10+ factories + upgrade requests
+- Ensure no frame drops or slowdowns
+- Check memory usage (no leaks from request objects)
 - [ ] **Lint & Type Check:**
-  - `npm run typecheck` – all clear
-  - `npm run lint` – all clear
+- `npm run typecheck` – all clear
+- `npm run lint` – all clear
 - [ ] **Full Test Suite:**
-  - `npm run test` – all tests pass (unit + integration + React)
-  - No regressions in existing tests
+- `npm run test` – all tests pass (unit + integration + React)
+- No regressions in existing tests
 - [ ] Update documentation/memory bank with final design notes
 - [ ] Mark TASK030 complete
 
@@ -612,3 +537,4 @@ Implement factory upgrade resource reservations: enable factories to detect when
 - Request lifecycle mirrors current buffer-target import pattern (leverage existing scheduler code)
 - UI complexity is modest (inline status in upgrade section + tooltip for details)
 - Edge cases (expiration, prestige) are straightforward; implement after core flow works
+````
