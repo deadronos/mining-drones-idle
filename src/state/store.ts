@@ -26,7 +26,7 @@ import {
 } from './serialization';
 import { createDefaultFactories } from './factory';
 import { generateSeed, deriveProcessSequence } from './utils';
-import { SAVE_VERSION, initialResources, initialSave, initialModules } from './constants';
+import { SAVE_VERSION, initialResources, initialSave, initialModules, initialPrestige } from './constants';
 
 // Type exports
 export type {
@@ -262,6 +262,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
         return {
           resources: { ...initialResources },
           modules: { ...initialModules },
+          prestige: { ...initialPrestige },
           save: { ...initialSave, lastSave: Date.now() },
           settings: { ...currentSettings },
           rngSeed: generateSeed(),
