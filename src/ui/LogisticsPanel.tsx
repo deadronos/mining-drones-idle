@@ -25,14 +25,19 @@ export const LogisticsPanel = () => {
   }, []);
 
   const transfers = logisticsQueues.pendingTransfers;
-  const totalHaulers = factories.reduce((sum: number, f) => sum + ((f.haulersAssigned) ?? 0), 0);
-  const activeTransfers = transfers.filter((t) => t.status === 'scheduled' || t.status === 'in-transit');
+  const totalHaulers = factories.reduce((sum: number, f) => sum + (f.haulersAssigned ?? 0), 0);
+  const activeTransfers = transfers.filter(
+    (t) => t.status === 'scheduled' || t.status === 'in-transit',
+  );
   const completedTransfers = transfers.filter((t) => t.status === 'completed').length;
 
   const totalTransferPages = Math.max(1, Math.ceil(activeTransfers.length / TRANSFERS_PAGE_SIZE));
   const safeTransferPage = Math.min(transferPage, totalTransferPages - 1);
   const transferStart = safeTransferPage * TRANSFERS_PAGE_SIZE;
-  const visibleTransfers = activeTransfers.slice(transferStart, transferStart + TRANSFERS_PAGE_SIZE);
+  const visibleTransfers = activeTransfers.slice(
+    transferStart,
+    transferStart + TRANSFERS_PAGE_SIZE,
+  );
 
   return (
     <div className="logistics-panel">
@@ -95,19 +100,19 @@ export const LogisticsPanel = () => {
               const sourceName =
                 transfer.fromFactoryId === WAREHOUSE_NODE_ID
                   ? 'Warehouse'
-                  : sourceFactory?.id ?? transfer.fromFactoryId;
+                  : (sourceFactory?.id ?? transfer.fromFactoryId);
               const destName =
                 transfer.toFactoryId === WAREHOUSE_NODE_ID
                   ? 'Warehouse'
-                  : destFactory?.id ?? transfer.toFactoryId;
+                  : (destFactory?.id ?? transfer.toFactoryId);
               const sourceLabel =
                 transfer.fromFactoryId === WAREHOUSE_NODE_ID
                   ? 'WH'
-                  : sourceFactory?.id.slice(0, 4) ?? '???';
+                  : (sourceFactory?.id.slice(0, 4) ?? '???');
               const destLabel =
                 transfer.toFactoryId === WAREHOUSE_NODE_ID
                   ? 'WH'
-                  : destFactory?.id.slice(0, 4) ?? '???';
+                  : (destFactory?.id.slice(0, 4) ?? '???');
               return (
                 <div key={transfer.id} className="transfer-item">
                   <div className="transfer-route">
@@ -123,9 +128,7 @@ export const LogisticsPanel = () => {
                     <span className="resource">
                       {Math.round(transfer.amount)} {transfer.resource}
                     </span>
-                    <span className="eta">
-                      ETA: {remainingTime.toFixed(1)}s
-                    </span>
+                    <span className="eta">ETA: {remainingTime.toFixed(1)}s</span>
                   </div>
                 </div>
               );

@@ -178,10 +178,12 @@ const migrations: Array<{ targetVersion: string; migrate: MigrationFn }> = [
               ice: Number(resources.ice) || 0,
               credits: Number(resources.credits) || 0,
             },
-            currentStorage: typeof factory.currentStorage === 'number' ? factory.currentStorage : normalizedOre,
+            currentStorage:
+              typeof factory.currentStorage === 'number' ? factory.currentStorage : normalizedOre,
             logisticsState: {
               outboundReservations:
-                factory.logisticsState?.outboundReservations && typeof factory.logisticsState.outboundReservations === 'object'
+                factory.logisticsState?.outboundReservations &&
+                typeof factory.logisticsState.outboundReservations === 'object'
                   ? factory.logisticsState.outboundReservations
                   : {},
               inboundSchedules,
@@ -201,7 +203,9 @@ const migrations: Array<{ targetVersion: string; migrate: MigrationFn }> = [
                 resource: transfer?.resource,
                 amount: Number(transfer?.amount) || 0,
                 eta: Number(transfer?.eta) || 0,
-                status: (transfer?.status === 'in-transit' ? 'in-transit' : 'scheduled') as 'in-transit' | 'scheduled',
+                status: (transfer?.status === 'in-transit' ? 'in-transit' : 'scheduled') as
+                  | 'in-transit'
+                  | 'scheduled',
               }))
               .filter(
                 (transfer: any) =>

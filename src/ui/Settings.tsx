@@ -180,21 +180,22 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
           <section className="settings-section settings-section--wide">
             <h3>Warehouse Primer</h3>
             <p className="settings-note">
-              Your warehouse is the global ledger for spendable inventory. It fuels prestige, module purchases,
-              and exports when haulers find surplus at any factory.
+              Your warehouse is the global ledger for spendable inventory. It fuels prestige, module
+              purchases, and exports when haulers find surplus at any factory.
             </p>
             <ul className="settings-note-list">
               <li>
-                <strong>Warehouse totals</strong> are the numbers shown in the HUD and Upgrade panel—they rise only
-                when haulers or unloads deliver to the warehouse.
+                <strong>Warehouse totals</strong> are the numbers shown in the HUD and Upgrade
+                panel—they rise only when haulers or unloads deliver to the warehouse.
               </li>
               <li>
-                <strong>Factory storage</strong> is local working stock that keeps refineries running; haulers export
-                excess above the buffer and import when a factory is starving.
+                <strong>Factory storage</strong> is local working stock that keeps refineries
+                running; haulers export excess above the buffer and import when a factory is
+                starving.
               </li>
               <li>
-                When resources look “missing,” check the selected factory card—if the buffer is full, haulers will
-                route the overflow to the warehouse on their next run.
+                When resources look “missing,” check the selected factory card—if the buffer is
+                full, haulers will route the overflow to the warehouse on their next run.
               </li>
             </ul>
           </section>
@@ -309,11 +310,7 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
               >
                 Import JSON
               </button>
-              <button
-                type="button"
-                onClick={handleResetRequest}
-                aria-label="Reset game progress"
-              >
+              <button type="button" onClick={handleResetRequest} aria-label="Reset game progress">
                 Reset Game
               </button>
               <input

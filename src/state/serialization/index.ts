@@ -1,5 +1,10 @@
 // Vector and travel snapshot serialization
-export { normalizeVectorTuple, cloneVectorTuple, normalizeTravelSnapshot, cloneTravelSnapshot } from './vectors';
+export {
+  normalizeVectorTuple,
+  cloneVectorTuple,
+  normalizeTravelSnapshot,
+  cloneTravelSnapshot,
+} from './vectors';
 
 // Drone flight serialization
 export { normalizeDroneFlight, normalizeDroneFlights, cloneDroneFlight } from './drones';
@@ -39,9 +44,4 @@ export {
 } from './store';
 
 // Utility types and functions
-export {
-  coerceNumber,
-  vector3ToTuple,
-  tupleToVector3,
-  getStorageCapacity,
-} from './types';
+export { coerceNumber, vector3ToTuple, tupleToVector3, getStorageCapacity } from './types';

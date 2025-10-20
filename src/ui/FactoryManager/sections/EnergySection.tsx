@@ -17,8 +17,7 @@ export const EnergySection = ({ factory }: EnergySectionProps) => {
     <div>
       <h4>Energy</h4>
       <p>
-        {Math.round(factory.energy).toLocaleString()} /{' '}
-        {factory.energyCapacity.toLocaleString()}
+        {Math.round(factory.energy).toLocaleString()} / {factory.energyCapacity.toLocaleString()}
       </p>
       <div className="factory-bar">
         <div

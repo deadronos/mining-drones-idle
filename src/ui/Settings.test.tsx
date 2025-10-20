@@ -136,10 +136,7 @@ describe('ui/Settings', () => {
     storeApi.setState((state) => ({
       ...state,
       resources: { ...state.resources, ore: 123, bars: 45 },
-      factories: [
-        ...state.factories,
-        createFactory('factory-test', new Vector3(12, 0, 0)),
-      ],
+      factories: [...state.factories, createFactory('factory-test', new Vector3(12, 0, 0))],
     }));
 
     render(<SettingsPanel onClose={() => undefined} persistence={persistence} />);

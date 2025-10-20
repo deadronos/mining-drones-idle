@@ -26,16 +26,19 @@ const WAREHOUSE_POSITION = new Vector3(0, 0, 0);
  * Updates pending transfers queue and executes arrivals.
  * Returns the updated logistics queues and tick counter.
  */
-export function processLogistics(
-  state: StoreState,
-): {
+export function processLogistics(state: StoreState): {
   logisticsQueues: LogisticsQueues;
   logisticsTick: number;
 } {
   const updatedQueues: LogisticsQueues = {
     pendingTransfers: [...state.logisticsQueues.pendingTransfers],
   };
-  logLogistics('processLogistics: factories=%o transfers=%o gameTime=%o', state.factories.length, updatedQueues.pendingTransfers.length, state.gameTime);
+  logLogistics(
+    'processLogistics: factories=%o transfers=%o gameTime=%o',
+    state.factories.length,
+    updatedQueues.pendingTransfers.length,
+    state.gameTime,
+  );
 
   const resolveHaulerConfig = (factory: { haulerConfig?: HaulerConfig }): HaulerConfig => ({
     capacity: factory.haulerConfig?.capacity ?? LOGISTICS_CONFIG.hauler_capacity,
@@ -76,26 +79,41 @@ export function processLogistics(
     const warehouseStock = (state.resources as unknown as Record<string, number>)[resource] ?? 0;
     let warehouseSpace =
       warehouseCapacity - warehouseStock - (warehouseInboundReservations.get(resource) ?? 0);
-    let warehouseAvailable =
-      warehouseStock - (warehouseOutboundReservations.get(resource) ?? 0);
+    let warehouseAvailable = warehouseStock - (warehouseOutboundReservations.get(resource) ?? 0);
 
     warehouseSpace = Math.max(0, warehouseSpace);
     warehouseAvailable = Math.max(0, warehouseAvailable);
 
     const proposedTransfers = matchSurplusToNeed(state.factories, resource, state.gameTime);
-    logLogistics('resource[%s]: warehouse stock=%o space=%o available=%o proposed=%o', resource, warehouseStock, warehouseSpace, warehouseAvailable, proposedTransfers.length);
+    logLogistics(
+      'resource[%s]: warehouse stock=%o space=%o available=%o proposed=%o',
+      resource,
+      warehouseStock,
+      warehouseSpace,
+      warehouseAvailable,
+      proposedTransfers.length,
+    );
 
     for (const transfer of proposedTransfers) {
       const sourceFactory = state.factories.find((f) => f.id === transfer.fromFactoryId);
       const destFactory = state.factories.find((f) => f.id === transfer.toFactoryId);
 
       if (!sourceFactory || !destFactory) {
-        logLogistics('discard proposed transfer: missing factories from=%s to=%s', transfer.fromFactoryId, transfer.toFactoryId);
+        logLogistics(
+          'discard proposed transfer: missing factories from=%s to=%s',
+          transfer.fromFactoryId,
+          transfer.toFactoryId,
+        );
         continue;
       }
 
       if (!reserveOutbound(sourceFactory, resource, transfer.amount)) {
-        logLogistics('reserve failed for proposed transfer: from=%s to=%s amount=%o', transfer.fromFactoryId, transfer.toFactoryId, transfer.amount);
+        logLogistics(
+          'reserve failed for proposed transfer: from=%s to=%s amount=%o',
+          transfer.fromFactoryId,
+          transfer.toFactoryId,
+          transfer.amount,
+        );
         continue;
       }
 
@@ -128,7 +146,10 @@ export function processLogistics(
     }
 
     if (!networkHasHaulers) {
-      logLogistics('resource[%s]: skipping factory<->warehouse scheduling: no haulers assigned', resource);
+      logLogistics(
+        'resource[%s]: skipping factory<->warehouse scheduling: no haulers assigned',
+        resource,
+      );
       continue;
     }
 
@@ -140,11 +161,9 @@ export function processLogistics(
 
         const config = resolveHaulerConfig(factory);
         const target = computeBufferTarget(factory, resource);
-        const current =
-          factory.resources[resource as keyof typeof factory.resources] ?? 0;
+        const current = factory.resources[resource as keyof typeof factory.resources] ?? 0;
         const minReserve = computeMinReserve(factory, resource);
-        const reservedOutbound =
-          factory.logisticsState?.outboundReservations?.[resource] ?? 0;
+        const reservedOutbound = factory.logisticsState?.outboundReservations?.[resource] ?? 0;
         let available = Math.max(0, current - target - minReserve - reservedOutbound);
 
         while (available > 0 && warehouseSpace > 0) {
@@ -153,7 +172,13 @@ export function processLogistics(
           if (transferAmount <= 0) break;
 
           if (!reserveOutbound(factory, resource, transferAmount)) {
-            logLogistics('reserve to-warehouse failed: factory=%s res=%s amount=%o avail=%o', factory.id, resource, transferAmount, available);
+            logLogistics(
+              'reserve to-warehouse failed: factory=%s res=%s amount=%o avail=%o',
+              factory.id,
+              resource,
+              transferAmount,
+              available,
+            );
             break;
           }
 
@@ -202,8 +227,7 @@ export function processLogistics(
 
         const config = resolveHaulerConfig(factory);
         const target = computeBufferTarget(factory, resource);
-        const current =
-          factory.resources[resource as keyof typeof factory.resources] ?? 0;
+        const current = factory.resources[resource as keyof typeof factory.resources] ?? 0;
         const reservedInbound =
           factory.logisticsState?.inboundSchedules
             ?.filter((schedule) => schedule.resource === resource)
@@ -278,7 +302,14 @@ export function processLogistics(
   const completedTransfers: string[] = [];
   for (const transfer of updatedQueues.pendingTransfers) {
     if (state.gameTime >= transfer.eta && transfer.status === 'scheduled') {
-      logLogistics('transfer due: id=%s res=%s amount=%o from=%s to=%s', transfer.id, transfer.resource, transfer.amount, transfer.fromFactoryId, transfer.toFactoryId);
+      logLogistics(
+        'transfer due: id=%s res=%s amount=%o from=%s to=%s',
+        transfer.id,
+        transfer.resource,
+        transfer.amount,
+        transfer.fromFactoryId,
+        transfer.toFactoryId,
+      );
       if (transfer.toFactoryId === WAREHOUSE_NODE_ID) {
         const sourceFactory = state.factories.find((f) => f.id === transfer.fromFactoryId);
         if (sourceFactory) {
@@ -293,11 +324,9 @@ export function processLogistics(
 
           const currentWarehouse =
             (state.resources as unknown as Record<string, number>)[transfer.resource] ?? 0;
-          const updatedWarehouse = Math.min(
-            warehouseCapacity,
-            currentWarehouse + transfer.amount,
-          );
-          (state.resources as unknown as Record<string, number>)[transfer.resource] = updatedWarehouse;
+          const updatedWarehouse = Math.min(warehouseCapacity, currentWarehouse + transfer.amount);
+          (state.resources as unknown as Record<string, number>)[transfer.resource] =
+            updatedWarehouse;
 
           completedTransfers.push(transfer.id);
         }
@@ -319,14 +348,15 @@ export function processLogistics(
           }
 
           if (destFactory.logisticsState?.inboundSchedules) {
-            destFactory.logisticsState.inboundSchedules = destFactory.logisticsState.inboundSchedules.filter(
-              (schedule) =>
-                !(
-                  schedule.fromFactoryId === transfer.fromFactoryId &&
-                  schedule.resource === transfer.resource &&
-                  schedule.eta === transfer.eta
-                ),
-            );
+            destFactory.logisticsState.inboundSchedules =
+              destFactory.logisticsState.inboundSchedules.filter(
+                (schedule) =>
+                  !(
+                    schedule.fromFactoryId === transfer.fromFactoryId &&
+                    schedule.resource === transfer.resource &&
+                    schedule.eta === transfer.eta
+                  ),
+              );
           }
 
           completedTransfers.push(transfer.id);

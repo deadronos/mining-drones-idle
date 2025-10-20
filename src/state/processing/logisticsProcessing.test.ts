@@ -82,9 +82,7 @@ describe('processLogistics warehouse integration', () => {
 
     const firstPass = processLogistics(state);
     const exportTransfer = firstPass.logisticsQueues.pendingTransfers.find(
-      (transfer) =>
-        transfer.toFactoryId === WAREHOUSE_NODE_ID &&
-        transfer.resource === 'bars',
+      (transfer) => transfer.toFactoryId === WAREHOUSE_NODE_ID && transfer.resource === 'bars',
     );
 
     expect(exportTransfer).toBeDefined();

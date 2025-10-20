@@ -12,7 +12,8 @@ function getEnvVar(name: string): string | undefined {
     const g: unknown = typeof globalThis !== 'undefined' ? (globalThis as unknown) : undefined;
     if (!g || typeof g !== 'object' || !('process' in g)) return undefined;
     const procUnknown = (g as { process?: unknown }).process;
-    if (!procUnknown || typeof procUnknown !== 'object' || !('env' in procUnknown)) return undefined;
+    if (!procUnknown || typeof procUnknown !== 'object' || !('env' in procUnknown))
+      return undefined;
     const envUnknown = (procUnknown as { env?: unknown }).env;
     if (!envUnknown || typeof envUnknown !== 'object') return undefined;
     const val = (envUnknown as Record<string, unknown>)[name];
@@ -28,8 +29,10 @@ export const isLogisticsDebugEnabled = (): boolean => {
   try {
     if (LOG_ENV === '1' || LOG_ENV?.toLowerCase() === 'true') return true;
     if (typeof window === 'undefined') return false;
-    const v = window.localStorage.getItem('debug:logistics') ?? window.localStorage.getItem('DEBUG_LOGISTICS');
-    return v === '1' || (v?.toLowerCase?.() === 'true');
+    const v =
+      window.localStorage.getItem('debug:logistics') ??
+      window.localStorage.getItem('DEBUG_LOGISTICS');
+    return v === '1' || v?.toLowerCase?.() === 'true';
   } catch {
     return false;
   }

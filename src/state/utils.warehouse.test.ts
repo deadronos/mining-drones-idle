@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { computeWarehouseCapacity } from '@/state/utils';
-import { initialModules, BASE_STORAGE, STORAGE_PER_LEVEL, WAREHOUSE_CONFIG } from '@/state/constants';
+import {
+  initialModules,
+  BASE_STORAGE,
+  STORAGE_PER_LEVEL,
+  WAREHOUSE_CONFIG,
+} from '@/state/constants';
 
 describe('computeWarehouseCapacity', () => {
   it('scales with storage module level', () => {

@@ -66,9 +66,7 @@ export const createPowerSystem = (world: GameWorld, store: StoreApiType) => {
             const alreadyUsed = factoryEnergyUse.get(dockingFactoryId) ?? 0;
             const available = Math.max(
               0,
-              dockingFactory.energy +
-                (factorySolarGain.get(dockingFactoryId) ?? 0) -
-                alreadyUsed,
+              dockingFactory.energy + (factorySolarGain.get(dockingFactoryId) ?? 0) - alreadyUsed,
             );
             const fromFactory = Math.min(remainingNeed, available);
             if (fromFactory > 0) {

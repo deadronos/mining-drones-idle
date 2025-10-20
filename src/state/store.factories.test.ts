@@ -19,9 +19,7 @@ describe('store factory integration', () => {
     const factory = state.factories[0];
 
     expect(factory.haulersAssigned).toBe(WAREHOUSE_CONFIG.starterFactoryHaulers);
-    expect(factory.resources.ore).toBeGreaterThanOrEqual(
-      WAREHOUSE_CONFIG.starterFactoryStock.ore,
-    );
+    expect(factory.resources.ore).toBeGreaterThanOrEqual(WAREHOUSE_CONFIG.starterFactoryStock.ore);
     expect(factory.resources.bars).toBeGreaterThanOrEqual(
       WAREHOUSE_CONFIG.starterFactoryStock.bars,
     );

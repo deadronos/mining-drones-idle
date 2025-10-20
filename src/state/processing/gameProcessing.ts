@@ -1,10 +1,6 @@
 import type { StoreState, Resources } from '../types';
 import type { BuildableFactory } from '@/ecs/factories';
-import {
-  enforceMinOneRefining,
-  startRefineProcess,
-  tickRefineProcess,
-} from '@/ecs/factories';
+import { enforceMinOneRefining, startRefineProcess, tickRefineProcess } from '@/ecs/factories';
 import { computeHaulerMaintenanceCost } from '@/ecs/logistics';
 import { computeRefineryProduction, applyRefineryProduction } from '../utils';
 import { cloneFactory } from '../serialization';

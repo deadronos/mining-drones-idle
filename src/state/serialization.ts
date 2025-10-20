@@ -27,11 +27,7 @@ import {
   initialSave,
   initialSettings,
 } from './constants';
-import {
-  coerceNumber,
-  vector3ToTuple,
-  tupleToVector3,
-} from './utils';
+import { coerceNumber, vector3ToTuple, tupleToVector3 } from './utils';
 
 export const normalizeVectorTuple = (value: unknown): VectorTuple | null => {
   if (!Array.isArray(value) || value.length !== 3) {
@@ -44,11 +40,7 @@ export const normalizeVectorTuple = (value: unknown): VectorTuple | null => {
   return [parsed[0], parsed[1], parsed[2]] as VectorTuple;
 };
 
-export const cloneVectorTuple = (value: VectorTuple): VectorTuple => [
-  value[0],
-  value[1],
-  value[2],
-];
+export const cloneVectorTuple = (value: VectorTuple): VectorTuple => [value[0], value[1], value[2]];
 
 export const normalizeTravelSnapshot = (value: unknown): TravelSnapshot | null => {
   if (typeof value !== 'object' || value === null) {
@@ -344,7 +336,10 @@ export const normalizeFactorySnapshot = (value: unknown): FactorySnapshot | null
                     amount: Math.max(0, coerceNumber(schedule.amount, 0)),
                     eta: Math.max(0, coerceNumber(schedule.eta, 0)),
                   }))
-                  .filter((s: { fromFactoryId: string; resource: string; amount: number; eta: number }) => s.fromFactoryId && s.resource)
+                  .filter(
+                    (s: { fromFactoryId: string; resource: string; amount: number; eta: number }) =>
+                      s.fromFactoryId && s.resource,
+                  )
               : [],
           }
         : undefined,

@@ -1,5 +1,10 @@
 import type { StoreApi } from 'zustand/vanilla';
-import type { BuildableFactory, FactoryResources, FactoryUpgrades, DockingResult } from '@/ecs/factories';
+import type {
+  BuildableFactory,
+  FactoryResources,
+  FactoryUpgrades,
+  DockingResult,
+} from '@/ecs/factories';
 import type { TransportableResource } from '@/ecs/logistics';
 import type { moduleDefinitions } from './constants';
 
@@ -218,11 +223,7 @@ export interface StoreState {
   setSelectedFactory(this: void, factoryId: string | null): void;
   cycleSelectedFactory(this: void, direction: 1 | -1): void;
   nextFactoryRoundRobin(this: void): number;
-  dockDroneAtFactory(
-    this: void,
-    factoryId: string,
-    droneId: string,
-  ): DockingResult;
+  dockDroneAtFactory(this: void, factoryId: string, droneId: string): DockingResult;
   undockDroneFromFactory(
     this: void,
     factoryId: string,

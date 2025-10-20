@@ -29,13 +29,13 @@ Evaluate the optional factory solar regeneration upgrade identified in DES019/TA
 
 ### Subtasks
 
-| ID  | Description                                              | Status     | Updated    | Notes |
-| --- | -------------------------------------------------------- | ---------- | ---------- | ----- |
-| 1.1 | Add solar upgrade field to factories + migrations        | Completed  | 2025-10-23 | Added `solar` to upgrades, serialization, and new 0.3.1 migration. |
-| 2.1 | Register solar collector upgrade and UI controls         | Completed  | 2025-10-23 | Added `solar` definition, costs, and FactoryManager display. |
-| 3.1 | Implement solar regen in power system with constants     | Completed  | 2025-10-23 | Power system applies passive regen mapped per factory. |
-| 4.1 | Add unit/persistence tests for solar regen and upgrades  | Completed  | 2025-10-23 | New vitest coverage for power system regen and upgrade flow. |
-| 5.1 | Update UI/tooltips/documentation (optional polish)       | Completed  | 2025-10-23 | Factory panel shows solar regen rate; design notes updated. |
+| ID  | Description                                             | Status    | Updated    | Notes                                                              |
+| --- | ------------------------------------------------------- | --------- | ---------- | ------------------------------------------------------------------ |
+| 1.1 | Add solar upgrade field to factories + migrations       | Completed | 2025-10-23 | Added `solar` to upgrades, serialization, and new 0.3.1 migration. |
+| 2.1 | Register solar collector upgrade and UI controls        | Completed | 2025-10-23 | Added `solar` definition, costs, and FactoryManager display.       |
+| 3.1 | Implement solar regen in power system with constants    | Completed | 2025-10-23 | Power system applies passive regen mapped per factory.             |
+| 4.1 | Add unit/persistence tests for solar regen and upgrades | Completed | 2025-10-23 | New vitest coverage for power system regen and upgrade flow.       |
+| 5.1 | Update UI/tooltips/documentation (optional polish)      | Completed | 2025-10-23 | Factory panel shows solar regen rate; design notes updated.        |
 
 ## Progress Log
 

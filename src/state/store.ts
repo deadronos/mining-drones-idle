@@ -26,7 +26,13 @@ import {
 } from './serialization';
 import { createDefaultFactories } from './factory';
 import { generateSeed, deriveProcessSequence } from './utils';
-import { SAVE_VERSION, initialResources, initialSave, initialModules, initialPrestige } from './constants';
+import {
+  SAVE_VERSION,
+  initialResources,
+  initialSave,
+  initialModules,
+  initialPrestige,
+} from './constants';
 
 // Type exports
 export type {
@@ -195,11 +201,19 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
 
       if (newLogisticsTick < LOGISTICS_CONFIG.scheduling_interval) {
         set({ logisticsTick: newLogisticsTick });
-        logLogistics('scheduler skip: tick=%o/<%o>', newLogisticsTick, LOGISTICS_CONFIG.scheduling_interval);
+        logLogistics(
+          'scheduler skip: tick=%o/<%o>',
+          newLogisticsTick,
+          LOGISTICS_CONFIG.scheduling_interval,
+        );
         return;
       }
 
-      logLogistics('scheduler run: tick=%o interval=%o', newLogisticsTick, LOGISTICS_CONFIG.scheduling_interval);
+      logLogistics(
+        'scheduler run: tick=%o interval=%o',
+        newLogisticsTick,
+        LOGISTICS_CONFIG.scheduling_interval,
+      );
       const { logisticsQueues } = processLogistics(state);
       set({
         logisticsQueues,
@@ -226,9 +240,15 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
             ? normalized.selectedFactoryId
             : (restoredFactories[0]?.id ?? null);
         return {
-          resources: normalized.resources ? { ...initialResources, ...normalized.resources } : initialResources,
-          modules: normalized.modules ? { ...normalizeModules(normalized.modules) } : initialModules,
-          prestige: normalized.prestige ? { ...normalizePrestige(normalized.prestige) } : { cores: 0 },
+          resources: normalized.resources
+            ? { ...initialResources, ...normalized.resources }
+            : initialResources,
+          modules: normalized.modules
+            ? { ...normalizeModules(normalized.modules) }
+            : initialModules,
+          prestige: normalized.prestige
+            ? { ...normalizePrestige(normalized.prestige) }
+            : { cores: 0 },
           settings: normalizeSettings(normalized.settings ?? {}),
           save,
           rngSeed: restoredRng,

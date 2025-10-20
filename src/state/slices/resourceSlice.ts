@@ -20,10 +20,7 @@ export interface ResourceSliceState {
 }
 
 export interface ResourceSliceMethods {
-  addResources: (
-    delta: Partial<Resources>,
-    options?: { capacityAware?: boolean },
-  ) => void;
+  addResources: (delta: Partial<Resources>, options?: { capacityAware?: boolean }) => void;
   addOre: (amount: number) => void;
   buy: (moduleId: string) => void;
   prestigeReady: () => boolean;

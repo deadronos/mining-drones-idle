@@ -34,13 +34,13 @@ Look at `ENERGY_ISSUE_EXAMINATION.md` and execute the documented next steps:
 
 ### Subtasks
 
-| ID  | Description                                          | Status     | Updated    | Notes |
-| --- | ---------------------------------------------------- | ---------- | ---------- | ----- |
-| 1.1 | Capture requirements and design in memory bank       | Completed  | 2025-10-23 | DES019 + RQ-032..RQ-034 recorded. |
-| 2.1 | Refactor unload system for zero-cargo path           | Completed  | 2025-10-23 | Always undocks, clears targets, frees queue slots. |
-| 3.1 | Add DroneAI assignment cleanup and tests             | Completed  | 2025-10-23 | Idle drones clear stale factory targets; unit coverage added. |
-| 4.1 | Enable factory-assisted charging and test coverage   | Completed  | 2025-10-23 | Power system draws from factory pools with regression tests. |
-| 5.1 | Execute validation and document outcomes             | Completed  | 2025-10-23 | `npm run test` suite green; optional solar regen deferred. |
+| ID  | Description                                        | Status    | Updated    | Notes                                                         |
+| --- | -------------------------------------------------- | --------- | ---------- | ------------------------------------------------------------- |
+| 1.1 | Capture requirements and design in memory bank     | Completed | 2025-10-23 | DES019 + RQ-032..RQ-034 recorded.                             |
+| 2.1 | Refactor unload system for zero-cargo path         | Completed | 2025-10-23 | Always undocks, clears targets, frees queue slots.            |
+| 3.1 | Add DroneAI assignment cleanup and tests           | Completed | 2025-10-23 | Idle drones clear stale factory targets; unit coverage added. |
+| 4.1 | Enable factory-assisted charging and test coverage | Completed | 2025-10-23 | Power system draws from factory pools with regression tests.  |
+| 5.1 | Execute validation and document outcomes           | Completed | 2025-10-23 | `npm run test` suite green; optional solar regen deferred.    |
 
 ## Progress Log
 

@@ -28,12 +28,24 @@ With multiple buyable factories now in the game, this design addresses:
 
 ```typescript
 moduleDefinitions = {
-  droneBay: { label: 'Drone Bay', baseCost: 4, description: '+1 drone, +5% travel speed' },
+  droneBay: {
+    label: 'Drone Bay',
+    baseCost: 4,
+    description: '+1 drone, +5% travel speed',
+  },
   refinery: { label: 'Refinery', baseCost: 8, description: '+10% bar output' },
   storage: { label: 'Storage', baseCost: 3, description: '+100 ore capacity' },
-  solar: { label: 'Solar Array', baseCost: 4, description: '+5 energy/s, +25 max energy' },
-  scanner: { label: 'Scanner', baseCost: 12, description: '+5% new asteroid richness' },
-}
+  solar: {
+    label: 'Solar Array',
+    baseCost: 4,
+    description: '+5 energy/s, +25 max energy',
+  },
+  scanner: {
+    label: 'Scanner',
+    baseCost: 12,
+    description: '+5% new asteroid richness',
+  },
+};
 ```
 
 ### Per-Factory Upgrades (already exist)
@@ -44,7 +56,7 @@ factoryUpgradeDefinitions = {
   refine: { label: 'Refinery Line', description: '+1 refine slot' },
   storage: { label: 'Bulk Storage', description: '+150 ore storage' },
   energy: { label: 'Capacitors', description: '+30 local energy capacity' },
-}
+};
 ```
 
 ### Global Resources & Modifiers
@@ -125,22 +137,22 @@ Lightweight logistics layer to move resources between factories, reducing starva
 
 ```typescript
 interface HaulerConfig {
-  capacity: number;           // items per trip (default: 50)
-  speed: number;              // tiles/s (default: 1.0)
-  pickupOverhead: number;     // seconds (default: 1.0)
-  dropoffOverhead: number;    // seconds (default: 1.0)
-  resourceFilters: string[];  // e.g., ['ore', 'metals']
+  capacity: number; // items per trip (default: 50)
+  speed: number; // tiles/s (default: 1.0)
+  pickupOverhead: number; // seconds (default: 1.0)
+  dropoffOverhead: number; // seconds (default: 1.0)
+  resourceFilters: string[]; // e.g., ['ore', 'metals']
   mode: 'auto' | 'manual' | 'demand-first' | 'supply-first';
-  priority: number;           // 0-10
+  priority: number; // 0-10
 }
 
 interface FactoryLogisticsState {
-  outboundReservations: Record<string, number>;  // resource → reserved amount
+  outboundReservations: Record<string, number>; // resource → reserved amount
   inboundSchedules: Array<{
     fromFactoryId: string;
     resource: string;
     amount: number;
-    eta: number;  // game time when arrival occurs
+    eta: number; // game time when arrival occurs
   }>;
 }
 ```
@@ -152,7 +164,7 @@ interface FactoryLogisticsState {
 **Steps:**
 
 1. **Sampling:** For each resource R, collect factories that produce/accept R
-2. **Buffer Target:** `target = buffer_seconds * consumption_rate` (e.g., 30s * rate)
+2. **Buffer Target:** `target = buffer_seconds * consumption_rate` (e.g., 30s \* rate)
 3. **Need & Surplus:**
    - `need = max(0, target - current_inventory)`
    - `surplus = max(0, current_inventory - target - min_reserve)` (min_reserve: 5s worth)
@@ -165,7 +177,8 @@ interface FactoryLogisticsState {
 
 ```typescript
 const distance = factoryA.position.distanceTo(factoryB.position);
-const travel_time = (distance / hauler.speed) + hauler.pickupOverhead + hauler.dropoffOverhead;
+const travel_time =
+  distance / hauler.speed + hauler.pickupOverhead + hauler.dropoffOverhead;
 ```
 
 ### Edge Case Protections
@@ -249,7 +262,7 @@ processLogistics(dt: number) {
 
   // For each resource type
   for (const resource of RESOURCE_TYPES) {
-    const factoriesWithResource = this.factories.filter(f => 
+    const factoriesWithResource = this.factories.filter(f =>
       f.resources[resource] !== undefined
     );
 
@@ -282,7 +295,7 @@ processLogistics(dt: number) {
         if (transferAmount <= 0) continue;
 
         // Reserve at source
-        source.logisticsState.outboundReservations[resource] = 
+        source.logisticsState.outboundReservations[resource] =
           (source.logisticsState.outboundReservations[resource] ?? 0) + transferAmount;
 
         // Schedule transfer
@@ -311,21 +324,21 @@ processLogistics(dt: number) {
     if (this.gameTime >= transfer.eta && transfer.status === 'scheduled') {
       const source = this.getFactory(transfer.fromFactoryId);
       const dest = this.getFactory(transfer.toFactoryId);
-      
+
       if (source && dest) {
         // Decrement source (if not already done at scheduling)
         source.resources[transfer.resource] -= transfer.amount;
-        
+
         // Increment destination
         dest.resources[transfer.resource] += transfer.amount;
-        
+
         transfer.status = 'completed';
       }
     }
   }
 
   // Clean up completed transfers
-  this.logisticsQueues.pendingTransfers = 
+  this.logisticsQueues.pendingTransfers =
     this.logisticsQueues.pendingTransfers.filter(t => t.status !== 'completed');
 }
 ```
@@ -338,15 +351,15 @@ processLogistics(dt: number) {
 
 ```typescript
 const LOGISTICS_CONFIG = {
-  buffer_seconds: 30,           // target 30s worth of resources
-  min_reserve_seconds: 5,       // never drop below 5s
-  hauler_capacity: 50,          // items per trip
-  hauler_speed: 1.0,            // tiles/s
-  pickup_overhead: 1.0,         // seconds
-  dropoff_overhead: 1.0,        // seconds
-  scheduling_interval: 2.0,     // seconds between scheduling ticks
-  hysteresis_threshold: 0.2,    // 20% difference required to move
-  cooldown_period: 10.0,        // seconds before reversing same transfer
+  buffer_seconds: 30, // target 30s worth of resources
+  min_reserve_seconds: 5, // never drop below 5s
+  hauler_capacity: 50, // items per trip
+  hauler_speed: 1.0, // tiles/s
+  pickup_overhead: 1.0, // seconds
+  dropoff_overhead: 1.0, // seconds
+  scheduling_interval: 2.0, // seconds between scheduling ticks
+  hysteresis_threshold: 0.2, // 20% difference required to move
+  cooldown_period: 10.0, // seconds before reversing same transfer
 };
 ```
 
@@ -358,7 +371,7 @@ const LOGISTICS_CONFIG = {
 const haulerCost = (count: number) => ({
   metals: 50 * Math.pow(1.25, count),
   crystals: 30 * Math.pow(1.25, count),
-  energy: 10
+  energy: 10,
 });
 ```
 
@@ -386,7 +399,7 @@ const haulerCost = (count: number) => ({
 // In normalizeSnapshot / applySnapshot
 if (snapshot.save.version < '0.3.0') {
   // Add default hauler fields to all factories
-  snapshot.factories = snapshot.factories?.map(factory => ({
+  snapshot.factories = snapshot.factories?.map((factory) => ({
     ...factory,
     haulersAssigned: factory.haulersAssigned ?? 0,
     haulerConfig: factory.haulerConfig ?? {
@@ -396,12 +409,12 @@ if (snapshot.save.version < '0.3.0') {
       dropoffOverhead: 1.0,
       resourceFilters: [],
       mode: 'auto',
-      priority: 5
+      priority: 5,
     },
     logisticsState: factory.logisticsState ?? {
       outboundReservations: {},
-      inboundSchedules: []
-    }
+      inboundSchedules: [],
+    },
   }));
 
   // Initialize global logistics queues

@@ -303,9 +303,9 @@ export const createDroneAISystem = (world: GameWorld, store: StoreApiType) => {
         const occupiedA = a.queueLength;
         const occupiedB = b.queueLength;
         if (occupiedA !== occupiedB) {
-          return occupiedA - occupiedB;  // Prefer less-filled docking
+          return occupiedA - occupiedB; // Prefer less-filled docking
         }
-        return a.distance - b.distance;  // Break ties by distance
+        return a.distance - b.distance; // Break ties by distance
       });
       selected = candidates[0];
       if (candidates.length > 1 && rng.next() < FACTORY_VARIETY_CHANCE) {
@@ -370,11 +370,7 @@ export const createDroneAISystem = (world: GameWorld, store: StoreApiType) => {
         synchronizeDroneFlight(drone, storedFlight, world, store);
       }
 
-      if (
-        drone.targetFactoryId &&
-        drone.state !== 'returning' &&
-        drone.state !== 'unloading'
-      ) {
+      if (drone.targetFactoryId && drone.state !== 'returning' && drone.state !== 'unloading') {
         const stuckFactoryId = drone.targetFactoryId;
         const stateApi = store.getState();
         const factory = stateApi.getFactory(stuckFactoryId);

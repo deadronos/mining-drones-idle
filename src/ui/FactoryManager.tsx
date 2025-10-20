@@ -238,7 +238,15 @@ const SelectedFactoryCard = ({
 
       // Only show buffer target for transportable resources (not credits)
       let bufferTarget = null;
-      if (key !== 'credits' && (key === 'ore' || key === 'bars' || key === 'metals' || key === 'crystals' || key === 'organics' || key === 'ice')) {
+      if (
+        key !== 'credits' &&
+        (key === 'ore' ||
+          key === 'bars' ||
+          key === 'metals' ||
+          key === 'crystals' ||
+          key === 'organics' ||
+          key === 'ice')
+      ) {
         bufferTarget = Math.ceil(computeBufferTarget(factory, key));
       }
 
@@ -297,7 +305,7 @@ const SelectedFactoryCard = ({
               visibleDockEntries.map((entry) => (
                 <li
                   key={entry.droneId}
-                  className={`factory-queue-item${entry.status === 'waiting' ? ' waiting' : ''}`}
+                  className={`factory-queue-item${entry.status === 'waiting' ? 'waiting' : ''}`}
                 >
                   {entry.status === 'waiting' ? '⏳' : '🛬'} {entry.droneId}
                 </li>
@@ -343,7 +351,10 @@ const SelectedFactoryCard = ({
             />
           </div>
           {solarRegen > 0 ? (
-            <p className="muted" aria-label={`Solar regeneration ${solarRegen.toFixed(2)} per second`}>
+            <p
+              className="muted"
+              aria-label={`Solar regeneration ${solarRegen.toFixed(2)} per second`}
+            >
               Solar regen: {solarRegen.toFixed(2)}/s
             </p>
           ) : null}
@@ -501,13 +512,15 @@ const SelectedFactoryCard = ({
           return (factory.haulersAssigned ?? 0) > 0 ? (
             <div className="hauler-info">
               <p className="desc">
-                This factory has {factory.haulersAssigned} hauler{factory.haulersAssigned === 1 ? '' : 's'} assigned.
+                This factory has {factory.haulersAssigned} hauler
+                {factory.haulersAssigned === 1 ? '' : 's'} assigned.
               </p>
               <p className="next-cost">Next: {Math.ceil(nextCost)} bars</p>
             </div>
           ) : (
             <p className="muted small">
-              Next: {Math.ceil(nextCost)} bars · Assign haulers to enable automatic resource transfers.
+              Next: {Math.ceil(nextCost)} bars · Assign haulers to enable automatic resource
+              transfers.
             </p>
           );
         })()}

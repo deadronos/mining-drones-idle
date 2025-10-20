@@ -190,10 +190,8 @@ export const getStorageCapacity = (modules: Modules, modifiers?: ResourceModifie
   return base * (modifiers?.storageCapacityMultiplier ?? 1);
 };
 
-export const computeWarehouseCapacity = (
-  modules: Modules,
-  modifiers?: ResourceModifierSnapshot,
-) => getStorageCapacity(modules, modifiers) * WAREHOUSE_CONFIG.storageMultiplier;
+export const computeWarehouseCapacity = (modules: Modules, modifiers?: ResourceModifierSnapshot) =>
+  getStorageCapacity(modules, modifiers) * WAREHOUSE_CONFIG.storageMultiplier;
 
 export const getEnergyCapacity = (modules: Modules, modifiers?: ResourceModifierSnapshot) => {
   const base = BASE_ENERGY_CAP + modules.solar * ENERGY_PER_SOLAR;
