@@ -44,7 +44,7 @@ export const DockingSection = ({ factory }: DockingSectionProps) => {
           dockingEntries.map((entry) => (
             <li
               key={entry.droneId}
-              className={`factory-queue-item${entry.status === 'waiting' ? ' waiting' : ''}`}
+              className={`factory-queue-item${entry.status === 'waiting' ? 'waiting' : ''}`}
             >
               {entry.status === 'waiting' ? '⏳' : '🛬'} {entry.droneId}
             </li>

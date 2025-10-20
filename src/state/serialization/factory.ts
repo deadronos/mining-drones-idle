@@ -69,9 +69,7 @@ export const normalizeFactorySnapshot = (value: unknown): FactorySnapshot | null
       resourceFilters: Array.isArray(hc.resourceFilters)
         ? hc.resourceFilters.filter((val): val is string => typeof val === 'string')
         : [],
-      mode: ['auto', 'manual', 'demand-first', 'supply-first'].includes(
-        String(hc.mode),
-      )
+      mode: ['auto', 'manual', 'demand-first', 'supply-first'].includes(String(hc.mode))
         ? (hc.mode as unknown as 'auto' | 'manual' | 'demand-first' | 'supply-first')
         : 'auto',
       priority: Math.min(10, Math.max(0, Math.floor(coerceNumber(hc.priority, 5)))),

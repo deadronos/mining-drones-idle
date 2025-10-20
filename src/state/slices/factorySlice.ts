@@ -70,7 +70,9 @@ export const createFactorySlice: StateCreator<
         }
       }
       const selectedFactoryId =
-        state.selectedFactoryId === factoryId ? (factories[0]?.id ?? null) : state.selectedFactoryId;
+        state.selectedFactoryId === factoryId
+          ? (factories[0]?.id ?? null)
+          : state.selectedFactoryId;
       return { factories, droneOwners, selectedFactoryId };
     });
   },
@@ -106,9 +108,7 @@ export const createFactorySlice: StateCreator<
   toggleFactoryPinned: (factoryId) => {
     set((state) => ({
       factories: state.factories.map((factory) =>
-        factory.id === factoryId
-          ? { ...cloneFactory(factory), pinned: !factory.pinned }
-          : factory,
+        factory.id === factoryId ? { ...cloneFactory(factory), pinned: !factory.pinned } : factory,
       ),
     }));
   },
@@ -233,9 +233,7 @@ export const createFactorySlice: StateCreator<
       if (!changed) {
         return {};
       }
-      const factories = state.factories.map((factory, idx) =>
-        idx === index ? updated : factory,
-      );
+      const factories = state.factories.map((factory, idx) => (idx === index ? updated : factory));
       return { factories };
     });
   },
@@ -266,9 +264,7 @@ export const createFactorySlice: StateCreator<
       }
       updated.energy += applied;
       granted = applied;
-      const factories = state.factories.map((factory, idx) =>
-        idx === index ? updated : factory,
-      );
+      const factories = state.factories.map((factory, idx) => (idx === index ? updated : factory));
       const resources = {
         ...state.resources,
         energy: Math.max(0, state.resources.energy - applied),
@@ -284,8 +280,7 @@ export const createFactorySlice: StateCreator<
     if (index === -1) {
       return false;
     }
-    const definition =
-      factoryUpgradeDefinitions[upgrade as keyof typeof factoryUpgradeDefinitions];
+    const definition = factoryUpgradeDefinitions[upgrade as keyof typeof factoryUpgradeDefinitions];
     if (!definition) {
       return false;
     }

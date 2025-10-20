@@ -90,7 +90,7 @@ WHEN the player buys a factory, THE SYSTEM SHALL verify affordability, deduct th
 
 ## RQ-023 Drone Factory Assignment
 
-WHEN a drone transitions to a returning state with cargo, THE SYSTEM SHALL reserve a docking slot at the nearest available factory (round-robin for ties) and set the drone's travel target to that factory. [Acceptance: Simulation test flips a drone to returning and confirms the store records the assignment while the drone's travel destination matches the factory position.]
+WHEN a drone transitions to a returning state with cargo, THE SYSTEM SHALL reserve a docking slot at the factory with the least-filled docking queue (ties broken by distance) and set the drone's travel target to that factory to balance load across all available factories. [Acceptance: Drone AI unit test assigns drones from a common position and verifies they distribute across multiple factories roughly equally, with no single factory receiving all drones.]
 
 ## RQ-024 Factory Refining Pipeline
 
@@ -171,3 +171,7 @@ WHEN the Settings panel content height exceeds the available viewport height min
 ## RQ-043 Settings Narrow View Layout
 
 WHEN the viewport width shrinks below 1024px, THE SYSTEM SHALL collapse the Settings panel to a single column, reducing horizontal padding as needed so that the panel fits within the viewport without spawning horizontal scrollbars. [Acceptance: Manual resize at 900px width confirms a single column layout with no horizontal scrolling.]
+
+## RQ-044 Factory Buffer Target Visibility
+
+WHEN viewing a factory's storage inventory in the Inspector, THE SYSTEM SHALL display the logistics buffer target for each tracked resource (ore, bars, metals, crystals, organics, ice) as a suffix label so players understand the surplus/deficit thresholds. [Acceptance: React component test verifies buffer targets render for each resource, TypeScript compiles without errors, and linting passes.]

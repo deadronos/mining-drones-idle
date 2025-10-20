@@ -191,44 +191,44 @@ The five design questions were resolved toward clarity and player onboarding:
 
 **Overall Status:** In Progress - 75%
 
-| ID  | Description                                              | Status      | Updated     | Notes |
-| --- | -------------------------------------------------------- | ----------- | ------- | ----- |
-| 1.1 | Update `createDefaultFactories()` for 1st factory hauler | Completed   | 2025-10-24 | Seeded onboarding hauler |
-| 1.2 | Add startup resources to 1st factory                     | Completed   | 2025-10-24 | Starter ore/bars applied |
-| 1.3 | Serialization updates for startup state                  | Not Started |         |       |
-| 1.4 | Unit test: 1st factory has 1 hauler                      | Completed   | 2025-10-24 | Coverage in `store.factories.test.ts` |
-| 2.1 | Alias warehouse terminology                              | Not Started |         |       |
-| 2.2 | Update capacity logic & WAREHOUSE_MULTIPLIER             | Completed   | 2025-10-24 | `mergeResourceDelta` clamps via warehouse capacity |
-| 2.3 | Add WAREHOUSE_CONFIG constant                            | Completed   | 2025-10-24 | Config captured in `state/constants.ts` |
-| 2.4 | Utility: computeWarehouseCapacity()                      | Completed   | 2025-10-24 | Helper added in `state/utils.ts` |
-| 2.5 | Unit test: capacity scales with modules                  | Completed   | 2025-10-24 | `utils.warehouse.test.ts` |
-| 3.1 | Update matchSurplusToNeed for warehouse transfers        | Completed   | 2025-10-24 | Warehouse routing handled in `processLogistics` scheduler |
-| 3.2 | Update computeBufferTarget logic                         | Completed   | 2025-10-24 | Buffer targets aligned with warehouse constants (LOGISTICS_CONFIG) |
-| 3.3 | Update computeMinReserve logic                           | Completed   | 2025-10-24 | Reserve calculations use shared warehouse thresholds |
-| 3.4 | Update reserveOutbound & executeArrival                  | Completed   | 2025-10-24 | Warehouse arrivals handled via custom scheduler pathway |
-| 3.5 | Unit tests: buffer & export logic                        | Completed   | 2025-10-24 | Added `logisticsProcessing.test.ts` coverage |
-| 4.1 | Audit unload.ts ore routing                              | Completed   | 2025-10-24 | Ore remains local; warehouse exports handle surplus |
-| 4.2 | Update non-ore unload routing                            | Completed   | 2025-10-24 | Factory ledger only; warehouse fed in scheduler/fallback |
-| 4.3 | No-factory fallback to warehouse                         | Completed   | 2025-10-24 | Confirmed direct warehouse deposit when no dock |
-| 4.4 | Unit test: unload routing                                | Completed   | 2025-10-24 | Added unload tests covering local vs warehouse |
-| 5.1 | Audit global refinery (no change)                        | Completed   | 2025-10-24 | Global refinery flow left intact for warehouse operations |
-| 5.2 | Audit processFactories production                        | Completed   | 2025-10-24 | Local-only bar production verified |
-| 5.3 | Remove totalBarsProduced duplication                     | Completed   | 2025-10-24 | `processFactories` no longer increments warehouse bars |
-| 5.4 | Unit test: factory production is local only              | Completed   | 2025-10-24 | Updated store test asserts warehouse bars unchanged |
+| ID  | Description                                              | Status      | Updated    | Notes                                                                         |
+| --- | -------------------------------------------------------- | ----------- | ---------- | ----------------------------------------------------------------------------- |
+| 1.1 | Update `createDefaultFactories()` for 1st factory hauler | Completed   | 2025-10-24 | Seeded onboarding hauler                                                      |
+| 1.2 | Add startup resources to 1st factory                     | Completed   | 2025-10-24 | Starter ore/bars applied                                                      |
+| 1.3 | Serialization updates for startup state                  | Not Started |            |                                                                               |
+| 1.4 | Unit test: 1st factory has 1 hauler                      | Completed   | 2025-10-24 | Coverage in `store.factories.test.ts`                                         |
+| 2.1 | Alias warehouse terminology                              | Not Started |            |                                                                               |
+| 2.2 | Update capacity logic & WAREHOUSE_MULTIPLIER             | Completed   | 2025-10-24 | `mergeResourceDelta` clamps via warehouse capacity                            |
+| 2.3 | Add WAREHOUSE_CONFIG constant                            | Completed   | 2025-10-24 | Config captured in `state/constants.ts`                                       |
+| 2.4 | Utility: computeWarehouseCapacity()                      | Completed   | 2025-10-24 | Helper added in `state/utils.ts`                                              |
+| 2.5 | Unit test: capacity scales with modules                  | Completed   | 2025-10-24 | `utils.warehouse.test.ts`                                                     |
+| 3.1 | Update matchSurplusToNeed for warehouse transfers        | Completed   | 2025-10-24 | Warehouse routing handled in `processLogistics` scheduler                     |
+| 3.2 | Update computeBufferTarget logic                         | Completed   | 2025-10-24 | Buffer targets aligned with warehouse constants (LOGISTICS_CONFIG)            |
+| 3.3 | Update computeMinReserve logic                           | Completed   | 2025-10-24 | Reserve calculations use shared warehouse thresholds                          |
+| 3.4 | Update reserveOutbound & executeArrival                  | Completed   | 2025-10-24 | Warehouse arrivals handled via custom scheduler pathway                       |
+| 3.5 | Unit tests: buffer & export logic                        | Completed   | 2025-10-24 | Added `logisticsProcessing.test.ts` coverage                                  |
+| 4.1 | Audit unload.ts ore routing                              | Completed   | 2025-10-24 | Ore remains local; warehouse exports handle surplus                           |
+| 4.2 | Update non-ore unload routing                            | Completed   | 2025-10-24 | Factory ledger only; warehouse fed in scheduler/fallback                      |
+| 4.3 | No-factory fallback to warehouse                         | Completed   | 2025-10-24 | Confirmed direct warehouse deposit when no dock                               |
+| 4.4 | Unit test: unload routing                                | Completed   | 2025-10-24 | Added unload tests covering local vs warehouse                                |
+| 5.1 | Audit global refinery (no change)                        | Completed   | 2025-10-24 | Global refinery flow left intact for warehouse operations                     |
+| 5.2 | Audit processFactories production                        | Completed   | 2025-10-24 | Local-only bar production verified                                            |
+| 5.3 | Remove totalBarsProduced duplication                     | Completed   | 2025-10-24 | `processFactories` no longer increments warehouse bars                        |
+| 5.4 | Unit test: factory production is local only              | Completed   | 2025-10-24 | Updated store test asserts warehouse bars unchanged                           |
 | 6.1 | Update doPrestige behavior                               | Completed   | 2025-10-24 | Verified prestige resets to new default factory with starter hauler/resources |
-| 6.2 | Update prestige screen display                           | Completed   | 2025-10-24 | Upgrade panel now labels warehouse bars for prestige readiness |
-| 6.3 | Unit test: prestige reset                                | Completed   | 2025-10-24 | Adjusted store test to expect starter hauler after reset |
-| 7.1 | Update HUD labels                                        | Completed   | 2025-10-24 | Upgrade panel buttons reference warehouse bars explicitly |
-| 7.2 | Update factory inspector display                         | Completed   | 2025-10-24 | Factory view shows Warehouse Inventory vs Factory Storage |
-| 7.3 | Update logistics panel                                   | Completed   | 2025-10-24 | Panel now highlights warehouse node and stock in summary |
-| 7.4 | Add tutorial/settings note                               | Completed   | 2025-10-24 | Warehouse primer added to Settings copy |
-| 8.1 | Add migration (backwards compat)                         | Completed   | 2025-10-24 | Migration `0.3.2` normalizes logistics data |
-| 8.2 | Update save version if needed                            | Completed   | 2025-10-24 | `SAVE_VERSION` bumped to `0.3.2` |
-| 8.3 | Unit test: old save import                               | Completed   | 2025-10-24 | Added coverage in `migrations.test.ts` |
-| 9.1 | Integration: ore → refine → export to warehouse          | Completed   | 2025-10-24 | Warehouse/export scenario in `store.warehouse.integration.test.ts` |
-| 9.2 | Integration: starving factory import from warehouse      | Completed   | 2025-10-24 | Warehouse import scenario verified via integration test |
-| 9.3 | Integration: prestige run reset                          | Completed   | 2025-10-24 | Integration test checks prestige reset invariants |
-| 9.4 | Integration: save/load cycle                             | Completed   | 2025-10-24 | Export/import round-trip covered in integration test |
+| 6.2 | Update prestige screen display                           | Completed   | 2025-10-24 | Upgrade panel now labels warehouse bars for prestige readiness                |
+| 6.3 | Unit test: prestige reset                                | Completed   | 2025-10-24 | Adjusted store test to expect starter hauler after reset                      |
+| 7.1 | Update HUD labels                                        | Completed   | 2025-10-24 | Upgrade panel buttons reference warehouse bars explicitly                     |
+| 7.2 | Update factory inspector display                         | Completed   | 2025-10-24 | Factory view shows Warehouse Inventory vs Factory Storage                     |
+| 7.3 | Update logistics panel                                   | Completed   | 2025-10-24 | Panel now highlights warehouse node and stock in summary                      |
+| 7.4 | Add tutorial/settings note                               | Completed   | 2025-10-24 | Warehouse primer added to Settings copy                                       |
+| 8.1 | Add migration (backwards compat)                         | Completed   | 2025-10-24 | Migration `0.3.2` normalizes logistics data                                   |
+| 8.2 | Update save version if needed                            | Completed   | 2025-10-24 | `SAVE_VERSION` bumped to `0.3.2`                                              |
+| 8.3 | Unit test: old save import                               | Completed   | 2025-10-24 | Added coverage in `migrations.test.ts`                                        |
+| 9.1 | Integration: ore → refine → export to warehouse          | Completed   | 2025-10-24 | Warehouse/export scenario in `store.warehouse.integration.test.ts`            |
+| 9.2 | Integration: starving factory import from warehouse      | Completed   | 2025-10-24 | Warehouse import scenario verified via integration test                       |
+| 9.3 | Integration: prestige run reset                          | Completed   | 2025-10-24 | Integration test checks prestige reset invariants                             |
+| 9.4 | Integration: save/load cycle                             | Completed   | 2025-10-24 | Export/import round-trip covered in integration test                          |
 
 ## Estimated Effort
 

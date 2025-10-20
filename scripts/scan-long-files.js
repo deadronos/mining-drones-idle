@@ -10,7 +10,7 @@ const DEFAULT_THRESHOLD = 300;
 
 function getAllFiles(dir, fileList = []) {
   const files = fs.readdirSync(dir);
-  files.forEach(file => {
+  files.forEach((file) => {
     const filePath = path.join(dir, file);
     const stat = fs.statSync(filePath);
     if (stat.isDirectory()) {
@@ -28,13 +28,13 @@ function countLines(filePath) {
 }
 
 function main() {
-  const thresholdArg = process.argv.find(arg => arg.startsWith('--threshold='));
+  const thresholdArg = process.argv.find((arg) => arg.startsWith('--threshold='));
   const threshold = thresholdArg ? parseInt(thresholdArg.split('=')[1], 10) : DEFAULT_THRESHOLD;
   const jsonOutput = process.argv.includes('--json');
 
   const allFiles = getAllFiles(SRC_DIR);
   const longFiles = allFiles
-    .map(file => ({ file, lines: countLines(file) }))
+    .map((file) => ({ file, lines: countLines(file) }))
     .filter(({ lines }) => lines > threshold);
 
   if (jsonOutput) {

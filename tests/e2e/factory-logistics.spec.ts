@@ -4,10 +4,13 @@ test.describe('Factory Hauler Logistics', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to game and wait for app to initialize
     await page.goto('/');
-    await page.waitForFunction(() => {
-      const win = window as unknown as Record<string, unknown>;
-      return win.__appReady;
-    }, { timeout: 10000 });
+    await page.waitForFunction(
+      () => {
+        const win = window as unknown as Record<string, unknown>;
+        return win.__appReady;
+      },
+      { timeout: 10000 },
+    );
     // Wait for initial render
     await page.waitForTimeout(500);
   });

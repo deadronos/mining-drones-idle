@@ -14,26 +14,19 @@ import { WAREHOUSE_CONFIG } from '@/state/constants';
 export const LOGISTICS_CONFIG = {
   buffer_seconds: WAREHOUSE_CONFIG.bufferSeconds, // Target inventory level
   min_reserve_seconds: WAREHOUSE_CONFIG.minReserveSeconds, // Never drop below min reserve
-  hauler_capacity: 50,          // Default items per trip
-  hauler_speed: 1.0,            // Default tiles per second
-  pickup_overhead: 1.0,         // Default seconds for pickup
-  dropoff_overhead: 1.0,        // Default seconds for dropoff
-  scheduling_interval: 2.0,     // Run scheduler every 2 seconds
-  hysteresis_threshold: 0.2,    // 20% difference threshold before transfer
-  cooldown_period: 10.0,        // Seconds before reversing same transfer
+  hauler_capacity: 50, // Default items per trip
+  hauler_speed: 1.0, // Default tiles per second
+  pickup_overhead: 1.0, // Default seconds for pickup
+  dropoff_overhead: 1.0, // Default seconds for dropoff
+  scheduling_interval: 2.0, // Run scheduler every 2 seconds
+  hysteresis_threshold: 0.2, // 20% difference threshold before transfer
+  cooldown_period: 10.0, // Seconds before reversing same transfer
 } as const;
 
 // Resource types that can be transported
-export const RESOURCE_TYPES = [
-  'ore',
-  'bars',
-  'metals',
-  'crystals',
-  'organics',
-  'ice',
-] as const;
+export const RESOURCE_TYPES = ['ore', 'bars', 'metals', 'crystals', 'organics', 'ice'] as const;
 
-export type TransportableResource = typeof RESOURCE_TYPES[number];
+export type TransportableResource = (typeof RESOURCE_TYPES)[number];
 
 export const WAREHOUSE_NODE_ID = 'warehouse' as const;
 
@@ -121,7 +114,14 @@ export const computeTravelTime = (
   const distance = sourcePos.distanceTo(destPos);
   const travelTime = distance / Math.max(0.1, config.speed);
   const total = config.pickupOverhead + travelTime + config.dropoffOverhead;
-  logLogistics('computeTravelTime distance=%o speed=%o overhead=[%o,%o] total=%o', distance, config.speed, config.pickupOverhead, config.dropoffOverhead, total);
+  logLogistics(
+    'computeTravelTime distance=%o speed=%o overhead=[%o,%o] total=%o',
+    distance,
+    config.speed,
+    config.pickupOverhead,
+    config.dropoffOverhead,
+    total,
+  );
   return total;
 };
 
@@ -189,7 +189,12 @@ export const matchSurplusToNeed = (
     }
   }
 
-  logLogistics('matchSurplusToNeed[%s]: needs=%o surpluses=%o', resource, needs.map(n => ({ id: n.factory.id, need: n.need })), surpluses.map(s => ({ id: s.factory.id, surplus: s.surplus })));
+  logLogistics(
+    'matchSurplusToNeed[%s]: needs=%o surpluses=%o',
+    resource,
+    needs.map((n) => ({ id: n.factory.id, need: n.need })),
+    surpluses.map((s) => ({ id: s.factory.id, surplus: s.surplus })),
+  );
 
   // Sort needs descending (highest first) and surpluses descending
   needs.sort((a, b) => b.need - a.need);
@@ -202,13 +207,23 @@ export const matchSurplusToNeed = (
       if (surplusEntry.surplus <= 0) continue;
 
       // Respect resource filters if set
-      const needHasFilters = needEntry.config?.resourceFilters && needEntry.config.resourceFilters.length > 0;
-      if (needHasFilters && needEntry.config && !needEntry.config.resourceFilters.includes(resource)) {
+      const needHasFilters =
+        needEntry.config?.resourceFilters && needEntry.config.resourceFilters.length > 0;
+      if (
+        needHasFilters &&
+        needEntry.config &&
+        !needEntry.config.resourceFilters.includes(resource)
+      ) {
         continue;
       }
 
-      const surplusHasFilters = surplusEntry.config?.resourceFilters && surplusEntry.config.resourceFilters.length > 0;
-      if (surplusHasFilters && surplusEntry.config && !surplusEntry.config.resourceFilters.includes(resource)) {
+      const surplusHasFilters =
+        surplusEntry.config?.resourceFilters && surplusEntry.config.resourceFilters.length > 0;
+      if (
+        surplusHasFilters &&
+        surplusEntry.config &&
+        !surplusEntry.config.resourceFilters.includes(resource)
+      ) {
         continue;
       }
 
@@ -243,7 +258,14 @@ export const matchSurplusToNeed = (
         status: 'scheduled',
         eta,
       });
-      logLogistics('proposed transfer [%s]: %s -> %s amount=%o eta=%o', resource, surplusEntry.factory.id, needEntry.factory.id, transferAmount, eta - gameTime);
+      logLogistics(
+        'proposed transfer [%s]: %s -> %s amount=%o eta=%o',
+        resource,
+        surplusEntry.factory.id,
+        needEntry.factory.id,
+        transferAmount,
+        eta - gameTime,
+      );
 
       // Update remaining need/surplus
       needEntry.need -= transferAmount;
@@ -269,22 +291,46 @@ export const validateTransfer = (
 ): boolean => {
   if (amount <= 0) return false;
 
-  const current = (factory.resources[resource as keyof typeof factory.resources]) ?? 0;
+  const current = factory.resources[resource as keyof typeof factory.resources] ?? 0;
   const reserved = factory.logisticsState?.outboundReservations[resource] ?? 0;
   const available = Math.max(0, current - reserved);
 
   if (available < amount) {
-    logLogistics('validateTransfer[%s] FAIL: factory=%s available=%o amount=%o current=%o reserved=%o', resource, factory.id, available, amount, current, reserved);
+    logLogistics(
+      'validateTransfer[%s] FAIL: factory=%s available=%o amount=%o current=%o reserved=%o',
+      resource,
+      factory.id,
+      available,
+      amount,
+      current,
+      reserved,
+    );
     return false; // Not enough available
   }
 
   const minReserve = computeMinReserve(factory, resource);
   if (current - amount - reserved < minReserve) {
-    logLogistics('validateTransfer[%s] FAIL: factory=%s would drop below minReserve=%o (current=%o amount=%o reserved=%o)', resource, factory.id, minReserve, current, amount, reserved);
+    logLogistics(
+      'validateTransfer[%s] FAIL: factory=%s would drop below minReserve=%o (current=%o amount=%o reserved=%o)',
+      resource,
+      factory.id,
+      minReserve,
+      current,
+      amount,
+      reserved,
+    );
     return false; // Would drop below minimum reserve
   }
 
-  logLogistics('validateTransfer[%s] OK: factory=%s amount=%o current=%o reserved=%o minReserve=%o', resource, factory.id, amount, current, reserved, minReserve);
+  logLogistics(
+    'validateTransfer[%s] OK: factory=%s amount=%o current=%o reserved=%o minReserve=%o',
+    resource,
+    factory.id,
+    amount,
+    current,
+    reserved,
+    minReserve,
+  );
   return true;
 };
 
@@ -303,7 +349,12 @@ export const reserveOutbound = (
   amount: number,
 ): boolean => {
   if (!validateTransfer(factory, resource, amount)) {
-    logLogistics('reserveOutbound[%s] REJECTED for factory=%s amount=%o', resource, factory.id, amount);
+    logLogistics(
+      'reserveOutbound[%s] REJECTED for factory=%s amount=%o',
+      resource,
+      factory.id,
+      amount,
+    );
     return false;
   }
 
@@ -321,7 +372,13 @@ export const reserveOutbound = (
   factory.logisticsState.outboundReservations[resource] =
     (factory.logisticsState.outboundReservations[resource] ?? 0) + amount;
 
-  logLogistics('reserveOutbound[%s] OK: factory=%s reservedNow=%o (+%o)', resource, factory.id, factory.logisticsState.outboundReservations[resource], amount);
+  logLogistics(
+    'reserveOutbound[%s] OK: factory=%s reservedNow=%o (+%o)',
+    resource,
+    factory.id,
+    factory.logisticsState.outboundReservations[resource],
+    amount,
+  );
 
   return true;
 };
@@ -342,7 +399,13 @@ export const releaseReservation = (
 
   const current = factory.logisticsState.outboundReservations[resource] ?? 0;
   factory.logisticsState.outboundReservations[resource] = Math.max(0, current - amount);
-  logLogistics('releaseReservation[%s]: factory=%s reservedNow=%o (-%o)', resource, factory.id, factory.logisticsState.outboundReservations[resource], amount);
+  logLogistics(
+    'releaseReservation[%s]: factory=%s reservedNow=%o (-%o)',
+    resource,
+    factory.id,
+    factory.logisticsState.outboundReservations[resource],
+    amount,
+  );
 };
 
 /**
@@ -368,13 +431,17 @@ export const executeArrival = (
   // Decrement source
   const sourceRes = sourceFactory.resources[resource as keyof typeof sourceFactory.resources];
   if (typeof sourceRes === 'number') {
-    sourceFactory.resources[resource as keyof typeof sourceFactory.resources] = Math.max(0, sourceRes - amount) as never;
+    sourceFactory.resources[resource as keyof typeof sourceFactory.resources] = Math.max(
+      0,
+      sourceRes - amount,
+    ) as never;
   }
 
   // Increment destination
   const destRes = destFactory.resources[resource as keyof typeof destFactory.resources];
   if (typeof destRes === 'number') {
-    destFactory.resources[resource as keyof typeof destFactory.resources] = (destRes + amount) as never;
+    destFactory.resources[resource as keyof typeof destFactory.resources] = (destRes +
+      amount) as never;
   }
 
   // Record in destination's inbound schedules for UI
@@ -386,15 +453,18 @@ export const executeArrival = (
   // Remove this transfer from inbound schedules (it's now completed)
   destFactory.logisticsState.inboundSchedules = (
     destFactory.logisticsState.inboundSchedules ?? []
-  ).filter(
-    (s) => !(s.fromFactoryId === sourceFactory.id && s.resource === resource),
-  );
+  ).filter((s) => !(s.fromFactoryId === sourceFactory.id && s.resource === resource));
 
-  logLogistics('executeArrival[%s]: %s -> %s amount=%o', resource, sourceFactory.id, destFactory.id, amount);
+  logLogistics(
+    'executeArrival[%s]: %s -> %s amount=%o',
+    resource,
+    sourceFactory.id,
+    destFactory.id,
+    amount,
+  );
 
   return true;
 };
-
 
 /**
  * Computes the purchase cost for a hauler at a given level
@@ -405,11 +475,7 @@ export const executeArrival = (
  * @param growth Growth multiplier per level
  * @returns Cost in ore
  */
-export const computeHaulerCost = (
-  level: number,
-  baseCost = 10,
-  growth = 1.15,
-): number => {
+export const computeHaulerCost = (level: number, baseCost = 10, growth = 1.15): number => {
   return Math.ceil(baseCost * Math.pow(growth, level));
 };
 

@@ -6,7 +6,10 @@ import { WAREHOUSE_CONFIG } from '@/state/constants';
 export const createDefaultFactories = (): BuildableFactory[] => [
   ((factory) => {
     factory.haulersAssigned = WAREHOUSE_CONFIG.starterFactoryHaulers;
-    factory.resources.ore = Math.max(factory.resources.ore, WAREHOUSE_CONFIG.starterFactoryStock.ore);
+    factory.resources.ore = Math.max(
+      factory.resources.ore,
+      WAREHOUSE_CONFIG.starterFactoryStock.ore,
+    );
     factory.resources.bars = Math.max(
       factory.resources.bars,
       WAREHOUSE_CONFIG.starterFactoryStock.bars,

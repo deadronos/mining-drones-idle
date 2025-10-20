@@ -22,11 +22,11 @@ Prototype trails in `src/r3f/Drones.tsx` using instancing or Drei `Trail`, add S
 
 ## Subtasks
 
-| ID  | Description      | Status      | Updated    | Notes                                                                |
-| --- | ---------------- | ----------- | ---------- | -------------------------------------------------------------------- |
-| 8.1 | Trails prototype | Completed   | 2025-10-17 | `TrailBuffer` + `DroneTrails` render fading line segments per drone. |
-| 8.2 | Settings toggle  | Completed   | 2025-10-17 | Settings panel exposes persisted `showTrails` toggle with tests.     |
-| 8.3 | Factory visuals  | Completed   | 2025-10-18 | Moved implementation into TASK011 and completed visuals (conveyors, transfer FX, boost pulse). |
+| ID  | Description      | Status    | Updated    | Notes                                                                                          |
+| --- | ---------------- | --------- | ---------- | ---------------------------------------------------------------------------------------------- |
+| 8.1 | Trails prototype | Completed | 2025-10-17 | `TrailBuffer` + `DroneTrails` render fading line segments per drone.                           |
+| 8.2 | Settings toggle  | Completed | 2025-10-17 | Settings panel exposes persisted `showTrails` toggle with tests.                               |
+| 8.3 | Factory visuals  | Completed | 2025-10-18 | Moved implementation into TASK011 and completed visuals (conveyors, transfer FX, boost pulse). |
 
 ## Acceptance Criteria
 

@@ -33,7 +33,7 @@ test('import rejects invalid payloads gracefully', async ({ page }) => {
 
   // Optionally assert that an error notification is present
   const toast = page.locator('.toast, .notification, [role="alert"]');
-  if (await toast.count() > 0) {
+  if ((await toast.count()) > 0) {
     await expect(toast.first()).toBeVisible();
   }
 });

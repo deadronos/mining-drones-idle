@@ -54,9 +54,7 @@ export const TransferLines = () => {
       return [];
     }
 
-    const factoryMap = new Map(
-      factories.map((factory) => [factory.id, factory]),
-    );
+    const factoryMap = new Map(factories.map((factory) => [factory.id, factory]));
 
     return logisticsQueues.pendingTransfers
       .filter((transfer) => transfer.status === 'scheduled' || transfer.status === 'in-transit')
@@ -107,7 +105,7 @@ export const TransferLines = () => {
   }
 
   const hovered = hoveredId
-    ? visuals.find((visual) => visual.transfer.id === hoveredId) ?? null
+    ? (visuals.find((visual) => visual.transfer.id === hoveredId) ?? null)
     : null;
 
   return (
@@ -167,7 +165,10 @@ export const TransferLines = () => {
 
       {hovered ? (
         <Html
-          position={hovered.midpoint.clone().add(new Vector3(0, hovered.radius * 6, 0)).toArray()}
+          position={hovered.midpoint
+            .clone()
+            .add(new Vector3(0, hovered.radius * 6, 0))
+            .toArray()}
           center
           style={{
             padding: 0,

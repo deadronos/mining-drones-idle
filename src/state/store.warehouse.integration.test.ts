@@ -88,9 +88,7 @@ describe('store warehouse integration flows', () => {
     advanceTick(LOGISTICS_CONFIG.scheduling_interval);
     let transfers = store.getState().logisticsQueues.pendingTransfers;
     expect(Array.isArray(transfers)).toBe(true);
-    expect(
-      transfers.some((transfer) => transfer.fromFactoryId === WAREHOUSE_NODE_ID),
-    ).toBe(true);
+    expect(transfers.some((transfer) => transfer.fromFactoryId === WAREHOUSE_NODE_ID)).toBe(true);
 
     const transferToFactory = transfers.find(
       (transfer) => transfer.fromFactoryId === WAREHOUSE_NODE_ID,

@@ -12,11 +12,7 @@ export const normalizeVectorTuple = (value: unknown): VectorTuple | null => {
   return [parsed[0], parsed[1], parsed[2]] as VectorTuple;
 };
 
-export const cloneVectorTuple = (value: VectorTuple): VectorTuple => [
-  value[0],
-  value[1],
-  value[2],
-];
+export const cloneVectorTuple = (value: VectorTuple): VectorTuple => [value[0], value[1], value[2]];
 
 export const normalizeTravelSnapshot = (value: unknown): TravelSnapshot | null => {
   if (typeof value !== 'object' || value === null) {

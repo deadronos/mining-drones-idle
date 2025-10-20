@@ -49,7 +49,9 @@ describe('DockingSection', () => {
     const { getAllByRole } = render(<DockingSection factory={factory} />);
 
     const buttons = getAllByRole('button');
-    expect(buttons.some((b) => b.getAttribute('aria-label') === 'Previous docking page')).toBeTruthy();
+    expect(
+      buttons.some((b) => b.getAttribute('aria-label') === 'Previous docking page'),
+    ).toBeTruthy();
     expect(buttons.some((b) => b.getAttribute('aria-label') === 'Next docking page')).toBeTruthy();
   });
 });

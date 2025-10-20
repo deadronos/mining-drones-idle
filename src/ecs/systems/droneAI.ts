@@ -298,7 +298,15 @@ export const createDroneAISystem = (world: GameWorld, store: StoreApiType) => {
     let selected = null as (typeof withDistances)[number] | null;
 
     if (candidates.length > 0) {
-      candidates.sort((a, b) => a.distance - b.distance);
+      // Sort by least occupied docks (primary), then by distance (secondary)
+      candidates.sort((a, b) => {
+        const occupiedA = a.queueLength;
+        const occupiedB = b.queueLength;
+        if (occupiedA !== occupiedB) {
+          return occupiedA - occupiedB; // Prefer less-filled docking
+        }
+        return a.distance - b.distance; // Break ties by distance
+      });
       selected = candidates[0];
       if (candidates.length > 1 && rng.next() < FACTORY_VARIETY_CHANCE) {
         const others = candidates.slice(1);
@@ -362,11 +370,7 @@ export const createDroneAISystem = (world: GameWorld, store: StoreApiType) => {
         synchronizeDroneFlight(drone, storedFlight, world, store);
       }
 
-      if (
-        drone.targetFactoryId &&
-        drone.state !== 'returning' &&
-        drone.state !== 'unloading'
-      ) {
+      if (drone.targetFactoryId && drone.state !== 'returning' && drone.state !== 'unloading') {
         const stuckFactoryId = drone.targetFactoryId;
         const stateApi = store.getState();
         const factory = stateApi.getFactory(stuckFactoryId);

@@ -26,11 +26,11 @@ The current Settings panel is a fixed-width column that can grow taller than the
 
 ### Subtasks
 
-| ID  | Description                                             | Status      | Updated    | Notes |
-| --- | ------------------------------------------------------- | ----------- | ---------- | ----- |
-| 1.1 | Update React markup structure for settings content grid | Complete    | 2025-10-24 |       |
-| 1.2 | Revise CSS for panel sizing and grid layout             | Complete    | 2025-10-24 |       |
-| 1.3 | Perform manual responsive verification                  | Complete    | 2025-10-24 | Validated at 900/1280/1440/1920px widths and ~720px height |
+| ID  | Description                                             | Status   | Updated    | Notes                                                      |
+| --- | ------------------------------------------------------- | -------- | ---------- | ---------------------------------------------------------- |
+| 1.1 | Update React markup structure for settings content grid | Complete | 2025-10-24 |                                                            |
+| 1.2 | Revise CSS for panel sizing and grid layout             | Complete | 2025-10-24 |                                                            |
+| 1.3 | Perform manual responsive verification                  | Complete | 2025-10-24 | Validated at 900/1280/1440/1920px widths and ~720px height |
 
 ## Progress Log
 

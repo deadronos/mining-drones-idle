@@ -30,10 +30,10 @@ Non-goals:
 
 ## Styling & Interfaces
 
-| File | Change |
-| ---- | ------ |
-| `src/ui/Settings.tsx` | Wrap existing sections in a `div.settings-content`; add `settings-section settings-section--wide` to the primer section; leave header and confirmation markup intact. |
-| `src/styles.css` | Update `.settings-panel` width, padding clamps, `max-height`, and `overflow-y`. Add the new grid styles (`.settings-content`, `.settings-section--wide`), responsive breakpoints around 1024px / 1600px, and scrollbar styling for overflowing content. |
+| File                  | Change                                                                                                                                                                                                                                                  |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/ui/Settings.tsx` | Wrap existing sections in a `div.settings-content`; add `settings-section settings-section--wide` to the primer section; leave header and confirmation markup intact.                                                                                   |
+| `src/styles.css`      | Update `.settings-panel` width, padding clamps, `max-height`, and `overflow-y`. Add the new grid styles (`.settings-content`, `.settings-section--wide`), responsive breakpoints around 1024px / 1600px, and scrollbar styling for overflowing content. |
 
 ### Responsive Behavior
 

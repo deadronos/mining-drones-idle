@@ -47,7 +47,11 @@ describe('RosterSection', () => {
     const { getAllByRole } = render(<RosterSection factory={factory} />);
 
     const buttons = getAllByRole('button');
-    expect(buttons.some((b) => b.getAttribute('aria-label') === 'Previous owned drones page')).toBeTruthy();
-    expect(buttons.some((b) => b.getAttribute('aria-label') === 'Next owned drones page')).toBeTruthy();
+    expect(
+      buttons.some((b) => b.getAttribute('aria-label') === 'Previous owned drones page'),
+    ).toBeTruthy();
+    expect(
+      buttons.some((b) => b.getAttribute('aria-label') === 'Next owned drones page'),
+    ).toBeTruthy();
   });
 });

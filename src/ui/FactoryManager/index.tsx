@@ -1,9 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { computeFactoryCost, type BuildableFactory } from '@/ecs/factories';
-import {
-  useStore,
-  type FactoryUpgradeId,
-} from '@/state/store';
+import { useStore, type FactoryUpgradeId } from '@/state/store';
 import { DockingSection } from './sections/DockingSection';
 import { EnergySection } from './sections/EnergySection';
 import { StorageSection } from './sections/StorageSection';

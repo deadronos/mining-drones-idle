@@ -1,6 +1,10 @@
 import { FACTORY_CONFIG } from '@/ecs/factories';
 import type { RefineProcess } from '@/ecs/factories';
-import type { RefineProcessSnapshot, FactoryResourceSnapshot, FactoryUpgradeSnapshot } from '../types';
+import type {
+  RefineProcessSnapshot,
+  FactoryResourceSnapshot,
+  FactoryUpgradeSnapshot,
+} from '../types';
 import { coerceNumber } from '../utils';
 
 export const normalizeFactoryResources = (value: unknown): FactoryResourceSnapshot => {
