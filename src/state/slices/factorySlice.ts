@@ -376,7 +376,8 @@ export const createFactorySlice: StateCreator<
 
         // Update fulfilled amount
         const additionalFulfilled = Math.min(amount, needed - fulfilled);
-        request.fulfilledAmount[resource as keyof FactoryResources] = fulfilled + additionalFulfilled;
+        request.fulfilledAmount[resource as keyof FactoryResources] =
+          fulfilled + additionalFulfilled;
         changed = true;
 
         // Check if all resources are now fulfilled

@@ -176,8 +176,7 @@ The project already implements many recommended patterns for React + R3F + Zusta
 
 ---
 
-This audit was written programmatically and saved to `docs/src-best-practices-audit.md`.
----
+## This audit was written programmatically and saved to `docs/src-best-practices-audit.md`.
 
        ## Ratings and notes for inspected hot paths
 
