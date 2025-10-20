@@ -33,7 +33,7 @@
 | TASK029 | Local-First Energy Priority                  | Completed   | 2025-10-25 |
 | TASK030 | Factory Upgrade Resource Reservations        | Completed   | 2025-10-25 |
 | TASK031 | Performance Optimizations                    | Completed   | 2025-10-20 |
-| TASK032 | Warehouse Space-Station Entity & Left Panel  | Pending     | 2025-10-20 |
+| TASK032 | Warehouse Space-Station Entity & Left Panel  | In Progress | 2025-10-25 |
 
 ```
 
