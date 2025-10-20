@@ -16,6 +16,7 @@ import {
 import { computeWarehouseCapacity } from '@/state/utils';
 import { getResourceModifiers } from '@/lib/resourceModifiers';
 import { gameWorld } from '@/ecs/world';
+import { logLogistics } from '@/lib/debug';
 
 const WAREHOUSE_POSITION = new Vector3(0, 0, 0);
 
@@ -33,6 +34,7 @@ export function processLogistics(
   const updatedQueues: LogisticsQueues = {
     pendingTransfers: [...state.logisticsQueues.pendingTransfers],
   };
+  logLogistics('processLogistics: factories=%o transfers=%o gameTime=%o', state.factories.length, updatedQueues.pendingTransfers.length, state.gameTime);
 
   const resolveHaulerConfig = (factory: { haulerConfig?: HaulerConfig }): HaulerConfig => ({
     capacity: factory.haulerConfig?.capacity ?? LOGISTICS_CONFIG.hauler_capacity,
@@ -80,16 +82,19 @@ export function processLogistics(
     warehouseAvailable = Math.max(0, warehouseAvailable);
 
     const proposedTransfers = matchSurplusToNeed(state.factories, resource, state.gameTime);
+    logLogistics('resource[%s]: warehouse stock=%o space=%o available=%o proposed=%o', resource, warehouseStock, warehouseSpace, warehouseAvailable, proposedTransfers.length);
 
     for (const transfer of proposedTransfers) {
       const sourceFactory = state.factories.find((f) => f.id === transfer.fromFactoryId);
       const destFactory = state.factories.find((f) => f.id === transfer.toFactoryId);
 
       if (!sourceFactory || !destFactory) {
+        logLogistics('discard proposed transfer: missing factories from=%s to=%s', transfer.fromFactoryId, transfer.toFactoryId);
         continue;
       }
 
       if (!reserveOutbound(sourceFactory, resource, transfer.amount)) {
+        logLogistics('reserve failed for proposed transfer: from=%s to=%s amount=%o', transfer.fromFactoryId, transfer.toFactoryId, transfer.amount);
         continue;
       }
 
@@ -124,6 +129,7 @@ export function processLogistics(
     }
 
     if (!networkHasHaulers) {
+      logLogistics('resource[%s]: skipping factory<->warehouse scheduling: no haulers assigned', resource);
       continue;
     }
 
@@ -148,6 +154,7 @@ export function processLogistics(
           if (transferAmount <= 0) break;
 
           if (!reserveOutbound(factory, resource, transferAmount)) {
+            logLogistics('reserve to-warehouse failed: factory=%s res=%s amount=%o avail=%o', factory.id, resource, transferAmount, available);
             break;
           }
 
@@ -276,6 +283,7 @@ export function processLogistics(
   const completedTransfers: string[] = [];
   for (const transfer of updatedQueues.pendingTransfers) {
     if (state.gameTime >= transfer.eta && transfer.status === 'scheduled') {
+      logLogistics('transfer due: id=%s res=%s amount=%o from=%s to=%s', transfer.id, transfer.resource, transfer.amount, transfer.fromFactoryId, transfer.toFactoryId);
       if (transfer.toFactoryId === WAREHOUSE_NODE_ID) {
         const sourceFactory = state.factories.find((f) => f.id === transfer.fromFactoryId);
         if (sourceFactory) {

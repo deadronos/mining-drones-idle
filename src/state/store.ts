@@ -11,6 +11,7 @@ import {
 import { processRefinery, processFactories } from './processing/gameProcessing';
 import { processLogistics } from './processing/logisticsProcessing';
 import { LOGISTICS_CONFIG } from '@/ecs/logistics';
+import { logLogistics } from '@/lib/debug';
 import {
   normalizeSnapshot,
   snapshotToFactory,
@@ -157,6 +158,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
     tick: (dt) => {
       if (dt <= 0) return;
       set((state) => ({ gameTime: state.gameTime + dt }));
+      logLogistics('tick dt=%o gameTime=%o', dt, get().gameTime);
       get().processRefinery(dt);
       get().processLogistics(dt);
       get().processFactories(dt);
@@ -189,9 +191,11 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
 
       if (newLogisticsTick < LOGISTICS_CONFIG.scheduling_interval) {
         set({ logisticsTick: newLogisticsTick });
+        logLogistics('scheduler skip: tick=%o/<%o>', newLogisticsTick, LOGISTICS_CONFIG.scheduling_interval);
         return;
       }
 
+      logLogistics('scheduler run: tick=%o interval=%o', newLogisticsTick, LOGISTICS_CONFIG.scheduling_interval);
       const { logisticsQueues } = processLogistics(state);
       set({
         logisticsQueues,
