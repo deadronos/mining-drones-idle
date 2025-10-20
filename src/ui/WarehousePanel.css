@@ -1,0 +1,115 @@
+.warehouse-panel {
+  gap: clamp(0.8rem, 0.6rem + 0.25vw, 1.1rem);
+  padding: clamp(1rem, 0.85rem + 0.35vw, 1.4rem) clamp(1.2rem, 1rem + 0.45vw, 1.6rem);
+  font-size: var(--panel-font-size);
+  line-height: 1.5;
+}
+
+.warehouse-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.warehouse-panel__title-group {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.15rem, 0.1rem + 0.1vw, 0.3rem);
+}
+
+.warehouse-panel__title {
+  margin: 0;
+  font-size: clamp(1.05rem, 0.95rem + 0.28vw, 1.3rem);
+  letter-spacing: 0.02em;
+}
+
+.warehouse-panel__subtitle {
+  margin: 0;
+  font-size: clamp(0.72rem, 0.66rem + 0.12vw, 0.82rem);
+  color: rgba(148, 163, 184, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.warehouse-panel__section {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.5rem, 0.4rem + 0.2vw, 0.75rem);
+}
+
+.warehouse-panel__section-title {
+  margin: 0;
+  font-size: clamp(0.85rem, 0.78rem + 0.2vw, 1rem);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: rgba(165, 243, 252, 0.9);
+}
+
+.warehouse-panel__resources {
+  margin: 0;
+  padding: clamp(0.75rem, 0.6rem + 0.3vw, 1rem);
+  border-radius: var(--card-radius);
+  border: 1px solid var(--card-border);
+  background: rgba(15, 23, 42, 0.75);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(0.5rem, 0.35rem + 0.25vw, 0.8rem);
+}
+
+.warehouse-panel__resource-row {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.15rem, 0.1rem + 0.1vw, 0.3rem);
+}
+
+.warehouse-panel__resource-row dt {
+  margin: 0;
+  font-size: clamp(0.72rem, 0.66rem + 0.15vw, 0.86rem);
+  color: rgba(148, 163, 184, 0.9);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.warehouse-panel__resource-row dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(0.92rem, 0.82rem + 0.25vw, 1.1rem);
+  font-weight: 600;
+  color: #e0f2fe;
+}
+
+.warehouse-panel__bonuses {
+  border-radius: var(--card-radius);
+  border: 1px solid rgba(45, 212, 191, 0.28);
+  background: rgba(15, 118, 110, 0.14);
+  padding: clamp(0.65rem, 0.5rem + 0.3vw, 0.9rem) clamp(0.8rem, 0.6rem + 0.4vw, 1.1rem);
+}
+
+.warehouse-panel__actions {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.warehouse-panel__settings {
+  border-radius: clamp(0.5rem, 0.4rem + 0.2vw, 0.75rem);
+  padding: clamp(0.45rem, 0.35rem + 0.2vw, 0.65rem) clamp(0.9rem, 0.7rem + 0.4vw, 1.25rem);
+  font-size: clamp(0.78rem, 0.7rem + 0.2vw, 0.92rem);
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.35), rgba(8, 145, 178, 0.32));
+  border: 1px solid rgba(94, 234, 212, 0.4);
+  color: #f0fdfa;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.warehouse-panel__settings:hover {
+  border-color: rgba(94, 234, 212, 0.6);
+  color: #ecfeff;
+}
+
+@media (max-width: 960px) {
+  .warehouse-panel__resources {
+    grid-template-columns: 1fr;
+  }
+}

@@ -175,3 +175,15 @@ WHEN the viewport width shrinks below 1024px, THE SYSTEM SHALL collapse the Sett
 ## RQ-044 Factory Buffer Target Visibility
 
 WHEN viewing a factory's storage inventory in the Inspector, THE SYSTEM SHALL display the logistics buffer target for each tracked resource (ore, bars, metals, crystals, organics, ice) as a suffix label so players understand the surplus/deficit thresholds. [Acceptance: React component test verifies buffer targets render for each resource, TypeScript compiles without errors, and linting passes.]
+
+## RQ-045 Warehouse Landmark Placement
+
+WHEN the game world initializes, THE SYSTEM SHALL create a static warehouse entity positioned at Vector3(8, 0, 5) and expose it via `gameWorld.warehouse` without adding it to drone or asteroid queries. [Acceptance: Unit test instantiates a fresh world and asserts the warehouse position vector and entity isolation.]
+
+## RQ-046 Warehouse Docking Ring Animation
+
+WHEN the warehouse renders in the 3D scene, THE SYSTEM SHALL rotate its docking ring at 0.5 radians per second around the Y axis so the station appears active. [Acceptance: Unit test covers the rotation helper to confirm the angular velocity constant and frame-update behavior.]
+
+## RQ-047 Warehouse Panel Presentation
+
+WHEN the HUD renders, THE SYSTEM SHALL display a "Warehouse" panel with a card-styled resource list and resource bonuses section matching the factory panel theming, including the Settings button anchored at the bottom. [Acceptance: React component test renders the panel, verifies resource formatting, header hierarchy, bonuses heading, and Settings button callback.]

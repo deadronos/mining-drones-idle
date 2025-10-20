@@ -87,11 +87,18 @@ export interface FactoryEntity {
   activity: FactoryActivityState;
 }
 
+export interface WarehouseEntity {
+  id: string;
+  kind: 'warehouse';
+  position: Vector3;
+}
+
 export type Entity = DroneEntity | AsteroidEntity | FactoryEntity;
 
 export interface GameWorld {
   world: World<Entity>;
   factory: FactoryEntity;
+  warehouse: WarehouseEntity;
   droneQuery: Query<DroneEntity>;
   asteroidQuery: Query<AsteroidEntity>;
   rng: RandomSource;
@@ -178,6 +185,14 @@ const createDrone = (origin: Vector3): DroneEntity => ({
   ownerFactoryId: null,
 });
 
+export const WAREHOUSE_POSITION = new Vector3(8, 0, 5);
+
+const createWarehouse = (): WarehouseEntity => ({
+  id: 'warehouse-core',
+  kind: 'warehouse',
+  position: WAREHOUSE_POSITION.clone(),
+});
+
 const isDrone = (entity: Entity): entity is DroneEntity => entity.kind === 'drone';
 const isAsteroid = (entity: Entity): entity is AsteroidEntity => entity.kind === 'asteroid';
 
@@ -188,6 +203,7 @@ export const createGameWorld = (options: CreateWorldOptions = {}): GameWorld => 
   } = options;
   const world = new World<Entity>();
   const factory = world.add(createFactory());
+  const warehouse = createWarehouse();
   const droneQuery = world.where(isDrone).connect();
   const asteroidQuery = world.where(isAsteroid).connect();
   const events: FactoryEventState = { transfers: [] };
@@ -196,7 +212,7 @@ export const createGameWorld = (options: CreateWorldOptions = {}): GameWorld => 
     world.add(createAsteroid(0, rng));
   }
 
-  return { world, factory, droneQuery, asteroidQuery, rng, events };
+  return { world, factory, warehouse, droneQuery, asteroidQuery, rng, events };
 };
 
 let initialSeed = Date.now();

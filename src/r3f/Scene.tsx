@@ -20,6 +20,7 @@ import { Asteroids } from '@/r3f/Asteroids';
 import { Drones } from '@/r3f/Drones';
 import { DroneTrails } from '@/r3f/DroneTrails';
 import { TransferLines } from '@/r3f/TransferLines';
+import { Warehouse } from '@/r3f/Warehouse';
 import { useFactoryAutofit } from '@/hooks/useFactoryAutofit';
 import { useCameraReset } from '@/hooks/useCameraReset';
 import { computeAutofitCamera, computeBoundingBox, DEFAULT_AUTOFIT_CONFIG } from '@/lib/camera';
@@ -116,6 +117,7 @@ export const Scene = () => {
       <pointLight position={[-8, 4, -6]} intensity={0.6} color="#38bdf8" />
       <Suspense fallback={null}>
         <Stars radius={120} depth={60} count={4000} factor={4} fade speed={0.2} />
+        <Warehouse />
         <Factory />
         <Asteroids />
         <Drones />
