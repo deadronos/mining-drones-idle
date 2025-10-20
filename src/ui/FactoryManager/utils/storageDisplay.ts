@@ -1,4 +1,5 @@
 import type { BuildableFactory } from '@/ecs/factories';
+import { computeBufferTarget, type TransportableResource } from '@/ecs/logistics';
 
 /**
  * Storage resource ordering and labels for consistent UI display.
@@ -44,12 +45,14 @@ export function buildStorageEntries(factory: BuildableFactory) {
   return STORAGE_RESOURCE_ORDER.map((key) => {
     const amount = factory.resources[key] ?? 0;
     const display = formatStorageAmount(key, amount, factory.storageCapacity);
+    const bufferTarget = computeBufferTarget(factory, key as TransportableResource);
 
     return {
       key,
       label: STORAGE_LABELS[key] ?? key,
       amount,
       display,
+      bufferTarget,
     };
   });
 }
