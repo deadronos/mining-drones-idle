@@ -20,10 +20,13 @@ export const StorageSection = ({ factory }: StorageSectionProps) => {
           <li
             key={entry.key}
             className={entry.amount > 0 ? 'storage-row' : 'storage-row muted'}
-            aria-label={`${entry.label}: ${entry.display}`}
+            aria-label={`${entry.label}: ${entry.display}${entry.bufferTarget ? ` (buffer: ${Math.floor(entry.bufferTarget)})` : ''}`}
           >
             <span className="storage-name">{entry.label}</span>
-            <span className="storage-value">{entry.display}</span>
+            <span className="storage-value">
+              {entry.display}
+              {entry.bufferTarget ? ` (buf: ${Math.floor(entry.bufferTarget)})` : ''}
+            </span>
           </li>
         ))}
       </ul>

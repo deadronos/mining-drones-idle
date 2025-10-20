@@ -4,6 +4,7 @@ import type { PerspectiveCamera } from 'three';
 import { Vector3 } from 'three';
 import { useStore } from '../state/store';
 import type { BuildableFactory } from '../ecs/factories';
+import { WAREHOUSE_POSITION } from '../ecs/world';
 import {
   computeAutofitCamera,
   lerpCameraState,
@@ -12,8 +13,8 @@ import {
 } from '../lib/camera';
 
 /**
- * Hook to manage camera autofit for factories.
- * Smoothly animates camera to fit all factories on screen.
+ * Hook to manage camera autofit for factories and warehouse.
+ * Smoothly animates camera to fit all factories and warehouse on screen with relative centering.
  * Works with perspective cameras.
  */
 export const useFactoryAutofit = () => {
@@ -44,7 +45,11 @@ export const useFactoryAutofit = () => {
     previousCameraState.current ??= currentState;
 
     // Compute target autofit state with viewport aspect ratio and FOV
-    const positions = factories.map((f) => new Vector3(f.position.x, f.position.y, f.position.z));
+    // Include warehouse and all factories in the autofit
+    const positions = [
+      WAREHOUSE_POSITION,
+      ...factories.map((f) => new Vector3(f.position.x, f.position.y, f.position.z)),
+    ];
     const aspect = size.width / size.height;
     const fov = 'fov' in perspCamera ? perspCamera.fov : 52;
     const targetState = computeAutofitCamera(positions, DEFAULT_AUTOFIT_CONFIG, fov, aspect);

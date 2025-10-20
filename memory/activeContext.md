@@ -6,6 +6,7 @@
 
 ✅ **FactoryManager Refactor Complete (TASK023)**: Deleted old monolithic `FactoryManager.tsx` file that was blocking refactored version. Solar Array bonus now displays correctly in UI.
 
+🟡 **TASK032 – Warehouse Space-Station & Panel**: Implementing the new warehouse landmark in the world scene and redesigning the left HUD into a dedicated Warehouse panel with themed resource cards and bonuses display.
 🟡 **TASK025 – Warehouse Reconciliation**: Standing up the warehouse-first resource model remains in soak; continue validating transfers and polish once the Settings work lands.
 
 ✅ **TASK029 – Local-First Energy Priority**: Completed full implementation of energy system reversal. Factories now use local energy first (for drone charging and processing), with global warehouse as backup. All 165 tests pass, code is clean (lint & typecheck).
@@ -74,10 +75,11 @@
 
 ## Next Steps
 
-1. **TASK028 Follow-up**: Design decision on solution approach (current recommendation: position-based unload trigger)
-2. Proceed with implementation task once solution chosen
-3. Continue monitoring warehouse reconciliation metrics and log any regressions surfaced during Settings QA.
-4. Observe drone distribution in live play to ensure load balancing is working as expected (no single factory dominating queue).
-5. Gather player feedback on buffer target display clarity and adjust labels/formatting if needed.
-6. Capture tutorial/tooling follow-up (tutorial overlay or HUD tooltip) once UI teams provide direction.
-7. Prepare final TASK025 wrap-up notes and identify residual polish items for warehouse UX.
+1. Execute TASK032 implementation (world warehouse entity, Warehouse panel styling, supporting tests) following DES027.
+2. **TASK028 Follow-up**: Design decision on solution approach (current recommendation: position-based unload trigger)
+3. Proceed with implementation task once solution chosen
+4. Continue monitoring warehouse reconciliation metrics and log any regressions surfaced during Settings QA.
+5. Observe drone distribution in live play to ensure load balancing is working as expected (no single factory dominating queue).
+6. Gather player feedback on buffer target display clarity and adjust labels/formatting if needed.
+7. Capture tutorial/tooling follow-up (tutorial overlay or HUD tooltip) once UI teams provide direction.
+8. Prepare final TASK025 wrap-up notes and identify residual polish items for warehouse UX.

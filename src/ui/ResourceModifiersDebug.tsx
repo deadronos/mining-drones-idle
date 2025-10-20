@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useStore } from '@/state/store';
 import { getResourceModifiers } from '@/lib/resourceModifiers';
+import './ResourceModifiersDebug.css';
 
 const formatPercent = (value: number) => {
   const rounded = Math.round(value * 1000) / 10;
@@ -19,7 +20,14 @@ const formatDelta = (delta: number) => {
   return `${sign}${Math.abs(rounded).toFixed(1)}%`;
 };
 
-export const ResourceModifiersDebug = () => {
+interface ResourceModifiersDebugProps {
+  className?: string;
+  heading?: string;
+  headingLevel?: 'h3' | 'h4' | 'h5';
+}
+
+export const ResourceModifiersDebug = (props?: ResourceModifiersDebugProps) => {
+  const { className, heading = 'Resource Bonuses', headingLevel = 'h4' } = props ?? {};
   const resources = useStore((state) => state.resources);
   const prestigeCores = useStore((state) => state.prestige.cores);
   const modifiers = useMemo(
@@ -65,17 +73,29 @@ export const ResourceModifiersDebug = () => {
     },
   ];
 
+  const containerClass = ['resource-modifiers', className].filter(Boolean).join(' ');
+
+  const headingElement = (() => {
+    if (headingLevel === 'h3') {
+      return <h3 className="resource-modifiers__title">{heading}</h3>;
+    }
+    if (headingLevel === 'h5') {
+      return <h5 className="resource-modifiers__title">{heading}</h5>;
+    }
+    return <h4 className="resource-modifiers__title">{heading}</h4>;
+  })();
+
   return (
-    <div className="hud-modifiers" aria-live="polite">
-      <h4>Resource Bonuses</h4>
-      <ul className="hud-modifiers-list">
+    <section className={containerClass} aria-live="polite">
+      {headingElement}
+      <ul className="resource-modifiers__list">
         {entries.map((entry) => (
-          <li key={entry.label} className="hud-modifiers-item" title={entry.tooltip}>
-            <span className="hud-modifiers-label">{entry.label}</span>
-            <span className="hud-modifiers-value">{formatDelta(entry.delta)}</span>
+          <li key={entry.label} className="resource-modifiers__item" title={entry.tooltip}>
+            <span className="resource-modifiers__label">{entry.label}</span>
+            <span className="resource-modifiers__value">{formatDelta(entry.delta)}</span>
           </li>
         ))}
       </ul>
-    </div>
+    </section>
   );
 };

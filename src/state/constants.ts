@@ -24,7 +24,7 @@ export const ENERGY_PER_SOLAR = 25;
 export const SOLAR_BASE_GEN = 5;
 export const DRONE_ENERGY_COST = 1.2;
 // Solar Collector upgrade (factory-local)
-export const FACTORY_SOLAR_BASE_REGEN = 0.25;
+export const FACTORY_SOLAR_BASE_REGEN = 1.25;
 export const FACTORY_SOLAR_REGEN_PER_LEVEL = 0.5;
 export const FACTORY_SOLAR_MAX_ENERGY_PER_LEVEL = 10; // +10 max energy per Solar Collector level
 

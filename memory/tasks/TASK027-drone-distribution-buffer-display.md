@@ -1,6 +1,6 @@
 # TASK027 — Drone Distribution & Storage Buffer Display
 
-**Status**: ✅ Completed  
+**Status**: ✅ Completed (Re-implemented)
 **Added**: 2025-10-25  
 **Updated**: 2025-10-25
 
@@ -58,7 +58,7 @@ Both changes are low-risk and non-invasive. No new state required, just algorith
 
 ## Progress Log
 
-### 2025-10-25
+### 2025-10-25 (Initial Implementation)
 
 - Analyzed resource distribution problem: drones cluster at Factory 0 due to distance-first priority
 - Reviewed `assignReturnFactory()` algorithm and `computeBufferTarget()` calculations
@@ -69,6 +69,37 @@ Both changes are low-risk and non-invasive. No new state required, just algorith
 - Ran full test suite: All 158 tests pass
 - TypeScript and linting: Clean
 - Task ready for completion
+
+### 2025-10-25 (Re-implementation After Refactor)
+
+**Issue Found**: Buffer display feature was lost when TASK023 deleted old monolithic FactoryManager.tsx
+
+- Changes had been applied to old file, never migrated to refactored structure
+- storageDisplay.ts had no buffer computation
+- StorageSection.tsx had no buffer display
+
+**Re-implementation Steps**:
+
+1. Updated `src/ui/FactoryManager/utils/storageDisplay.ts`:
+   - Added import of `computeBufferTarget` and `TransportableResource` from logistics
+   - Modified `buildStorageEntries()` to compute buffer target for each resource
+   - Added `bufferTarget` field to returned entry object
+
+2. Updated `src/ui/FactoryManager/sections/StorageSection.tsx`:
+   - Modified JSX to display `(buf: X)` suffix for each resource
+   - Updated aria-label to include buffer information
+   - Used `Math.floor()` to display clean integer values
+
+3. Validation:
+   - ✅ TypeScript: 0 errors (tsc -b --noEmit passes)
+   - ✅ Linting: 0 errors (ESLint passes)
+   - ✅ Tests: 174/174 passing (Vitest suite clean)
+   - ✅ No regressions introduced
+
+**Files Modified**:
+
+- `src/ui/FactoryManager/utils/storageDisplay.ts` (lines 2, 38-45)
+- `src/ui/FactoryManager/sections/StorageSection.tsx` (lines 16-26)
 
 ---
 
