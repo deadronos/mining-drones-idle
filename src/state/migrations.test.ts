@@ -16,7 +16,16 @@ describe('migrations', () => {
         energy: 50,
         credits: 0,
       },
-      modules: { droneBay: 1, refinery: 0, storage: 0, solar: 0, scanner: 0 },
+      modules: {
+        droneBay: 1,
+        refinery: 0,
+        storage: 0,
+        solar: 0,
+        scanner: 0,
+        haulerDepot: 0,
+        logisticsHub: 0,
+        routingProtocol: 0,
+      },
       prestige: { cores: 0 },
       save: { lastSave: 1_000_000, version: '0.0.1' },
       settings: {
@@ -52,7 +61,16 @@ describe('migrations', () => {
         energy: 100,
         credits: 0,
       },
-      modules: { droneBay: 1, refinery: 0, storage: 0, solar: 0, scanner: 0 },
+      modules: {
+        droneBay: 1,
+        refinery: 0,
+        storage: 0,
+        solar: 0,
+        scanner: 0,
+        haulerDepot: 0,
+        logisticsHub: 0,
+        routingProtocol: 0,
+      },
       prestige: { cores: 0 },
       save: { lastSave: Date.now(), version: saveVersion },
       settings: {
@@ -85,7 +103,16 @@ describe('migrations', () => {
         energy: 100,
         credits: 0,
       },
-      modules: { droneBay: 1, refinery: 0, storage: 0, solar: 0, scanner: 0 },
+      modules: {
+        droneBay: 1,
+        refinery: 0,
+        storage: 0,
+        solar: 0,
+        scanner: 0,
+        haulerDepot: 0,
+        logisticsHub: 0,
+        routingProtocol: 0,
+      },
       prestige: { cores: 0 },
       save: { lastSave: Date.now() - 1_000_000, version: '0.3.1' },
       settings: {
@@ -167,5 +194,78 @@ describe('migrations', () => {
     expect(migrated.factories?.[0]?.logisticsState?.outboundReservations).toEqual({});
     expect(migrated.factories?.[0]?.logisticsState?.inboundSchedules).toHaveLength(1);
     expect(migrated.factories?.[0]?.logisticsState?.inboundSchedules?.[0]?.amount).toBe(15);
+  });
+  it('initializes hauler module and factory upgrade defaults', () => {
+    const legacy = {
+      resources: {
+        ore: 10,
+        metals: 5,
+        crystals: 2,
+        organics: 0,
+        ice: 0,
+        bars: 3,
+        energy: 20,
+        credits: 0,
+      },
+      modules: {
+        droneBay: 2,
+        refinery: 1,
+        storage: 0,
+        solar: 0,
+        scanner: 0,
+        haulerDepot: 0,
+        logisticsHub: 0,
+        routingProtocol: 0,
+      },
+      factories: [
+        {
+          id: 'factory-legacy',
+          position: [0, 0, 0] as [number, number, number],
+          dockingCapacity: 3,
+          refineSlots: 2,
+          idleEnergyPerSec: 1,
+          energyPerRefine: 2,
+          storageCapacity: 300,
+          currentStorage: 0,
+          queuedDrones: [],
+          activeRefines: [],
+          pinned: false,
+          energy: 40,
+          energyCapacity: 80,
+          resources: { ore: 10, metals: 5, crystals: 2, organics: 0, ice: 0, bars: 3, credits: 0 },
+          ownedDrones: [],
+          upgrades: { docking: 0, refine: 0, storage: 0, energy: 0, solar: 0 },
+          upgradeRequests: [],
+          haulersAssigned: 0,
+          logisticsState: { outboundReservations: {}, inboundSchedules: [] },
+        },
+      ],
+      logisticsQueues: { pendingTransfers: [] },
+      droneFlights: [],
+      save: { lastSave: Date.now(), version: '0.3.2' },
+      prestige: { cores: 0 },
+      settings: {
+        autosaveEnabled: true,
+        autosaveInterval: 10,
+        offlineCapHours: 8,
+        notation: 'standard',
+        throttleFloor: 0.25,
+        showTrails: true,
+        performanceProfile: 'medium',
+        inspectorCollapsed: false,
+      },
+    } satisfies Partial<StoreSnapshot>;
+
+    const { snapshot: migrated } = migrateSnapshot(legacy as StoreSnapshot);
+
+    expect(migrated.modules.haulerDepot).toBe(0);
+    expect(migrated.modules.logisticsHub).toBe(0);
+    expect(migrated.modules.routingProtocol).toBe(0);
+    const [factory] = migrated.factories ?? [];
+    expect(factory?.haulerUpgrades).toEqual({
+      capacityBoost: 0,
+      speedBoost: 0,
+      efficiencyBoost: 0,
+    });
   });
 });

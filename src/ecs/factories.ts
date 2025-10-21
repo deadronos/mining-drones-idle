@@ -78,6 +78,11 @@ export interface BuildableFactory {
     mode: 'auto' | 'manual' | 'demand-first' | 'supply-first';
     priority: number;
   };
+  haulerUpgrades?: {
+    capacityBoost?: number;
+    speedBoost?: number;
+    efficiencyBoost?: number;
+  };
   logisticsState?: {
     outboundReservations: Record<string, number>;
     inboundSchedules: Array<{
@@ -145,6 +150,7 @@ export const createFactory = (id: string, position: Vector3): BuildableFactory =
     mode: 'auto',
     priority: 5,
   },
+  haulerUpgrades: undefined,
   logisticsState: {
     outboundReservations: {},
     inboundSchedules: [],
@@ -458,23 +464,23 @@ export const computeUpgradeCost = (
     { baseCost: Partial<FactoryResources>; growth: number }
   > = {
     docking: {
-      baseCost: { metals: 40, crystals: 20 },
+      baseCost: { bars: 1350 },
       growth: 1.35,
     },
     refine: {
-      baseCost: { metals: 50, crystals: 30 },
+      baseCost: { bars: 1350 },
       growth: 1.35,
     },
     storage: {
-      baseCost: { metals: 30, crystals: 15 },
+      baseCost: { bars: 1350 },
       growth: 1.35,
     },
     energy: {
-      baseCost: { metals: 60, crystals: 40 },
+      baseCost: { bars: 1350 },
       growth: 1.35,
     },
     solar: {
-      baseCost: { metals: 45, crystals: 25 },
+      baseCost: { bars: 1350 },
       growth: 1.35,
     },
   };

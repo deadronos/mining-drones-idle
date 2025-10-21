@@ -5,6 +5,7 @@ import type {
   FactoryUpgradeRequestSnapshot,
   HaulerConfig,
   FactoryLogisticsState,
+  FactoryHaulerUpgrades,
 } from '../types';
 import { normalizeVectorTuple } from './vectors';
 import {
@@ -29,6 +30,14 @@ function isHaulerConfig(value: unknown): value is Partial<HaulerConfig> {
       'resourceFilters' in value ||
       'mode' in value ||
       'priority' in value)
+  );
+}
+
+function isFactoryHaulerUpgrades(value: unknown): value is Partial<FactoryHaulerUpgrades> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    ('capacityBoost' in value || 'speedBoost' in value || 'efficiencyBoost' in value)
   );
 }
 
@@ -103,6 +112,27 @@ export const normalizeFactorySnapshot = (value: unknown): FactorySnapshot | null
         : 'auto',
       priority: Math.min(10, Math.max(0, Math.floor(coerceNumber(hc.priority, 5)))),
     };
+  }
+
+  let haulerUpgrades: FactoryHaulerUpgrades | undefined;
+  if (isFactoryHaulerUpgrades(raw.haulerUpgrades)) {
+    haulerUpgrades = {};
+    if (typeof raw.haulerUpgrades.capacityBoost === 'number') {
+      haulerUpgrades.capacityBoost = Math.max(0, Math.floor(raw.haulerUpgrades.capacityBoost));
+    }
+    if (typeof raw.haulerUpgrades.speedBoost === 'number') {
+      haulerUpgrades.speedBoost = Math.max(0, Math.floor(raw.haulerUpgrades.speedBoost));
+    }
+    if (typeof raw.haulerUpgrades.efficiencyBoost === 'number') {
+      haulerUpgrades.efficiencyBoost = Math.max(0, Math.floor(raw.haulerUpgrades.efficiencyBoost));
+    }
+    if (
+      haulerUpgrades.capacityBoost === undefined &&
+      haulerUpgrades.speedBoost === undefined &&
+      haulerUpgrades.efficiencyBoost === undefined
+    ) {
+      haulerUpgrades = undefined;
+    }
   }
 
   // Normalize logisticsState
@@ -188,6 +218,7 @@ export const normalizeFactorySnapshot = (value: unknown): FactorySnapshot | null
     upgradeRequests,
     haulersAssigned: Math.max(0, Math.floor(coerceNumber(raw.haulersAssigned, 0))),
     haulerConfig,
+    haulerUpgrades,
     logisticsState,
   };
 };
@@ -219,6 +250,7 @@ export const cloneFactory = (factory: BuildableFactory): BuildableFactory => ({
   })),
   haulersAssigned: factory.haulersAssigned,
   haulerConfig: factory.haulerConfig ? { ...factory.haulerConfig } : undefined,
+  haulerUpgrades: factory.haulerUpgrades ? { ...factory.haulerUpgrades } : undefined,
   logisticsState: factory.logisticsState
     ? {
         outboundReservations: { ...factory.logisticsState.outboundReservations },
@@ -254,6 +286,7 @@ export const snapshotToFactory = (snapshot: FactorySnapshot): BuildableFactory =
   })),
   haulersAssigned: snapshot.haulersAssigned,
   haulerConfig: snapshot.haulerConfig ? { ...snapshot.haulerConfig } : undefined,
+  haulerUpgrades: snapshot.haulerUpgrades ? { ...snapshot.haulerUpgrades } : undefined,
   logisticsState: snapshot.logisticsState
     ? {
         outboundReservations: { ...snapshot.logisticsState.outboundReservations },
@@ -289,6 +322,7 @@ export const factoryToSnapshot = (factory: BuildableFactory): FactorySnapshot =>
   })),
   haulersAssigned: factory.haulersAssigned,
   haulerConfig: factory.haulerConfig ? { ...factory.haulerConfig } : undefined,
+  haulerUpgrades: factory.haulerUpgrades ? { ...factory.haulerUpgrades } : undefined,
   logisticsState: factory.logisticsState
     ? {
         outboundReservations: { ...factory.logisticsState.outboundReservations },

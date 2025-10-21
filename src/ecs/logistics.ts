@@ -138,6 +138,7 @@ export const matchSurplusToNeed = (
   factories: BuildableFactory[],
   resource: TransportableResource,
   gameTime: number,
+  resolvedConfigs?: Map<string, HaulerConfig>,
 ): Omit<PendingTransfer, 'id'>[] => {
   const transfers: Omit<PendingTransfer, 'id'>[] = [];
 
@@ -173,7 +174,8 @@ export const matchSurplusToNeed = (
     const need = Math.max(0, target - current);
 
     if (need > 0) {
-      needs.push({ factory, need, config: factory.haulerConfig });
+      const config = resolvedConfigs?.get(factory.id) ?? factory.haulerConfig;
+      needs.push({ factory, need, config });
     }
 
     const haulersAssigned = factory.haulersAssigned ?? 0;
@@ -185,7 +187,8 @@ export const matchSurplusToNeed = (
     const surplus = Math.max(0, current - target - minReserve);
 
     if (surplus > 0) {
-      surpluses.push({ factory, surplus, config: factory.haulerConfig });
+      const config = resolvedConfigs?.get(factory.id) ?? factory.haulerConfig;
+      surpluses.push({ factory, surplus, config });
     }
   }
 

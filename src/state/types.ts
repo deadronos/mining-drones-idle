@@ -6,7 +6,11 @@ import type {
   DockingResult,
 } from '@/ecs/factories';
 import type { TransportableResource } from '@/ecs/logistics';
-import type { moduleDefinitions } from './constants';
+import type {
+  moduleDefinitions,
+  haulerModuleDefinitions,
+  factoryHaulerUpgradeDefinitions,
+} from './constants';
 
 export type { FactoryResources, FactoryUpgrades };
 
@@ -79,6 +83,7 @@ export interface FactorySnapshot {
   upgradeRequests?: FactoryUpgradeRequestSnapshot[];
   haulersAssigned?: number;
   haulerConfig?: HaulerConfig;
+  haulerUpgrades?: FactoryHaulerUpgrades;
   logisticsState?: FactoryLogisticsState;
 }
 
@@ -90,6 +95,12 @@ export interface HaulerConfig {
   resourceFilters: string[];
   mode: 'auto' | 'manual' | 'demand-first' | 'supply-first';
   priority: number;
+}
+
+export interface FactoryHaulerUpgrades {
+  capacityBoost?: number;
+  speedBoost?: number;
+  efficiencyBoost?: number;
 }
 
 export interface FactoryLogisticsState {
@@ -145,6 +156,9 @@ export interface Modules {
   storage: number;
   solar: number;
   scanner: number;
+  haulerDepot: number;
+  logisticsHub: number;
+  routingProtocol: number;
 }
 
 export interface Prestige {
@@ -243,9 +257,20 @@ export interface StoreState {
   transferOreToFactory(this: void, factoryId: string, amount: number): number;
   addResourcesToFactory(this: void, factoryId: string, delta: Partial<FactoryResources>): void;
   allocateFactoryEnergy(this: void, factoryId: string, amount: number): number;
-  upgradeFactory(this: void, factoryId: string, upgrade: keyof FactoryUpgrades): boolean;
+  upgradeFactory(
+    this: void,
+    factoryId: string,
+    upgrade: keyof FactoryUpgrades,
+    variant?: FactoryUpgradeCostVariantId,
+  ): boolean;
   assignHaulers(this: void, factoryId: string, delta: number): boolean;
   updateHaulerConfig(this: void, factoryId: string, config: Partial<HaulerConfig>): void;
+  purchaseHaulerModule(this: void, moduleId: HaulerModuleId): boolean;
+  purchaseFactoryHaulerUpgrade(
+    this: void,
+    factoryId: string,
+    upgradeId: FactoryHaulerUpgradeId,
+  ): boolean;
   getLogisticsStatus(
     this: void,
     factoryId: string,
@@ -261,11 +286,20 @@ export type StoreApiType = StoreApi<StoreState>;
 
 export type ModuleId = keyof typeof moduleDefinitions;
 
+export type HaulerModuleId = keyof typeof haulerModuleDefinitions;
+
+export type FactoryHaulerUpgradeId = keyof typeof factoryHaulerUpgradeDefinitions;
+
 export type FactoryUpgradeId = keyof FactoryUpgrades;
+
+export type FactoryUpgradeCostVariantId = 'bars' | 'metals' | 'crystals' | 'organics' | 'ice';
+
+export type FactoryUpgradeCostMap = Partial<FactoryResources>;
 
 export interface FactoryUpgradeDefinition {
   label: string;
   description: string;
-  baseCost: Partial<FactoryResources>;
+  baseCost: FactoryUpgradeCostMap;
+  alternativeCosts?: Partial<Record<FactoryUpgradeCostVariantId, FactoryUpgradeCostMap>>;
   apply(factory: BuildableFactory): void;
 }

@@ -16,6 +16,7 @@ import {
   computeFactoryEnergyDemand,
   findNearestAvailableFactory,
   detectUpgradeShortfall,
+  computeUpgradeCost,
   type BuildableFactory,
 } from './factories';
 
@@ -240,28 +241,26 @@ describe('Factory Entity', () => {
 
   describe('Upgrade Request Detection', () => {
     it('detects shortfall for unaffordable upgrade', () => {
-      // Factory has 10 metals, landing bay (docking) costs 40 metals
-      factory.resources.metals = 10;
+      const cost = computeUpgradeCost('docking', factory.upgrades.docking ?? 0);
+      factory.resources.bars = Math.max(0, (cost.bars ?? 0) - 500);
       const request = detectUpgradeShortfall(factory, ['docking']);
 
       expect(request).not.toBeNull();
       expect(request?.upgrade).toBe('docking');
-      expect(request?.resourceNeeded.metals).toBe(40);
+      expect(request?.resourceNeeded.bars).toBe(cost.bars);
       expect(request?.status).toBe('pending');
     });
 
     it('returns null if resources sufficient', () => {
-      // Docking costs 40 metals + 20 crystals
-      factory.resources.metals = 50;
-      factory.resources.crystals = 30;
+      const cost = computeUpgradeCost('docking', factory.upgrades.docking ?? 0);
+      factory.resources.bars = (cost.bars ?? 0) + 100;
       const request = detectUpgradeShortfall(factory, ['docking']);
 
       expect(request).toBeNull();
     });
 
     it('checks multiple upgrades in order', () => {
-      factory.resources.metals = 25; // Not enough for docking (40) or refine (50)
-      factory.resources.crystals = 10; // Not enough for either
+      factory.resources.bars = 0; // Not enough for docking or refine
 
       const request = detectUpgradeShortfall(factory, ['docking', 'refine']);
 
@@ -270,35 +269,37 @@ describe('Factory Entity', () => {
     });
 
     it('skips upgrades with sufficient resources', () => {
-      // Docking needs 40 metals + 20 crystals
-      // Refine needs 50 metals + 30 crystals
-      // Factory has 50 metals + 25 crystals - enough for docking, not refine
-      factory.resources.metals = 50;
-      factory.resources.crystals = 25; // Enough for docking (20), not for refine (30)
+      const dockingCost = computeUpgradeCost('docking', factory.upgrades.docking ?? 0);
+      factory.upgrades.refine = 2; // Increase refine cost via level scaling
+      const refineCost = computeUpgradeCost('refine', factory.upgrades.refine);
+      factory.resources.bars = (dockingCost.bars ?? 0) + 50; // enough for docking but below refine level 2
 
       const request = detectUpgradeShortfall(factory, ['docking', 'refine']);
 
       // Should return refine request (docking is skipped because fully affordable)
       expect(request?.upgrade).toBe('refine');
+      expect(factory.resources.bars).toBeLessThan(refineCost.bars ?? Number.POSITIVE_INFINITY);
     });
 
     it('respects current upgrade level in cost calculation', () => {
-      // Level 0 docking costs 40 metals
-      // If factory had docking level 1, cost would be higher
+      const baseCost = computeUpgradeCost('docking', factory.upgrades.docking ?? 0);
       factory.upgrades.docking = 1;
-      factory.resources.metals = 40; // Enough for level 0, not for level 1
+      const levelCost = computeUpgradeCost('docking', factory.upgrades.docking);
+      factory.resources.bars = baseCost.bars ?? 0; // Enough for level 0, not for level 1
 
       const request = detectUpgradeShortfall(factory, ['docking']);
 
       expect(request).not.toBeNull();
-      expect(request?.resourceNeeded.metals).toBeGreaterThan(40);
+      expect(request?.resourceNeeded.bars).toBe(levelCost.bars);
+      expect(levelCost.bars).toBeGreaterThan(baseCost.bars ?? 0);
     });
 
     it('does not create request if one already pending', () => {
-      factory.resources.metals = 10;
+      factory.resources.bars = 100;
+      const cost = computeUpgradeCost('docking', factory.upgrades.docking ?? 0);
       factory.upgradeRequests.push({
         upgrade: 'docking',
-        resourceNeeded: { metals: 40 },
+        resourceNeeded: cost,
         fulfilledAmount: {},
         status: 'pending',
         createdAt: Date.now(),
@@ -311,7 +312,7 @@ describe('Factory Entity', () => {
     });
 
     it('creates request with 60s expiration', () => {
-      factory.resources.metals = 10;
+      factory.resources.bars = 100;
       const before = Date.now();
       const request = detectUpgradeShortfall(factory, ['docking']);
       const after = Date.now();
@@ -321,13 +322,12 @@ describe('Factory Entity', () => {
     });
 
     it('includes all required resources in request', () => {
-      factory.resources.metals = 20;
-      factory.resources.crystals = 5;
+      factory.resources.bars = 0;
+      const cost = computeUpgradeCost('docking', factory.upgrades.docking ?? 0);
 
       const request = detectUpgradeShortfall(factory, ['docking']);
 
-      expect(request?.resourceNeeded.metals).toBe(40);
-      expect(request?.resourceNeeded.crystals).toBe(20);
+      expect(request?.resourceNeeded.bars).toBe(cost.bars);
       expect(request?.fulfilledAmount).toEqual({});
     });
 

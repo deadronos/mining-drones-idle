@@ -188,6 +188,35 @@
   margin: 0.15rem 0;
 }
 
+.hauler-upgrades__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(0.35rem, 0.3rem + 0.12vw, 0.5rem);
+}
+
+.hauler-upgrades__info-button {
+  border: none;
+  background: transparent;
+  color: rgba(129, 140, 248, 0.85);
+  font-size: clamp(0.78rem, 0.72rem + 0.16vw, 0.9rem);
+  cursor: help;
+  line-height: 1;
+  padding: 0.1rem 0.25rem;
+  border-radius: 999px;
+}
+
+.hauler-upgrades__info-button:focus-visible {
+  outline: 2px solid rgba(129, 140, 248, 0.65);
+  outline-offset: 2px;
+}
+
+.hauler-upgrades__helper {
+  margin: 0.25rem 0 clamp(0.35rem, 0.28rem + 0.15vw, 0.5rem) 0;
+  font-size: clamp(0.68rem, 0.62rem + 0.14vw, 0.8rem);
+  color: rgba(199, 210, 254, 0.85);
+}
+
 .factory-bar {
   width: 100%;
   height: 0.5rem;
@@ -280,15 +309,75 @@
 
 .factory-upgrade-row {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: clamp(0.4rem, 0.3rem + 0.2vw, 0.65rem);
   margin-bottom: clamp(0.35rem, 0.25rem + 0.2vw, 0.55rem);
+}
+
+.factory-upgrade-content {
+  flex: 1 1 16rem;
+  min-width: 0;
 }
 
 .factory-upgrade-row .desc {
   font-size: clamp(0.66rem, 0.6rem + 0.14vw, 0.78rem);
   color: #94a3b8;
+}
+
+.factory-upgrade-row .upgrade-variant {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.2rem, 0.18rem + 0.12vw, 0.3rem);
+  margin-top: clamp(0.25rem, 0.2rem + 0.15vw, 0.4rem);
+}
+
+.factory-upgrade-row .upgrade-variant select {
+  width: 100%;
+  max-width: 100%;
+  padding: clamp(0.3rem, 0.25rem + 0.15vw, 0.45rem) clamp(0.4rem, 0.35rem + 0.2vw, 0.6rem);
+  border-radius: clamp(0.3rem, 0.25rem + 0.1vw, 0.45rem);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  background: rgba(30, 41, 59, 0.85);
+  color: #e2e8f0;
+  font-size: clamp(0.66rem, 0.62rem + 0.14vw, 0.78rem);
+  line-height: 1.35;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+.factory-upgrade-row .upgrade-variant select:focus {
+  outline: none;
+  border-color: rgba(125, 211, 252, 0.8);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.35);
+  background: rgba(15, 23, 42, 0.95);
+}
+
+.factory-upgrade-row .upgrade-variant select option {
+  white-space: normal;
+}
+
+.factory-upgrade-actions {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  width: clamp(7.5rem, 6.2rem + 3vw, 9.5rem);
+}
+
+.factory-upgrade-actions .upgrade-button {
+  width: 100%;
+  white-space: normal;
+  line-height: 1.35;
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .factory-upgrade-actions {
+    width: 100%;
+  }
 }
 
 .upgrade-button {
@@ -459,4 +548,91 @@
   font-size: clamp(0.68rem, 0.64rem + 0.14vw, 0.8rem);
   color: #86efac;
   margin: 0;
+}
+
+.hauler-config-summary {
+  margin-top: clamp(0.4rem, 0.32rem + 0.14vw, 0.55rem);
+  font-size: clamp(0.7rem, 0.64rem + 0.12vw, 0.82rem);
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.hauler-config-summary strong {
+  color: #f8fafc;
+}
+
+.hauler-upgrades {
+  margin-top: clamp(0.5rem, 0.4rem + 0.2vw, 0.75rem);
+  padding-top: clamp(0.35rem, 0.3rem + 0.12vw, 0.5rem);
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.hauler-upgrades h5 {
+  margin: 0 0 clamp(0.3rem, 0.25rem + 0.12vw, 0.45rem) 0;
+  font-size: clamp(0.7rem, 0.64rem + 0.12vw, 0.82rem);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.hauler-upgrades ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.4rem, 0.32rem + 0.14vw, 0.55rem);
+}
+
+.hauler-upgrade-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: clamp(0.45rem, 0.35rem + 0.18vw, 0.7rem);
+}
+
+.hauler-upgrade-name {
+  font-weight: 600;
+  font-size: clamp(0.72rem, 0.66rem + 0.14vw, 0.84rem);
+  text-transform: capitalize;
+}
+
+.hauler-upgrade-level {
+  margin-left: clamp(0.35rem, 0.28rem + 0.12vw, 0.5rem);
+  font-size: clamp(0.66rem, 0.62rem + 0.12vw, 0.78rem);
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.hauler-upgrade-desc {
+  margin: clamp(0.12rem, 0.1rem + 0.05vw, 0.2rem) 0 0 0;
+  font-size: clamp(0.64rem, 0.6rem + 0.12vw, 0.76rem);
+  color: rgba(148, 163, 184, 0.7);
+}
+
+.hauler-upgrade-actions {
+  display: flex;
+  align-items: center;
+}
+
+.hauler-upgrade-buy {
+  border-radius: clamp(0.3rem, 0.25rem + 0.1vw, 0.45rem);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  background: rgba(14, 165, 233, 0.18);
+  color: #e0f2fe;
+  font-size: clamp(0.66rem, 0.6rem + 0.12vw, 0.78rem);
+  padding: clamp(0.3rem, 0.25rem + 0.12vw, 0.45rem) clamp(0.5rem, 0.4rem + 0.2vw, 0.7rem);
+  cursor: pointer;
+}
+
+.hauler-upgrade-buy:disabled {
+  border-color: rgba(148, 163, 184, 0.3);
+  color: rgba(148, 163, 184, 0.7);
+  background: rgba(30, 41, 59, 0.6);
+  cursor: not-allowed;
+}
+
+.hauler-upgrade-max {
+  font-size: clamp(0.64rem, 0.6rem + 0.12vw, 0.76rem);
+  color: rgba(148, 163, 184, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }

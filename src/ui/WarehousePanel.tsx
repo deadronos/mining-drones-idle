@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useStore } from '@/state/store';
 import { ResourceModifiersDebug } from '@/ui/ResourceModifiersDebug';
+import { HaulerModulesPanel } from './HaulerModulesPanel';
 import './WarehousePanel.css';
 
 interface WarehousePanelProps {
@@ -57,6 +58,15 @@ export const WarehousePanel = ({ onOpenSettings }: WarehousePanelProps) => {
           <h2 className="warehouse-panel__title">Warehouse</h2>
           <p className="warehouse-panel__subtitle">Global inventory ledger</p>
         </div>
+        <button
+          type="button"
+          className="warehouse-panel__header-button"
+          onClick={onOpenSettings}
+          aria-label="Settings"
+          title="Settings"
+        >
+          ⚙️
+        </button>
       </header>
 
       <section className="warehouse-panel__section" aria-live="polite">
@@ -71,17 +81,13 @@ export const WarehousePanel = ({ onOpenSettings }: WarehousePanelProps) => {
         </dl>
       </section>
 
+      <HaulerModulesPanel />
+
       <ResourceModifiersDebug
         className="warehouse-panel__bonuses"
         heading="Resource Bonuses"
         headingLevel="h3"
       />
-
-      <div className="warehouse-panel__actions">
-        <button type="button" className="warehouse-panel__settings" onClick={onOpenSettings}>
-          Settings
-        </button>
-      </div>
     </aside>
   );
 };

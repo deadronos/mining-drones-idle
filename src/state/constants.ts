@@ -9,7 +9,7 @@ import type {
   FactoryUpgradeDefinition,
 } from './types';
 
-export const SAVE_VERSION = '0.3.2';
+export const SAVE_VERSION = '0.3.3';
 export const saveVersion = SAVE_VERSION;
 
 export const GROWTH = 1.15;
@@ -38,7 +38,7 @@ export const FACTORY_PLACEMENT_ATTEMPTS = 100;
 export const FACTORY_UPGRADE_GROWTH = 1.35;
 
 export const WAREHOUSE_CONFIG = {
-  storageMultiplier: 1,
+  storageMultiplier: 8,
   starterFactoryHaulers: 1,
   starterFactoryStock: {
     ore: 50,
@@ -76,6 +76,9 @@ export const initialModules: Modules = {
   storage: 0,
   solar: 0,
   scanner: 0,
+  haulerDepot: 0,
+  logisticsHub: 0,
+  routingProtocol: 0,
 };
 
 export const initialPrestige: Prestige = { cores: 0 };
@@ -94,11 +97,71 @@ export const moduleDefinitions = {
   scanner: { label: 'Scanner', baseCost: 12, description: '+5% new asteroid richness' },
 } as const;
 
+export const HAULER_DEPOT_CAPACITY_PER_LEVEL = 10;
+export const HAULER_DEPOT_SPEED_MULT_PER_LEVEL = 0.05;
+export const LOGISTICS_HUB_OVERHEAD_REDUCTION_PER_LEVEL = 0.1;
+export const ROUTING_PROTOCOL_MATCHING_BONUS_PER_LEVEL = 0.02;
+
+export const FACTORY_HAULER_CAPACITY_PER_LEVEL = 5;
+export const FACTORY_HAULER_SPEED_PER_LEVEL = 0.1;
+export const FACTORY_HAULER_EFFICIENCY_PER_LEVEL = 0.05;
+
+export const haulerModuleDefinitions = {
+  haulerDepot: {
+    label: 'Hauler Depot',
+    description: '+10 capacity, +5% speed per level',
+    maxLevel: 20,
+    baseCost: { metals: 60 },
+    costGrowth: 1.18,
+  },
+  logisticsHub: {
+    label: 'Logistics Hub',
+    description: '−10% pickup/dropoff overhead per level',
+    maxLevel: 15,
+    baseCost: { metals: 80, bars: 10 },
+    costGrowth: 1.16,
+  },
+  routingProtocol: {
+    label: 'Routing Protocol',
+    description: '+2% routing efficiency per level',
+    maxLevel: 10,
+    baseCost: { crystals: 100, bars: 15 },
+    costGrowth: 1.2,
+  },
+} as const;
+
+export const factoryHaulerUpgradeDefinitions = {
+  capacityBoost: {
+    label: 'Capacity Boost',
+    description: '+5 capacity per level',
+    maxLevel: 15,
+    baseCost: { metals: 50, bars: 20 },
+    costGrowth: 1.22,
+  },
+  speedBoost: {
+    label: 'Thruster Overdrive',
+    description: '+0.1 speed per level',
+    maxLevel: 12,
+    baseCost: { metals: 40, bars: 15 },
+    costGrowth: 1.18,
+  },
+  efficiencyBoost: {
+    label: 'Efficiency Suite',
+    description: '−5% overhead per level',
+    maxLevel: 10,
+    baseCost: { crystals: 60, bars: 25 },
+    costGrowth: 1.2,
+  },
+} as const;
+
 export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeDefinition> = {
   docking: {
     label: 'Landing Bay',
     description: '+1 docking slot for concurrent drones',
-    baseCost: { metals: 40, crystals: 20 },
+    baseCost: { bars: 13 },
+    alternativeCosts: {
+      metals: { metals: 50 },
+    },
     apply: (factory) => {
       factory.dockingCapacity += 1;
       factory.upgrades.docking += 1;
@@ -107,7 +170,10 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
   refine: {
     label: 'Refinery Line',
     description: '+1 refine slot for parallel batches',
-    baseCost: { metals: 35, bars: 10 },
+    baseCost: { bars: 13 },
+    alternativeCosts: {
+      organics: { organics: 25, metals: 25 },
+    },
     apply: (factory) => {
       factory.refineSlots += 1;
       factory.upgrades.refine += 1;
@@ -115,8 +181,11 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
   },
   storage: {
     label: 'Bulk Storage',
-    description: '+150 ore storage capacity',
-    baseCost: { metals: 25, organics: 15 },
+    description: '+150 storage capacity',
+    baseCost: { bars: 13 },
+    alternativeCosts: {
+      organics: { organics: 20 },
+    },
     apply: (factory) => {
       factory.storageCapacity += 150;
       factory.upgrades.storage += 1;
@@ -125,7 +194,10 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
   energy: {
     label: 'Capacitors',
     description: '+30 local energy capacity',
-    baseCost: { crystals: 30, ice: 10 },
+    baseCost: { bars: 13 },
+    alternativeCosts: {
+      ice: { ice: 30, metals: 15 },
+    },
     apply: (factory) => {
       factory.energyCapacity += 30;
       factory.upgrades.energy += 1;
@@ -135,7 +207,10 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
   solar: {
     label: 'Solar Collectors',
     description: 'Regenerates local energy each second',
-    baseCost: { metals: 30, crystals: 15 },
+    baseCost: { bars: 13 },
+    alternativeCosts: {
+      crystals: { crystals: 25, metals: 10 },
+    },
     apply: (factory) => {
       factory.upgrades.solar += 1;
       // Apply local bonus: +10 max energy per level
