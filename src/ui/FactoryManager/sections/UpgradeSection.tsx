@@ -70,7 +70,7 @@ export const UpgradeSection = ({ factory, onUpgrade }: UpgradeSectionProps) => {
         const affordable = hasResources(factory, cost);
         return (
           <div key={upgradeId} className="factory-upgrade-row">
-            <div>
+            <div className="factory-upgrade-content">
               <strong>{definition.label}</strong> <span className="muted">Lv {level}</span>
               <div className="desc">{definition.description}</div>
               <label className="upgrade-variant">
@@ -96,14 +96,16 @@ export const UpgradeSection = ({ factory, onUpgrade }: UpgradeSectionProps) => {
                 </select>
               </label>
             </div>
-            <button
-              type="button"
-              disabled={!affordable}
-              onClick={() => onUpgrade(upgradeId, activeVariant)}
-              className="upgrade-button"
-            >
-              Upgrade ({variantLabels[activeVariant] ?? activeVariant})
-            </button>
+            <div className="factory-upgrade-actions">
+              <button
+                type="button"
+                disabled={!affordable}
+                onClick={() => onUpgrade(upgradeId, activeVariant)}
+                className="upgrade-button"
+              >
+                Upgrade ({variantLabels[activeVariant] ?? activeVariant})
+              </button>
+            </div>
           </div>
         );
       })}

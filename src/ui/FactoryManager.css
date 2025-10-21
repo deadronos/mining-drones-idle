@@ -309,15 +309,75 @@
 
 .factory-upgrade-row {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: clamp(0.4rem, 0.3rem + 0.2vw, 0.65rem);
   margin-bottom: clamp(0.35rem, 0.25rem + 0.2vw, 0.55rem);
+}
+
+.factory-upgrade-content {
+  flex: 1 1 16rem;
+  min-width: 0;
 }
 
 .factory-upgrade-row .desc {
   font-size: clamp(0.66rem, 0.6rem + 0.14vw, 0.78rem);
   color: #94a3b8;
+}
+
+.factory-upgrade-row .upgrade-variant {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.2rem, 0.18rem + 0.12vw, 0.3rem);
+  margin-top: clamp(0.25rem, 0.2rem + 0.15vw, 0.4rem);
+}
+
+.factory-upgrade-row .upgrade-variant select {
+  width: 100%;
+  max-width: 100%;
+  padding: clamp(0.3rem, 0.25rem + 0.15vw, 0.45rem) clamp(0.4rem, 0.35rem + 0.2vw, 0.6rem);
+  border-radius: clamp(0.3rem, 0.25rem + 0.1vw, 0.45rem);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  background: rgba(30, 41, 59, 0.85);
+  color: #e2e8f0;
+  font-size: clamp(0.66rem, 0.62rem + 0.14vw, 0.78rem);
+  line-height: 1.35;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+.factory-upgrade-row .upgrade-variant select:focus {
+  outline: none;
+  border-color: rgba(125, 211, 252, 0.8);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.35);
+  background: rgba(15, 23, 42, 0.95);
+}
+
+.factory-upgrade-row .upgrade-variant select option {
+  white-space: normal;
+}
+
+.factory-upgrade-actions {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  width: clamp(7.5rem, 6.2rem + 3vw, 9.5rem);
+}
+
+.factory-upgrade-actions .upgrade-button {
+  width: 100%;
+  white-space: normal;
+  line-height: 1.35;
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .factory-upgrade-actions {
+    width: 100%;
+  }
 }
 
 .upgrade-button {
