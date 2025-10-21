@@ -64,6 +64,7 @@ export type {
   ModuleId,
   HaulerModuleId,
   FactoryUpgradeId,
+  FactoryUpgradeCostVariantId,
   FactoryHaulerUpgradeId,
   FactoryUpgradeDefinition,
   FactoryResources,

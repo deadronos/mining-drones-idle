@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { computeFactoryCost, type BuildableFactory } from '@/ecs/factories';
-import { useStore, type FactoryUpgradeId } from '@/state/store';
+import { useStore, type FactoryUpgradeCostVariantId, type FactoryUpgradeId } from '@/state/store';
 import { DockingSection } from './sections/DockingSection';
 import { EnergySection } from './sections/EnergySection';
 import { StorageSection } from './sections/StorageSection';
@@ -51,9 +51,9 @@ export const FactoryManager = () => {
   const safeIndex = selectedIndex >= 0 ? selectedIndex : 0;
   const selectedFactory = factories[safeIndex] ?? null;
 
-  const handleUpgrade = (upgradeId: FactoryUpgradeId) => {
+  const handleUpgrade = (upgradeId: FactoryUpgradeId, variant?: FactoryUpgradeCostVariantId) => {
     if (!selectedFactory) return;
-    upgradeFactory(selectedFactory.id, upgradeId);
+    upgradeFactory(selectedFactory.id, upgradeId, variant);
   };
 
   return (
@@ -109,7 +109,7 @@ interface SelectedFactoryCardProps {
   total: number;
   onPrev: () => void;
   onNext: () => void;
-  onUpgrade: (upgrade: FactoryUpgradeId) => void;
+  onUpgrade: (upgrade: FactoryUpgradeId, variant?: FactoryUpgradeCostVariantId) => void;
   onTogglePin: (factoryId: string) => void;
   onAssignHaulers: (factoryId: string, count: number) => boolean;
 }

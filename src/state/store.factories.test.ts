@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { FACTORY_MAX_DISTANCE, FACTORY_MIN_DISTANCE, createStoreInstance } from '@/state/store';
+import {
+  FACTORY_MAX_DISTANCE,
+  FACTORY_MIN_DISTANCE,
+  createStoreInstance,
+  getFactoryUpgradeCost,
+} from '@/state/store';
 import { FACTORY_CONFIG, computeFactoryCost } from '@/ecs/factories';
 import { WAREHOUSE_CONFIG } from '@/state/constants';
 
@@ -125,7 +130,7 @@ describe('store factory integration', () => {
     expect(resources.bars).toBeCloseTo(initialWarehouseBars);
   });
 
-  it('upgrades factories using local resources', () => {
+  it('upgrades factories using local bars by default', () => {
     const factoryId = store.getState().factories[0].id;
     store.setState((state) => ({
       factories: state.factories.map((factory, idx) =>
@@ -134,22 +139,14 @@ describe('store factory integration', () => {
               ...factory,
               resources: {
                 ...factory.resources,
-                metals: 100,
-                crystals: 100,
-                bars: 50,
-                organics: 50,
-                ice: 50,
+                bars: 10_000,
               },
             }
           : factory,
       ),
       resources: {
         ...state.resources,
-        metals: 100,
-        crystals: 100,
-        bars: 50,
-        organics: 50,
-        ice: 50,
+        bars: 10_000,
       },
     }));
 
@@ -157,18 +154,52 @@ describe('store factory integration', () => {
     const dockUpgrade = store.getState().upgradeFactory(factoryId, 'docking');
     expect(dockUpgrade).toBe(true);
     const afterDock = store.getState().factories[0];
+    const dockCost = getFactoryUpgradeCost('docking', before.upgrades.docking ?? 0);
     expect(afterDock.dockingCapacity).toBe(before.dockingCapacity + 1);
-    expect(afterDock.resources.metals).toBeLessThan(before.resources.metals);
-    expect(afterDock.resources.crystals).toBeLessThan(before.resources.crystals);
-    expect(store.getState().resources.metals).toBe(100);
-    expect(store.getState().resources.crystals).toBe(100);
+    expect(afterDock.resources.bars).toBeCloseTo(
+      (before.resources.bars ?? 0) - (dockCost.bars ?? 0),
+      5,
+    );
+    expect(store.getState().resources.bars).toBeCloseTo(10_000);
 
     const solarUpgrade = store.getState().upgradeFactory(factoryId, 'solar');
     expect(solarUpgrade).toBe(true);
     const afterSolar = store.getState().factories[0];
+    const solarCost = getFactoryUpgradeCost('solar', afterDock.upgrades.solar ?? 0);
     expect(afterSolar.upgrades.solar).toBe((before.upgrades.solar ?? 0) + 1);
-    expect(afterSolar.resources.metals).toBeLessThan(afterDock.resources.metals);
-    expect(afterSolar.resources.crystals).toBeLessThan(afterDock.resources.crystals);
+    expect(afterSolar.resources.bars).toBeCloseTo(
+      (afterDock.resources.bars ?? 0) - (solarCost.bars ?? 0),
+      5,
+    );
+  });
+
+  it('supports paying for upgrades with alternative resources', () => {
+    const factoryId = store.getState().factories[0].id;
+    store.setState((state) => ({
+      factories: state.factories.map((factory, idx) =>
+        idx === 0
+          ? {
+              ...factory,
+              resources: {
+                ...factory.resources,
+                bars: 0,
+                metals: 10_000,
+              },
+            }
+          : factory,
+      ),
+    }));
+
+    const before = store.getState().factories[0];
+    const success = store.getState().upgradeFactory(factoryId, 'docking', 'metals');
+    expect(success).toBe(true);
+    const after = store.getState().factories[0];
+    const cost = getFactoryUpgradeCost('docking', before.upgrades.docking ?? 0, 'metals');
+    expect(after.resources.metals).toBeCloseTo(
+      (before.resources.metals ?? 0) - (cost.metals ?? 0),
+      5,
+    );
+    expect(after.resources.bars).toBe(before.resources.bars);
   });
 
   it('places purchased factories with randomized spacing within bounds', () => {

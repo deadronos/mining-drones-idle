@@ -257,7 +257,12 @@ export interface StoreState {
   transferOreToFactory(this: void, factoryId: string, amount: number): number;
   addResourcesToFactory(this: void, factoryId: string, delta: Partial<FactoryResources>): void;
   allocateFactoryEnergy(this: void, factoryId: string, amount: number): number;
-  upgradeFactory(this: void, factoryId: string, upgrade: keyof FactoryUpgrades): boolean;
+  upgradeFactory(
+    this: void,
+    factoryId: string,
+    upgrade: keyof FactoryUpgrades,
+    variant?: FactoryUpgradeCostVariantId,
+  ): boolean;
   assignHaulers(this: void, factoryId: string, delta: number): boolean;
   updateHaulerConfig(this: void, factoryId: string, config: Partial<HaulerConfig>): void;
   purchaseHaulerModule(this: void, moduleId: HaulerModuleId): boolean;
@@ -287,9 +292,14 @@ export type FactoryHaulerUpgradeId = keyof typeof factoryHaulerUpgradeDefinition
 
 export type FactoryUpgradeId = keyof FactoryUpgrades;
 
+export type FactoryUpgradeCostVariantId = 'bars' | 'metals' | 'crystals' | 'organics' | 'ice';
+
+export type FactoryUpgradeCostMap = Partial<FactoryResources>;
+
 export interface FactoryUpgradeDefinition {
   label: string;
   description: string;
-  baseCost: Partial<FactoryResources>;
+  baseCost: FactoryUpgradeCostMap;
+  alternativeCosts?: Partial<Record<FactoryUpgradeCostVariantId, FactoryUpgradeCostMap>>;
   apply(factory: BuildableFactory): void;
 }

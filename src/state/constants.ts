@@ -158,7 +158,10 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
   docking: {
     label: 'Landing Bay',
     description: '+1 docking slot for concurrent drones',
-    baseCost: { metals: 40, crystals: 20 },
+    baseCost: { bars: 2672 },
+    alternativeCosts: {
+      metals: { metals: 1800 },
+    },
     apply: (factory) => {
       factory.dockingCapacity += 1;
       factory.upgrades.docking += 1;
@@ -167,7 +170,10 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
   refine: {
     label: 'Refinery Line',
     description: '+1 refine slot for parallel batches',
-    baseCost: { metals: 35, bars: 10 },
+    baseCost: { bars: 2672 },
+    alternativeCosts: {
+      organics: { organics: 1000, metals: 500 },
+    },
     apply: (factory) => {
       factory.refineSlots += 1;
       factory.upgrades.refine += 1;
@@ -176,7 +182,10 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
   storage: {
     label: 'Bulk Storage',
     description: '+150 ore storage capacity',
-    baseCost: { metals: 25, organics: 15 },
+    baseCost: { bars: 2672 },
+    alternativeCosts: {
+      organics: { organics: 2000 },
+    },
     apply: (factory) => {
       factory.storageCapacity += 150;
       factory.upgrades.storage += 1;
@@ -185,7 +194,10 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
   energy: {
     label: 'Capacitors',
     description: '+30 local energy capacity',
-    baseCost: { crystals: 30, ice: 10 },
+    baseCost: { bars: 2672 },
+    alternativeCosts: {
+      ice: { ice: 1500, metals: 300 },
+    },
     apply: (factory) => {
       factory.energyCapacity += 30;
       factory.upgrades.energy += 1;
@@ -195,7 +207,10 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
   solar: {
     label: 'Solar Collectors',
     description: 'Regenerates local energy each second',
-    baseCost: { metals: 30, crystals: 15 },
+    baseCost: { bars: 2672 },
+    alternativeCosts: {
+      crystals: { crystals: 500, metals: 200 },
+    },
     apply: (factory) => {
       factory.upgrades.solar += 1;
       // Apply local bonus: +10 max energy per level
