@@ -38,7 +38,7 @@ export const FACTORY_PLACEMENT_ATTEMPTS = 100;
 export const FACTORY_UPGRADE_GROWTH = 1.35;
 
 export const WAREHOUSE_CONFIG = {
-  storageMultiplier: 1,
+  storageMultiplier: 8,
   starterFactoryHaulers: 1,
   starterFactoryStock: {
     ore: 50,
