@@ -158,9 +158,9 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
   docking: {
     label: 'Landing Bay',
     description: '+1 docking slot for concurrent drones',
-    baseCost: { bars: 1350 },
+    baseCost: { bars: 13 },
     alternativeCosts: {
-      metals: { metals: 900 },
+      metals: { metals: 50 },
     },
     apply: (factory) => {
       factory.dockingCapacity += 1;
@@ -170,9 +170,9 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
   refine: {
     label: 'Refinery Line',
     description: '+1 refine slot for parallel batches',
-    baseCost: { bars: 1350 },
+    baseCost: { bars: 13 },
     alternativeCosts: {
-      organics: { organics: 500, metals: 250 },
+      organics: { organics: 25, metals: 25 },
     },
     apply: (factory) => {
       factory.refineSlots += 1;
@@ -181,10 +181,10 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
   },
   storage: {
     label: 'Bulk Storage',
-    description: '+150 ore storage capacity',
-    baseCost: { bars: 1350 },
+    description: '+150 storage capacity',
+    baseCost: { bars: 13 },
     alternativeCosts: {
-      organics: { organics: 1000 },
+      organics: { organics: 20 },
     },
     apply: (factory) => {
       factory.storageCapacity += 150;
@@ -194,9 +194,9 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
   energy: {
     label: 'Capacitors',
     description: '+30 local energy capacity',
-    baseCost: { bars: 1350 },
+    baseCost: { bars: 13 },
     alternativeCosts: {
-      ice: { ice: 750, metals: 150 },
+      ice: { ice: 30, metals: 15 },
     },
     apply: (factory) => {
       factory.energyCapacity += 30;
@@ -207,9 +207,9 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
   solar: {
     label: 'Solar Collectors',
     description: 'Regenerates local energy each second',
-    baseCost: { bars: 1350 },
+    baseCost: { bars: 13 },
     alternativeCosts: {
-      crystals: { crystals: 250, metals: 100 },
+      crystals: { crystals: 25, metals: 10 },
     },
     apply: (factory) => {
       factory.upgrades.solar += 1;
