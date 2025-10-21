@@ -6,7 +6,11 @@ import type {
   DockingResult,
 } from '@/ecs/factories';
 import type { TransportableResource } from '@/ecs/logistics';
-import type { moduleDefinitions } from './constants';
+import type {
+  moduleDefinitions,
+  haulerModuleDefinitions,
+  factoryHaulerUpgradeDefinitions,
+} from './constants';
 
 export type { FactoryResources, FactoryUpgrades };
 
@@ -79,6 +83,7 @@ export interface FactorySnapshot {
   upgradeRequests?: FactoryUpgradeRequestSnapshot[];
   haulersAssigned?: number;
   haulerConfig?: HaulerConfig;
+  haulerUpgrades?: FactoryHaulerUpgrades;
   logisticsState?: FactoryLogisticsState;
 }
 
@@ -90,6 +95,12 @@ export interface HaulerConfig {
   resourceFilters: string[];
   mode: 'auto' | 'manual' | 'demand-first' | 'supply-first';
   priority: number;
+}
+
+export interface FactoryHaulerUpgrades {
+  capacityBoost?: number;
+  speedBoost?: number;
+  efficiencyBoost?: number;
 }
 
 export interface FactoryLogisticsState {
@@ -145,6 +156,9 @@ export interface Modules {
   storage: number;
   solar: number;
   scanner: number;
+  haulerDepot: number;
+  logisticsHub: number;
+  routingProtocol: number;
 }
 
 export interface Prestige {
@@ -246,6 +260,12 @@ export interface StoreState {
   upgradeFactory(this: void, factoryId: string, upgrade: keyof FactoryUpgrades): boolean;
   assignHaulers(this: void, factoryId: string, delta: number): boolean;
   updateHaulerConfig(this: void, factoryId: string, config: Partial<HaulerConfig>): void;
+  purchaseHaulerModule(this: void, moduleId: HaulerModuleId): boolean;
+  purchaseFactoryHaulerUpgrade(
+    this: void,
+    factoryId: string,
+    upgradeId: FactoryHaulerUpgradeId,
+  ): boolean;
   getLogisticsStatus(
     this: void,
     factoryId: string,
@@ -260,6 +280,10 @@ export interface StoreState {
 export type StoreApiType = StoreApi<StoreState>;
 
 export type ModuleId = keyof typeof moduleDefinitions;
+
+export type HaulerModuleId = keyof typeof haulerModuleDefinitions;
+
+export type FactoryHaulerUpgradeId = keyof typeof factoryHaulerUpgradeDefinitions;
 
 export type FactoryUpgradeId = keyof FactoryUpgrades;
 

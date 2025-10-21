@@ -7,6 +7,7 @@
 ✅ **FactoryManager Refactor Complete (TASK023)**: Deleted old monolithic `FactoryManager.tsx` file that was blocking refactored version. Solar Array bonus now displays correctly in UI.
 
 🟡 **TASK032 – Warehouse Space-Station & Panel**: Implementing the new warehouse landmark in the world scene and redesigning the left HUD into a dedicated Warehouse panel with themed resource cards and bonuses display.
+🟡 **TASK033 – Hauler Tech Upgrades**: Building hybrid global/per-factory hauler upgrades per DES028, starting with module registry, bonus resolution utilities, and migration scaffolding.
 🟡 **TASK025 – Warehouse Reconciliation**: Standing up the warehouse-first resource model remains in soak; continue validating transfers and polish once the Settings work lands.
 
 ✅ **TASK029 – Local-First Energy Priority**: Completed full implementation of energy system reversal. Factories now use local energy first (for drone charging and processing), with global warehouse as backup. All 165 tests pass, code is clean (lint & typecheck).
@@ -57,6 +58,8 @@
   - Added buffer reserve target display to factory storage panel showing logistics decision thresholds
   - Updated RQ-023 and added RQ-044 to requirements
   - All tests pass (158 tests), TypeScript clean, linting clean
+
+- Added Logistics Modules and per-factory override help affordances clarifying how global bonuses stack (TASK033)
 
 - Fixed hauler logistics not exporting Bars to warehouse on fresh runs:
   - computeBufferTarget is now resource-aware (Ore uses consumption buffer; Bars keep a minimal local buffer; others conservative).

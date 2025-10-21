@@ -1,5 +1,5 @@
 import { Vector3 } from 'three';
-import type { StoreState, LogisticsQueues, HaulerConfig } from '../types';
+import type { StoreState, LogisticsQueues } from '../types';
 import type { FactoryTransferEvent } from '@/ecs/world';
 import {
   RESOURCE_TYPES,
@@ -16,6 +16,7 @@ import {
 } from '@/ecs/logistics';
 import { computeWarehouseCapacity } from '@/state/utils';
 import { getResourceModifiers } from '@/lib/resourceModifiers';
+import { resolveFactoryHaulerConfig } from '@/lib/haulerUpgrades';
 import { gameWorld } from '@/ecs/world';
 import { logLogistics } from '@/lib/debug';
 
@@ -40,21 +41,23 @@ export function processLogistics(state: StoreState): {
     state.gameTime,
   );
 
-  const resolveHaulerConfig = (factory: { haulerConfig?: HaulerConfig }): HaulerConfig => ({
-    capacity: factory.haulerConfig?.capacity ?? LOGISTICS_CONFIG.hauler_capacity,
-    speed: factory.haulerConfig?.speed ?? LOGISTICS_CONFIG.hauler_speed,
-    pickupOverhead: factory.haulerConfig?.pickupOverhead ?? LOGISTICS_CONFIG.pickup_overhead,
-    dropoffOverhead: factory.haulerConfig?.dropoffOverhead ?? LOGISTICS_CONFIG.dropoff_overhead,
-    resourceFilters: factory.haulerConfig?.resourceFilters ?? [],
-    mode: factory.haulerConfig?.mode ?? 'auto',
-    priority: factory.haulerConfig?.priority ?? 5,
-  });
-
   const modifiers = getResourceModifiers(state.resources, state.prestige.cores);
   const warehouseCapacity = computeWarehouseCapacity(state.modules, modifiers);
 
   const warehouseInboundReservations = new Map<string, number>();
   const warehouseOutboundReservations = new Map<string, number>();
+
+  const resolvedConfigs = new Map<string, ReturnType<typeof resolveFactoryHaulerConfig>>();
+  for (const factory of state.factories) {
+    resolvedConfigs.set(
+      factory.id,
+      resolveFactoryHaulerConfig({
+        baseConfig: factory.haulerConfig,
+        modules: state.modules,
+        upgrades: factory.haulerUpgrades,
+      }),
+    );
+  }
 
   for (const transfer of updatedQueues.pendingTransfers) {
     if (transfer.toFactoryId === WAREHOUSE_NODE_ID) {
@@ -84,7 +87,12 @@ export function processLogistics(state: StoreState): {
     warehouseSpace = Math.max(0, warehouseSpace);
     warehouseAvailable = Math.max(0, warehouseAvailable);
 
-    const proposedTransfers = matchSurplusToNeed(state.factories, resource, state.gameTime);
+    const proposedTransfers = matchSurplusToNeed(
+      state.factories,
+      resource,
+      state.gameTime,
+      resolvedConfigs,
+    );
     logLogistics(
       'resource[%s]: warehouse stock=%o space=%o available=%o proposed=%o',
       resource,
@@ -159,7 +167,8 @@ export function processLogistics(state: StoreState): {
         const haulersAssigned = factory.haulersAssigned ?? 0;
         if (haulersAssigned <= 0) continue;
 
-        const config = resolveHaulerConfig(factory);
+        const config = resolvedConfigs.get(factory.id);
+        if (!config) continue;
         const target = computeBufferTarget(factory, resource);
         const current = factory.resources[resource as keyof typeof factory.resources] ?? 0;
         const minReserve = computeMinReserve(factory, resource);
@@ -225,7 +234,8 @@ export function processLogistics(state: StoreState): {
       for (const factory of state.factories) {
         if (warehouseAvailable <= 0) break;
 
-        const config = resolveHaulerConfig(factory);
+        const config = resolvedConfigs.get(factory.id);
+        if (!config) continue;
         const target = computeBufferTarget(factory, resource);
         const current = factory.resources[resource as keyof typeof factory.resources] ?? 0;
         const reservedInbound =
@@ -311,7 +321,10 @@ export function processLogistics(state: StoreState): {
     for (const { factory, request } of upgradeRequests) {
       if (warehouseAvailable <= 0) break;
 
-      const config = resolveHaulerConfig(factory);
+      const config = resolvedConfigs.get(factory.id);
+      if (!config) {
+        continue;
+      }
       const neededAmount = request.resourceNeeded[resource as keyof typeof request.resourceNeeded];
       const fulfilledAmount =
         request.fulfilledAmount[resource as keyof typeof request.fulfilledAmount] ?? 0;

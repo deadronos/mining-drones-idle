@@ -88,6 +88,9 @@ const migrations: Array<{ targetVersion: string; migrate: MigrationFn }> = [
         storage: migrated.modules?.storage ?? 0,
         solar: migrated.modules?.solar ?? 0,
         scanner: migrated.modules?.scanner ?? 0,
+        haulerDepot: migrated.modules?.haulerDepot ?? 0,
+        logisticsHub: migrated.modules?.logisticsHub ?? 0,
+        routingProtocol: migrated.modules?.routingProtocol ?? 0,
       };
       return { snapshot: migrated, description: 'ensure module keys exist' };
     },
@@ -219,6 +222,54 @@ const migrations: Array<{ targetVersion: string; migrate: MigrationFn }> = [
       };
 
       return { snapshot: migrated, description: 'normalize logistics data for warehouse routing' };
+    },
+  },
+  {
+    targetVersion: '0.3.3',
+    migrate: (snapshot) => {
+      const migrated = { ...snapshot } as StoreSnapshot;
+      const modules = migrated.modules ?? {};
+      migrated.modules = {
+        droneBay: modules.droneBay ?? 1,
+        refinery: modules.refinery ?? 0,
+        storage: modules.storage ?? 0,
+        solar: modules.solar ?? 0,
+        scanner: modules.scanner ?? 0,
+        haulerDepot: modules.haulerDepot ?? 0,
+        logisticsHub: modules.logisticsHub ?? 0,
+        routingProtocol: modules.routingProtocol ?? 0,
+      };
+
+      if (Array.isArray(migrated.factories)) {
+        migrated.factories = migrated.factories.map((factory: any) => {
+          const upgrades = factory.haulerUpgrades;
+          if (
+            upgrades &&
+            typeof upgrades === 'object' &&
+            ('capacityBoost' in upgrades || 'speedBoost' in upgrades || 'efficiencyBoost' in upgrades)
+          ) {
+            return {
+              ...factory,
+              haulerUpgrades: {
+                capacityBoost: Math.max(0, Math.floor(Number(upgrades.capacityBoost ?? 0))),
+                speedBoost: Math.max(0, Math.floor(Number(upgrades.speedBoost ?? 0))),
+                efficiencyBoost: Math.max(0, Math.floor(Number(upgrades.efficiencyBoost ?? 0))),
+              },
+            };
+          }
+
+          return {
+            ...factory,
+            haulerUpgrades: {
+              capacityBoost: 0,
+              speedBoost: 0,
+              efficiencyBoost: 0,
+            },
+          };
+        });
+      }
+
+      return { snapshot: migrated, description: 'initialize hauler upgrade defaults' };
     },
   },
 ];

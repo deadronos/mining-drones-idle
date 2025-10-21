@@ -39,6 +39,15 @@ export const normalizeModules = (snapshot?: Partial<Modules>): Modules => ({
   storage: Math.max(0, Math.floor(coerceNumber(snapshot?.storage, initialModules.storage))),
   solar: Math.max(0, Math.floor(coerceNumber(snapshot?.solar, initialModules.solar))),
   scanner: Math.max(0, Math.floor(coerceNumber(snapshot?.scanner, initialModules.scanner))),
+  haulerDepot: Math.max(0, Math.floor(coerceNumber(snapshot?.haulerDepot, initialModules.haulerDepot))),
+  logisticsHub: Math.max(
+    0,
+    Math.floor(coerceNumber(snapshot?.logisticsHub, initialModules.logisticsHub)),
+  ),
+  routingProtocol: Math.max(
+    0,
+    Math.floor(coerceNumber(snapshot?.routingProtocol, initialModules.routingProtocol)),
+  ),
 });
 
 export const normalizePrestige = (snapshot?: Partial<Prestige>): Prestige => ({

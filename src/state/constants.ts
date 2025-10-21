@@ -9,7 +9,7 @@ import type {
   FactoryUpgradeDefinition,
 } from './types';
 
-export const SAVE_VERSION = '0.3.2';
+export const SAVE_VERSION = '0.3.3';
 export const saveVersion = SAVE_VERSION;
 
 export const GROWTH = 1.15;
@@ -76,6 +76,9 @@ export const initialModules: Modules = {
   storage: 0,
   solar: 0,
   scanner: 0,
+  haulerDepot: 0,
+  logisticsHub: 0,
+  routingProtocol: 0,
 };
 
 export const initialPrestige: Prestige = { cores: 0 };
@@ -92,6 +95,63 @@ export const moduleDefinitions = {
   storage: { label: 'Storage', baseCost: 3, description: '+100 ore capacity' },
   solar: { label: 'Solar Array', baseCost: 4, description: '+5 energy/s, +25 max energy' },
   scanner: { label: 'Scanner', baseCost: 12, description: '+5% new asteroid richness' },
+} as const;
+
+export const HAULER_DEPOT_CAPACITY_PER_LEVEL = 10;
+export const HAULER_DEPOT_SPEED_MULT_PER_LEVEL = 0.05;
+export const LOGISTICS_HUB_OVERHEAD_REDUCTION_PER_LEVEL = 0.1;
+export const ROUTING_PROTOCOL_MATCHING_BONUS_PER_LEVEL = 0.02;
+
+export const FACTORY_HAULER_CAPACITY_PER_LEVEL = 5;
+export const FACTORY_HAULER_SPEED_PER_LEVEL = 0.1;
+export const FACTORY_HAULER_EFFICIENCY_PER_LEVEL = 0.05;
+
+export const haulerModuleDefinitions = {
+  haulerDepot: {
+    label: 'Hauler Depot',
+    description: '+10 capacity, +5% speed per level',
+    maxLevel: 20,
+    baseCost: { metals: 60 },
+    costGrowth: 1.18,
+  },
+  logisticsHub: {
+    label: 'Logistics Hub',
+    description: '−10% pickup/dropoff overhead per level',
+    maxLevel: 15,
+    baseCost: { metals: 80, bars: 10 },
+    costGrowth: 1.16,
+  },
+  routingProtocol: {
+    label: 'Routing Protocol',
+    description: '+2% routing efficiency per level',
+    maxLevel: 10,
+    baseCost: { crystals: 100, bars: 15 },
+    costGrowth: 1.2,
+  },
+} as const;
+
+export const factoryHaulerUpgradeDefinitions = {
+  capacityBoost: {
+    label: 'Capacity Boost',
+    description: '+5 capacity per level',
+    maxLevel: 15,
+    baseCost: { metals: 50, bars: 20 },
+    costGrowth: 1.22,
+  },
+  speedBoost: {
+    label: 'Thruster Overdrive',
+    description: '+0.1 speed per level',
+    maxLevel: 12,
+    baseCost: { metals: 40, bars: 15 },
+    costGrowth: 1.18,
+  },
+  efficiencyBoost: {
+    label: 'Efficiency Suite',
+    description: '−5% overhead per level',
+    maxLevel: 10,
+    baseCost: { crystals: 60, bars: 25 },
+    costGrowth: 1.2,
+  },
 } as const;
 
 export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeDefinition> = {
