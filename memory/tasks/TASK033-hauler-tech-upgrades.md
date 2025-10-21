@@ -1,8 +1,8 @@
 # TASK033 - Hauler Tech Upgrades Implementation
 
-**Status**: Pending  
-**Added**: 2025-10-21  
-**Updated**: 2025-10-21  
+**Status**: In Progress
+**Added**: 2025-10-21
+**Updated**: 2025-10-27
 **Design**: [DES028 - Hauler Tech Upgrades (Hybrid Global + Per-Factory)](../designs/DES028-hauler-tech-upgrades.md)
 
 ---
@@ -111,33 +111,33 @@ Implementation follows the pattern established by factory upgrades (DES018), ext
 
 ## Progress Tracking
 
-**Overall Status**: Not Started — 0%
+**Overall Status**: In Progress — 70%
 
 ### Subtasks
 
 | ID  | Description                                 | Status | Updated | Notes |
 | --- | ------------------------------------------- | ------ | ------- | ----- |
-| 1.1 | Add module registry types & constants       | ⏳     | —       |       |
-| 1.2 | Implement bonus calculation utility         | ⏳     | —       |       |
-| 1.3 | Update config resolution chain              | ⏳     | —       |       |
-| 1.4 | Unit tests: multiplier stacking             | ⏳     | —       |       |
-| 2.1 | Extend BuildableFactory with upgrade fields | ⏳     | —       |       |
-| 2.2 | Update snapshot types & serialization       | ⏳     | —       |       |
-| 2.3 | Helper function: merge global + per-factory | ⏳     | —       |       |
-| 3.1 | Implement purchaseHaulerModule() method     | ⏳     | —       |       |
-| 3.2 | Implement purchaseFactoryUpgrade() method   | ⏳     | —       |       |
-| 3.3 | Cost calculation & max level validation     | ⏳     | —       |       |
-| 3.4 | Unit tests: purchase logic                  | ⏳     | —       |       |
-| 4.1 | Migration logic: normalize old snapshots    | ⏳     | —       |       |
-| 4.2 | Bump SAVE_VERSION to 0.3.3                  | ⏳     | —       |       |
-| 4.3 | Migration tests                             | ⏳     | —       |       |
-| 5.1 | HaulerModulesPanel component                | ⏳     | —       |       |
-| 5.2 | Per-factory override UI in HaulerSection    | ⏳     | —       |       |
-| 5.3 | LogisticsPanel bonus summary                | ⏳     | —       |       |
-| 5.4 | CSS styling                                 | ⏳     | —       |       |
-| 6.1 | Full test run & regression check            | ⏳     | —       |       |
+| 1.1 | Add module registry types & constants       | ✅     | 2025-10-26 | Added hauler module definitions |
+| 1.2 | Implement bonus calculation utility         | ✅     | 2025-10-26 | getHaulerModuleBonuses created |
+| 1.3 | Update config resolution chain              | ✅     | 2025-10-26 | Logistics processing uses resolved configs |
+| 1.4 | Unit tests: multiplier stacking             | ✅     | 2025-10-26 | Added haulerUpgrades helper tests |
+| 2.1 | Extend BuildableFactory with upgrade fields | ✅     | 2025-10-26 | Added haulerUpgrades optional field |
+| 2.2 | Update snapshot types & serialization       | ✅     | 2025-10-26 | Snapshot + clone include haulerUpgrades |
+| 2.3 | Helper function: merge global + per-factory | ✅     | 2025-10-26 | resolveFactoryHaulerConfig exported |
+| 3.1 | Implement purchaseHaulerModule() method     | ✅     | 2025-10-26 | store slice added purchase logic |
+| 3.2 | Implement purchaseFactoryUpgrade() method   | ✅     | 2025-10-26 | per-factory override purchase implemented |
+| 3.3 | Cost calculation & max level validation     | ✅     | 2025-10-26 | Constants + guards enforce caps |
+| 3.4 | Unit tests: purchase logic                  | ✅     | 2025-10-26 | store purchase tests cover success/failure |
+| 4.1 | Migration logic: normalize old snapshots    | ✅     | 2025-10-26 | Migration initializes modules/upgrades |
+| 4.2 | Bump SAVE_VERSION to 0.3.3                  | ✅     | 2025-10-26 | Version constant updated |
+| 4.3 | Migration tests                             | ✅     | 2025-10-26 | Added coverage for new defaults |
+| 5.1 | HaulerModulesPanel component                | ✅     | 2025-10-26 | Warehouse panel renders module list |
+| 5.2 | Per-factory override UI in HaulerSection    | ✅     | 2025-10-26 | Inspector shows upgrade controls |
+| 5.3 | LogisticsPanel bonus summary                | ✅     | 2025-10-26 | Network bonus line added |
+| 5.4 | CSS styling                                 | ✅     | 2025-10-26 | Styling added for modules & upgrades |
+| 6.1 | Full test run & regression check            | ⏳     | —       | Pending command run |
 | 6.2 | Manual playtesting & cost tuning            | ⏳     | —       |       |
-| 6.3 | Tooltips & documentation                    | ⏳     | —       |       |
+| 6.3 | Tooltips & documentation                    | ✅     | 2025-10-27 | Added Logistics Modules and per-factory override guidance copy |
 
 ---
 
@@ -148,6 +148,24 @@ Implementation follows the pattern established by factory upgrades (DES018), ext
 - Task file created from DES028 design
 - Phases broken into actionable subtasks
 - Ready for Phase 1 implementation
+
+### 2025-10-26 - Phase 1 Kickoff
+
+- Reviewed DES028 requirements and confirmed scope for Task033
+- Drafted new EARS requirements RQ-048 through RQ-051 covering modules, overrides, purchases, and migrations
+- Marked Task033 as in progress and began updating module type definitions
+
+### 2025-10-26 - Core implementation & UI wiring
+
+- Implemented hauler module constants, helper utilities, and store purchase methods
+- Updated serialization, migrations, and logistics processing to apply module + per-factory bonuses
+- Added Warehouse HaulerModulesPanel, LogisticsPanel bonus summary, and Factory inspector upgrade controls
+- Added Vitest coverage for helper math, store purchases, and migration defaults
+
+### 2025-10-27 - Guidance tooltips
+
+- Added contextual copy and help affordances to Logistics Modules and per-factory overrides explaining how bonuses stack
+- Captured requirement RQ-052 covering tooltip expectations and added Warehouse panel test assertion
 
 ---
 

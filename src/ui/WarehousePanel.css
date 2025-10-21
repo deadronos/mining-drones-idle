@@ -85,6 +85,125 @@
   padding: clamp(0.65rem, 0.5rem + 0.3vw, 0.9rem) clamp(0.8rem, 0.6rem + 0.4vw, 1.1rem);
 }
 
+.hauler-modules {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.45rem, 0.35rem + 0.18vw, 0.7rem);
+  padding: clamp(0.75rem, 0.6rem + 0.3vw, 1rem);
+  border-radius: var(--card-radius);
+  border: 1px solid rgba(14, 165, 233, 0.25);
+  background: rgba(8, 47, 73, 0.45);
+}
+
+.hauler-modules__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(0.35rem, 0.28rem + 0.12vw, 0.5rem);
+}
+
+.hauler-modules__info-button {
+  border: none;
+  background: transparent;
+  color: rgba(125, 211, 252, 0.85);
+  font-size: clamp(0.82rem, 0.76rem + 0.14vw, 0.94rem);
+  cursor: help;
+  line-height: 1;
+  padding: 0.1rem 0.25rem;
+  border-radius: 999px;
+}
+
+.hauler-modules__info-button:focus-visible {
+  outline: 2px solid rgba(125, 211, 252, 0.7);
+  outline-offset: 2px;
+}
+
+.hauler-modules__helper {
+  margin: 0;
+  font-size: clamp(0.68rem, 0.62rem + 0.14vw, 0.8rem);
+  color: rgba(191, 219, 254, 0.8);
+}
+
+.hauler-modules__summary {
+  margin: 0;
+  font-size: clamp(0.72rem, 0.66rem + 0.14vw, 0.84rem);
+  color: rgba(191, 219, 254, 0.9);
+  font-variant-numeric: tabular-nums;
+}
+
+.hauler-modules__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.5rem, 0.4rem + 0.2vw, 0.75rem);
+}
+
+.hauler-modules__item {
+  display: flex;
+  justify-content: space-between;
+  gap: clamp(0.6rem, 0.45rem + 0.2vw, 0.9rem);
+  align-items: flex-start;
+}
+
+.hauler-modules__label {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(0.35rem, 0.28rem + 0.1vw, 0.45rem);
+}
+
+.hauler-modules__name {
+  font-size: clamp(0.82rem, 0.76rem + 0.16vw, 0.96rem);
+  font-weight: 600;
+}
+
+.hauler-modules__level {
+  font-size: clamp(0.7rem, 0.64rem + 0.12vw, 0.82rem);
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.hauler-modules__description {
+  margin: 0;
+  font-size: clamp(0.68rem, 0.62rem + 0.14vw, 0.8rem);
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.hauler-modules__effect {
+  margin: 0;
+  font-size: clamp(0.68rem, 0.62rem + 0.14vw, 0.8rem);
+  color: #bae6fd;
+}
+
+.hauler-modules__actions {
+  display: flex;
+  align-items: center;
+}
+
+.hauler-modules__buy {
+  border-radius: clamp(0.35rem, 0.3rem + 0.12vw, 0.5rem);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  background: rgba(14, 165, 233, 0.18);
+  color: #e0f2fe;
+  font-size: clamp(0.7rem, 0.64rem + 0.12vw, 0.82rem);
+  padding: clamp(0.35rem, 0.3rem + 0.12vw, 0.5rem) clamp(0.6rem, 0.5rem + 0.2vw, 0.8rem);
+  cursor: pointer;
+}
+
+.hauler-modules__buy:disabled {
+  border-color: rgba(148, 163, 184, 0.3);
+  color: rgba(148, 163, 184, 0.7);
+  background: rgba(30, 41, 59, 0.6);
+  cursor: not-allowed;
+}
+
+.hauler-modules__max {
+  font-size: clamp(0.68rem, 0.62rem + 0.14vw, 0.8rem);
+  color: rgba(148, 163, 184, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
 .warehouse-panel__actions {
   margin-top: auto;
   display: flex;

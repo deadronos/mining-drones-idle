@@ -54,6 +54,14 @@ describe('ui/WarehousePanel', () => {
     expect(screen.getByText('Drones')).toBeInTheDocument();
     expect(screen.getByText('14')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Resource Bonuses/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Logistics Modules/i })).toBeInTheDocument();
+    expect(screen.getByText(/Network Capacity \+0/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Global hauler module help/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Global logistics modules apply automatically to every hauler. Use per-factory overrides/,
+      ),
+    ).toBeInTheDocument();
   });
 
   it('fires the provided settings callback when the button is clicked', () => {

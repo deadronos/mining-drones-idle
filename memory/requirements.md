@@ -187,3 +187,23 @@ WHEN the warehouse renders in the 3D scene, THE SYSTEM SHALL rotate its docking 
 ## RQ-047 Warehouse Panel Presentation
 
 WHEN the HUD renders, THE SYSTEM SHALL display a "Warehouse" panel with a card-styled resource list and resource bonuses section matching the factory panel theming, including the Settings button anchored at the bottom. [Acceptance: React component test renders the panel, verifies resource formatting, header hierarchy, bonuses heading, and Settings button callback.]
+
+## RQ-048 Global Hauler Module Scaling
+
+WHEN a player purchases a global hauler module upgrade, THE SYSTEM SHALL apply the corresponding capacity and speed multipliers to every factory's hauler configuration during logistics resolution. [Acceptance: Unit tests confirm that warehouse module levels increase computed capacity and speed for multiple factories.]
+
+## RQ-049 Per-Factory Hauler Overrides
+
+WHEN a factory owns hauler override upgrades, THE SYSTEM SHALL merge the override bonuses with the global module multipliers so that the factory receives the higher of additive bonuses and stacked multipliers without affecting other factories. [Acceptance: Unit tests set different override levels per factory and assert resolved configs differ only where overrides exist.]
+
+## RQ-050 Hauler Upgrade Purchase Validation
+
+WHEN a player attempts to buy a hauler module or factory override upgrade, THE SYSTEM SHALL validate affordability, enforce maximum level caps, deduct the required resources, and reject purchases that fail validation without mutating state. [Acceptance: Store slice tests cover successful purchases, insufficient funds, and max-level rejections.]
+
+## RQ-051 Save Migration for Hauler Upgrades
+
+WHEN loading a snapshot saved before version 0.3.3, THE SYSTEM SHALL initialize all new hauler module and per-factory upgrade fields to their defaults while preserving existing data so the save loads without errors. [Acceptance: Migration tests load a pre-0.3.3 snapshot and assert new fields exist with zeroed levels and prior data remains intact.]
+
+## RQ-052 Hauler Upgrade Guidance Tooltips
+
+WHEN a player views the Logistics Modules panel or a factory's Per-Factory Upgrades section, THE SYSTEM SHALL surface contextual guidance explaining that global modules apply network-wide while overrides affect only the inspected factory. [Acceptance: UI tests assert that help affordances render with descriptive copy next to the Logistics Modules header and within the factory hauler upgrades list.]

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useStore } from '@/state/store';
 import { ResourceModifiersDebug } from '@/ui/ResourceModifiersDebug';
+import { HaulerModulesPanel } from './HaulerModulesPanel';
 import './WarehousePanel.css';
 
 interface WarehousePanelProps {
@@ -70,6 +71,8 @@ export const WarehousePanel = ({ onOpenSettings }: WarehousePanelProps) => {
           ))}
         </dl>
       </section>
+
+      <HaulerModulesPanel />
 
       <ResourceModifiersDebug
         className="warehouse-panel__bonuses"

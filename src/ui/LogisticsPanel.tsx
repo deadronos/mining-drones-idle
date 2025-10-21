@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@/state/store';
 import { WAREHOUSE_NODE_ID } from '@/ecs/logistics';
+import { getHaulerModuleBonuses } from '@/lib/haulerUpgrades';
 import './LogisticsPanel.css';
 
 const TRANSFERS_PAGE_SIZE = 5;
@@ -11,6 +12,7 @@ const TRANSFERS_PAGE_SIZE = 5;
 export const LogisticsPanel = () => {
   const factories = useStore((state) => state.factories);
   const resources = useStore((state) => state.resources);
+  const modules = useStore((state) => state.modules);
   const logisticsQueues = useStore((state) => state.logisticsQueues);
   const gameTime = useStore((state) => state.gameTime);
   const [, forceUpdate] = useState(0);
@@ -30,6 +32,7 @@ export const LogisticsPanel = () => {
     (t) => t.status === 'scheduled' || t.status === 'in-transit',
   );
   const completedTransfers = transfers.filter((t) => t.status === 'completed').length;
+  const moduleBonuses = getHaulerModuleBonuses(modules);
 
   const totalTransferPages = Math.max(1, Math.ceil(activeTransfers.length / TRANSFERS_PAGE_SIZE));
   const safeTransferPage = Math.min(transferPage, totalTransferPages - 1);
@@ -59,6 +62,12 @@ export const LogisticsPanel = () => {
         <div className="summary-item">
           <span className="label">Warehouse Bars:</span>
           <span className="value">{Math.floor(resources.bars).toLocaleString()}</span>
+        </div>
+        <div className="summary-item">
+          <span className="label">Network Bonus:</span>
+          <span className="value">
+            +{moduleBonuses.capacityBonus} cap · ×{moduleBonuses.speedMultiplier.toFixed(2)} speed
+          </span>
         </div>
       </div>
 

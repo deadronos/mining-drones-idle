@@ -1,7 +1,21 @@
 import type { StateCreator } from 'zustand';
-import type { StoreState, HaulerConfig, FactoryLogisticsState } from '../types';
+import type {
+  StoreState,
+  HaulerConfig,
+  FactoryLogisticsState,
+  HaulerModuleId,
+  FactoryHaulerUpgradeId,
+  FactoryResources,
+  Resources,
+} from '../types';
 import { computeHaulerCost } from '@/ecs/logistics';
 import { cloneFactory } from '../serialization';
+import {
+  getHaulerModuleCost,
+  getHaulerModuleMaxLevel,
+  getFactoryHaulerUpgradeCost,
+  getFactoryHaulerUpgradeMaxLevel,
+} from '@/lib/haulerUpgrades';
 
 export interface LogisticsSliceState {
   logisticsTick: number;
@@ -10,6 +24,8 @@ export interface LogisticsSliceState {
 export interface LogisticsSliceMethods {
   assignHaulers: (factoryId: string, delta: number) => boolean;
   updateHaulerConfig: (factoryId: string, config: Partial<HaulerConfig>) => void;
+  purchaseHaulerModule: (moduleId: HaulerModuleId) => boolean;
+  purchaseFactoryHaulerUpgrade: (factoryId: string, upgradeId: FactoryHaulerUpgradeId) => boolean;
   getLogisticsStatus: (
     factoryId: string,
   ) => { haulersAssigned: number; config?: HaulerConfig; state?: FactoryLogisticsState } | null;
@@ -111,6 +127,82 @@ export const createLogisticsSlice: StateCreator<
       const factories = current.factories.map((f, idx) => (idx === index ? factory : f));
       return { factories };
     });
+  },
+
+  purchaseHaulerModule: (moduleId) => {
+    let purchased = false;
+    set((current) => {
+      const currentLevel = current.modules[moduleId] ?? 0;
+      const maxLevel = getHaulerModuleMaxLevel(moduleId);
+      if (currentLevel >= maxLevel) {
+        return current;
+      }
+
+      const cost = getHaulerModuleCost(moduleId, currentLevel + 1);
+      const costEntries = Object.entries(cost) as Array<[keyof Resources, number]>;
+      for (const [resource, amount] of costEntries) {
+        const available = current.resources[resource] ?? 0;
+        if (available < amount) {
+          return current;
+        }
+      }
+
+      const resources = { ...current.resources };
+      for (const [resource, amount] of costEntries) {
+        resources[resource] = Math.max(0, resources[resource] - amount);
+      }
+
+      const modules = { ...current.modules, [moduleId]: currentLevel + 1 };
+      purchased = true;
+      return { resources, modules };
+    });
+    return purchased;
+  },
+
+  purchaseFactoryHaulerUpgrade: (factoryId, upgradeId) => {
+    let purchased = false;
+    set((current) => {
+      const index = current.factories.findIndex((factory) => factory.id === factoryId);
+      if (index === -1) {
+        return current;
+      }
+
+      const factory = cloneFactory(current.factories[index]);
+      const currentLevel = factory.haulerUpgrades?.[upgradeId] ?? 0;
+      const maxLevel = getFactoryHaulerUpgradeMaxLevel(upgradeId);
+      if (currentLevel >= maxLevel) {
+        return current;
+      }
+
+      const cost = getFactoryHaulerUpgradeCost(upgradeId, currentLevel + 1);
+      const costEntries = Object.entries(cost) as Array<[keyof FactoryResources, number]>;
+      for (const [resource, amount] of costEntries) {
+        const available = factory.resources[resource] ?? 0;
+        if (available < amount) {
+          return current;
+        }
+      }
+
+      const updatedResources: FactoryResources = { ...factory.resources };
+      for (const [resource, amount] of costEntries) {
+        updatedResources[resource] = Math.max(0, updatedResources[resource] - amount);
+      }
+
+      factory.resources = updatedResources;
+      factory.haulerUpgrades = {
+        ...(factory.haulerUpgrades ?? {}),
+        [upgradeId]: currentLevel + 1,
+      };
+
+      const factories = current.factories.map((candidate, idx) =>
+        idx === index ? factory : candidate,
+      );
+
+      purchased = true;
+      return { factories };
+    });
+
+    return purchased;
   },
 
   getLogisticsStatus: (factoryId) => {
