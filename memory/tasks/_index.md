@@ -35,3 +35,4 @@
 | TASK031 | Performance Optimizations                    | Completed   | 2025-10-20 |
 | TASK032 | Warehouse Space-Station Entity & Left Panel  | In Progress | 2025-10-25 |
 | TASK033 | Hauler Tech Upgrades Implementation          | In Progress | 2025-10-27 |
+| TASK034 | Secondary Resource Sinks & Investment System | Pending     | 2025-10-21 |
