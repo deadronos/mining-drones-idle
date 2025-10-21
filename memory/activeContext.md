@@ -6,6 +6,7 @@
 
 ✅ **FactoryManager Refactor Complete (TASK023)**: Deleted old monolithic `FactoryManager.tsx` file that was blocking refactored version. Solar Array bonus now displays correctly in UI.
 
+🟡 **TASK034 – Secondary Resource Sinks**: Implementing Tier 1 bulk factory upgrade alternative costs so factories can consume secondary resources directly while relieving bar pressure.
 🟡 **TASK032 – Warehouse Space-Station & Panel**: Implementing the new warehouse landmark in the world scene and redesigning the left HUD into a dedicated Warehouse panel with themed resource cards and bonuses display.
 🟡 **TASK033 – Hauler Tech Upgrades**: Building hybrid global/per-factory hauler upgrades per DES028, starting with module registry, bonus resolution utilities, and migration scaffolding.
 🟡 **TASK025 – Warehouse Reconciliation**: Standing up the warehouse-first resource model remains in soak; continue validating transfers and polish once the Settings work lands.

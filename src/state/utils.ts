@@ -8,6 +8,7 @@ import type {
   RefineryStats,
   FactoryUpgradeId,
   FactoryResources,
+  FactoryUpgradeCostVariantId,
 } from './types';
 import {
   GROWTH,
@@ -121,10 +122,14 @@ export const deriveProcessSequence = (factories: BuildableFactory[]): number => 
 export const computeFactoryUpgradeCost = (
   upgrade: FactoryUpgradeId,
   level: number,
+  variant?: FactoryUpgradeCostVariantId,
 ): Partial<FactoryResources> => {
   const definition = factoryUpgradeDefinitions[upgrade];
+  const baseCostMap =
+    (variant && variant !== 'bars' ? definition.alternativeCosts?.[variant] : undefined) ??
+    definition.baseCost;
   const result: Partial<FactoryResources> = {};
-  for (const [key, value] of Object.entries(definition.baseCost) as [
+  for (const [key, value] of Object.entries(baseCostMap ?? {}) as [
     keyof FactoryResources,
     number,
   ][]) {
@@ -136,7 +141,8 @@ export const computeFactoryUpgradeCost = (
 export const getFactoryUpgradeCost = (
   upgrade: FactoryUpgradeId,
   level: number,
-): Partial<FactoryResources> => computeFactoryUpgradeCost(upgrade, level);
+  variant?: FactoryUpgradeCostVariantId,
+): Partial<FactoryResources> => computeFactoryUpgradeCost(upgrade, level, variant);
 
 export const getFactorySolarRegen = (level: number): number => {
   // Base 0.25 regen available at level 0 (not purchased)

@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { BuildableFactory, FactoryResources } from '@/ecs/factories';
-import type { StoreState } from '../types';
+import type { FactoryUpgradeCostVariantId, StoreState } from '../types';
 import {
   createFactory,
   attemptDockDrone,
@@ -38,7 +38,11 @@ export interface FactorySliceMethods {
   transferOreToFactory: (factoryId: string, amount: number) => number;
   addResourcesToFactory: (factoryId: string, delta: Partial<FactoryResources>) => void;
   allocateFactoryEnergy: (factoryId: string, amount: number) => number;
-  upgradeFactory: (factoryId: string, upgrade: string) => boolean;
+  upgradeFactory: (
+    factoryId: string,
+    upgrade: string,
+    variant?: FactoryUpgradeCostVariantId,
+  ) => boolean;
   detectAndCreateUpgradeRequest: (factoryId: string) => boolean;
   updateUpgradeRequestFulfillment: (factoryId: string, resource: string, amount: number) => void;
   clearExpiredUpgradeRequests: (factoryId: string) => void;
@@ -279,7 +283,7 @@ export const createFactorySlice: StateCreator<
     return granted;
   },
 
-  upgradeFactory: (factoryId, upgrade) => {
+  upgradeFactory: (factoryId, upgrade, variant) => {
     const state = get();
     const index = state.factories.findIndex((f) => f.id === factoryId);
     if (index === -1) {
@@ -291,7 +295,7 @@ export const createFactorySlice: StateCreator<
     }
     const base = state.factories[index];
     const level = (base.upgrades as unknown as Record<string, number>)[upgrade] ?? 0;
-    const cost = computeFactoryUpgradeCost(upgrade as never, level);
+    const cost = computeFactoryUpgradeCost(upgrade as never, level, variant);
     for (const [key, value] of Object.entries(cost) as [keyof FactoryResources, number][]) {
       if (value > 0 && (base.resources[key] ?? 0) < value) {
         return false;
