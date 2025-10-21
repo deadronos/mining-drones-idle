@@ -1,7 +1,13 @@
-import type { Modules, HaulerConfig, FactoryHaulerUpgrades, HaulerModuleId, FactoryHaulerUpgradeId, Resources, FactoryResources } from '@/state/types';
-import {
-  LOGISTICS_CONFIG,
-} from '@/ecs/logistics';
+import type {
+  Modules,
+  HaulerConfig,
+  FactoryHaulerUpgrades,
+  HaulerModuleId,
+  FactoryHaulerUpgradeId,
+  Resources,
+  FactoryResources,
+} from '@/state/types';
+import { LOGISTICS_CONFIG } from '@/ecs/logistics';
 import {
   HAULER_DEPOT_CAPACITY_PER_LEVEL,
   HAULER_DEPOT_SPEED_MULT_PER_LEVEL,
@@ -127,6 +133,5 @@ export const getFactoryHaulerUpgradeCost = (
 export const getHaulerModuleMaxLevel = (moduleId: HaulerModuleId): number =>
   haulerModuleDefinitions[moduleId].maxLevel;
 
-export const getFactoryHaulerUpgradeMaxLevel = (
-  upgradeId: FactoryHaulerUpgradeId,
-): number => factoryHaulerUpgradeDefinitions[upgradeId].maxLevel;
+export const getFactoryHaulerUpgradeMaxLevel = (upgradeId: FactoryHaulerUpgradeId): number =>
+  factoryHaulerUpgradeDefinitions[upgradeId].maxLevel;

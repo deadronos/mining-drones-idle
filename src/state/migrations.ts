@@ -246,7 +246,9 @@ const migrations: Array<{ targetVersion: string; migrate: MigrationFn }> = [
           if (
             upgrades &&
             typeof upgrades === 'object' &&
-            ('capacityBoost' in upgrades || 'speedBoost' in upgrades || 'efficiencyBoost' in upgrades)
+            ('capacityBoost' in upgrades ||
+              'speedBoost' in upgrades ||
+              'efficiencyBoost' in upgrades)
           ) {
             return {
               ...factory,

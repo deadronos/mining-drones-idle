@@ -197,7 +197,16 @@ describe('migrations', () => {
   });
   it('initializes hauler module and factory upgrade defaults', () => {
     const legacy = {
-      resources: { ore: 10, metals: 5, crystals: 2, organics: 0, ice: 0, bars: 3, energy: 20, credits: 0 },
+      resources: {
+        ore: 10,
+        metals: 5,
+        crystals: 2,
+        organics: 0,
+        ice: 0,
+        bars: 3,
+        energy: 20,
+        credits: 0,
+      },
       modules: {
         droneBay: 2,
         refinery: 1,
@@ -259,5 +268,4 @@ describe('migrations', () => {
       efficiencyBoost: 0,
     });
   });
-
 });

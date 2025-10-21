@@ -9,6 +9,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: clamp(0.5rem, 0.4rem + 0.2vw, 0.75rem);
 }
 
 .warehouse-panel__title-group {
@@ -197,34 +198,39 @@
   cursor: not-allowed;
 }
 
-.hauler-modules__max {
+.warehouse-panel__max {
   font-size: clamp(0.68rem, 0.62rem + 0.14vw, 0.8rem);
   color: rgba(148, 163, 184, 0.8);
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
 
+.warehouse-panel__header-button {
+  background: none;
+  border: none;
+  color: rgba(165, 243, 252, 0.8);
+  font-size: clamp(1rem, 0.9rem + 0.25vw, 1.3rem);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 6px;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+.warehouse-panel__header-button:hover {
+  color: rgba(165, 243, 252, 1);
+  background: rgba(165, 243, 252, 0.1);
+}
+
+.warehouse-panel__header-button:focus-visible {
+  outline: 2px solid rgba(165, 243, 252, 0.6);
+  outline-offset: 2px;
+}
+
 .warehouse-panel__actions {
   margin-top: auto;
   display: flex;
   justify-content: flex-start;
-}
-
-.warehouse-panel__settings {
-  border-radius: clamp(0.5rem, 0.4rem + 0.2vw, 0.75rem);
-  padding: clamp(0.45rem, 0.35rem + 0.2vw, 0.65rem) clamp(0.9rem, 0.7rem + 0.4vw, 1.25rem);
-  font-size: clamp(0.78rem, 0.7rem + 0.2vw, 0.92rem);
-  background: linear-gradient(135deg, rgba(13, 148, 136, 0.35), rgba(8, 145, 178, 0.32));
-  border: 1px solid rgba(94, 234, 212, 0.4);
-  color: #f0fdfa;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.warehouse-panel__settings:hover {
-  border-color: rgba(94, 234, 212, 0.6);
-  color: #ecfeff;
 }
 
 @media (max-width: 960px) {

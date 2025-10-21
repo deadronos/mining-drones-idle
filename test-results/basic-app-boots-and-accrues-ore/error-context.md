@@ -28,7 +28,7 @@
                     - definition [ref=e31]: '0.0'
                 - generic [ref=e32]:
                     - term [ref=e33]: Bars
-                    - definition [ref=e34]: '30.0'
+                    - definition [ref=e34]: '0.0'
                 - generic [ref=e35]:
                     - term [ref=e36]: Energy
                     - definition [ref=e37]: '100'
@@ -98,34 +98,34 @@
                     - strong [ref=e104]: Drone Bay
                     - generic [ref=e105]: Lv 1
                     - generic [ref=e106]: +1 drone, +5% travel speed
-                - button "Buy (5 warehouse bars)" [ref=e108] [cursor=pointer]
+                - button "Buy (5 warehouse bars)" [disabled] [ref=e108]
             - generic [ref=e109]:
                 - generic [ref=e110]:
                     - strong [ref=e111]: Refinery
                     - generic [ref=e112]: Lv 0
                     - generic [ref=e113]: +10% bar output
-                - button "Buy (8 warehouse bars)" [ref=e115] [cursor=pointer]
+                - button "Buy (8 warehouse bars)" [disabled] [ref=e115]
             - generic [ref=e116]:
                 - generic [ref=e117]:
                     - strong [ref=e118]: Storage
                     - generic [ref=e119]: Lv 0
                     - generic [ref=e120]: +100 ore capacity
-                - button "Buy (3 warehouse bars)" [ref=e122] [cursor=pointer]
+                - button "Buy (3 warehouse bars)" [disabled] [ref=e122]
             - generic [ref=e123]:
                 - generic [ref=e124]:
                     - strong [ref=e125]: Solar Array
                     - generic [ref=e126]: Lv 0
                     - generic [ref=e127]: +5 energy/s, +25 max energy
-                - button "Buy (4 warehouse bars)" [ref=e129] [cursor=pointer]
+                - button "Buy (4 warehouse bars)" [disabled] [ref=e129]
             - generic [ref=e130]:
                 - generic [ref=e131]:
                     - strong [ref=e132]: Scanner
                     - generic [ref=e133]: Lv 0
                     - generic [ref=e134]: +5% new asteroid richness
-                - button "Buy (12 warehouse bars)" [ref=e136] [cursor=pointer]
+                - button "Buy (12 warehouse bars)" [disabled] [ref=e136]
             - separator [ref=e137]
             - heading "Prestige" [level=3] [ref=e138]
-            - generic [ref=e139]: 'Warehouse Bars: 30 → Next Cores: 0'
+            - generic [ref=e139]: 'Warehouse Bars: 0 → Next Cores: 0'
             - button "Prestige Run" [disabled] [ref=e140]
             - generic [ref=e141]: 'Cores: 0 • Bonus: +0%'
         - generic [ref=e142]:
@@ -142,7 +142,7 @@
                     - generic [ref=e153]: '0'
                 - generic [ref=e154]:
                     - generic [ref=e155]: 'Warehouse Bars:'
-                    - generic [ref=e156]: '30'
+                    - generic [ref=e156]: '0'
                 - generic [ref=e157]:
                     - generic [ref=e158]: 'Network Bonus:'
                     - generic [ref=e159]: +0 cap · ×1.00 speed
@@ -150,12 +150,12 @@
                 - heading "Active Transfers" [level=5] [ref=e162]
                 - generic [ref=e163]:
                     - generic [ref=e164]:
-                        - generic "Warehouse" [ref=e165]: WH
+                        - generic "factory-0" [ref=e165]: fact
                         - generic [ref=e166]: →
-                        - generic "factory-0" [ref=e167]: fact
+                        - generic "Warehouse" [ref=e167]: WH
                     - generic [ref=e168]:
                         - generic [ref=e169]: 30 bars
-                        - generic [ref=e170]: 'ETA: 0.6s'
+                        - generic [ref=e170]: 'ETA: 0.8s'
         - complementary [ref=e171]:
             - heading "Factories" [level=3] [ref=e172]
             - paragraph [ref=e173]:
@@ -183,98 +183,97 @@
                             - listitem [ref=e194]: No drones docked
                     - generic [ref=e195]:
                         - heading "Energy" [level=4] [ref=e196]
-                        - paragraph [ref=e197]: 0 / 80
-                        - paragraph [ref=e199]: 'Solar regen: 1.25/s'
-                    - generic [ref=e200]:
-                        - heading "Storage" [level=4] [ref=e201]
-                        - list [ref=e202]:
-                            - 'listitem "Ore: 0 / 300 (buffer: 50)" [ref=e203]':
-                                - generic [ref=e204]: Ore
-                                - generic [ref=e205]: '0 / 300 (buf: 50)'
-                            - 'listitem "Bars: 30 (buffer: 5)" [ref=e206]':
-                                - generic [ref=e207]: Bars
-                                - generic [ref=e208]: '30 (buf: 5)'
-                            - 'listitem "Metals: 5 (buffer: 20)" [ref=e209]':
-                                - generic [ref=e210]: Metals
-                                - generic [ref=e211]: '5 (buf: 20)'
-                            - 'listitem "Crystals: 3 (buffer: 20)" [ref=e212]':
-                                - generic [ref=e213]: Crystals
-                                - generic [ref=e214]: '3 (buf: 20)'
-                            - 'listitem "Organics: 41 (buffer: 20)" [ref=e215]':
-                                - generic [ref=e216]: Organics
-                                - generic [ref=e217]: '41 (buf: 20)'
-                            - 'listitem "Ice: 12 (buffer: 20)" [ref=e218]':
-                                - generic [ref=e219]: Ice
-                                - generic [ref=e220]: '12 (buf: 20)'
-                            - 'listitem "Credits: 0 (buffer: 15)" [ref=e221]':
-                                - generic [ref=e222]: Credits
-                                - generic [ref=e223]: '0 (buf: 15)'
-                - generic [ref=e224]:
-                    - heading "Upgrades" [level=4] [ref=e225]
-                    - generic [ref=e226]:
-                        - generic [ref=e227]:
-                            - strong [ref=e228]: Landing Bay
-                            - generic [ref=e229]: Lv 0
-                            - generic [ref=e230]: +1 docking slot for concurrent drones
-                            - generic [ref=e231]:
-                                - generic [ref=e232]: Pay with
-                                - combobox "Pay with" [ref=e233]:
+                        - paragraph [ref=e197]: 15 / 80
+                        - paragraph [ref=e200]: 'Solar regen: 1.25/s'
+                    - generic [ref=e201]:
+                        - heading "Storage" [level=4] [ref=e202]
+                        - list [ref=e203]:
+                            - 'listitem "Ore: 0 / 300 (buffer: 50)" [ref=e204]':
+                                - generic [ref=e205]: Ore
+                                - generic [ref=e206]: '0 / 300 (buf: 50)'
+                            - 'listitem "Bars: 60 (buffer: 5)" [ref=e207]':
+                                - generic [ref=e208]: Bars
+                                - generic [ref=e209]: '60 (buf: 5)'
+                            - 'listitem "Metals: 19 (buffer: 20)" [ref=e210]':
+                                - generic [ref=e211]: Metals
+                                - generic [ref=e212]: '19 (buf: 20)'
+                            - 'listitem "Crystals: 2 (buffer: 20)" [ref=e213]':
+                                - generic [ref=e214]: Crystals
+                                - generic [ref=e215]: '2 (buf: 20)'
+                            - 'listitem "Organics: 0 (buffer: 20)" [ref=e216]':
+                                - generic [ref=e217]: Organics
+                                - generic [ref=e218]: '0 (buf: 20)'
+                            - 'listitem "Ice: 1 (buffer: 20)" [ref=e219]':
+                                - generic [ref=e220]: Ice
+                                - generic [ref=e221]: '1 (buf: 20)'
+                            - 'listitem "Credits: 0 (buffer: 15)" [ref=e222]':
+                                - generic [ref=e223]: Credits
+                                - generic [ref=e224]: '0 (buf: 15)'
+                - generic [ref=e225]:
+                    - heading "Upgrades" [level=4] [ref=e226]
+                    - generic [ref=e227]:
+                        - generic [ref=e228]:
+                            - strong [ref=e229]: Landing Bay
+                            - generic [ref=e230]: Lv 0
+                            - generic [ref=e231]: +1 docking slot for concurrent drones
+                            - generic [ref=e232]:
+                                - generic [ref=e233]: Pay with
+                                - combobox "Pay with" [ref=e234]:
                                     - option "Bars (1350 bars)" [selected]
                                     - option "Metals (900 metals)"
-                        - button "Upgrade (Bars)" [disabled] [ref=e235]
-                    - generic [ref=e236]:
-                        - generic [ref=e237]:
-                            - strong [ref=e238]: Refinery Line
-                            - generic [ref=e239]: Lv 0
-                            - generic [ref=e240]: +1 refine slot for parallel batches
-                            - generic [ref=e241]:
-                                - generic [ref=e242]: Pay with
-                                - combobox "Pay with" [ref=e243]:
+                        - button "Upgrade (Bars)" [disabled] [ref=e236]
+                    - generic [ref=e237]:
+                        - generic [ref=e238]:
+                            - strong [ref=e239]: Refinery Line
+                            - generic [ref=e240]: Lv 0
+                            - generic [ref=e241]: +1 refine slot for parallel batches
+                            - generic [ref=e242]:
+                                - generic [ref=e243]: Pay with
+                                - combobox "Pay with" [ref=e244]:
                                     - option "Bars (1350 bars)" [selected]
                                     - option "Organics (500 organics + 250 metals)"
-                        - button "Upgrade (Bars)" [disabled] [ref=e245]
-                    - generic [ref=e246]:
-                        - generic [ref=e247]:
-                            - strong [ref=e248]: Bulk Storage
-                            - generic [ref=e249]: Lv 0
-                            - generic [ref=e250]: +150 ore storage capacity
-                            - generic [ref=e251]:
-                                - generic [ref=e252]: Pay with
-                                - combobox "Pay with" [ref=e253]:
+                        - button "Upgrade (Bars)" [disabled] [ref=e246]
+                    - generic [ref=e247]:
+                        - generic [ref=e248]:
+                            - strong [ref=e249]: Bulk Storage
+                            - generic [ref=e250]: Lv 0
+                            - generic [ref=e251]: +150 ore storage capacity
+                            - generic [ref=e252]:
+                                - generic [ref=e253]: Pay with
+                                - combobox "Pay with" [ref=e254]:
                                     - option "Bars (1350 bars)" [selected]
                                     - option "Organics (1000 organics)"
-                        - button "Upgrade (Bars)" [disabled] [ref=e255]
-                    - generic [ref=e256]:
-                        - generic [ref=e257]:
-                            - strong [ref=e258]: Capacitors
-                            - generic [ref=e259]: Lv 0
-                            - generic [ref=e260]: +30 local energy capacity
-                            - generic [ref=e261]:
-                                - generic [ref=e262]: Pay with
-                                - combobox "Pay with" [ref=e263]:
+                        - button "Upgrade (Bars)" [disabled] [ref=e256]
+                    - generic [ref=e257]:
+                        - generic [ref=e258]:
+                            - strong [ref=e259]: Capacitors
+                            - generic [ref=e260]: Lv 0
+                            - generic [ref=e261]: +30 local energy capacity
+                            - generic [ref=e262]:
+                                - generic [ref=e263]: Pay with
+                                - combobox "Pay with" [ref=e264]:
                                     - option "Bars (1350 bars)" [selected]
                                     - option "Ice (750 ice + 150 metals)"
-                        - button "Upgrade (Bars)" [disabled] [ref=e265]
-                    - generic [ref=e266]:
-                        - generic [ref=e267]:
-                            - strong [ref=e268]: Solar Collectors
-                            - generic [ref=e269]: Lv 0
-                            - generic [ref=e270]: Regenerates local energy each second
-                            - generic [ref=e271]:
-                                - generic [ref=e272]: Pay with
-                                - combobox "Pay with" [ref=e273]:
+                        - button "Upgrade (Bars)" [disabled] [ref=e266]
+                    - generic [ref=e267]:
+                        - generic [ref=e268]:
+                            - strong [ref=e269]: Solar Collectors
+                            - generic [ref=e270]: Lv 0
+                            - generic [ref=e271]: Regenerates local energy each second
+                            - generic [ref=e272]:
+                                - generic [ref=e273]: Pay with
+                                - combobox "Pay with" [ref=e274]:
                                     - option "Bars (1350 bars)" [selected]
                                     - option "Crystals (250 crystals + 100 metals)"
-                        - button "Upgrade (Bars)" [disabled] [ref=e275]
-                - generic [ref=e276]:
-                    - heading "Owned Drones" [level=4] [ref=e277]
-                    - list [ref=e278]:
-                        - listitem [ref=e279]: drone-ca
-                - generic [ref=e280]:
-                    - heading "Active Refining" [level=4] [ref=e281]
-                    - list [ref=e282]:
-                        - listitem [ref=e283]: ore — 75%
-                        - listitem [ref=e284]: ore — 0%
+                        - button "Upgrade (Bars)" [disabled] [ref=e276]
+                - generic [ref=e277]:
+                    - heading "Owned Drones" [level=4] [ref=e278]
+                    - list [ref=e279]:
+                        - listitem [ref=e280]: drone-ca
+                - generic [ref=e281]:
+                    - heading "Active Refining" [level=4] [ref=e282]
+                    - list [ref=e283]:
+                        - listitem [ref=e284]: ore — 9%
                 - generic [ref=e285]:
                     - heading "Hauler Logistics" [level=4] [ref=e286]
                     - generic [ref=e287]:
@@ -321,7 +320,7 @@
     - generic [ref=e326]:
         - generic [ref=e327]:
             - generic [ref=e328]:
-                - heading "Ice Fracture" [level=3] [ref=e329]
+                - heading "Bio-Lattice" [level=3] [ref=e329]
                 - paragraph [ref=e330]: Asteroid asteroid-2
             - generic [ref=e331]:
                 - button "Previous asteroid" [ref=e332] [cursor=pointer]: ◀
@@ -332,58 +331,26 @@
             - generic [ref=e338]: Primary Biome
             - generic [ref=e340]:
                 - generic [ref=e341]: Gravity
-                - generic [ref=e342]: 1.07g
+                - generic [ref=e342]: 0.82g
             - generic [ref=e343]:
                 - generic [ref=e344]: Dominant Resource
-                - generic [ref=e345]: Crystals
+                - generic [ref=e345]: Organics
             - generic [ref=e346]:
                 - generic [ref=e347]: Hazard
-                - generic [ref=e348]: Ion Storm
+                - generic [ref=e348]: Spore Burst
         - generic [ref=e349]:
             - generic [ref=e350]: Resource Mix
             - list [ref=e351]:
                 - listitem [ref=e352]:
-                    - generic [ref=e353]: Crystals
-                    - generic [ref=e354]: 36%
+                    - generic [ref=e353]: Organics
+                    - generic [ref=e354]: 52%
                 - listitem [ref=e355]:
                     - generic [ref=e356]: Ore
-                    - generic [ref=e357]: 31%
+                    - generic [ref=e357]: 22%
                 - listitem [ref=e358]:
-                    - generic [ref=e359]: Metals
-                    - generic [ref=e360]: 19%
+                    - generic [ref=e359]: Ice
+                    - generic [ref=e360]: 15%
         - generic [ref=e361]:
             - generic [ref=e362]: Regions
-            - list [ref=e363]:
-                - listitem [ref=e364]:
-                    - generic [ref=e365]:
-                        - generic [ref=e368]: Ice Fracture
-                        - generic [ref=e369]: 13%
-                    - generic [ref=e370]:
-                        - generic [ref=e371]: 0.90g
-                        - generic [ref=e372]: Ice
-                        - generic [ref=e373]: Micro Quakes
-                - listitem [ref=e374]:
-                    - generic [ref=e375]:
-                        - generic [ref=e378]: Ferric Mantle
-                        - generic [ref=e379]: 21%
-                    - generic [ref=e380]:
-                        - generic [ref=e381]: 1.25g
-                        - generic [ref=e382]: Metals
-                        - generic [ref=e383]: Micro Quakes
-                - listitem [ref=e384]:
-                    - generic [ref=e385]:
-                        - generic [ref=e388]: Crystal Bloom
-                        - generic [ref=e389]: 44%
-                    - generic [ref=e390]:
-                        - generic [ref=e391]: 1.05g
-                        - generic [ref=e392]: Crystals
-                        - generic [ref=e393]: Ion Storm
-                - listitem [ref=e394]:
-                    - generic [ref=e395]:
-                        - generic [ref=e398]: Crystal Bloom
-                        - generic [ref=e399]: 22%
-                    - generic [ref=e400]:
-                        - generic [ref=e401]: 1.05g
-                        - generic [ref=e402]: Crystals
-                        - generic [ref=e403]: Ion Storm
+            - paragraph [ref=e363]: No fractures recorded.
 ```

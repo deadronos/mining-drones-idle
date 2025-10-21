@@ -124,10 +124,7 @@ export const normalizeFactorySnapshot = (value: unknown): FactorySnapshot | null
       haulerUpgrades.speedBoost = Math.max(0, Math.floor(raw.haulerUpgrades.speedBoost));
     }
     if (typeof raw.haulerUpgrades.efficiencyBoost === 'number') {
-      haulerUpgrades.efficiencyBoost = Math.max(
-        0,
-        Math.floor(raw.haulerUpgrades.efficiencyBoost),
-      );
+      haulerUpgrades.efficiencyBoost = Math.max(0, Math.floor(raw.haulerUpgrades.efficiencyBoost));
     }
     if (
       haulerUpgrades.capacityBoost === undefined &&

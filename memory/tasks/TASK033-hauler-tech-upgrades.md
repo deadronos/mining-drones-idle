@@ -115,28 +115,28 @@ Implementation follows the pattern established by factory upgrades (DES018), ext
 
 ### Subtasks
 
-| ID  | Description                                 | Status | Updated | Notes |
-| --- | ------------------------------------------- | ------ | ------- | ----- |
-| 1.1 | Add module registry types & constants       | ✅     | 2025-10-26 | Added hauler module definitions |
-| 1.2 | Implement bonus calculation utility         | ✅     | 2025-10-26 | getHaulerModuleBonuses created |
-| 1.3 | Update config resolution chain              | ✅     | 2025-10-26 | Logistics processing uses resolved configs |
-| 1.4 | Unit tests: multiplier stacking             | ✅     | 2025-10-26 | Added haulerUpgrades helper tests |
-| 2.1 | Extend BuildableFactory with upgrade fields | ✅     | 2025-10-26 | Added haulerUpgrades optional field |
-| 2.2 | Update snapshot types & serialization       | ✅     | 2025-10-26 | Snapshot + clone include haulerUpgrades |
-| 2.3 | Helper function: merge global + per-factory | ✅     | 2025-10-26 | resolveFactoryHaulerConfig exported |
-| 3.1 | Implement purchaseHaulerModule() method     | ✅     | 2025-10-26 | store slice added purchase logic |
-| 3.2 | Implement purchaseFactoryUpgrade() method   | ✅     | 2025-10-26 | per-factory override purchase implemented |
-| 3.3 | Cost calculation & max level validation     | ✅     | 2025-10-26 | Constants + guards enforce caps |
-| 3.4 | Unit tests: purchase logic                  | ✅     | 2025-10-26 | store purchase tests cover success/failure |
-| 4.1 | Migration logic: normalize old snapshots    | ✅     | 2025-10-26 | Migration initializes modules/upgrades |
-| 4.2 | Bump SAVE_VERSION to 0.3.3                  | ✅     | 2025-10-26 | Version constant updated |
-| 4.3 | Migration tests                             | ✅     | 2025-10-26 | Added coverage for new defaults |
-| 5.1 | HaulerModulesPanel component                | ✅     | 2025-10-26 | Warehouse panel renders module list |
-| 5.2 | Per-factory override UI in HaulerSection    | ✅     | 2025-10-26 | Inspector shows upgrade controls |
-| 5.3 | LogisticsPanel bonus summary                | ✅     | 2025-10-26 | Network bonus line added |
-| 5.4 | CSS styling                                 | ✅     | 2025-10-26 | Styling added for modules & upgrades |
-| 6.1 | Full test run & regression check            | ⏳     | —       | Pending command run |
-| 6.2 | Manual playtesting & cost tuning            | ⏳     | —       |       |
+| ID  | Description                                 | Status | Updated    | Notes                                                          |
+| --- | ------------------------------------------- | ------ | ---------- | -------------------------------------------------------------- |
+| 1.1 | Add module registry types & constants       | ✅     | 2025-10-26 | Added hauler module definitions                                |
+| 1.2 | Implement bonus calculation utility         | ✅     | 2025-10-26 | getHaulerModuleBonuses created                                 |
+| 1.3 | Update config resolution chain              | ✅     | 2025-10-26 | Logistics processing uses resolved configs                     |
+| 1.4 | Unit tests: multiplier stacking             | ✅     | 2025-10-26 | Added haulerUpgrades helper tests                              |
+| 2.1 | Extend BuildableFactory with upgrade fields | ✅     | 2025-10-26 | Added haulerUpgrades optional field                            |
+| 2.2 | Update snapshot types & serialization       | ✅     | 2025-10-26 | Snapshot + clone include haulerUpgrades                        |
+| 2.3 | Helper function: merge global + per-factory | ✅     | 2025-10-26 | resolveFactoryHaulerConfig exported                            |
+| 3.1 | Implement purchaseHaulerModule() method     | ✅     | 2025-10-26 | store slice added purchase logic                               |
+| 3.2 | Implement purchaseFactoryUpgrade() method   | ✅     | 2025-10-26 | per-factory override purchase implemented                      |
+| 3.3 | Cost calculation & max level validation     | ✅     | 2025-10-26 | Constants + guards enforce caps                                |
+| 3.4 | Unit tests: purchase logic                  | ✅     | 2025-10-26 | store purchase tests cover success/failure                     |
+| 4.1 | Migration logic: normalize old snapshots    | ✅     | 2025-10-26 | Migration initializes modules/upgrades                         |
+| 4.2 | Bump SAVE_VERSION to 0.3.3                  | ✅     | 2025-10-26 | Version constant updated                                       |
+| 4.3 | Migration tests                             | ✅     | 2025-10-26 | Added coverage for new defaults                                |
+| 5.1 | HaulerModulesPanel component                | ✅     | 2025-10-26 | Warehouse panel renders module list                            |
+| 5.2 | Per-factory override UI in HaulerSection    | ✅     | 2025-10-26 | Inspector shows upgrade controls                               |
+| 5.3 | LogisticsPanel bonus summary                | ✅     | 2025-10-26 | Network bonus line added                                       |
+| 5.4 | CSS styling                                 | ✅     | 2025-10-26 | Styling added for modules & upgrades                           |
+| 6.1 | Full test run & regression check            | ⏳     | —          | Pending command run                                            |
+| 6.2 | Manual playtesting & cost tuning            | ⏳     | —          |                                                                |
 | 6.3 | Tooltips & documentation                    | ✅     | 2025-10-27 | Added Logistics Modules and per-factory override guidance copy |
 
 ---
