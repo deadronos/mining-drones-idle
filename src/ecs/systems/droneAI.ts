@@ -2,6 +2,7 @@ import { Vector3 } from 'three';
 import type { AsteroidEntity, DroneEntity, GameWorld, TravelData } from '@/ecs/world';
 import { computeTravelPosition, snapshotToTravel, travelToSnapshot } from '@/ecs/flights';
 import type { DroneFlightPhase, DroneFlightState, StoreApiType } from '@/state/store';
+import { getSinkBonuses } from '@/state/sinks';
 import type { RandomSource } from '@/lib/rng';
 import { computeWaypointWithOffset } from '@/ecs/systems/travel';
 import { getRegionById, pickRegionForDrone } from '@/ecs/biomes';
@@ -115,7 +116,8 @@ const startTravel = (
   }
   const distance = from.distanceTo(to);
   const gravity = Math.max(0.5, options?.gravityMultiplier ?? 1);
-  const effectiveSpeed = Math.max(1, drone.speed / gravity);
+  const sinkBonuses = getSinkBonuses(store.getState());
+  const effectiveSpeed = Math.max(1, (drone.speed * sinkBonuses.droneSpeedMultiplier) / gravity);
   const duration = Math.max(distance / effectiveSpeed, 0.1);
   const travel: TravelData = { from, to, elapsed: 0, duration };
   const pathSeed = drone.flightSeed ?? 1;

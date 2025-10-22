@@ -8,6 +8,9 @@ import type {
   StoreSettings,
   StoreSnapshot,
   StoreState,
+  SpecTechState,
+  SpecTechSpentState,
+  PrestigeInvestmentState,
 } from '../types';
 import {
   SAVE_VERSION,
@@ -16,6 +19,10 @@ import {
   initialPrestige,
   initialSave,
   initialSettings,
+  initialSpecTechs,
+  initialSpecTechSpent,
+  initialPrestigeInvestments,
+  specTechDefinitions,
 } from '../constants';
 import { coerceNumber } from './types';
 import { normalizeFactorySnapshot } from './factory';
@@ -55,6 +62,52 @@ export const normalizeModules = (snapshot?: Partial<Modules>): Modules => ({
 
 export const normalizePrestige = (snapshot?: Partial<Prestige>): Prestige => ({
   cores: Math.max(0, Math.floor(coerceNumber(snapshot?.cores, initialPrestige.cores))),
+});
+
+const clampLevel = (value: number, max: number) => Math.max(0, Math.min(max, Math.floor(value)));
+
+export const normalizeSpecTechs = (snapshot?: Partial<SpecTechState>): SpecTechState => ({
+  oreMagnet: clampLevel(coerceNumber(snapshot?.oreMagnet, initialSpecTechs.oreMagnet), specTechDefinitions.oreMagnet.maxLevel),
+  crystalResonance: clampLevel(
+    coerceNumber(snapshot?.crystalResonance, initialSpecTechs.crystalResonance),
+    specTechDefinitions.crystalResonance.maxLevel,
+  ),
+  biotechFarming: clampLevel(
+    coerceNumber(snapshot?.biotechFarming, initialSpecTechs.biotechFarming),
+    specTechDefinitions.biotechFarming.maxLevel,
+  ),
+  cryoPreservation: clampLevel(
+    coerceNumber(snapshot?.cryoPreservation, initialSpecTechs.cryoPreservation),
+    specTechDefinitions.cryoPreservation.maxLevel,
+  ),
+});
+
+export const normalizeSpecTechSpent = (snapshot?: Partial<SpecTechSpentState>): SpecTechSpentState => ({
+  metals: Math.max(0, Math.floor(coerceNumber(snapshot?.metals, initialSpecTechSpent.metals))),
+  crystals: Math.max(0, Math.floor(coerceNumber(snapshot?.crystals, initialSpecTechSpent.crystals))),
+  organics: Math.max(0, Math.floor(coerceNumber(snapshot?.organics, initialSpecTechSpent.organics))),
+  ice: Math.max(0, Math.floor(coerceNumber(snapshot?.ice, initialSpecTechSpent.ice))),
+});
+
+export const normalizePrestigeInvestments = (
+  snapshot?: Partial<PrestigeInvestmentState>,
+): PrestigeInvestmentState => ({
+  droneVelocity: Math.max(
+    0,
+    Math.floor(coerceNumber(snapshot?.droneVelocity, initialPrestigeInvestments.droneVelocity)),
+  ),
+  asteroidAbundance: Math.max(
+    0,
+    Math.floor(coerceNumber(snapshot?.asteroidAbundance, initialPrestigeInvestments.asteroidAbundance)),
+  ),
+  refineryMastery: Math.max(
+    0,
+    Math.floor(coerceNumber(snapshot?.refineryMastery, initialPrestigeInvestments.refineryMastery)),
+  ),
+  offlineEfficiency: Math.max(
+    0,
+    Math.floor(coerceNumber(snapshot?.offlineEfficiency, initialPrestigeInvestments.offlineEfficiency)),
+  ),
 });
 
 export const normalizeSave = (snapshot?: Partial<SaveMeta>): SaveMeta => ({
@@ -105,6 +158,9 @@ export const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapsh
   prestige: normalizePrestige(snapshot.prestige),
   save: normalizeSave(snapshot.save),
   settings: normalizeSettings(snapshot.settings),
+  specTechs: normalizeSpecTechs(snapshot.specTechs),
+  specTechSpent: normalizeSpecTechSpent(snapshot.specTechSpent),
+  prestigeInvestments: normalizePrestigeInvestments(snapshot.prestigeInvestments),
   rngSeed:
     typeof snapshot.rngSeed === 'number' && Number.isFinite(snapshot.rngSeed)
       ? snapshot.rngSeed
@@ -138,6 +194,9 @@ export const serializeStore = (state: StoreState): StoreSnapshot => ({
   prestige: { ...state.prestige },
   save: { ...state.save, version: SAVE_VERSION },
   settings: { ...state.settings },
+  specTechs: { ...state.specTechs },
+  specTechSpent: { ...state.specTechSpent },
+  prestigeInvestments: { ...state.prestigeInvestments },
   rngSeed: state.rngSeed,
   droneFlights: state.droneFlights.map(cloneDroneFlight),
   factories: state.factories.map(factoryToSnapshot),

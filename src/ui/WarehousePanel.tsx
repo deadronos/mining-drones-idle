@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { useStore } from '@/state/store';
 import { ResourceModifiersDebug } from '@/ui/ResourceModifiersDebug';
 import { HaulerModulesPanel } from './HaulerModulesPanel';
+import { SpecializationTechsPanel } from './SpecializationTechsPanel';
+import { InvestmentBoardPanel } from './InvestmentBoardPanel';
 import './WarehousePanel.css';
 
 interface WarehousePanelProps {
@@ -80,6 +82,9 @@ export const WarehousePanel = ({ onOpenSettings }: WarehousePanelProps) => {
           ))}
         </dl>
       </section>
+
+      <SpecializationTechsPanel />
+      <InvestmentBoardPanel />
 
       <HaulerModulesPanel />
 

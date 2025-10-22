@@ -2,16 +2,29 @@ import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { WarehousePanel } from './WarehousePanel';
-import { storeApi, type Resources, type Modules } from '@/state/store';
+import {
+  storeApi,
+  type Resources,
+  type Modules,
+  type SpecTechState,
+  type SpecTechSpentState,
+  type PrestigeInvestmentState,
+} from '@/state/store';
 
 describe('ui/WarehousePanel', () => {
   let originalResources: Resources;
   let originalModules: Modules;
+  let originalSpecTechs: SpecTechState;
+  let originalSpecTechSpent: SpecTechSpentState;
+  let originalPrestigeInvestments: PrestigeInvestmentState;
 
   beforeEach(() => {
     const state = storeApi.getState();
     originalResources = { ...state.resources };
     originalModules = { ...state.modules };
+    originalSpecTechs = { ...state.specTechs };
+    originalSpecTechSpent = { ...state.specTechSpent };
+    originalPrestigeInvestments = { ...state.prestigeInvestments };
   });
 
   afterEach(() => {
@@ -20,6 +33,9 @@ describe('ui/WarehousePanel', () => {
         ...state,
         resources: { ...originalResources },
         modules: { ...originalModules },
+        specTechs: { ...originalSpecTechs },
+        specTechSpent: { ...originalSpecTechSpent },
+        prestigeInvestments: { ...originalPrestigeInvestments },
       }));
     });
   });
@@ -54,6 +70,8 @@ describe('ui/WarehousePanel', () => {
     expect(screen.getByText('Drones')).toBeInTheDocument();
     expect(screen.getByText('14')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Resource Bonuses/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Specialization Techs/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Prestige Investment Board/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Logistics Modules/i })).toBeInTheDocument();
     expect(screen.getByText(/Network Capacity \+0/)).toBeInTheDocument();
     expect(screen.getByLabelText(/Global hauler module help/i)).toBeInTheDocument();
@@ -71,5 +89,23 @@ describe('ui/WarehousePanel', () => {
     const button = screen.getByRole('button', { name: /Settings/i });
     fireEvent.click(button);
     expect(onOpenSettings).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables investment and specialization actions when locked or unaffordable', () => {
+    act(() => {
+      storeApi.setState((state) => ({
+        ...state,
+        resources: { ...state.resources, metals: 0, crystals: 0, organics: 0, ice: 0 },
+        specTechSpent: { ...state.specTechSpent, metals: 0 },
+      }));
+    });
+
+    render(<WarehousePanel onOpenSettings={() => undefined} />);
+
+    const [specializationButton, investmentButton] = screen.getAllByRole('button', {
+      name: /Invest .*metals/i,
+    });
+    expect(investmentButton).toBeDisabled();
+    expect(specializationButton).toBeDisabled();
   });
 });
