@@ -2,6 +2,19 @@
 
 ## Current Focus
 
+✅ **CODEX P1 BADGE FIX: Specialization Tech Unlock Path** ✅
+
+- **Issue**: Specialization techs were permanently locked due to circular dependency in `specTechSpent` tracking
+  - `specTechSpent` only incremented after successful purchase, but unlock check happened before
+  - No gameplay path to reach 50k+ spending threshold for any secondary resource
+- **Solution**: Track all secondary resource spending across all systems
+  - Modified `investPrestige()`: now tracks spending on prestige investments
+  - Modified `purchaseFactory()`: now tracks metals/crystals spending when factories purchased
+  - Modified `upgradeFactory()`: now tracks secondary resources when upgrades purchased
+  - Added `trackSecondaryResourceSpend()` helper for future use
+- **Validation**: 194/194 tests passing ✅, TypeScript clean ✅, linting clean ✅
+- **Status**: Fix ready for deployment - Tier 2 specialization techs now unlock naturally via gameplay
+
 ✅ **TASK035 & TASK036 Completed** ✅
 
 - **TASK035 (Remove ownedDrones)**: Successfully removed unused historical ownership record from entire codebase

@@ -101,16 +101,27 @@ export const createFactorySlice: StateCreator<
     const id = `factory-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
     const position = computeFactoryPlacement(state.factories);
     const factory = createFactory(id, position);
-    set((current) => ({
-      resources: {
-        ...current.resources,
-        metals: current.resources.metals - cost.metals,
-        crystals: current.resources.crystals - cost.crystals,
-      },
-      factories: [...current.factories, factory],
-      factoryAutofitSequence: current.factoryAutofitSequence + 1,
-      selectedFactoryId: factory.id,
-    }));
+    set((current) => {
+      const specTechSpent = { ...current.specTechSpent };
+      // Track metals and crystals spending for specialization tech unlocks
+      if (cost.metals > 0) {
+        specTechSpent.metals = (specTechSpent.metals ?? 0) + cost.metals;
+      }
+      if (cost.crystals > 0) {
+        specTechSpent.crystals = (specTechSpent.crystals ?? 0) + cost.crystals;
+      }
+      return {
+        resources: {
+          ...current.resources,
+          metals: current.resources.metals - cost.metals,
+          crystals: current.resources.crystals - cost.crystals,
+        },
+        specTechSpent,
+        factories: [...current.factories, factory],
+        factoryAutofitSequence: current.factoryAutofitSequence + 1,
+        selectedFactoryId: factory.id,
+      };
+    });
     return true;
   },
 
@@ -298,7 +309,23 @@ export const createFactorySlice: StateCreator<
       const factories = current.factories.map((factory, idx) =>
         idx === index ? updated : factory,
       );
-      return { factories };
+      // Track secondary resource spending for specialization tech unlocks
+      const specTechSpent = { ...current.specTechSpent };
+      const secondaryResourceKeys: Array<'metals' | 'crystals' | 'organics' | 'ice'> = [
+        'metals',
+        'crystals',
+        'organics',
+        'ice',
+      ];
+      for (const key of secondaryResourceKeys) {
+        if (key in cost) {
+          const value = (cost as unknown as Record<string, number>)[key];
+          if (value > 0) {
+            specTechSpent[key] = (specTechSpent[key] ?? 0) + value;
+          }
+        }
+      }
+      return { factories, specTechSpent };
     });
     return true;
   },
