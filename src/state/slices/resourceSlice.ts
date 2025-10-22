@@ -53,6 +53,7 @@ export interface ResourceSliceMethods {
   setLastSave: (timestamp: number) => void;
   purchaseSpecTech: (techId: SpecTechId) => boolean;
   investPrestige: (investmentId: PrestigeInvestmentId) => boolean;
+  trackSecondaryResourceSpend: (resourceKey: string, amount: number) => void;
 }
 
 export const createResourceSlice: StateCreator<
@@ -164,8 +165,13 @@ export const createResourceSlice: StateCreator<
         ...state.prestigeInvestments,
         [investmentId]: currentLevel + 1,
       };
+      // Track spending for specialization tech unlocks
+      const specTechSpent: SpecTechSpentState = {
+        ...state.specTechSpent,
+        [resourceKey]: (state.specTechSpent[resourceKey] ?? 0) + cost,
+      };
       invested = true;
-      return { resources, prestigeInvestments };
+      return { resources, prestigeInvestments, specTechSpent };
     });
     return invested;
   },
@@ -214,5 +220,25 @@ export const createResourceSlice: StateCreator<
 
   setLastSave: (timestamp) => {
     set((state) => ({ save: { ...state.save, lastSave: timestamp } }));
+  },
+
+  trackSecondaryResourceSpend: (resourceKey: string, amount: number) => {
+    const validKeys: Array<'metals' | 'crystals' | 'organics' | 'ice'> = [
+      'metals',
+      'crystals',
+      'organics',
+      'ice',
+    ];
+    if (!validKeys.includes(resourceKey as never)) {
+      return;
+    }
+    set((state) => ({
+      specTechSpent: {
+        ...state.specTechSpent,
+        [resourceKey as 'metals' | 'crystals' | 'organics' | 'ice']: (
+          state.specTechSpent[resourceKey as 'metals' | 'crystals' | 'organics' | 'ice'] ?? 0
+        ) + amount,
+      },
+    }));
   },
 });
