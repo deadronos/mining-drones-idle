@@ -86,6 +86,110 @@
   padding: clamp(0.65rem, 0.5rem + 0.3vw, 0.9rem) clamp(0.8rem, 0.6rem + 0.4vw, 1.1rem);
 }
 
+.warehouse-panel__techs,
+.warehouse-panel__investments {
+  gap: clamp(0.6rem, 0.45rem + 0.25vw, 0.9rem);
+}
+
+.warehouse-panel__tech-list,
+.warehouse-panel__investment-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.6rem, 0.45rem + 0.25vw, 0.9rem);
+}
+
+.warehouse-panel__tech-item,
+.warehouse-panel__investment-item {
+  border-radius: var(--card-radius);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  background: rgba(15, 23, 42, 0.6);
+  padding: clamp(0.75rem, 0.6rem + 0.3vw, 1rem);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.45rem, 0.35rem + 0.2vw, 0.7rem);
+}
+
+.warehouse-panel__tech-header,
+.warehouse-panel__investment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: clamp(0.4rem, 0.3rem + 0.2vw, 0.6rem);
+}
+
+.warehouse-panel__tech-title,
+.warehouse-panel__investment-title {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.15rem, 0.1rem + 0.1vw, 0.25rem);
+}
+
+.warehouse-panel__tech-name,
+.warehouse-panel__investment-name {
+  font-weight: 600;
+  font-size: clamp(0.85rem, 0.78rem + 0.18vw, 1rem);
+}
+
+.warehouse-panel__tech-level,
+.warehouse-panel__investment-level,
+.warehouse-panel__tech-bonus,
+.warehouse-panel__investment-bonus {
+  font-size: clamp(0.7rem, 0.64rem + 0.14vw, 0.84rem);
+  color: rgba(148, 163, 184, 0.9);
+  font-variant-numeric: tabular-nums;
+}
+
+.warehouse-panel__tech-bonus,
+.warehouse-panel__investment-bonus {
+  color: rgba(165, 243, 252, 0.95);
+}
+
+.warehouse-panel__tech-description,
+.warehouse-panel__investment-description,
+.warehouse-panel__tech-progress,
+.warehouse-panel__investments-summary {
+  margin: 0;
+  font-size: clamp(0.7rem, 0.64rem + 0.14vw, 0.84rem);
+  color: rgba(191, 219, 254, 0.85);
+}
+
+.warehouse-panel__tech-actions,
+.warehouse-panel__investment-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(0.4rem, 0.3rem + 0.2vw, 0.6rem);
+  flex-wrap: wrap;
+}
+
+.warehouse-panel__tech-button,
+.warehouse-panel__investment-button {
+  border-radius: clamp(0.35rem, 0.3rem + 0.12vw, 0.5rem);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  background: rgba(14, 116, 233, 0.18);
+  color: #e0f2fe;
+  font-size: clamp(0.7rem, 0.64rem + 0.12vw, 0.82rem);
+  padding: clamp(0.35rem, 0.3rem + 0.12vw, 0.5rem) clamp(0.6rem, 0.5rem + 0.2vw, 0.8rem);
+  cursor: pointer;
+}
+
+.warehouse-panel__tech-button:disabled,
+.warehouse-panel__investment-button:disabled {
+  border-color: rgba(148, 163, 184, 0.3);
+  color: rgba(148, 163, 184, 0.7);
+  background: rgba(30, 41, 59, 0.6);
+  cursor: not-allowed;
+}
+
+.warehouse-panel__tech-effect,
+.warehouse-panel__investment-effect {
+  font-size: clamp(0.68rem, 0.62rem + 0.14vw, 0.8rem);
+  color: rgba(165, 243, 252, 0.9);
+}
+
 .hauler-modules {
   display: flex;
   flex-direction: column;

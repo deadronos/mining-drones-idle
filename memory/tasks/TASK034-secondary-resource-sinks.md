@@ -60,7 +60,7 @@ Notes: Phase 1 is functionally implemented in the codebase. Key implementations:
 **Depends on**: TASK033 completion (no hard dependency, but review hauler tech to understand store patterns)  
 **Estimated effort (remaining)**: 0.5–1 day (playtesting + validation)
 
-### Phase 2: Tier 2 – Specialization Techs
+-### Phase 2: Tier 2 – Specialization Techs *(In Progress 2025-10-23)*
 
 - [ ] Add `specTechs` and `specTechSpent` to store state types
 - [ ] Create `unlockedSpecTechs()` selector based on cumulative spending
@@ -80,7 +80,7 @@ Notes: Phase 1 is functionally implemented in the codebase. Key implementations:
 
 Notes: The codebase already contains a resource-driven modifiers system (`src/lib/resourceModifiers.ts`) which provides passive bonuses based on accumulated secondary resources (metals/crystals/organics/ice). That system is used by refinery and capacity calculations and can be re-used when implementing discrete "spec techs". However, the purchasable/unlockable tech mechanics, state fields and UI are not yet implemented.
 
-### Phase 3: Tier 3 – Prestige Investment Board
+-### Phase 3: Tier 3 – Prestige Investment Board *(Queued 2025-10-23)*
 
 - [ ] Add `prestigeInvestments` to store state (persisted separately)
 - [ ] Ensure prestige investments survive reset (separate from regular state wipe)

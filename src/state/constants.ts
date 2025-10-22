@@ -7,9 +7,14 @@ import type {
   RefineryStats,
   FactoryUpgradeId,
   FactoryUpgradeDefinition,
+  SpecTechId,
+  SpecTechState,
+  SpecTechSpentState,
+  PrestigeInvestmentId,
+  PrestigeInvestmentState,
 } from './types';
 
-export const SAVE_VERSION = '0.3.3';
+export const SAVE_VERSION = '0.3.4';
 export const saveVersion = SAVE_VERSION;
 
 export const GROWTH = 1.15;
@@ -84,6 +89,27 @@ export const initialModules: Modules = {
 export const initialPrestige: Prestige = { cores: 0 };
 
 export const initialSave: SaveMeta = { lastSave: Date.now(), version: SAVE_VERSION };
+
+export const initialSpecTechs: SpecTechState = {
+  oreMagnet: 0,
+  crystalResonance: 0,
+  biotechFarming: 0,
+  cryoPreservation: 0,
+};
+
+export const initialSpecTechSpent: SpecTechSpentState = {
+  metals: 0,
+  crystals: 0,
+  organics: 0,
+  ice: 0,
+};
+
+export const initialPrestigeInvestments: PrestigeInvestmentState = {
+  droneVelocity: 0,
+  asteroidAbundance: 0,
+  refineryMastery: 0,
+  offlineEfficiency: 0,
+};
 
 export const rawResourceKeys = ['ore', 'ice', 'metals', 'crystals', 'organics'] as const;
 
@@ -216,5 +242,116 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
       // Apply local bonus: +10 max energy per level
       factory.energyCapacity += FACTORY_SOLAR_MAX_ENERGY_PER_LEVEL;
     },
+  },
+};
+
+export interface SpecTechDefinition {
+  id: SpecTechId;
+  label: string;
+  description: string;
+  resource: keyof SpecTechSpentState;
+  unlockAt: number;
+  baseCost: number;
+  costGrowth: number;
+  bonusPerLevel: number;
+  maxLevel: number;
+}
+
+export const specTechDefinitions: Record<SpecTechId, SpecTechDefinition> = {
+  oreMagnet: {
+    id: 'oreMagnet',
+    label: 'Ore Magnet',
+    description: '+3% ore mined per level',
+    resource: 'metals',
+    unlockAt: 50_000,
+    baseCost: 8_000,
+    costGrowth: 1.28,
+    bonusPerLevel: 0.03,
+    maxLevel: 20,
+  },
+  crystalResonance: {
+    id: 'crystalResonance',
+    label: 'Crystal Resonance',
+    description: '+2% asteroid richness per level',
+    resource: 'crystals',
+    unlockAt: 50_000,
+    baseCost: 7_500,
+    costGrowth: 1.3,
+    bonusPerLevel: 0.02,
+    maxLevel: 20,
+  },
+  biotechFarming: {
+    id: 'biotechFarming',
+    label: 'Biotech Farming',
+    description: '+3% refinery yield per level',
+    resource: 'organics',
+    unlockAt: 50_000,
+    baseCost: 6_500,
+    costGrowth: 1.26,
+    bonusPerLevel: 0.03,
+    maxLevel: 20,
+  },
+  cryoPreservation: {
+    id: 'cryoPreservation',
+    label: 'Cryo-Preservation',
+    description: '+5% offline gains per level',
+    resource: 'ice',
+    unlockAt: 50_000,
+    baseCost: 5_000,
+    costGrowth: 1.24,
+    bonusPerLevel: 0.05,
+    maxLevel: 15,
+  },
+};
+
+export interface PrestigeInvestmentDefinition {
+  id: PrestigeInvestmentId;
+  label: string;
+  description: string;
+  resource: keyof SpecTechSpentState;
+  baseCost: number;
+  growthFactor: number;
+  bonusPerTier: number;
+}
+
+export const prestigeInvestmentDefinitions: Record<
+  PrestigeInvestmentId,
+  PrestigeInvestmentDefinition
+> = {
+  droneVelocity: {
+    id: 'droneVelocity',
+    label: 'Drone Velocity',
+    description: '+2% travel speed per tier',
+    resource: 'metals',
+    baseCost: 1_000,
+    growthFactor: 1.5,
+    bonusPerTier: 0.02,
+  },
+  asteroidAbundance: {
+    id: 'asteroidAbundance',
+    label: 'Asteroid Abundance',
+    description: '+2% spawn rate per tier',
+    resource: 'crystals',
+    baseCost: 1_000,
+    growthFactor: 1.5,
+    bonusPerTier: 0.02,
+  },
+  refineryMastery: {
+    id: 'refineryMastery',
+    label: 'Refinery Mastery',
+    description: '+1% refinery yield per tier',
+    resource: 'organics',
+    baseCost: 1_000,
+    growthFactor: 1.5,
+    bonusPerTier: 0.01,
+  },
+  offlineEfficiency: {
+    id: 'offlineEfficiency',
+    label: 'Offline Efficiency',
+    description: '+3% offline gains per tier',
+    resource: 'ice',
+    baseCost: 1_000,
+    growthFactor: 1.5,
+    bonusPerTier: 0.03,
   },
 };

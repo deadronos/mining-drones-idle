@@ -1,5 +1,6 @@
 import type { StoreApi } from 'zustand';
 import type { StoreState } from '@/state/store';
+import { getSinkBonuses } from '@/state/sinks';
 
 const HOURS_TO_SECONDS = 3600;
 
@@ -58,6 +59,14 @@ export const simulateOfflineProgress = (
     report.progressedSteps += 1;
     report.oreConsumed += stats.oreConsumed;
     report.barsProduced += stats.barsProduced;
+    const offlineMultiplier = getSinkBonuses(store.getState()).offlineProgressMultiplier;
+    if (offlineMultiplier > 1 && stats.barsProduced > 0) {
+      const extraBars = stats.barsProduced * (offlineMultiplier - 1);
+      if (extraBars > 0) {
+        store.getState().addResources({ bars: extraBars });
+        report.barsProduced += extraBars;
+      }
+    }
   };
 
   const iterations = Math.floor(clampedSeconds / step);

@@ -33,6 +33,9 @@ import {
   initialSave,
   initialModules,
   initialPrestige,
+  initialSpecTechs,
+  initialSpecTechSpent,
+  initialPrestigeInvestments,
 } from './constants';
 
 // Type exports
@@ -69,6 +72,11 @@ export type {
   FactoryUpgradeDefinition,
   FactoryResources,
   FactoryUpgrades,
+  SpecTechState,
+  SpecTechSpentState,
+  PrestigeInvestmentState,
+  SpecTechId,
+  PrestigeInvestmentId,
 } from './types';
 
 // Constants exports
@@ -87,6 +95,8 @@ export {
   saveVersion,
   moduleDefinitions,
   factoryUpgradeDefinitions,
+  specTechDefinitions,
+  prestigeInvestmentDefinitions,
 } from './constants';
 
 // Utils exports
@@ -270,6 +280,15 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
             ? { ...normalizePrestige(normalized.prestige) }
             : { cores: 0 },
           settings: normalizeSettings(normalized.settings ?? {}),
+          specTechs: normalized.specTechs
+            ? { ...normalized.specTechs }
+            : { ...initialSpecTechs },
+          specTechSpent: normalized.specTechSpent
+            ? { ...normalized.specTechSpent }
+            : { ...initialSpecTechSpent },
+          prestigeInvestments: normalized.prestigeInvestments
+            ? { ...normalized.prestigeInvestments }
+            : { ...initialPrestigeInvestments },
           save,
           rngSeed: restoredRng,
           droneFlights: (normalized.droneFlights ?? []).map(cloneDroneFlight),
@@ -307,6 +326,9 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
           resources: { ...initialResources },
           modules: { ...initialModules },
           prestige: { ...initialPrestige },
+          specTechs: { ...initialSpecTechs },
+          specTechSpent: { ...initialSpecTechSpent },
+          prestigeInvestments: { ...initialPrestigeInvestments },
           save: { ...initialSave, lastSave: Date.now() },
           settings: { ...currentSettings },
           rngSeed: generateSeed(),

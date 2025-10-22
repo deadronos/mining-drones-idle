@@ -13,11 +13,48 @@ import {
   parseSnapshot,
   saveVersion,
   serializeStore,
+  PRESTIGE_THRESHOLD,
 } from '@/state/store';
 import { getResourceModifiers } from '@/lib/resourceModifiers';
 import { createFactory } from '@/ecs/factories';
 
 describe('state/store', () => {
+  it('purchases specialization tech only when unlocked and affordable', () => {
+    const store = createStoreInstance();
+    store.setState((state) => ({
+      resources: { ...state.resources, metals: 9_000 },
+      specTechSpent: { ...state.specTechSpent, metals: 0 },
+    }));
+    expect(store.getState().purchaseSpecTech('oreMagnet')).toBe(false);
+
+    store.setState((state) => ({
+      resources: { ...state.resources, metals: 12_000 },
+      specTechSpent: { ...state.specTechSpent, metals: 50_000 },
+    }));
+
+    expect(store.getState().purchaseSpecTech('oreMagnet')).toBe(true);
+    const after = store.getState();
+    expect(after.specTechs.oreMagnet).toBe(1);
+    expect(after.specTechSpent.metals).toBeGreaterThan(50_000);
+    expect(after.resources.metals).toBeLessThan(12_000);
+  });
+
+  it('persists prestige investments across prestige resets', () => {
+    const store = createStoreInstance();
+    store.setState((state) => ({
+      resources: { ...state.resources, metals: 5_000, bars: PRESTIGE_THRESHOLD },
+      specTechs: { ...state.specTechs, oreMagnet: 2 },
+      specTechSpent: { ...state.specTechSpent, metals: 60_000 },
+    }));
+
+    expect(store.getState().investPrestige('droneVelocity')).toBe(true);
+    store.getState().doPrestige();
+    const afterPrestige = store.getState();
+    expect(afterPrestige.prestigeInvestments.droneVelocity).toBe(1);
+    expect(afterPrestige.specTechs.oreMagnet).toBe(0);
+    expect(afterPrestige.specTechSpent.metals).toBe(0);
+  });
+
   it('converts ore into bars using refinery and prestige multipliers', () => {
     const store = createStoreInstance();
     const base = store.getState();
@@ -49,6 +86,27 @@ describe('state/store', () => {
     expect(boosted.barsProduced).toBeGreaterThan(baseline.barsProduced);
     expect(boosted.barsProduced).toBeCloseTo(
       baseline.barsProduced * modifiers.refineryYieldMultiplier,
+      5,
+    );
+  });
+
+  it('applies specialization and prestige refinery bonuses multiplicatively', () => {
+    const baseStore = createStoreInstance();
+    baseStore.setState((state) => ({
+      resources: { ...state.resources, ore: 40 },
+    }));
+    const baseline = computeRefineryProduction(baseStore.getState(), 1);
+
+    const enhancedStore = createStoreInstance();
+    enhancedStore.setState((state) => ({
+      resources: { ...state.resources, ore: 40 },
+      specTechs: { ...state.specTechs, biotechFarming: 2 },
+      prestigeInvestments: { ...state.prestigeInvestments, refineryMastery: 1 },
+    }));
+    const enhanced = computeRefineryProduction(enhancedStore.getState(), 1);
+    const expectedMultiplier = (1 + 2 * 0.03) * (1 + 0.01);
+    expect(enhanced.barsProduced).toBeCloseTo(
+      baseline.barsProduced * expectedMultiplier,
       5,
     );
   });

@@ -207,3 +207,23 @@ WHEN loading a snapshot saved before version 0.3.3, THE SYSTEM SHALL initialize 
 ## RQ-052 Hauler Upgrade Guidance Tooltips
 
 WHEN a player views the Logistics Modules panel or a factory's Per-Factory Upgrades section, THE SYSTEM SHALL surface contextual guidance explaining that global modules apply network-wide while overrides affect only the inspected factory. [Acceptance: UI tests assert that help affordances render with descriptive copy next to the Logistics Modules header and within the factory hauler upgrades list.]
+
+## RQ-053 Specialization Tech Unlock Thresholds
+
+WHEN the cumulative metals, crystals, organics, or ice spent on specialization techs reaches each tech's unlock threshold, THE SYSTEM SHALL expose that tech in the Specialization panel with its current level, cost, and effect description. [Acceptance: Store/unit tests simulate spend increments and assert the selector marks techs unlocked at exactly the target thresholds.]
+
+## RQ-054 Specialization Tech Bonus Application
+
+WHEN a player purchases a specialization tech level, THE SYSTEM SHALL immediately apply the advertised multiplier to the corresponding production system (ore attraction, asteroid richness, refinery yield, or offline gains) and reflect the effect in downstream calculations. [Acceptance: Integration tests cover ore delivery scaling, asteroid spawn richness, refinery output, and offline simulation multipliers after purchasing tech levels.]
+
+## RQ-055 Prestige Investment Persistence
+
+WHEN a player invests resources into the prestige investment board, THE SYSTEM SHALL persist the purchased tiers across prestige resets while leaving per-run specialization tech progress reset. [Acceptance: Store/serialization tests prestige the run and verify investment tiers remain while specialization state clears.]
+
+## RQ-056 Prestige Investment Bonus Stack
+
+WHEN prestige investment tiers exist, THE SYSTEM SHALL apply their bonuses multiplicatively with specialization tech multipliers, increasing drone speed, asteroid spawn rate, refinery yield, and offline gains by the documented per-tier percentages. [Acceptance: Unit tests compute combined multipliers from multiple tiers and confirm stacking order matches design.]
+
+## RQ-057 Sink Progress UI Visibility
+
+WHEN viewing the Warehouse prestige and specialization panels, THE SYSTEM SHALL display current spend totals, tier levels, next costs, and aggregate multipliers so players understand the effect of their investments. [Acceptance: React component tests verify renders for locked/unlocked states, tooltip text, and formatted progress values.]
