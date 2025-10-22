@@ -211,9 +211,6 @@ export const normalizeFactorySnapshot = (value: unknown): FactorySnapshot | null
     energy: Math.max(0, coerceNumber(raw.energy, FACTORY_CONFIG.initialEnergy)),
     energyCapacity: Math.max(1, coerceNumber(raw.energyCapacity, FACTORY_CONFIG.energyCapacity)),
     resources: normalizeFactoryResources(raw.resources),
-    ownedDrones: Array.isArray(raw.ownedDrones)
-      ? raw.ownedDrones.filter((id): id is string => typeof id === 'string')
-      : [],
     upgrades: normalizeFactoryUpgrades(raw.upgrades),
     upgradeRequests,
     haulersAssigned: Math.max(0, Math.floor(coerceNumber(raw.haulersAssigned, 0))),
@@ -238,7 +235,6 @@ export const cloneFactory = (factory: BuildableFactory): BuildableFactory => ({
   energy: factory.energy,
   energyCapacity: factory.energyCapacity,
   resources: { ...factory.resources },
-  ownedDrones: [...factory.ownedDrones],
   upgrades: { ...factory.upgrades },
   upgradeRequests: factory.upgradeRequests.map((req) => ({
     upgrade: req.upgrade,
@@ -274,7 +270,6 @@ export const snapshotToFactory = (snapshot: FactorySnapshot): BuildableFactory =
   energy: snapshot.energy,
   energyCapacity: snapshot.energyCapacity,
   resources: { ...snapshot.resources },
-  ownedDrones: [...snapshot.ownedDrones],
   upgrades: { ...snapshot.upgrades },
   upgradeRequests: (snapshot.upgradeRequests ?? []).map((req) => ({
     upgrade: req.upgrade,
@@ -310,7 +305,6 @@ export const factoryToSnapshot = (factory: BuildableFactory): FactorySnapshot =>
   energy: factory.energy,
   energyCapacity: factory.energyCapacity,
   resources: { ...factory.resources },
-  ownedDrones: [...factory.ownedDrones],
   upgrades: { ...factory.upgrades },
   upgradeRequests: factory.upgradeRequests.map((req) => ({
     upgrade: req.upgrade,

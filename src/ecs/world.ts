@@ -132,9 +132,18 @@ const createFactory = (): FactoryEntity => ({
   },
 });
 
-export const createAsteroid = (scannerLevel: number, rng: RandomSource): AsteroidEntity => {
+export interface SpawnAsteroidOptions {
+  richnessMultiplier?: number;
+}
+
+export const createAsteroid = (
+  scannerLevel: number,
+  rng: RandomSource,
+  options?: SpawnAsteroidOptions,
+): AsteroidEntity => {
   const position = randomOnRing(12, 48, 6, rng);
-  const richnessBias = 1 + scannerLevel * 0.05;
+  const richnessMultiplier = Math.max(0, options?.richnessMultiplier ?? 1);
+  const richnessBias = (1 + scannerLevel * 0.05) * richnessMultiplier;
   const richness = randomRange(0.8, 1.2, rng) * richnessBias;
   const oreRemaining = BASE_ASTEROID_RICHNESS * richness;
   const radius = randomRange(0.6, 1.4, rng) * Math.cbrt(oreRemaining / BASE_ASTEROID_RICHNESS);
@@ -232,14 +241,24 @@ export const spawnDrone = (world: GameWorld) =>
 
 export const removeDrone = (world: GameWorld, drone: DroneEntity) => world.world.remove(drone);
 
-export const spawnAsteroid = (world: GameWorld, scannerLevel: number) =>
-  world.world.add(createAsteroid(scannerLevel, world.rng));
+export const spawnAsteroid = (
+  world: GameWorld,
+  scannerLevel: number,
+  options?: SpawnAsteroidOptions,
+) => world.world.add(createAsteroid(scannerLevel, world.rng, options));
 
 export const removeAsteroid = (world: GameWorld, asteroid: AsteroidEntity) =>
   world.world.remove(asteroid);
 
-export const ensureAsteroidTarget = (world: GameWorld, scannerLevel: number) => {
-  while (world.asteroidQuery.size < ASTEROID_TARGET) {
-    spawnAsteroid(world, scannerLevel);
+export interface EnsureAsteroidOptions extends SpawnAsteroidOptions {
+  scannerLevel: number;
+  spawnMultiplier?: number;
+}
+
+export const ensureAsteroidTarget = (world: GameWorld, options: EnsureAsteroidOptions) => {
+  const spawnMultiplier = Math.max(0, options.spawnMultiplier ?? 1);
+  const target = Math.round(ASTEROID_TARGET * spawnMultiplier);
+  while (world.asteroidQuery.size < target) {
+    spawnAsteroid(world, options.scannerLevel, { richnessMultiplier: options.richnessMultiplier });
   }
 };

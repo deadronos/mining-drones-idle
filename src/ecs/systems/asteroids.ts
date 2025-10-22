@@ -6,12 +6,15 @@ import {
 } from '@/ecs/world';
 import type { StoreApiType } from '@/state/store';
 import { TAU } from '@/lib/math';
+import { getSinkBonuses } from '@/state/sinks';
 
 export const createAsteroidSystem = (world: GameWorld, store: StoreApiType) => {
   const { asteroidQuery } = world;
   const recyclable: AsteroidEntity[] = [];
   return (dt: number) => {
-    const { modules } = store.getState();
+    const state = store.getState();
+    const { modules } = state;
+    const sinkBonuses = getSinkBonuses(state);
     recyclable.length = 0;
     for (const asteroid of asteroidQuery) {
       asteroid.rotation = (asteroid.rotation + asteroid.spin * dt) % TAU;
@@ -22,6 +25,10 @@ export const createAsteroidSystem = (world: GameWorld, store: StoreApiType) => {
     for (const asteroid of recyclable) {
       removeAsteroid(world, asteroid);
     }
-    ensureAsteroidTarget(world, modules.scanner);
+    ensureAsteroidTarget(world, {
+      scannerLevel: modules.scanner,
+      spawnMultiplier: sinkBonuses.asteroidSpawnMultiplier,
+      richnessMultiplier: sinkBonuses.asteroidRichnessMultiplier,
+    });
   };
 };

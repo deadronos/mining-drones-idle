@@ -9,6 +9,11 @@ import { getResourceModifiers } from '@/lib/resourceModifiers';
 
 const offsetVector = new Vector3();
 
+// Distance threshold for drone to trigger unload when returning to factory.
+// When drone.position is within this distance of factory.position, unload begins immediately.
+// This bypasses battery throttling that delays travel.elapsed completion.
+const UNLOAD_ARRIVAL_DISTANCE = 1.0;
+
 export const computeWaypointWithOffset = (baseWaypoint: Vector3, seed: number, index: number) => {
   const mixedSeed = (seed ^ ((index + 1) * 0x9e3779b9)) >>> 0;
   const rng = createRng(mixedSeed || 1);
@@ -69,6 +74,26 @@ export const createTravelSystem = (world: GameWorld, store: StoreApiType) => {
         });
       }
 
+      // Position-based unload trigger: if drone has reached factory position, start unloading immediately.
+      // This bypasses battery throttling that delays travel.elapsed completion.
+      // Flight data has already been recorded above, so clearing travel is safe.
+      if (drone.state === 'returning' && drone.targetFactoryId) {
+        const factory = api.getFactory(drone.targetFactoryId);
+        if (factory) {
+          const distanceToFactory = drone.position.distanceTo(factory.position);
+          if (distanceToFactory < UNLOAD_ARRIVAL_DISTANCE) {
+            // Drone has arrived at factory position; start unload immediately
+            drone.position.copy(factory.position);
+            drone.travel = null;
+            api.clearDroneFlight(drone.id);
+            drone.state = 'unloading';
+            drone.flightSeed = null;
+            continue;
+          }
+        }
+      }
+
+      // Time-based trigger: fallback for when position-based trigger doesn't fire
       if (travel.elapsed >= travel.duration - 1e-4) {
         drone.position.copy(travel.to);
         drone.travel = null;

@@ -1,5 +1,14 @@
 import type { StateCreator } from 'zustand';
-import type { StoreState, Resources, Modules } from '../types';
+import type {
+  StoreState,
+  Resources,
+  Modules,
+  SpecTechState,
+  SpecTechSpentState,
+  PrestigeInvestmentState,
+  SpecTechId,
+  PrestigeInvestmentId,
+} from '../types';
 import {
   PRESTIGE_THRESHOLD,
   initialResources,
@@ -7,8 +16,20 @@ import {
   BASE_ENERGY_CAP,
   moduleDefinitions,
   initialSave,
+  initialSpecTechs,
+  initialSpecTechSpent,
+  initialPrestigeInvestments,
+  specTechDefinitions,
+  prestigeInvestmentDefinitions,
 } from '../constants';
 import { costForLevel, computePrestigeGain } from '../utils';
+import {
+  getSpecTechCost,
+  getSpecTechLevel,
+  getSpecTechUnlockProgress,
+  getPrestigeInvestmentCost,
+  getSpecTechMaxLevel,
+} from '../sinks';
 import { mergeResourceDelta } from '@/lib/resourceMerging';
 import { createDefaultFactories } from '../factory';
 import { generateSeed, deriveProcessSequence } from '../utils';
@@ -17,6 +38,9 @@ export interface ResourceSliceState {
   resources: Resources;
   modules: Modules;
   prestige: { cores: number };
+  specTechs: SpecTechState;
+  specTechSpent: SpecTechSpentState;
+  prestigeInvestments: PrestigeInvestmentState;
 }
 
 export interface ResourceSliceMethods {
@@ -27,6 +51,8 @@ export interface ResourceSliceMethods {
   preview: () => number;
   doPrestige: () => void;
   setLastSave: (timestamp: number) => void;
+  purchaseSpecTech: (techId: SpecTechId) => boolean;
+  investPrestige: (investmentId: PrestigeInvestmentId) => boolean;
 }
 
 export const createResourceSlice: StateCreator<
@@ -38,6 +64,9 @@ export const createResourceSlice: StateCreator<
   resources: { ...initialResources },
   modules: { ...initialModules },
   prestige: { cores: 0 },
+  specTechs: { ...initialSpecTechs },
+  specTechSpent: { ...initialSpecTechSpent },
+  prestigeInvestments: { ...initialPrestigeInvestments },
 
   addResources: (delta, options) => {
     set((state) => {
@@ -74,6 +103,73 @@ export const createResourceSlice: StateCreator<
     });
   },
 
+  purchaseSpecTech: (techId) => {
+    let purchased = false;
+    set((state) => {
+      const definition = specTechDefinitions[techId];
+      if (!definition) {
+        return state;
+      }
+      const currentLevel = getSpecTechLevel(state.specTechs, techId);
+      if (currentLevel >= getSpecTechMaxLevel(techId)) {
+        return state;
+      }
+      const { unlocked } = getSpecTechUnlockProgress(state.specTechSpent, techId);
+      if (!unlocked) {
+        return state;
+      }
+      const cost = getSpecTechCost(techId, currentLevel);
+      const resourceKey = definition.resource;
+      const available = state.resources[resourceKey] ?? 0;
+      if (available < cost) {
+        return state;
+      }
+      const resources: Resources = {
+        ...state.resources,
+        [resourceKey]: available - cost,
+      };
+      const specTechs: SpecTechState = {
+        ...state.specTechs,
+        [techId]: currentLevel + 1,
+      };
+      const specTechSpent: SpecTechSpentState = {
+        ...state.specTechSpent,
+        [resourceKey]: (state.specTechSpent[resourceKey] ?? 0) + cost,
+      };
+      purchased = true;
+      return { resources, specTechs, specTechSpent };
+    });
+    return purchased;
+  },
+
+  investPrestige: (investmentId) => {
+    let invested = false;
+    set((state) => {
+      const definition = prestigeInvestmentDefinitions[investmentId];
+      if (!definition) {
+        return state;
+      }
+      const currentLevel = state.prestigeInvestments[investmentId] ?? 0;
+      const cost = getPrestigeInvestmentCost(investmentId, currentLevel);
+      const resourceKey = definition.resource;
+      const available = state.resources[resourceKey] ?? 0;
+      if (available < cost) {
+        return state;
+      }
+      const resources: Resources = {
+        ...state.resources,
+        [resourceKey]: available - cost,
+      };
+      const prestigeInvestments: PrestigeInvestmentState = {
+        ...state.prestigeInvestments,
+        [investmentId]: currentLevel + 1,
+      };
+      invested = true;
+      return { resources, prestigeInvestments };
+    });
+    return invested;
+  },
+
   prestigeReady: () => {
     return get().resources.bars >= PRESTIGE_THRESHOLD;
   },
@@ -95,6 +191,9 @@ export const createResourceSlice: StateCreator<
         prestige,
         resources: { ...initialResources, energy: BASE_ENERGY_CAP },
         modules: { ...initialModules },
+        specTechs: { ...initialSpecTechs },
+        specTechSpent: { ...initialSpecTechSpent },
+        prestigeInvestments: { ...state.prestigeInvestments },
         droneFlights: [],
         droneOwners: {},
         factories,

@@ -2,11 +2,22 @@
 
 ## Current Focus
 
-✅ **Serialization Refactor Complete (TASK024)**: Successfully redo the serialization refactoring from stub state to full implementation. Store-level normalization functions now properly in `serialization/store.ts`. All 174 tests pass, TypeScript clean, lint clean. Circular dependencies resolved.
+✅ **TASK035 & TASK036 Completed** ✅
+
+- **TASK035 (Remove ownedDrones)**: Successfully removed unused historical ownership record from entire codebase
+  - Removed 150+ lines across 9 files, deleted 2 files (RosterSection UI component & tests)
+  - Simplified factory state model, improved code maintainability
+  - All type definitions, serialization, store logic, and UI references cleaned
+- **TASK036 (Position-Based Unload Trigger)**: Implemented critical fix for queue jamming
+  - Drones now unload immediately upon arriving at factory position (< 1.0 units)
+  - Bypasses battery throttling that was causing 10-100x travel delays
+  - Preserves time-based trigger as fallback for edge cases
+- **Validation**: 189/189 tests passing ✅, TypeScript clean ✅, linting clean ✅
+- **Status**: Both tasks ready for production deployment
 
 ✅ **FactoryManager Refactor Complete (TASK023)**: Deleted old monolithic `FactoryManager.tsx` file that was blocking refactored version. Solar Array bonus now displays correctly in UI.
 
-🟡 **TASK034 – Secondary Resource Sinks**: Implementing Tier 1 bulk factory upgrade alternative costs so factories can consume secondary resources directly while relieving bar pressure.
+🟡 **TASK034 – Secondary Resource Sinks**: Implementing Phase 2 specialization techs and Phase 3 prestige investments to extend resource sinks beyond Tier 1. Focused on state schema, bonus application, UI, and persistence across prestige resets.
 🟡 **TASK032 – Warehouse Space-Station & Panel**: Implementing the new warehouse landmark in the world scene and redesigning the left HUD into a dedicated Warehouse panel with themed resource cards and bonuses display.
 🟡 **TASK033 – Hauler Tech Upgrades**: Building hybrid global/per-factory hauler upgrades per DES028, starting with module registry, bonus resolution utilities, and migration scaffolding.
 🟡 **TASK025 – Warehouse Reconciliation**: Standing up the warehouse-first resource model remains in soak; continue validating transfers and polish once the Settings work lands.
@@ -79,11 +90,13 @@
 
 ## Next Steps
 
-1. Execute TASK032 implementation (world warehouse entity, Warehouse panel styling, supporting tests) following DES027.
-2. **TASK028 Follow-up**: Design decision on solution approach (current recommendation: position-based unload trigger)
-3. Proceed with implementation task once solution chosen
-4. Continue monitoring warehouse reconciliation metrics and log any regressions surfaced during Settings QA.
-5. Observe drone distribution in live play to ensure load balancing is working as expected (no single factory dominating queue).
-6. Gather player feedback on buffer target display clarity and adjust labels/formatting if needed.
-7. Capture tutorial/tooling follow-up (tutorial overlay or HUD tooltip) once UI teams provide direction.
-8. Prepare final TASK025 wrap-up notes and identify residual polish items for warehouse UX.
+1. Land TASK034 Phase 2 specialization techs (state, selectors, bonuses, UI, tests).
+2. Follow through with TASK034 Phase 3 prestige investments (persistent state, exponential costs, UI, tests).
+3. Validate multiplicative stacking across tiers and add tooltips per DES029 Phase 4.
+4. Execute TASK032 implementation (world warehouse entity, Warehouse panel styling, supporting tests) following DES027 once current work stabilizes.
+5. **TASK028 Follow-up**: Design decision on solution approach (current recommendation: position-based unload trigger).
+6. Continue monitoring warehouse reconciliation metrics and log any regressions surfaced during Settings QA.
+7. Observe drone distribution in live play to ensure load balancing is working as expected (no single factory dominating queue).
+8. Gather player feedback on buffer target display clarity and adjust labels/formatting if needed.
+9. Capture tutorial/tooling follow-up (tutorial overlay or HUD tooltip) once UI teams provide direction.
+10. Prepare final TASK025 wrap-up notes and identify residual polish items for warehouse UX.

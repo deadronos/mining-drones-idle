@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unnecessary-type-assertion */
 import type { StoreSnapshot } from '@/state/store';
 import { saveVersion } from '@/state/store';
+import {
+  initialSpecTechs,
+  initialSpecTechSpent,
+  initialPrestigeInvestments,
+} from '@/state/constants';
 
 export interface MigrationReport {
   migrated: boolean;
@@ -272,6 +277,25 @@ const migrations: Array<{ targetVersion: string; migrate: MigrationFn }> = [
       }
 
       return { snapshot: migrated, description: 'initialize hauler upgrade defaults' };
+    },
+  },
+  {
+    targetVersion: '0.3.4',
+    migrate: (snapshot) => {
+      const migrated = { ...snapshot } as StoreSnapshot;
+      migrated.specTechs = {
+        ...initialSpecTechs,
+        ...(snapshot.specTechs ?? {}),
+      };
+      migrated.specTechSpent = {
+        ...initialSpecTechSpent,
+        ...(snapshot.specTechSpent ?? {}),
+      };
+      migrated.prestigeInvestments = {
+        ...initialPrestigeInvestments,
+        ...(snapshot.prestigeInvestments ?? {}),
+      };
+      return { snapshot: migrated, description: 'initialize specialization tech and investment fields' };
     },
   },
 ];

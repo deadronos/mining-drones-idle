@@ -10,6 +10,7 @@ import type {
   FactoryResources,
   FactoryUpgradeCostVariantId,
 } from './types';
+import { getSinkBonuses } from './sinks';
 import {
   GROWTH,
   BASE_REFINERY_RATE,
@@ -170,7 +171,10 @@ export const getFactoryEffectiveEnergyCapacity = (
 };
 
 export const computeRefineryProduction = (
-  state: Pick<StoreState, 'resources' | 'modules' | 'prestige'>,
+  state: Pick<
+    StoreState,
+    'resources' | 'modules' | 'prestige' | 'specTechs' | 'prestigeInvestments'
+  >,
   dt: number,
 ): RefineryStats => {
   if (dt <= 0) return emptyRefineryStats;
@@ -181,6 +185,7 @@ export const computeRefineryProduction = (
   const prestigeMult = computePrestigeBonus(state.prestige.cores);
   const refineryMult = Math.pow(1.1, state.modules.refinery);
   const modifiers = getResourceModifiers(state.resources, state.prestige.cores);
+  const sinkBonuses = getSinkBonuses(state);
   const oreConsumed = Math.min(oreAvailable, ORE_CONVERSION_PER_SECOND * dt);
   if (oreConsumed <= 0) {
     return emptyRefineryStats;
@@ -190,7 +195,8 @@ export const computeRefineryProduction = (
     BASE_REFINERY_RATE *
     refineryMult *
     prestigeMult *
-    modifiers.refineryYieldMultiplier;
+    modifiers.refineryYieldMultiplier *
+    sinkBonuses.refineryYieldMultiplier;
   return { oreConsumed, barsProduced };
 };
 

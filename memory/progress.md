@@ -2,6 +2,8 @@
 
 ## Summary
 
+- 2025-10-23: **Completed TASK035 & TASK036** – Removed unused `ownedDrones` historical record (150+ lines of dead code) and implemented position-based drone unload trigger to fix queue jamming. All 189 tests pass, TypeScript clean, linting clean. Both tasks ready for deployment.
+- 2025-10-23: Kicked off TASK034 Phases 2 & 3 (specialization techs and prestige investments) to extend resource sinks beyond Tier 1; updated active context accordingly and preparing implementation work.
 - Completed TASK027 (Drone Distribution & Storage Buffer Display): improved drone assignment to prefer least-filled docking slots (preventing clustering), added buffer target visibility in factory storage panel, updated RQ-023 and added RQ-044 to requirements, verified all 158 tests pass.
 - Implementing TASK032: added warehouse landmark entity, new R3F space-station mesh with animated docking ring, and redesigned Warehouse HUD panel with themed resource cards plus automated unit/UI coverage.
 - Completed TASK026 (Settings responsive layout): drafted DES022, added RQ-041–RQ-043 requirements, refactored the panel into a grid-based layout, verified the full Vitest suite, and manually confirmed responsive behavior.

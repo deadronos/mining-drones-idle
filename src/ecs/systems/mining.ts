@@ -1,6 +1,7 @@
 import type { GameWorld } from '@/ecs/world';
 import { consumeDroneEnergy } from '@/ecs/energy';
 import { DRONE_ENERGY_COST, type StoreApiType } from '@/state/store';
+import { getSinkBonuses } from '@/state/sinks';
 import { getRegionById } from '@/ecs/biomes';
 import { RESOURCE_KEYS } from '@/lib/biomes';
 import { getResourceModifiers } from '@/lib/resourceModifiers';
@@ -9,8 +10,10 @@ export const createMiningSystem = (world: GameWorld, store: StoreApiType) => {
   const { droneQuery, asteroidQuery } = world;
   return (dt: number) => {
     if (dt <= 0) return;
-    const { settings, resources, prestige } = store.getState();
+    const state = store.getState();
+    const { settings, resources, prestige } = state;
     const modifiers = getResourceModifiers(resources, prestige.cores);
+    const sinkBonuses = getSinkBonuses(state);
     const throttleFloor = settings.throttleFloor;
     const drainRate = DRONE_ENERGY_COST * modifiers.energyDrainMultiplier;
     for (const drone of droneQuery) {
@@ -36,7 +39,9 @@ export const createMiningSystem = (world: GameWorld, store: StoreApiType) => {
       if (fraction <= 0) {
         continue;
       }
-      const mined = Math.min(drone.miningRate * fraction * dt, capacityLeft, asteroid.oreRemaining);
+      const baseExtraction = drone.miningRate * fraction * dt;
+      const boostedExtraction = baseExtraction * sinkBonuses.oreYieldMultiplier;
+      const mined = Math.min(boostedExtraction, capacityLeft, asteroid.oreRemaining);
       if (mined <= 0) {
         drone.state = 'returning';
         drone.targetId = null;

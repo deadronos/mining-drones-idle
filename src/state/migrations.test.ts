@@ -47,6 +47,8 @@ describe('migrations', () => {
     expect(migrated.settings.showTrails).toBe(true);
     expect(Array.isArray(migrated.droneFlights)).toBe(true);
     expect(migrated.droneFlights?.length).toBe(0);
+    expect(migrated.specTechs).toBeDefined();
+    expect(migrated.prestigeInvestments).toBeDefined();
   });
 
   it('is idempotent when applied to current snapshots', () => {
@@ -81,6 +83,24 @@ describe('migrations', () => {
         throttleFloor: 0.25,
         showTrails: false,
         performanceProfile: 'medium',
+      },
+      specTechs: {
+        oreMagnet: 0,
+        crystalResonance: 0,
+        biotechFarming: 0,
+        cryoPreservation: 0,
+      },
+      specTechSpent: {
+        metals: 0,
+        crystals: 0,
+        organics: 0,
+        ice: 0,
+      },
+      prestigeInvestments: {
+        droneVelocity: 0,
+        asteroidAbundance: 0,
+        refineryMastery: 0,
+        offlineEfficiency: 0,
       },
       droneFlights: [] as StoreSnapshot['droneFlights'],
     } as StoreSnapshot;
@@ -141,7 +161,6 @@ describe('migrations', () => {
           pinned: false,
           energy: 50,
           energyCapacity: 100,
-          ownedDrones: [],
           upgrades: { docking: 0, refine: 0, storage: 0, energy: 0, solar: 0 },
           logisticsState: {
             outboundReservations: {},
@@ -233,7 +252,6 @@ describe('migrations', () => {
           energy: 40,
           energyCapacity: 80,
           resources: { ore: 10, metals: 5, crystals: 2, organics: 0, ice: 0, bars: 3, credits: 0 },
-          ownedDrones: [],
           upgrades: { docking: 0, refine: 0, storage: 0, energy: 0, solar: 0 },
           upgradeRequests: [],
           haulersAssigned: 0,

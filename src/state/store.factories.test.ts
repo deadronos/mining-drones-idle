@@ -258,12 +258,10 @@ describe('store factory integration', () => {
     // Dock drone at Factory A
     store.getState().dockDroneAtFactory(factoryA.id, 'drone-1');
     expect(store.getState().factories[0].queuedDrones).toContain('drone-1');
-    expect(store.getState().factories[0].ownedDrones).not.toContain('drone-1');
 
     // Transfer ownership to Factory A (simulate unload)
     store.getState().undockDroneFromFactory(factoryA.id, 'drone-1', { transferOwnership: true });
     const afterFirst = store.getState();
-    expect(afterFirst.factories[0].ownedDrones).toContain('drone-1');
     expect(afterFirst.droneOwners['drone-1']).toBe(factoryA.id);
 
     // Dock same drone at Factory B
@@ -274,72 +272,7 @@ describe('store factory integration', () => {
     store.getState().undockDroneFromFactory(factoryB.id, 'drone-1', { transferOwnership: true });
     const afterSecond = store.getState();
 
-    // Verify: Drone should be in Factory B's ownedDrones but NOT Factory A's
-    expect(afterSecond.factories[0].ownedDrones).not.toContain('drone-1');
-    expect(afterSecond.factories[1].ownedDrones).toContain('drone-1');
+    // Verify: Drone owner is Factory B
     expect(afterSecond.droneOwners['drone-1']).toBe(factoryB.id);
-  });
-
-  it('prevents duplicate drone ownership when undocking multiple times at same factory', () => {
-    const state = store.getState();
-    const factoryA = state.factories[0];
-
-    // First cycle: dock and transfer ownership
-    store.getState().dockDroneAtFactory(factoryA.id, 'drone-2');
-    store.getState().undockDroneFromFactory(factoryA.id, 'drone-2', { transferOwnership: true });
-
-    let owned = store.getState().factories[0].ownedDrones;
-    const firstOwnershipCount = owned.filter((id) => id === 'drone-2').length;
-
-    // Second cycle: dock and transfer ownership again
-    store.getState().dockDroneAtFactory(factoryA.id, 'drone-2');
-    store.getState().undockDroneFromFactory(factoryA.id, 'drone-2', { transferOwnership: true });
-
-    owned = store.getState().factories[0].ownedDrones;
-    const secondOwnershipCount = owned.filter((id) => id === 'drone-2').length;
-
-    // Should have exactly 1 entry, not accumulated duplicates
-    expect(firstOwnershipCount).toBe(1);
-    expect(secondOwnershipCount).toBe(1);
-    expect(owned).toContain('drone-2');
-  });
-
-  it('ensures single ownership across all factories', () => {
-    const state = store.getState();
-    // Verify factories exist before purchase
-    void state.factories;
-
-    // Add more factories for testing
-    store.setState({
-      resources: { ...state.resources, metals: 1000, crystals: 1000 },
-    });
-    store.getState().purchaseFactory();
-    store.getState().purchaseFactory();
-
-    const updatedFactories = store.getState().factories;
-    const [fA, fB, fC] = updatedFactories;
-
-    // Simulate drone visiting multiple factories
-    store.getState().dockDroneAtFactory(fA.id, 'drone-3');
-    store.getState().undockDroneFromFactory(fA.id, 'drone-3', { transferOwnership: true });
-
-    store.getState().dockDroneAtFactory(fB.id, 'drone-3');
-    store.getState().undockDroneFromFactory(fB.id, 'drone-3', { transferOwnership: true });
-
-    store.getState().dockDroneAtFactory(fC.id, 'drone-3');
-    store.getState().undockDroneFromFactory(fC.id, 'drone-3', { transferOwnership: true });
-
-    // Count total occurrences across all factories
-    const finalState = store.getState();
-    const totalOwnerships = finalState.factories.reduce(
-      (sum, factory) => sum + factory.ownedDrones.filter((id) => id === 'drone-3').length,
-      0,
-    );
-
-    // Should have exactly 1 ownership (in factory C)
-    expect(totalOwnerships).toBe(1);
-    expect(finalState.factories[2].ownedDrones).toContain('drone-3');
-    expect(finalState.factories[0].ownedDrones).not.toContain('drone-3');
-    expect(finalState.factories[1].ownedDrones).not.toContain('drone-3');
   });
 });

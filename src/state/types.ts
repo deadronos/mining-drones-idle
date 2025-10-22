@@ -78,7 +78,6 @@ export interface FactorySnapshot {
   energy: number;
   energyCapacity: number;
   resources: FactoryResourceSnapshot;
-  ownedDrones: string[];
   upgrades: FactoryUpgradeSnapshot;
   upgradeRequests?: FactoryUpgradeRequestSnapshot[];
   haulersAssigned?: number;
@@ -200,6 +199,9 @@ export interface StoreSnapshot {
   selectedFactoryId?: string | null;
   droneOwners?: Record<string, string | null>;
   logisticsQueues?: LogisticsQueues;
+  specTechs?: SpecTechState;
+  specTechSpent?: SpecTechSpentState;
+  prestigeInvestments?: PrestigeInvestmentState;
 }
 
 export interface StoreState {
@@ -212,6 +214,9 @@ export interface StoreState {
   droneFlights: DroneFlightState[];
   factories: BuildableFactory[];
   logisticsQueues: LogisticsQueues;
+  specTechs: SpecTechState;
+  specTechSpent: SpecTechSpentState;
+  prestigeInvestments: PrestigeInvestmentState;
   gameTime: number;
   factoryProcessSequence: number;
   factoryRoundRobin: number;
@@ -271,6 +276,8 @@ export interface StoreState {
     factoryId: string,
     upgradeId: FactoryHaulerUpgradeId,
   ): boolean;
+  purchaseSpecTech(this: void, techId: SpecTechId): boolean;
+  investPrestige(this: void, investmentId: PrestigeInvestmentId): boolean;
   getLogisticsStatus(
     this: void,
     factoryId: string,
@@ -294,6 +301,14 @@ export type FactoryUpgradeId = keyof FactoryUpgrades;
 
 export type FactoryUpgradeCostVariantId = 'bars' | 'metals' | 'crystals' | 'organics' | 'ice';
 
+export type SpecTechId = 'oreMagnet' | 'crystalResonance' | 'biotechFarming' | 'cryoPreservation';
+
+export type PrestigeInvestmentId =
+  | 'droneVelocity'
+  | 'asteroidAbundance'
+  | 'refineryMastery'
+  | 'offlineEfficiency';
+
 export type FactoryUpgradeCostMap = Partial<FactoryResources>;
 
 export interface FactoryUpgradeDefinition {
@@ -303,3 +318,9 @@ export interface FactoryUpgradeDefinition {
   alternativeCosts?: Partial<Record<FactoryUpgradeCostVariantId, FactoryUpgradeCostMap>>;
   apply(factory: BuildableFactory): void;
 }
+
+export type SpecTechState = Record<SpecTechId, number>;
+
+export type SpecTechSpentState = Record<'metals' | 'crystals' | 'organics' | 'ice', number>;
+
+export type PrestigeInvestmentState = Record<PrestigeInvestmentId, number>;
