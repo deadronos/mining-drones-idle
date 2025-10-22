@@ -2,7 +2,18 @@
 
 ## Current Focus
 
-✅ **Serialization Refactor Complete (TASK024)**: Successfully redo the serialization refactoring from stub state to full implementation. Store-level normalization functions now properly in `serialization/store.ts`. All 174 tests pass, TypeScript clean, lint clean. Circular dependencies resolved.
+✅ **TASK035 & TASK036 Completed** ✅
+
+- **TASK035 (Remove ownedDrones)**: Successfully removed unused historical ownership record from entire codebase
+  - Removed 150+ lines across 9 files, deleted 2 files (RosterSection UI component & tests)
+  - Simplified factory state model, improved code maintainability
+  - All type definitions, serialization, store logic, and UI references cleaned
+- **TASK036 (Position-Based Unload Trigger)**: Implemented critical fix for queue jamming
+  - Drones now unload immediately upon arriving at factory position (< 1.0 units)
+  - Bypasses battery throttling that was causing 10-100x travel delays
+  - Preserves time-based trigger as fallback for edge cases
+- **Validation**: 189/189 tests passing ✅, TypeScript clean ✅, linting clean ✅
+- **Status**: Both tasks ready for production deployment
 
 ✅ **FactoryManager Refactor Complete (TASK023)**: Deleted old monolithic `FactoryManager.tsx` file that was blocking refactored version. Solar Array bonus now displays correctly in UI.
 

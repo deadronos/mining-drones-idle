@@ -9,6 +9,7 @@
 ## Original Request
 
 Fix the drone unload system to trigger on **position arrival** rather than **travel time completion**. Currently:
+
 - Drones returning to factory get throttled by low battery
 - Battery throttling slows travel progress to 10-100x slower
 - This causes drones to occupy docking slots indefinitely
@@ -21,8 +22,9 @@ Solution: When drone arrives at factory position (distance < threshold), immedia
 ### Root Cause Analysis (from DES024)
 
 The current flow:
+
 ```
-drone.state = 'returning' 
+drone.state = 'returning'
   → travel starts with battery fraction throttling
   → travel.elapsed += dt * fraction (fraction = 0.01-0.1 when battery low)
   → travel takes 10-100x longer than intended
@@ -36,6 +38,7 @@ With throttling: 10-second trip becomes 100+ seconds real-time
 ```
 
 Current transition point (src/ecs/systems/travel.ts:60-67):
+
 ```typescript
 if (travel.elapsed >= travel.duration - 1e-4) {
   drone.position.copy(travel.to);
@@ -44,7 +47,7 @@ if (travel.elapsed >= travel.duration - 1e-4) {
   if (drone.state === 'toAsteroid') {
     drone.state = 'mining';
   } else if (drone.state === 'returning') {
-    drone.state = 'unloading';  // ← Only happens at travel.duration
+    drone.state = 'unloading'; // ← Only happens at travel.duration
   }
 }
 ```
@@ -52,7 +55,7 @@ if (travel.elapsed >= travel.duration - 1e-4) {
 ### Why Position-Based Trigger Works
 
 - Battery throttling affects travel progress (`travel.elapsed`), not position computation
-- Position is updated every tick: `computeTravelPosition(travel, drone.position)` 
+- Position is updated every tick: `computeTravelPosition(travel, drone.position)`
 - By the time throttling causes problems, drone position is already correct
 - Transition to unload immediately once position is close enough = unload starts sooner
 - Unloading doesn't depend on travel data, so it's safe to clear travel early
@@ -107,6 +110,7 @@ if (travel.elapsed >= travel.duration - 1e-4) {
   - Add `UNLOAD_ARRIVAL_DISTANCE` constant at top
   - Add `hasArrivedAtFactory()` helper function
   - In travel loop, add check before time-based trigger:
+
     ```typescript
     // NEW: Check if drone has arrived at factory (position-based)
     if (drone.state === 'returning' && drone.targetFactoryId) {
@@ -215,29 +219,29 @@ if (travel.elapsed >= travel.duration - 1e-4) {
 
 ### Subtasks
 
-| ID  | Description                      | Status | Updated | Notes |
-| --- | -------------------------------- | ------ | ------- | ----- |
-| 1.1 | Review travel system             | Not Started | - | - |
-| 1.2 | Review distance checks           | Not Started | - | - |
-| 1.3 | Document unload system           | Not Started | - | - |
-| 2.1 | Define distance threshold        | Not Started | - | - |
-| 2.2 | Create arrival detection helper  | Not Started | - | - |
-| 2.3 | Design state transition logic    | Not Started | - | - |
-| 3.1 | Modify travel.ts with trigger    | Not Started | - | - |
-| 3.2 | Verify flight recording          | Not Started | - | - |
-| 3.3 | Add debugging/metrics (optional) | Not Started | - | - |
-| 4.1 | Unit tests for arrival detection | Not Started | - | - |
-| 4.2 | Integration tests               | Not Started | - | - |
-| 4.3 | Scenario tests (queue jamming)   | Not Started | - | - |
-| 5.1 | Handle missing factory edge case | Not Started | - | - |
-| 5.2 | Handle corrupted position       | Not Started | - | - |
-| 5.3 | Handle null travel state        | Not Started | - | - |
-| 5.4 | Handle drone already at factory  | Not Started | - | - |
-| 6.1 | Performance validation          | Not Started | - | - |
-| 6.2 | Full test suite run             | Not Started | - | - |
-| 6.3 | TypeScript check                | Not Started | - | - |
-| 6.4 | Lint check                      | Not Started | - | - |
-| 6.5 | Manual scenario test            | Not Started | - | - |
+| ID  | Description                      | Status      | Updated | Notes |
+| --- | -------------------------------- | ----------- | ------- | ----- |
+| 1.1 | Review travel system             | Not Started | -       | -     |
+| 1.2 | Review distance checks           | Not Started | -       | -     |
+| 1.3 | Document unload system           | Not Started | -       | -     |
+| 2.1 | Define distance threshold        | Not Started | -       | -     |
+| 2.2 | Create arrival detection helper  | Not Started | -       | -     |
+| 2.3 | Design state transition logic    | Not Started | -       | -     |
+| 3.1 | Modify travel.ts with trigger    | Not Started | -       | -     |
+| 3.2 | Verify flight recording          | Not Started | -       | -     |
+| 3.3 | Add debugging/metrics (optional) | Not Started | -       | -     |
+| 4.1 | Unit tests for arrival detection | Not Started | -       | -     |
+| 4.2 | Integration tests                | Not Started | -       | -     |
+| 4.3 | Scenario tests (queue jamming)   | Not Started | -       | -     |
+| 5.1 | Handle missing factory edge case | Not Started | -       | -     |
+| 5.2 | Handle corrupted position        | Not Started | -       | -     |
+| 5.3 | Handle null travel state         | Not Started | -       | -     |
+| 5.4 | Handle drone already at factory  | Not Started | -       | -     |
+| 6.1 | Performance validation           | Not Started | -       | -     |
+| 6.2 | Full test suite run              | Not Started | -       | -     |
+| 6.3 | TypeScript check                 | Not Started | -       | -     |
+| 6.4 | Lint check                       | Not Started | -       | -     |
+| 6.5 | Manual scenario test             | Not Started | -       | -     |
 
 ## Progress Log
 
@@ -258,17 +262,20 @@ _(Updates logged as work progresses)_
 ## Success Metrics (Validation)
 
 **Before Fix:**
+
 - 4+ factories show 30+ drones waiting
 - Total drones: 58
 - Waiting queues accumulate indefinitely
 
 **After Fix:**
+
 - Waiting queues should stay <= 10-15 per factory
 - Drones cycle through mining → returning → unloading → idle faster
 - No queue jamming cascade
 - Docking slots free up as unloading completes quicker
 
 **Related Issues Fixed:**
+
 - Battery throttling no longer blocks queue progression
 - Stuck-returning drones unload immediately
 - Waiting drones get fair access to docking slots

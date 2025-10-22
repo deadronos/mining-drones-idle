@@ -78,7 +78,6 @@ export interface FactorySnapshot {
   energy: number;
   energyCapacity: number;
   resources: FactoryResourceSnapshot;
-  ownedDrones: string[];
   upgrades: FactoryUpgradeSnapshot;
   upgradeRequests?: FactoryUpgradeRequestSnapshot[];
   haulersAssigned?: number;

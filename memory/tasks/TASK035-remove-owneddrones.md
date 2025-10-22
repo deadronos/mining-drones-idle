@@ -9,6 +9,7 @@
 ## Original Request
 
 Remove the `ownedDrones` field from factories. This is a historical record of drones that have finished unloading at a factory, but it:
+
 - Is not used by any game mechanics or logic
 - Is purely cosmetic (UI display only)
 - Duplicates functionality already provided by global `droneOwners` map
@@ -17,10 +18,12 @@ Remove the `ownedDrones` field from factories. This is a historical record of dr
 ## Thought Process
 
 The drone system has two ownership tracking mechanisms:
+
 1. **`factory.ownedDrones`** - Historical list of drone IDs that have unloaded here (cosmetic)
 2. **`store.droneOwners`** - Global map: droneId → factoryId (actual game logic)
 
 Investigation showed:
+
 - Game logic uses only `queuedDrones` (docking queue) and `droneOwners` (global map)
 - `ownedDrones` is only read by `RosterSection.tsx` (UI panel showing historical list)
 - No upgrades, achievements, or mechanics depend on `ownedDrones` count
@@ -59,6 +62,7 @@ Investigation showed:
 - [ ] **3.1** Update `src/state/slices/factorySlice.ts`
   - Remove `ownedDrones` handling from `undockDroneFromFactory()` (lines ~174-188)
   - This entire block can be deleted:
+
     ```typescript
     factories = state.factories.map((factory) => {
       if (factory.ownedDrones.includes(droneId)) {
@@ -128,23 +132,23 @@ Investigation showed:
 
 ### Subtasks
 
-| ID  | Description                      | Status | Updated | Notes |
-| --- | -------------------------------- | ------ | ------- | ----- |
-| 1.1 | Remove from BuildableFactory     | Not Started | - | - |
-| 1.2 | Remove from types               | Not Started | - | - |
-| 2.1 | Remove from serialization/factory.ts | Not Started | - | - |
-| 2.2 | Remove from serialization/types.ts | Not Started | - | - |
-| 2.3 | Add migration handler           | Not Started | - | - |
-| 3.1 | Remove from factorySlice        | Not Started | - | - |
-| 4.1 | Delete RosterSection.tsx        | Not Started | - | - |
-| 4.2 | Delete RosterSection.test.tsx   | Not Started | - | - |
-| 4.3 | Update FactoryManager imports   | Not Started | - | - |
-| 5.1 | Update factory tests            | Not Started | - | - |
-| 5.2 | Run test suite                  | Not Started | - | - |
-| 6.1 | TypeScript check                | Not Started | - | - |
-| 6.2 | Lint check                      | Not Started | - | - |
-| 6.3 | Full test run                   | Not Started | - | - |
-| 6.4 | Manual smoke test               | Not Started | - | - |
+| ID  | Description                          | Status      | Updated | Notes |
+| --- | ------------------------------------ | ----------- | ------- | ----- |
+| 1.1 | Remove from BuildableFactory         | Not Started | -       | -     |
+| 1.2 | Remove from types                    | Not Started | -       | -     |
+| 2.1 | Remove from serialization/factory.ts | Not Started | -       | -     |
+| 2.2 | Remove from serialization/types.ts   | Not Started | -       | -     |
+| 2.3 | Add migration handler                | Not Started | -       | -     |
+| 3.1 | Remove from factorySlice             | Not Started | -       | -     |
+| 4.1 | Delete RosterSection.tsx             | Not Started | -       | -     |
+| 4.2 | Delete RosterSection.test.tsx        | Not Started | -       | -     |
+| 4.3 | Update FactoryManager imports        | Not Started | -       | -     |
+| 5.1 | Update factory tests                 | Not Started | -       | -     |
+| 5.2 | Run test suite                       | Not Started | -       | -     |
+| 6.1 | TypeScript check                     | Not Started | -       | -     |
+| 6.2 | Lint check                           | Not Started | -       | -     |
+| 6.3 | Full test run                        | Not Started | -       | -     |
+| 6.4 | Manual smoke test                    | Not Started | -       | -     |
 
 ## Progress Log
 

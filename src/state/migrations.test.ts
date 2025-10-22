@@ -161,7 +161,6 @@ describe('migrations', () => {
           pinned: false,
           energy: 50,
           energyCapacity: 100,
-          ownedDrones: [],
           upgrades: { docking: 0, refine: 0, storage: 0, energy: 0, solar: 0 },
           logisticsState: {
             outboundReservations: {},
@@ -253,7 +252,6 @@ describe('migrations', () => {
           energy: 40,
           energyCapacity: 80,
           resources: { ore: 10, metals: 5, crystals: 2, organics: 0, ice: 0, bars: 3, credits: 0 },
-          ownedDrones: [],
           upgrades: { docking: 0, refine: 0, storage: 0, energy: 0, solar: 0 },
           upgradeRequests: [],
           haulersAssigned: 0,

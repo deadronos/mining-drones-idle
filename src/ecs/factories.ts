@@ -65,7 +65,6 @@ export interface BuildableFactory {
   energy: number;
   energyCapacity: number;
   resources: FactoryResources;
-  ownedDrones: string[];
   upgrades: FactoryUpgrades;
   upgradeRequests: FactoryUpgradeRequest[]; // active upgrade resource requests
   haulersAssigned?: number;
@@ -137,7 +136,6 @@ export const createFactory = (id: string, position: Vector3): BuildableFactory =
     ice: 0,
     credits: 0,
   },
-  ownedDrones: [],
   upgrades: { docking: 0, refine: 0, storage: 0, energy: 0, solar: 0 },
   upgradeRequests: [],
   haulersAssigned: 0,

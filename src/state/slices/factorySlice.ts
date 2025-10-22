@@ -169,27 +169,7 @@ export const createFactorySlice: StateCreator<
 
     if (options?.transferOwnership) {
       nextDroneOwners = { ...state.droneOwners, [droneId]: factoryId };
-
-      factories = state.factories.map((factory) => {
-        if (factory.ownedDrones.includes(droneId)) {
-          return {
-            ...factory,
-            ownedDrones: factory.ownedDrones.filter((id) => id !== droneId),
-          };
-        }
-        return factory;
-      });
-
-      factories = factories.map((factory, idx) => {
-        if (idx === index) {
-          const newOwned = Array.from(new Set([...factory.ownedDrones, droneId]));
-          return {
-            ...updated,
-            ownedDrones: newOwned,
-          };
-        }
-        return factory;
-      });
+      factories = state.factories.map((factory, idx) => (idx === index ? updated : factory));
     } else {
       factories = state.factories.map((factory, idx) => (idx === index ? updated : factory));
     }

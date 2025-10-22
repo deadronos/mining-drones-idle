@@ -5,7 +5,6 @@ import { DockingSection } from './sections/DockingSection';
 import { EnergySection } from './sections/EnergySection';
 import { StorageSection } from './sections/StorageSection';
 import { UpgradeSection } from './sections/UpgradeSection';
-import { RosterSection } from './sections/RosterSection';
 import { HaulerSection } from './sections/HaulerSection';
 import { RefineSection } from './sections/RefineSection';
 import '../FactoryManager.css';
@@ -162,8 +161,6 @@ const SelectedFactoryCard = ({
       </div>
 
       <UpgradeSection factory={factory} onUpgrade={onUpgrade} />
-
-      <RosterSection factory={factory} />
 
       <RefineSection factory={factory} />
 
