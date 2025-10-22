@@ -113,3 +113,7 @@
 8. Gather player feedback on buffer target display clarity and adjust labels/formatting if needed.
 9. Capture tutorial/tooling follow-up (tutorial overlay or HUD tooltip) once UI teams provide direction.
 10. Prepare final TASK025 wrap-up notes and identify residual polish items for warehouse UX.
+
+## Memory Bank Audit
+
+- 2025-10-22: Performed Memory Bank audit and added `TASK999` to record the update. Core memory files validated and a short progress note appended. One persistence test timed out during a local test run; no code changes were made as part of this audit.
