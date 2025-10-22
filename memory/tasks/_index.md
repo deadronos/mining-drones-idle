@@ -36,3 +36,7 @@
 | TASK032 | Warehouse Space-Station Entity & Left Panel  | In Progress | 2025-10-25 |
 | TASK033 | Hauler Tech Upgrades Implementation          | In Progress | 2025-10-27 |
 | TASK034 | Secondary Resource Sinks & Investment System | Pending     | 2025-10-21 |
+| TASK035 | Remove Unused ownedDrones Historical Record  | Pending     | 2025-10-22 |
+| TASK036 | Fix Drone Unload Trigger - Position Arrival  | Pending     | 2025-10-22 |
+
+```
