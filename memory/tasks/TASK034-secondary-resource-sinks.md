@@ -40,15 +40,25 @@ Bonuses compound multiplicatively, rewarding diverse investment paths.
 
 ### Phase 1: Tier 1 – Bulk Factory Upgrades
 
-- [ ] Add `alternativeCosts` to upgrade definitions in constants.ts
-- [ ] Create `computeUpgradeCost()` utility function
-- [ ] Extend `purchaseFactoryUpgrade()` store method to accept resource type parameter
-- [ ] Add cost variant UI to factory upgrade buttons (tabs/toggle for "Bars vs Metals" etc.)
-- [ ] Write unit tests for alternative cost calculation
+- [x] Add `alternativeCosts` to upgrade definitions in constants.ts
+- [x] Create `computeUpgradeCost()` utility function
+- [x] Extend `purchaseFactoryUpgrade()` store method to accept resource type parameter
+- [x] Add cost variant UI to factory upgrade buttons (tabs/toggle for "Bars vs Metals" etc.)
+- [x] Write unit tests for alternative cost calculation
 - [ ] Verify warehouse occupancy decreases (bar imports improve)
 
+Notes: Phase 1 is functionally implemented in the codebase. Key implementations:
+
+- `src/state/constants.ts` — `factoryUpgradeDefinitions` includes `alternativeCosts` entries.
+- `src/state/utils.ts` — `computeFactoryUpgradeCost` / `getFactoryUpgradeCost` implement variant cost math.
+- `src/state/slices/factorySlice.ts` — `upgradeFactory(factoryId, upgrade, variant)` accepts variants and deducts factory-local resources.
+- `src/ui/FactoryManager/sections/UpgradeSection.tsx` — UI shows "Pay with" selector and wires variant to upgrade action.
+- `src/state/store.factories.test.ts` — tests cover alternative resource payment flows.
+
+**Remaining Phase 1 task**: manual verification of warehouse occupancy/impact on bar imports (playtesting / metrics).
+
 **Depends on**: TASK033 completion (no hard dependency, but review hauler tech to understand store patterns)  
-**Estimated effort**: 2–3 days
+**Estimated effort (remaining)**: 0.5–1 day (playtesting + validation)
 
 ### Phase 2: Tier 2 – Specialization Techs
 
@@ -67,6 +77,8 @@ Bonuses compound multiplicatively, rewarding diverse investment paths.
 
 **Depends on**: Phase 1 completion  
 **Estimated effort**: 3–4 days
+
+Notes: The codebase already contains a resource-driven modifiers system (`src/lib/resourceModifiers.ts`) which provides passive bonuses based on accumulated secondary resources (metals/crystals/organics/ice). That system is used by refinery and capacity calculations and can be re-used when implementing discrete "spec techs". However, the purchasable/unlockable tech mechanics, state fields and UI are not yet implemented.
 
 ### Phase 3: Tier 3 – Prestige Investment Board
 
@@ -88,6 +100,8 @@ Bonuses compound multiplicatively, rewarding diverse investment paths.
 
 **Depends on**: Phase 2 completion  
 **Estimated effort**: 2–3 days
+
+Notes: Base prestige mechanics are already implemented (`src/state/slices/resourceSlice.ts`, `src/state/utils.ts`, and `src/ui/UpgradePanel.tsx` provide `computePrestigeGain`, `computePrestigeBonus`, `preview`, and `doPrestige`). What is missing is a persistent investment board (tiered investments, invest API, UI, serialization and ensuring investments persist across resets).
 
 ### Phase 4: Bonus Compounding & Balance Tuning
 
@@ -125,13 +139,13 @@ Bonuses compound multiplicatively, rewarding diverse investment paths.
 
 ## Progress Tracking
 
-**Overall Status**: Not Started (0%)
+- **Overall Status**: Phase 1 Complete (Tier 1 implemented); Phase 2 & 3 pending
 
 ### Subtasks
 
 | ID  | Description                                 | Status      | Updated    | Notes                                       |
 | --- | ------------------------------------------- | ----------- | ---------- | ------------------------------------------- |
-| 1.1 | Phase 1: Tier 1 Bulk Factory Upgrades       | Not Started | 2025-10-21 | Immediate utility, low implementation cost  |
+| 1.1 | Phase 1: Tier 1 Bulk Factory Upgrades       | Completed   | 2025-10-22 | Implemented (see notes above)               |
 | 1.2 | Phase 2: Tier 2 Specialization Techs        | Not Started | 2025-10-21 | Medium-term progression, complex state mgmt |
 | 1.3 | Phase 3: Tier 3 Prestige Investment Board   | Not Started | 2025-10-21 | Long-term endgame, prestige persistence     |
 | 1.4 | Phase 4: Bonus Compounding & Balance Tuning | Not Started | 2025-10-21 | Verify math, playtesting                    |
@@ -154,6 +168,21 @@ Bonuses compound multiplicatively, rewarding diverse investment paths.
 - Documented three-phase implementation plan
 - Identified critical dependencies and estimated effort (~8–13 days total)
 - Ready for Phase 1 kickoff once design is approved
+
+### 2025-10-22
+
+- Codebase scan performed to map TASK034 to implemented files.
+- Confirmed Phase 1 (Tier 1 alternative-cost factory upgrades) is implemented:
+  - `factoryUpgradeDefinitions` include `alternativeCosts`.
+  - Cost computation and UI variant selection are present (`computeFactoryUpgradeCost`, `UpgradeSection.tsx`).
+  - Store accepts `variant` in `upgradeFactory()` and tests cover alternate payment flows.
+- Noted existing supporting systems useful for Phase 2 and 3:
+  - `src/lib/resourceModifiers.ts` implements resource-accumulation-driven bonuses used by refinery and capacity calculations.
+  - Base prestige flow (cores, preview, doPrestige, computePrestigeBonus) exists in `resourceSlice` and `utils` and is surfaced in the UI (`UpgradePanel.tsx`).
+- Remaining work recommended:
+  - Implement Phase 2: spec techs as purchasable state with UI and tests (3–4 days est.).
+  - Implement Phase 3: prestige investment board with persistence (2–3 days est.).
+  - Manual playtesting to validate warehouse occupancy improvement from Phase 1.
 
 ---
 
