@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unknown-property */
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { InstancedMesh, MeshStandardMaterial, PointLight } from 'three';
+import type { InstancedMesh, MeshStandardMaterial, PointLight, Group } from 'three';
 import { Color, Matrix4, Quaternion, Vector3 } from 'three';
 import { gameWorld } from '@/ecs/world';
 import { useStore, type PerformanceProfile } from '@/state/store';
@@ -55,6 +55,15 @@ const fxScale = new Vector3(0.22, 0.22, 0.22);
 const itemScale = new Vector3(0.2, 0.2, 0.2);
 const fxColor = new Color('#38bdf8');
 
+// Factory color palette
+const FACTORY_BASE = '#1f2937';
+const FACTORY_CORE = '#1e293b';
+const FACTORY_RING = '#38bdf8';
+const FACTORY_ACCENT = '#0ea5e9';
+const FACTORY_STRUT = '#1a1a2e';
+const FACTORY_PANEL = '#111827';
+const FACTORY_GLOW = '#0f172a';
+
 type TransferState = {
   active: boolean;
   elapsed: number;
@@ -93,6 +102,7 @@ const FactoryModel = ({ position }: { position: Vector3 }) => {
   const ringMaterialRef = useRef<MeshStandardMaterial>(null);
   const baseMaterialRef = useRef<MeshStandardMaterial>(null);
   const boostLightRef = useRef<PointLight>(null);
+  const ringGroupRef = useRef<Group>(null);
 
   const [initialItemStates] = useState<ItemState[]>(() =>
     Array.from({ length: ITEM_POOL_SIZE }, (_, index) => ({
@@ -125,6 +135,11 @@ const FactoryModel = ({ position }: { position: Vector3 }) => {
     });
     if (boostLightRef.current) {
       boostLightRef.current.intensity = 0.6 + activity.boost * 1.6;
+    }
+
+    // Rotate the docking ring
+    if (ringGroupRef.current) {
+      ringGroupRef.current.rotation.z += delta * 0.8;
     }
 
     beltTextures.forEach((texture, index) => {
@@ -169,43 +184,225 @@ const FactoryModel = ({ position }: { position: Vector3 }) => {
 
   return (
     <group position={positionArray} quaternion={orientation}>
+      {/* Foundation base plate */}
+      <mesh position={[0, -0.3, 0]} receiveShadow>
+        <cylinderGeometry args={[3.2, 3.6, 0.25, 32]} />
+        <meshPhysicalMaterial
+          color={FACTORY_PANEL}
+          metalness={0.4}
+          roughness={0.7}
+          clearcoat={0.2}
+          clearcoatRoughness={0.8}
+        />
+      </mesh>
+
+      {/* Foundation support struts */}
+      {Array.from({ length: 6 }).map((_, i) => {
+        const angle = (i * Math.PI * 2) / 6;
+        const x = Math.cos(angle) * 2.8;
+        const z = Math.sin(angle) * 2.8;
+        return (
+          <mesh
+            key={`foundation-strut-${i}`}
+            position={[x, -0.08, z]}
+            rotation={[Math.PI / 2, angle, 0]}
+          >
+            <cylinderGeometry args={[0.06, 0.06, 0.5, 8]} />
+            <meshPhysicalMaterial
+              color={FACTORY_STRUT}
+              metalness={0.55}
+              roughness={0.6}
+              clearcoat={0.1}
+            />
+          </mesh>
+        );
+      })}
+
+      {/* Main base cylinder with enhanced detail */}
       <mesh castShadow receiveShadow>
         <cylinderGeometry args={[2.2, 2.8, 1.2, 32]} />
-        <meshStandardMaterial
+        <meshPhysicalMaterial
           ref={baseMaterialRef}
-          color="#1f2937"
-          metalness={0.55}
-          roughness={0.4}
-          emissive="#0f172a"
+          color={FACTORY_BASE}
+          metalness={0.6}
+          roughness={0.35}
+          emissive={FACTORY_GLOW}
           emissiveIntensity={0.22}
+          clearcoat={0.25}
+          clearcoatRoughness={0.65}
         />
       </mesh>
+
+      {/* Base detail rings */}
+      {Array.from({ length: 2 }).map((_, i) => (
+        <mesh key={`base-ring-${i}`} position={[0, -0.35 + i * 0.7, 0]} receiveShadow>
+          <cylinderGeometry args={[2.85, 2.85, 0.1, 32]} />
+          <meshPhysicalMaterial
+            color={FACTORY_ACCENT}
+            metalness={0.65}
+            roughness={0.4}
+            emissive="#06b6d4"
+            emissiveIntensity={0.2}
+            clearcoat={0.15}
+          />
+        </mesh>
+      ))}
+
+      {/* Processing core */}
       <mesh position={[0, 0.6, 0]} castShadow receiveShadow>
         <cylinderGeometry args={[1.6, 1.6, 1, 32]} />
-        <meshStandardMaterial
+        <meshPhysicalMaterial
           ref={coreMaterialRef}
-          color="#1e293b"
-          metalness={0.65}
-          roughness={0.3}
-          emissive="#38bdf8"
+          color={FACTORY_CORE}
+          metalness={0.7}
+          roughness={0.25}
+          emissive={FACTORY_RING}
           emissiveIntensity={0.6}
+          clearcoat={0.3}
+          clearcoatRoughness={0.55}
         />
       </mesh>
-      <mesh position={[0, 1.5, 0]} castShadow receiveShadow>
-        <torusGeometry args={[1.9, 0.12, 18, 64]} />
-        <meshStandardMaterial
-          ref={ringMaterialRef}
-          color="#38bdf8"
-          emissive="#0ea5e9"
-          emissiveIntensity={0.8}
-          metalness={0.45}
-          roughness={0.22}
+
+      {/* Core detail rings */}
+      {Array.from({ length: 3 }).map((_, i) => (
+        <mesh key={`core-ring-${i}`} position={[0, 0.1 + i * 0.4, 0]} receiveShadow>
+          <cylinderGeometry args={[1.7, 1.7, 0.08, 32]} />
+          <meshPhysicalMaterial
+            color="#0f2942"
+            metalness={0.65}
+            roughness={0.45}
+            emissive="#0c4a6e"
+            emissiveIntensity={0.15}
+            clearcoat={0.15}
+          />
+        </mesh>
+      ))}
+
+      {/* Primary rotating docking ring */}
+      <group ref={ringGroupRef} position={[0, 1.5, 0]}>
+        <mesh castShadow>
+          <torusGeometry args={[1.9, 0.12, 18, 64]} />
+          <meshPhysicalMaterial
+            ref={ringMaterialRef}
+            color={FACTORY_RING}
+            emissive={FACTORY_ACCENT}
+            emissiveIntensity={0.8}
+            metalness={0.5}
+            roughness={0.2}
+            clearcoat={0.35}
+            clearcoatRoughness={0.5}
+          />
+        </mesh>
+
+        {/* Docking port connectors around ring */}
+        {Array.from({ length: 6 }).map((_, i) => {
+          const angle = (i * Math.PI * 2) / 6;
+          const x = Math.cos(angle) * 1.9;
+          const z = Math.sin(angle) * 1.9;
+          return (
+            <mesh key={`dock-connector-${i}`} position={[x, 0, z]} rotation={[0, angle, 0]}>
+              <boxGeometry args={[0.25, 0.25, 0.2, 2, 2, 1]} />
+              <meshPhysicalMaterial
+                color={FACTORY_RING}
+                emissive={FACTORY_RING}
+                emissiveIntensity={0.5}
+                metalness={0.75}
+                roughness={0.25}
+                clearcoat={0.2}
+              />
+            </mesh>
+          );
+        })}
+
+        {/* Secondary stabilizing ring (perpendicular) */}
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[1.8, 0.06, 12, 48]} />
+          <meshPhysicalMaterial
+            color="#0a3a52"
+            metalness={0.6}
+            roughness={0.4}
+            emissive="#05596f"
+            emissiveIntensity={0.3}
+            clearcoat={0.15}
+          />
+        </mesh>
+      </group>
+
+      {/* Secondary static ring */}
+      <mesh position={[0, 0.75, 0]}>
+        <torusGeometry args={[2.1, 0.08, 20, 80]} />
+        <meshPhysicalMaterial
+          color="#0c2d42"
+          emissive="#0a4a62"
+          emissiveIntensity={0.35}
+          metalness={0.6}
+          roughness={0.45}
+          clearcoat={0.2}
         />
       </mesh>
+
+      {/* Floor platform with grid detail */}
       <mesh position={[0, 0.2, 0]} receiveShadow>
         <boxGeometry args={[3.4, 0.16, 3.4]} />
-        <meshStandardMaterial color="#111827" metalness={0.2} roughness={0.65} />
+        <meshPhysicalMaterial
+          color={FACTORY_PANEL}
+          metalness={0.3}
+          roughness={0.65}
+          clearcoat={0.1}
+        />
       </mesh>
+
+      {/* Corner support struts */}
+      {Array.from({ length: 4 }).map((_, i) => {
+        const angle = (i * Math.PI) / 2;
+        const x = Math.cos(angle) * 1.4;
+        const z = Math.sin(angle) * 1.4;
+        return (
+          <mesh
+            key={`support-strut-${i}`}
+            position={[x, 0.35, z]}
+            rotation={[0, angle, 0]}
+            receiveShadow
+          >
+            <cylinderGeometry args={[0.08, 0.08, 0.9, 12]} />
+            <meshPhysicalMaterial
+              color={FACTORY_STRUT}
+              metalness={0.5}
+              roughness={0.65}
+              clearcoat={0.1}
+            />
+          </mesh>
+        );
+      })}
+
+      {/* Radiator heat fins (side panels) */}
+      {Array.from({ length: 4 }).map((_, i) => {
+        const angle = (i * Math.PI * 2) / 4;
+        const x = Math.cos(angle) * 2.5;
+        const z = Math.sin(angle) * 2.5;
+        const rotY = angle + Math.PI / 2;
+        return (
+          <mesh
+            key={`radiator-${i}`}
+            position={[x, 0.5, z]}
+            rotation={[0, rotY, Math.PI / 8]}
+            castShadow
+            receiveShadow
+          >
+            <boxGeometry args={[0.12, 0.8, 0.6, 1, 3, 2]} />
+            <meshPhysicalMaterial
+              color="#0d1f2d"
+              emissive="#0f2a3a"
+              emissiveIntensity={0.15}
+              metalness={0.65}
+              roughness={0.5}
+              clearcoat={0.12}
+            />
+          </mesh>
+        );
+      })}
+
+      {/* Conveyor belts */}
       {BELTS.map((belt, index) => (
         <mesh
           key={`belt-${index}`}
@@ -215,40 +412,77 @@ const FactoryModel = ({ position }: { position: Vector3 }) => {
           receiveShadow
         >
           <boxGeometry args={belt.scale} />
-          <meshStandardMaterial
+          <meshPhysicalMaterial
             ref={(material) => {
               beltMaterials.current[index] = material;
             }}
-            color="#0f172a"
-            metalness={0.25}
-            roughness={0.5}
+            color={FACTORY_GLOW}
+            metalness={0.35}
+            roughness={0.45}
             emissive="#155e75"
             emissiveIntensity={0.18}
             map={beltTextures[index] ?? undefined}
+            clearcoat={0.15}
           />
         </mesh>
       ))}
+
+      {/* Items on conveyor */}
       <instancedMesh
         ref={itemMeshRef}
         args={[undefined as never, undefined as never, ITEM_POOL_SIZE]}
         castShadow
       >
         <boxGeometry args={[0.28, 0.18, 0.28]} />
-        <meshStandardMaterial
+        <meshPhysicalMaterial
           color="#f59e0b"
           emissive="#fbbf24"
           emissiveIntensity={0.4}
-          roughness={0.4}
+          roughness={0.3}
+          metalness={0.3}
+          clearcoat={0.2}
         />
       </instancedMesh>
+
+      {/* Top beacon */}
+      <mesh position={[0, 2.2, 0]} castShadow>
+        <coneGeometry args={[0.15, 0.3, 16]} />
+        <meshPhysicalMaterial
+          color="#7dd3fc"
+          emissive={FACTORY_ACCENT}
+          emissiveIntensity={0.7}
+          metalness={0.65}
+          roughness={0.2}
+          clearcoat={0.25}
+        />
+      </mesh>
+
+      {/* Boost/activity light */}
       <pointLight
         ref={boostLightRef}
         position={[0, 2.6, 0]}
-        color="#38bdf8"
+        color={FACTORY_RING}
         intensity={0.8}
         distance={10}
         decay={2}
       />
+
+      {/* Ambient accent lights around radiators */}
+      {Array.from({ length: 4 }).map((_, i) => {
+        const angle = (i * Math.PI * 2) / 4;
+        const x = Math.cos(angle) * 2.5;
+        const z = Math.sin(angle) * 2.5;
+        return (
+          <pointLight
+            key={`accent-light-${i}`}
+            position={[x, 0.5, z]}
+            color="#0ea5e9"
+            intensity={0.25}
+            distance={6}
+            decay={2}
+          />
+        );
+      })}
     </group>
   );
 };
