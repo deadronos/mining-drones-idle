@@ -38,7 +38,7 @@ import {
   initialPrestigeInvestments,
 } from './constants';
 
-// Type exports
+// Re-export all types and utilities
 export type {
   PerformanceProfile,
   VectorTuple,
@@ -79,7 +79,6 @@ export type {
   PrestigeInvestmentId,
 } from './types';
 
-// Constants exports
 export {
   PRESTIGE_THRESHOLD,
   ORE_PER_BAR,
@@ -99,7 +98,6 @@ export {
   prestigeInvestmentDefinitions,
 } from './constants';
 
-// Utils exports
 export {
   vector3ToTuple,
   tupleToVector3,
@@ -125,24 +123,13 @@ export {
   computeEnergyThrottle,
 } from './utils';
 
-// Serialization exports
 export { serializeStore, stringifySnapshot, parseSnapshot } from './serialization';
 
-// Factory exports
 export { createDefaultFactories } from './factory';
 
 /**
- * Zustand store creator that composes all slices and processing functions.
- * Each slice is responsible for a specific domain:
- * - resourceSlice: resources, modules, prestige operations
- * - settingsSlice: UI state and selections
- * - factorySlice: factory CRUD and operations
- * - droneSlice: drone flights and ownership
- * - logisticsSlice: hauler configuration and status
- *
- * Processing functions handle game loop orchestration:
- * - gameProcessing: refinery and factory processing
- * - logisticsProcessing: hauler logistics scheduler
+ * Main store creator that composes all slices and implements game loop orchestration.
+ * Refactored into modular functions in src/state/store/ for better maintainability.
  */
 const storeCreator: StateCreator<StoreState> = (set, get) => {
   const defaultFactories = createDefaultFactories();
@@ -150,23 +137,17 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
 
   // Build composed state from slices
   const sliceSet = set as unknown;
-
   const sliceGet = get as unknown;
 
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
-
   const resourceSlice = createResourceSlice(sliceSet, sliceGet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
-
   const settingsSlice = createSettingsSlice(sliceSet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
-
   const factorySlice = createFactorySlice(sliceSet, sliceGet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
-
   const droneSlice = createDroneSlice(sliceSet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
-
   const logisticsSlice = createLogisticsSlice(sliceSet, sliceGet);
 
   return {
@@ -204,10 +185,8 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
       return refineryStats;
     },
 
-    // Process factories (called from tick, already handled in tick orchestrator)
+    // Process factories (called from tick)
     processFactories: (dt) => {
-      // This is now handled within tick() via tickGameLoop
-      // Kept for backward compatibility if called directly
       if (dt <= 0 || get().factories.length === 0) return;
       const state = get();
       const { factories, resources, factoryProcessSequence } = processFactories(state, dt);
@@ -355,3 +334,4 @@ export const createStoreInstance = () => createVanillaStore<StoreState>(storeCre
 export const useStore = create<StoreState>()(storeCreator);
 
 export const storeApi = useStore as unknown as StoreApiType;
+
