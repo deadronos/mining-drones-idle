@@ -34,6 +34,7 @@ The design evolved through stakeholder feedback to a 6-phase implementation appr
 **Objective:** Create HaulerShips component with basic instanced rendering.
 
 **Tasks:**
+
 - [ ] Create `/src/r3f/HaulerShips.tsx`
 - [ ] Define procedural capsule/cone mesh (~0.5 units with engine nozzle)
 - [ ] Implement instanced mesh rendering (similar to Drones.tsx)
@@ -42,6 +43,7 @@ The design evolved through stakeholder feedback to a 6-phase implementation appr
 - [ ] Verify geometry visibility and scale relative to factories/drones
 
 **Acceptance Criteria:**
+
 - Procedural hauler mesh visible in 3D scene
 - Instanced rendering compiles without errors
 - Base material applies correct colors
@@ -56,6 +58,7 @@ The design evolved through stakeholder feedback to a 6-phase implementation appr
 **Objective:** Implement smooth Bezier path interpolation.
 
 **Tasks:**
+
 - [ ] Extract transfer duration from logistics queue (derive from `transfer.eta` and start time)
 - [ ] Implement cubic Bezier curve helper (P0, P1, P2, P3 with t ∈ [0, 1])
 - [ ] Compute elevated control points for natural arcing (midpoint elevation ~1.5×)
@@ -64,6 +67,7 @@ The design evolved through stakeholder feedback to a 6-phase implementation appr
 - [ ] Add unit tests for Bezier interpolation with edge cases
 
 **Acceptance Criteria:**
+
 - Hauler moves smoothly along Bezier path from source to destination
 - Position is frame-rate independent
 - Bezier helper is pure function with deterministic tests
@@ -78,6 +82,7 @@ The design evolved through stakeholder feedback to a 6-phase implementation appr
 **Objective:** Orient haulers and add visual polish.
 
 **Tasks:**
+
 - [ ] Compute quaternion from Bezier curve tangent (face direction of travel)
 - [ ] Apply quaternion to instanced mesh rotation each frame
 - [ ] Implement particle trail effect from hauler rear (engine exhaust)
@@ -87,6 +92,7 @@ The design evolved through stakeholder feedback to a 6-phase implementation appr
 - [ ] Add snapshot tests for orientation and color accuracy
 
 **Acceptance Criteria:**
+
 - Haulers always face direction of travel
 - Particle trails visible and smooth
 - Resource colors match TransferLines palette
@@ -101,6 +107,7 @@ The design evolved through stakeholder feedback to a 6-phase implementation appr
 **Objective:** Add hover detection, factory highlighting, and tooltips.
 
 **Tasks:**
+
 - [ ] Implement raycast picking on mouse move (map instanceId to transfer)
 - [ ] Display HTML-overlay tooltip (styled to match TransferLines)
 - [ ] Show source → destination, resource amount, ETA remaining
@@ -111,6 +118,7 @@ The design evolved through stakeholder feedback to a 6-phase implementation appr
 - [ ] Add E2E tests for tooltip display and factory highlighting
 
 **Acceptance Criteria:**
+
 - Hovering a hauler displays accurate tooltip
 - Source and destination factories highlight on hover
 - Tooltip contains source, dest, amount, resource, ETA, speed
@@ -125,6 +133,7 @@ The design evolved through stakeholder feedback to a 6-phase implementation appr
 **Objective:** Cap rendering and validate performance.
 
 **Tasks:**
+
 - [ ] Define `HAULER_RENDER_LIMIT = 256` constant (configurable)
 - [ ] Implement cap logic: render first N haulers, skip remainder
 - [ ] **Continue calculating all transfers (even if not rendered)**
@@ -134,6 +143,7 @@ The design evolved through stakeholder feedback to a 6-phase implementation appr
 - [ ] Add performance regression tests
 
 **Acceptance Criteria:**
+
 - Rendering is capped at 256 haulers (configurable)
 - All transfers are still calculated/tracked in store
 - Stress test achieves ≥60 FPS with 100 concurrent visible transfers
@@ -149,6 +159,7 @@ The design evolved through stakeholder feedback to a 6-phase implementation appr
 **Objective:** Integrate toggle and fallback to TransferLines.
 
 **Tasks:**
+
 - [ ] Add boolean setting `showHaulerShips` to Settings slice (default: true)
 - [ ] Update `/src/r3f/Scene.tsx` to conditionally render HaulerShips or TransferLines
 - [ ] Add UI toggle in Settings panel: "Show Hauler Ships"
@@ -158,6 +169,7 @@ The design evolved through stakeholder feedback to a 6-phase implementation appr
 - [ ] Full integration test: all systems (store, ui, r3f) working together
 
 **Acceptance Criteria:**
+
 - Settings panel has "Show Hauler Ships" toggle
 - Toggle switches between HaulerShips and TransferLines
 - State persists across page reloads
@@ -174,32 +186,32 @@ The design evolved through stakeholder feedback to a 6-phase implementation appr
 
 ### Subtasks
 
-| Phase | ID  | Description | Status | Updated | Notes |
-|-------|-----|-------------|--------|---------|-------|
-| 1 | 1.1 | Create HaulerShips.tsx scaffold | Not Started | — | — |
-| 1 | 1.2 | Procedural mesh + instancing | Not Started | — | — |
-| 1 | 1.3 | Resource-specific coloring | Not Started | — | — |
-| 1 | 1.4 | Test render single hauler | Not Started | — | — |
-| 2 | 2.1 | Extract transfer duration | Not Started | — | — |
-| 2 | 2.2 | Cubic Bezier helper | Not Started | — | — |
-| 2 | 2.3 | Position interpolation | Not Started | — | — |
-| 2 | 2.4 | useFrame matrix update | Not Started | — | — |
-| 2 | 2.5 | Unit tests for Bezier | Not Started | — | — |
-| 3 | 3.1 | Quaternion from tangent | Not Started | — | — |
-| 3 | 3.2 | Particle trails | Not Started | — | — |
-| 3 | 3.3 | Resource coloring + glow | Not Started | — | — |
-| 3 | 3.4 | Snapshot tests | Not Started | — | — |
-| 4 | 4.1 | Raycast picking | Not Started | — | — |
-| 4 | 4.2 | HTML tooltip + styling | Not Started | — | — |
-| 4 | 4.3 | Factory highlighting | Not Started | — | — |
-| 4 | 4.4 | E2E interaction tests | Not Started | — | — |
-| 5 | 5.1 | Render cap logic | Not Started | — | — |
-| 5 | 5.2 | Stress test scenario | Not Started | — | — |
-| 5 | 5.3 | Performance profiling | Not Started | — | — |
-| 6 | 6.1 | Settings slice + toggle | Not Started | — | — |
-| 6 | 6.2 | Scene.tsx conditional render | Not Started | — | — |
-| 6 | 6.3 | Settings UI integration | Not Started | — | — |
-| 6 | 6.4 | Full integration test | Not Started | — | — |
+| Phase | ID  | Description                     | Status      | Updated | Notes |
+| ----- | --- | ------------------------------- | ----------- | ------- | ----- |
+| 1     | 1.1 | Create HaulerShips.tsx scaffold | Not Started | —       | —     |
+| 1     | 1.2 | Procedural mesh + instancing    | Not Started | —       | —     |
+| 1     | 1.3 | Resource-specific coloring      | Not Started | —       | —     |
+| 1     | 1.4 | Test render single hauler       | Not Started | —       | —     |
+| 2     | 2.1 | Extract transfer duration       | Not Started | —       | —     |
+| 2     | 2.2 | Cubic Bezier helper             | Not Started | —       | —     |
+| 2     | 2.3 | Position interpolation          | Not Started | —       | —     |
+| 2     | 2.4 | useFrame matrix update          | Not Started | —       | —     |
+| 2     | 2.5 | Unit tests for Bezier           | Not Started | —       | —     |
+| 3     | 3.1 | Quaternion from tangent         | Not Started | —       | —     |
+| 3     | 3.2 | Particle trails                 | Not Started | —       | —     |
+| 3     | 3.3 | Resource coloring + glow        | Not Started | —       | —     |
+| 3     | 3.4 | Snapshot tests                  | Not Started | —       | —     |
+| 4     | 4.1 | Raycast picking                 | Not Started | —       | —     |
+| 4     | 4.2 | HTML tooltip + styling          | Not Started | —       | —     |
+| 4     | 4.3 | Factory highlighting            | Not Started | —       | —     |
+| 4     | 4.4 | E2E interaction tests           | Not Started | —       | —     |
+| 5     | 5.1 | Render cap logic                | Not Started | —       | —     |
+| 5     | 5.2 | Stress test scenario            | Not Started | —       | —     |
+| 5     | 5.3 | Performance profiling           | Not Started | —       | —     |
+| 6     | 6.1 | Settings slice + toggle         | Not Started | —       | —     |
+| 6     | 6.2 | Scene.tsx conditional render    | Not Started | —       | —     |
+| 6     | 6.3 | Settings UI integration         | Not Started | —       | —     |
+| 6     | 6.4 | Full integration test           | Not Started | —       | —     |
 
 ---
 
@@ -216,15 +228,15 @@ The design evolved through stakeholder feedback to a 6-phase implementation appr
 
 ## Key Design Decisions
 
-| Decision | Rationale |
-|----------|-----------|
-| **Procedural geometry** | Simpler than asset loading; capsule/cone sufficient for visual impact |
-| **Bezier arc paths** | Natural flight feel; visual variety vs. straight lines |
-| **Always face direction** | More immersive; matches expected behavior |
-| **256 hauler cap** | Instanced rendering limit; still calculate above cap |
-| **Settings toggle** | Graceful fallback to TransferLines if needed |
-| **Particle trails** | Visual polish without major performance cost |
-| **Factory highlighting** | Improves usability and context awareness |
+| Decision                  | Rationale                                                             |
+| ------------------------- | --------------------------------------------------------------------- |
+| **Procedural geometry**   | Simpler than asset loading; capsule/cone sufficient for visual impact |
+| **Bezier arc paths**      | Natural flight feel; visual variety vs. straight lines                |
+| **Always face direction** | More immersive; matches expected behavior                             |
+| **256 hauler cap**        | Instanced rendering limit; still calculate above cap                  |
+| **Settings toggle**       | Graceful fallback to TransferLines if needed                          |
+| **Particle trails**       | Visual polish without major performance cost                          |
+| **Factory highlighting**  | Improves usability and context awareness                              |
 
 ---
 
@@ -242,13 +254,13 @@ The design evolved through stakeholder feedback to a 6-phase implementation appr
 
 ## Risks & Mitigations
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|-----------|
-| Complex raycast picking | Medium | Medium | Use existing TransferLines raycast as reference |
-| Bezier interpolation performance | Low | Medium | Profile early; use efficient math library |
-| Particle trail overhead | Medium | Low | Start with simple trail, optimize if needed |
-| Settings persistence bug | Low | Low | Leverage existing Settings slice pattern |
-| High transfer volume regression | Medium | High | Stress test in Phase 5; monitor metrics |
+| Risk                             | Likelihood | Impact | Mitigation                                      |
+| -------------------------------- | ---------- | ------ | ----------------------------------------------- |
+| Complex raycast picking          | Medium     | Medium | Use existing TransferLines raycast as reference |
+| Bezier interpolation performance | Low        | Medium | Profile early; use efficient math library       |
+| Particle trail overhead          | Medium     | Low    | Start with simple trail, optimize if needed     |
+| Settings persistence bug         | Low        | Low    | Leverage existing Settings slice pattern        |
+| High transfer volume regression  | Medium     | High   | Stress test in Phase 5; monitor metrics         |
 
 ---
 

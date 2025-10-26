@@ -113,14 +113,14 @@ HaulerShips.tsx (new)
 
 #### Appearance Details
 
-| Property | Value                 | Notes                                         |
-| -------- | --------------------- | --------------------------------------------- |
-| Scale    | **0.4–0.6 units**     | **Larger than drones** to feel like cargo hauler |
-| Rotation | Face travel direction | Quaternion from Bezier curve tangent           |
+| Property | Value                                   | Notes                                             |
+| -------- | --------------------------------------- | ------------------------------------------------- |
+| Scale    | **0.4–0.6 units**                       | **Larger than drones** to feel like cargo hauler  |
+| Rotation | Face travel direction                   | Quaternion from Bezier curve tangent              |
 | Color    | **Resource-specific** (RESOURCE_COLORS) | Distinct from drones; reuse TransferLines palette |
-| Opacity  | 0.8 (full)            | Slight transparency for layering              |
-| Glow     | emissiveIntensity 0.5–0.7 | Increased on hover                        |
-| Trail    | **Yes** (particle engine effect) | Engine/thruster trail from rear         |
+| Opacity  | 0.8 (full)                              | Slight transparency for layering                  |
+| Glow     | emissiveIntensity 0.5–0.7               | Increased on hover                                |
+| Trail    | **Yes** (particle engine effect)        | Engine/thruster trail from rear                   |
 
 #### Interpolation Strategy
 
@@ -133,10 +133,10 @@ HaulerShips.tsx (new)
 
 ```typescript
 // Bezier arc trajectory
-const P0 = sourcePos;                          // Start
-const P1 = sourcePos + controlOffset1;         // Control point 1 (elevated)
-const P2 = destPos + controlOffset2;           // Control point 2 (elevated)
-const P3 = destPos;                            // End
+const P0 = sourcePos; // Start
+const P1 = sourcePos + controlOffset1; // Control point 1 (elevated)
+const P2 = destPos + controlOffset2; // Control point 2 (elevated)
+const P3 = destPos; // End
 const haulerPosition = cubicBezier(P0, P1, P2, P3, progress);
 ```
 
