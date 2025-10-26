@@ -38,6 +38,7 @@
 | TASK034 | Secondary Resource Sinks & Investment System | Pending     | 2025-10-21 |
 | TASK035 | Remove Unused ownedDrones Historical Record  | Completed   | 2025-10-25 |
 | TASK036 | Fix Drone Unload Trigger - Position Arrival  | Completed   | 2025-10-25 |
+| TASK037 | Hauler Ship Visuals Implementation           | Pending     | 2025-10-26 |
 
 ```
 

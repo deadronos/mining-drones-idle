@@ -2,6 +2,41 @@
 
 ## Current Work
 
+🚀 **Next: TASK037 – Hauler Ship Visuals Implementation**
+
+Design finalized with user decisions. Ready to kick off Phase 1 (Component Scaffold & Procedural Geometry).
+
+### TASK037 Overview
+
+**Goal:** Replace static transfer line visuals with animated hauler ships that fly between factories/warehouse.
+
+**Key Decisions:**
+
+- Procedural capsule/cone geometry (larger than drones, ~0.4–0.6 units)
+- Bezier arc paths with elevated control points (visual variety)
+- Always face direction of travel
+- Resource-specific colors from RESOURCE_COLORS palette
+- Particle engine trails for polish
+- 256 hauler render cap (continue calculating above)
+- Settings toggle for fallback to TransferLines
+- Factory highlighting on hover (usability)
+- Blocker for next release
+
+**Phases:**
+
+1. ✅ Component Scaffold & Procedural Geometry
+2. Bezier Arc & Position Interpolation
+3. Orientation & Visual Polish
+4. Interaction, Hover & Tooltips
+5. Performance Limits & Stress Testing
+6. Settings Toggle & Integration
+
+**Design Reference:** `/memory/designs/DES030-hauler-ship-visuals.md`
+
+---
+
+## Recent Completions
+
 ✅ **Completed: Code Refactoring Sprint**
 
 Successfully completed comprehensive analysis and refactoring of all three identified candidate files in the codebase.
