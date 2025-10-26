@@ -227,3 +227,23 @@ WHEN prestige investment tiers exist, THE SYSTEM SHALL apply their bonuses multi
 ## RQ-057 Sink Progress UI Visibility
 
 WHEN viewing the Warehouse prestige and specialization panels, THE SYSTEM SHALL display current spend totals, tier levels, next costs, and aggregate multipliers so players understand the effect of their investments. [Acceptance: React component tests verify renders for locked/unlocked states, tooltip text, and formatted progress values.]
+
+## RQ-058 Hauler Ship Rendering
+
+WHEN logistics schedules a transfer with status `scheduled` or `in-transit`, THE SYSTEM SHALL render an animated hauler ship along that route within the 3D scene instead of the legacy transfer line. [Acceptance: React Three Fiber test mounts the component with a sample transfer and asserts the instanced mesh count equals the transfer count.]
+
+## RQ-059 Hauler Flight Interpolation
+
+WHEN a hauler ship is in flight, THE SYSTEM SHALL interpolate its position along an arcing Bezier curve using the transfer's departure time, ETA, and the current `gameTime` so that progress is time-based and clamped to `[0, 1]`. [Acceptance: Unit tests validate the interpolation helper returns correct vectors at `t = 0`, mid-curve, and `t = 1`, including clamping for early/late gameTime values.]
+
+## RQ-060 Hauler Orientation & Trails
+
+WHEN hauler ships move, THE SYSTEM SHALL orient each ship to face its instantaneous velocity and emit a resource-colored engine glow or trail so players can perceive direction and motion. [Acceptance: Rendering test inspects instance matrices/quaternions for forward alignment, and snapshot verifies emissive trail material per resource color.]
+
+## RQ-061 Hauler Interaction Feedback
+
+WHEN a player hovers a hauler ship, THE SYSTEM SHALL display a tooltip containing source, destination, resource, amount, and ETA remaining while subtly brightening the ship. [Acceptance: Interaction test triggers pointer events and confirms tooltip content and emissive intensity update.]
+
+## RQ-062 Hauler Visual Toggle
+
+WHEN the player disables "Show Hauler Ships" in Settings, THE SYSTEM SHALL hide hauler ships and fall back to the legacy transfer lines while persisting the preference across saves. [Acceptance: Settings test toggles the option, verifies store state persists, and asserts the scene swaps between components accordingly.]

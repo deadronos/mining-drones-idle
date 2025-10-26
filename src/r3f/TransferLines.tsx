@@ -5,15 +5,7 @@ import type { PendingTransfer } from '@/state/store';
 import { useStore } from '@/state/store';
 import { WAREHOUSE_NODE_ID } from '@/ecs/logistics';
 import { WAREHOUSE_POSITION } from '@/ecs/world';
-
-const RESOURCE_COLORS: Record<string, string> = {
-  ore: '#b8860b', // dark goldenrod
-  bars: '#ff8c00', // dark orange
-  metals: '#c0c0c0', // silver
-  crystals: '#9370db', // medium purple
-  organics: '#228b22', // forest green
-  ice: '#00bfff', // deep sky blue
-};
+import { RESOURCE_COLORS } from '@/r3f/resourceColors';
 
 const AXIS_Y = new Vector3(0, 1, 0);
 const HEIGHT_OFFSET = 0.9;

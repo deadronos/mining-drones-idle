@@ -11,6 +11,8 @@ import type {
   SpecTechState,
   SpecTechSpentState,
   PrestigeInvestmentState,
+  PendingTransfer,
+  LogisticsQueues,
 } from '../types';
 import {
   SAVE_VERSION,
@@ -28,6 +30,11 @@ import { coerceNumber } from './types';
 import { normalizeFactorySnapshot } from './factory';
 import { normalizeDroneFlights, cloneDroneFlight } from './drones';
 import { factoryToSnapshot } from './factory';
+import { RESOURCE_TYPES, type TransportableResource } from '@/ecs/logistics/config';
+
+const isTransportableResource = (value: unknown): value is PendingTransfer['resource'] =>
+  typeof value === 'string' &&
+  (RESOURCE_TYPES as readonly TransportableResource[]).includes(value as TransportableResource);
 
 export const normalizeResources = (snapshot?: Partial<Resources>): Resources => ({
   ore: coerceNumber(snapshot?.ore, initialResources.ore),
@@ -89,6 +96,59 @@ export const normalizeSpecTechSpent = (snapshot?: Partial<SpecTechSpentState>): 
   ice: Math.max(0, Math.floor(coerceNumber(snapshot?.ice, initialSpecTechSpent.ice))),
 });
 
+const normalizePendingTransfer = (
+  transfer?: Partial<PendingTransfer> | null,
+): PendingTransfer | null => {
+  if (!transfer || typeof transfer !== 'object') {
+    return null;
+  }
+
+  const id = typeof transfer.id === 'string' && transfer.id.length > 0 ? transfer.id : null;
+  const fromFactoryId =
+    typeof transfer.fromFactoryId === 'string' && transfer.fromFactoryId.length > 0
+      ? transfer.fromFactoryId
+      : null;
+  const toFactoryId =
+    typeof transfer.toFactoryId === 'string' && transfer.toFactoryId.length > 0
+      ? transfer.toFactoryId
+      : null;
+
+  if (!id || !fromFactoryId || !toFactoryId) {
+    return null;
+  }
+
+  const eta = coerceNumber(transfer.eta, 0);
+  const defaultDepartedAt = Math.max(0, eta - 0.1);
+  const departedAt = Math.min(coerceNumber(transfer.departedAt, defaultDepartedAt), eta);
+  const status: PendingTransfer['status'] =
+    transfer.status === 'in-transit' || transfer.status === 'completed'
+      ? transfer.status
+      : 'scheduled';
+
+  return {
+    id,
+    fromFactoryId,
+    toFactoryId,
+  resource: isTransportableResource(transfer.resource) ? transfer.resource : 'ore',
+    amount: Math.max(0, coerceNumber(transfer.amount, 0)),
+    status,
+    eta,
+    departedAt,
+  };
+};
+
+const normalizeLogisticsQueues = (queues?: Partial<LogisticsQueues>): LogisticsQueues => {
+  if (!queues || !Array.isArray(queues.pendingTransfers)) {
+    return { pendingTransfers: [] };
+  }
+
+  const normalized = queues.pendingTransfers
+    .map((entry) => normalizePendingTransfer(entry))
+    .filter((entry): entry is PendingTransfer => entry !== null);
+
+  return { pendingTransfers: normalized };
+};
+
 export const normalizePrestigeInvestments = (
   snapshot?: Partial<PrestigeInvestmentState>,
 ): PrestigeInvestmentState => ({
@@ -145,6 +205,10 @@ export const normalizeSettings = (snapshot?: Partial<StoreSettings>): StoreSetti
   ),
   showTrails:
     typeof snapshot?.showTrails === 'boolean' ? snapshot.showTrails : initialSettings.showTrails,
+  showHaulerShips:
+    typeof snapshot?.showHaulerShips === 'boolean'
+      ? snapshot.showHaulerShips
+      : initialSettings.showHaulerShips,
   performanceProfile: normalizePerformanceProfile(snapshot?.performanceProfile),
   inspectorCollapsed:
     typeof snapshot?.inspectorCollapsed === 'boolean'
@@ -185,7 +249,7 @@ export const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapsh
           {},
         )
       : undefined,
-  logisticsQueues: snapshot.logisticsQueues ?? { pendingTransfers: [] },
+  logisticsQueues: normalizeLogisticsQueues(snapshot.logisticsQueues),
 });
 
 export const serializeStore = (state: StoreState): StoreSnapshot => ({

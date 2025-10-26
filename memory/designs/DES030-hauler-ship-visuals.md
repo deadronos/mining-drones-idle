@@ -1,6 +1,6 @@
 # DES030: Hauler Ship Visuals – Replacing Transfer Lines
 
-**Status:** Draft  
+**Status:** Implemented
 **Design Date:** 2025-10-26  
 **Relates to:** Visual enhancement epic  
 **Component:** `/src/r3f/TransferLines.tsx` → `/src/r3f/HaulerShips.tsx`

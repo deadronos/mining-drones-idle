@@ -34,6 +34,7 @@ describe('migrations', () => {
         offlineCapHours: 8,
         notation: 'standard',
         throttleFloor: 0.25,
+        showHaulerShips: true,
       },
     } as Partial<StoreSnapshot>;
 
@@ -45,6 +46,7 @@ describe('migrations', () => {
     expect(migrated.settings).toBeDefined();
     // showTrails should be present and default to true
     expect(migrated.settings.showTrails).toBe(true);
+    expect(migrated.settings.showHaulerShips).toBe(true);
     expect(Array.isArray(migrated.droneFlights)).toBe(true);
     expect(migrated.droneFlights?.length).toBe(0);
     expect(migrated.specTechs).toBeDefined();
@@ -82,6 +84,7 @@ describe('migrations', () => {
         notation: 'standard',
         throttleFloor: 0.25,
         showTrails: false,
+        showHaulerShips: true,
         performanceProfile: 'medium',
       },
       specTechs: {
@@ -142,6 +145,7 @@ describe('migrations', () => {
         notation: 'standard',
         throttleFloor: 0.25,
         showTrails: true,
+        showHaulerShips: true,
         performanceProfile: 'medium',
         inspectorCollapsed: false,
       },
@@ -181,6 +185,7 @@ describe('migrations', () => {
             amount: 0,
             eta: 5,
             status: 'completed',
+            departedAt: 5,
           },
           {
             id: 'transfer-valid',
@@ -190,6 +195,7 @@ describe('migrations', () => {
             amount: 10,
             eta: 4,
             status: 'in-transit',
+            departedAt: 3.9,
           },
         ],
       },
@@ -207,6 +213,8 @@ describe('migrations', () => {
     expect(transfer.toFactoryId).toBe('factory-1');
     expect(transfer.amount).toBe(10);
     expect(transfer.status).toBe('in-transit');
+    expect(transfer.departedAt).toBeLessThanOrEqual(transfer.eta);
+    expect(transfer.departedAt).toBeGreaterThanOrEqual(transfer.eta - 0.15);
 
     expect(migrated.factories?.[0]?.currentStorage).toBe(25);
     expect(migrated.factories?.[0]?.resources?.ore).toBe(25);
@@ -269,6 +277,7 @@ describe('migrations', () => {
         notation: 'standard',
         throttleFloor: 0.25,
         showTrails: true,
+        showHaulerShips: true,
         performanceProfile: 'medium',
         inspectorCollapsed: false,
       },

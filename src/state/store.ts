@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { createStore as createVanillaStore, type StateCreator } from 'zustand/vanilla';
-import type { StoreState, StoreApiType } from './types';
+import type { StoreState, StoreApiType, HighlightedFactories } from './types';
 import {
   createResourceSlice,
   createSettingsSlice,
@@ -165,6 +165,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
     selectedFactoryId: initialSelectedFactory,
     factories: defaultFactories,
     logisticsQueues: { pendingTransfers: [] },
+    highlightedFactories: { sourceId: null, destId: null },
 
     // Game loop tick orchestrator
     tick: (dt) => {
@@ -281,6 +282,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
           selectedAsteroidId: null,
           selectedFactoryId,
           droneOwners: normalizeDroneOwners(normalized.droneOwners ?? {}),
+          highlightedFactories: { sourceId: null, destId: null },
         };
       }),
 
@@ -323,6 +325,24 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
           selectedAsteroidId: null,
           selectedFactoryId,
           droneOwners: {},
+          highlightedFactories: { sourceId: null, destId: null },
+        };
+      });
+    },
+
+    setHighlightedFactories: (highlight: HighlightedFactories) => {
+      set((state) => {
+        if (
+          state.highlightedFactories.sourceId === highlight.sourceId &&
+          state.highlightedFactories.destId === highlight.destId
+        ) {
+          return state;
+        }
+        return {
+          highlightedFactories: {
+            sourceId: highlight.sourceId,
+            destId: highlight.destId,
+          },
         };
       });
     },

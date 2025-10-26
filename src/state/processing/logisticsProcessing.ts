@@ -130,6 +130,7 @@ export function processLogistics(state: StoreState): {
         id: transferId,
         ...transfer,
         resource,
+        departedAt: transfer.departedAt ?? state.gameTime,
       });
 
       try {
@@ -203,6 +204,7 @@ export function processLogistics(state: StoreState): {
             amount: transferAmount,
             status: 'scheduled',
             eta,
+            departedAt: state.gameTime,
           });
 
           try {
@@ -271,6 +273,7 @@ export function processLogistics(state: StoreState): {
             amount: transferAmount,
             status: 'scheduled',
             eta,
+            departedAt: state.gameTime,
           });
 
           factory.logisticsState.inboundSchedules = [
@@ -354,6 +357,7 @@ export function processLogistics(state: StoreState): {
         amount: transferAmount,
         status: 'scheduled',
         eta,
+        departedAt: state.gameTime,
       });
 
       factory.logisticsState ??= {

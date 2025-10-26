@@ -20,6 +20,7 @@ import { Asteroids } from '@/r3f/Asteroids';
 import { Drones } from '@/r3f/Drones';
 import { DroneTrails } from '@/r3f/DroneTrails';
 import { TransferLines } from '@/r3f/TransferLines';
+import { HaulerShips } from '@/r3f/HaulerShips';
 import { Warehouse } from '@/r3f/Warehouse';
 import { useFactoryAutofit } from '@/hooks/useFactoryAutofit';
 import { useCameraReset } from '@/hooks/useCameraReset';
@@ -33,6 +34,7 @@ type SystemRunner = (dt: number) => void;
 export const Scene = () => {
   const time = useMemo(() => createTimeSystem(0.1), []);
   const showTrails = useStore((state) => state.settings.showTrails);
+  const showHaulerShips = useStore((state) => state.settings.showHaulerShips);
   const factories = useStore((state) => state.factories);
   const { camera, size } = useThree();
   useFactoryAutofit();
@@ -122,7 +124,7 @@ export const Scene = () => {
         <Asteroids />
         <Drones />
         {showTrails ? <DroneTrails /> : null}
-        <TransferLines />
+        {showHaulerShips ? <HaulerShips /> : <TransferLines />}
       </Suspense>
     </>
   );

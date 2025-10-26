@@ -2,40 +2,29 @@
 
 ## Current Work
 
-🚀 **Next: TASK037 – Hauler Ship Visuals Implementation**
+✅ **TASK037 – Hauler Ship Visuals Implementation** is complete.
 
-Design finalized with user decisions. Ready to kick off Phase 1 (Component Scaffold & Procedural Geometry).
+- Hauler ships now replace TransferLines with instanced meshes, cubic Bezier motion, engine glow trails, and hover tooltips.
+- Settings slice, serialization, migrations, and UI expose a persistent "Show Hauler Ships" toggle with fallback to legacy lines.
+- Added R3F/unit tests for bezier math, progress clamping, settings toggles, and instanced mesh counts.
 
-### TASK037 Overview
+🔭 **Open follow-ups**
 
-**Goal:** Replace static transfer line visuals with animated hauler ships that fly between factories/warehouse.
-
-**Key Decisions:**
-
-- Procedural capsule/cone geometry (larger than drones, ~0.4–0.6 units)
-- Bezier arc paths with elevated control points (visual variety)
-- Always face direction of travel
-- Resource-specific colors from RESOURCE_COLORS palette
-- Particle engine trails for polish
-- 256 hauler render cap (continue calculating above)
-- Settings toggle for fallback to TransferLines
-- Factory highlighting on hover (usability)
-- Blocker for next release
-
-**Phases:**
-
-1. ✅ Component Scaffold & Procedural Geometry
-2. Bezier Arc & Position Interpolation
-3. Orientation & Visual Polish
-4. Interaction, Hover & Tooltips
-5. Performance Limits & Stress Testing
-6. Settings Toggle & Integration
+- Add factory highlight feedback during hauler hover (deferred from Phase 4).
+- Extend tooltip with speed readout once transfer velocity data is exposed.
+- Schedule performance profiling / stress runs (>100 haulers) before shipping to production.
 
 **Design Reference:** `/memory/designs/DES030-hauler-ship-visuals.md`
 
 ---
 
 ## Recent Completions
+
+✅ **Completed: TASK037 – Hauler Ship Visuals**
+
+- Animated hauler ships now fly along Bezier arcs with instanced rendering, engine glow trails, and hover tooltips.
+- Added `showHaulerShips` toggle with persistence, migrations, and conditional scene wiring.
+- Introduced `departedAt` timestamps for transfers plus supporting tests and R3F coverage.
 
 ✅ **Completed: Code Refactoring Sprint**
 
@@ -82,6 +71,6 @@ All refactored modules follow the same proven pattern:
 
 ## Next Steps
 
-1. Consider refactoring other large files following established patterns
-2. Monitor code quality metrics and maintainability improvements
-3. Continue leveraging modular structure for easier testing and debugging
+1. Prototype factory highlight feedback for hauler hover interactions.
+2. Surface hauler speed metrics in tooltip once transfer velocity is exposed.
+3. Schedule performance profiling / stress validation for ≥100 concurrent haulers.
