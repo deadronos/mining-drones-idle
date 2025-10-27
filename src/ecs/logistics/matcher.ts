@@ -141,6 +141,7 @@ export const matchSurplusToNeed = (
         amount: transferAmount,
         status: 'scheduled',
         eta,
+        departedAt: gameTime,
       });
       logLogistics(
         'proposed transfer [%s]: %s -> %s amount=%o eta=%o',

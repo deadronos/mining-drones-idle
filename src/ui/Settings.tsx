@@ -155,6 +155,10 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
     updateSettings({ showTrails: event.target.checked });
   };
 
+  const handleHaulerShips: ChangeEventHandler<HTMLInputElement> = (event) => {
+    updateSettings({ showHaulerShips: event.target.checked });
+  };
+
   const handlePerformanceProfile: ChangeEventHandler<HTMLSelectElement> = (event) => {
     updateSettings({ performanceProfile: event.target.value as PerformanceProfile });
   };
@@ -279,6 +283,18 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
                 checked={settings.showTrails}
                 onChange={handleTrails}
                 aria-label="Toggle drone trails"
+              />
+            </label>
+            <label className="settings-row">
+              <span>
+                Hauler ships
+                <small>Animated freighters replacing the legacy transfer lines.</small>
+              </span>
+              <input
+                type="checkbox"
+                checked={settings.showHaulerShips}
+                onChange={handleHaulerShips}
+                aria-label="Toggle hauler ship visuals"
               />
             </label>
             <label className="settings-row">

@@ -47,6 +47,7 @@ describe('ui/Settings', () => {
         notation: 'standard',
         throttleFloor: 0.25,
         showTrails: true,
+        showHaulerShips: true,
         performanceProfile: 'medium',
         inspectorCollapsed: false,
       },
@@ -98,6 +99,16 @@ describe('ui/Settings', () => {
     expect(toggle.checked).toBe(true);
     fireEvent.click(toggle);
     expect(storeApi.getState().settings.showTrails).toBe(false);
+  });
+
+  it('toggles hauler ship visuals', () => {
+    const persistence = createPersistenceMock();
+    render(<SettingsPanel onClose={() => undefined} persistence={persistence} />);
+
+    const toggle = screen.getByLabelText<HTMLInputElement>(/toggle hauler ship visuals/i);
+    expect(toggle.checked).toBe(true);
+    fireEvent.click(toggle);
+    expect(storeApi.getState().settings.showHaulerShips).toBe(false);
   });
 
   it('changes factory performance profile', () => {

@@ -1,10 +1,18 @@
 /* eslint-disable react/no-unknown-property */
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { InstancedMesh, MeshStandardMaterial, PointLight, Group } from 'three';
-import { Color, Matrix4, Quaternion, Vector3 } from 'three';
+import type { InstancedMesh, MeshStandardMaterial, PointLight, Group, Mesh, MeshBasicMaterial } from 'three';
+import {
+  AdditiveBlending,
+  Color,
+  Matrix4,
+  MathUtils,
+  Quaternion,
+  Vector3,
+} from 'three';
 import { gameWorld } from '@/ecs/world';
 import { useStore, type PerformanceProfile } from '@/state/store';
+import type { BuildableFactory } from '@/ecs/factories';
 import { getConveyorTexture, releaseConveyorTexture } from './assetCache';
 
 interface BeltDefinition {
@@ -63,6 +71,14 @@ const FACTORY_ACCENT = '#0ea5e9';
 const FACTORY_STRUT = '#1a1a2e';
 const FACTORY_PANEL = '#111827';
 const FACTORY_GLOW = '#0f172a';
+const HIGHLIGHT_SOURCE = new Color('#f97316');
+const HIGHLIGHT_DEST = new Color('#22d3ee');
+const BASE_RING_COLOR = new Color(FACTORY_RING);
+const BASE_RING_EMISSIVE = new Color(FACTORY_ACCENT);
+const BASE_CORE_EMISSIVE = new Color(FACTORY_RING);
+const BASE_BASE_EMISSIVE = new Color(FACTORY_GLOW);
+const BASE_BELT_EMISSIVE = new Color('#155e75');
+const BASE_LIGHT_COLOR = new Color(FACTORY_RING);
 
 type TransferState = {
   active: boolean;
@@ -81,8 +97,12 @@ type ItemState = {
   jitter: number;
 };
 
-const FactoryModel = ({ position }: { position: Vector3 }) => {
+const FactoryModel = ({ factory }: { factory: BuildableFactory }) => {
+  const { position, id } = factory;
   const performanceProfile = useStore((state) => state.settings.performanceProfile);
+  const highlighted = useStore((state) => state.highlightedFactories);
+  const isSourceHighlight = highlighted.sourceId === id;
+  const isDestinationHighlight = highlighted.destId === id;
   // Use shared conveyor texture cache: all factories share the same texture resource
   const sharedBeltTexture = useMemo(() => getConveyorTexture(), []);
   const beltTextures = useMemo(() => BELTS.map(() => sharedBeltTexture), [sharedBeltTexture]);
@@ -103,6 +123,10 @@ const FactoryModel = ({ position }: { position: Vector3 }) => {
   const baseMaterialRef = useRef<MeshStandardMaterial>(null);
   const boostLightRef = useRef<PointLight>(null);
   const ringGroupRef = useRef<Group>(null);
+  const highlightRingRef = useRef<Mesh>(null);
+  const highlightRingMaterialRef = useRef<MeshBasicMaterial>(null);
+  const highlightStrengthRef = useRef(0);
+  const highlightPulseRef = useRef(0);
 
   const [initialItemStates] = useState<ItemState[]>(() =>
     Array.from({ length: ITEM_POOL_SIZE }, (_, index) => ({
@@ -115,26 +139,66 @@ const FactoryModel = ({ position }: { position: Vector3 }) => {
   const itemStates = useRef<ItemState[]>(initialItemStates);
 
   useFrame((_, delta) => {
-    const { factory } = gameWorld;
-    const activity = factory.activity;
+    const { factory: worldFactory } = gameWorld;
+    const activity = worldFactory.activity;
     const profileConfig = PROFILE_CONFIG[performanceProfile];
 
     const processing = activity.processing;
+    const highlightTarget = isSourceHighlight ? 1 : isDestinationHighlight ? 0.75 : 0;
+    highlightStrengthRef.current = MathUtils.damp(
+      highlightStrengthRef.current,
+      highlightTarget,
+      6,
+      delta,
+    );
+    const highlightAmount = highlightStrengthRef.current;
+    const highlightColor = isSourceHighlight ? HIGHLIGHT_SOURCE : HIGHLIGHT_DEST;
+
     if (baseMaterialRef.current) {
-      baseMaterialRef.current.emissiveIntensity = 0.18 + processing * 0.35;
+      baseMaterialRef.current.emissive
+        .copy(BASE_BASE_EMISSIVE)
+        .lerp(highlightColor, highlightAmount * 0.35);
+      baseMaterialRef.current.emissiveIntensity = 0.18 + processing * 0.35 + highlightAmount * 0.45;
     }
     if (coreMaterialRef.current) {
-      coreMaterialRef.current.emissiveIntensity = 0.5 + processing * 0.9 + activity.boost * 0.6;
+      coreMaterialRef.current.emissive
+        .copy(BASE_CORE_EMISSIVE)
+        .lerp(highlightColor, highlightAmount * 0.6);
+      coreMaterialRef.current.emissiveIntensity =
+        0.5 + processing * 0.9 + activity.boost * 0.6 + highlightAmount * 0.9;
     }
     if (ringMaterialRef.current) {
-      ringMaterialRef.current.emissiveIntensity = 0.75 + activity.boost * 1.4;
+      ringMaterialRef.current.color.copy(BASE_RING_COLOR).lerp(highlightColor, highlightAmount * 0.6);
+      ringMaterialRef.current.emissive
+        .copy(BASE_RING_EMISSIVE)
+        .lerp(highlightColor, highlightAmount);
+      ringMaterialRef.current.emissiveIntensity =
+        0.75 + activity.boost * 1.4 + highlightAmount * 0.8;
     }
     beltMaterials.current.forEach((material) => {
       if (!material) return;
-      material.emissiveIntensity = 0.12 + processing * 0.5;
+      material.emissive.copy(BASE_BELT_EMISSIVE).lerp(highlightColor, highlightAmount * 0.3);
+      material.emissiveIntensity = 0.12 + processing * 0.5 + highlightAmount * 0.3;
     });
     if (boostLightRef.current) {
-      boostLightRef.current.intensity = 0.6 + activity.boost * 1.6;
+      const lightColor = highlightAmount > 0.02 ? highlightColor : BASE_LIGHT_COLOR;
+      boostLightRef.current.color.copy(lightColor);
+      boostLightRef.current.intensity = 0.6 + activity.boost * 1.6 + highlightAmount * 1.2;
+    }
+    if (highlightRingRef.current && highlightRingMaterialRef.current) {
+      if (highlightAmount > 0.02) {
+        highlightPulseRef.current += delta * 1.5;
+        const pulse = 1 + Math.sin(highlightPulseRef.current * 2) * 0.08 * highlightAmount;
+        const baseScale = 1.05 + highlightAmount * 0.35;
+        highlightRingRef.current.visible = true;
+        highlightRingRef.current.scale.setScalar(baseScale * pulse);
+        highlightRingRef.current.rotation.z += delta * 0.6;
+        highlightRingMaterialRef.current.opacity = 0.2 + highlightAmount * 0.45;
+        highlightRingMaterialRef.current.color.copy(highlightColor);
+      } else {
+        highlightRingRef.current.visible = false;
+        highlightRingMaterialRef.current.opacity = 0;
+      }
     }
 
     // Rotate the docking ring
@@ -230,6 +294,24 @@ const FactoryModel = ({ position }: { position: Vector3 }) => {
           emissiveIntensity={0.22}
           clearcoat={0.25}
           clearcoatRoughness={0.65}
+        />
+      </mesh>
+
+      <mesh
+        ref={highlightRingRef}
+        position={[0, -0.18, 0]}
+        rotation={[Math.PI / 2, 0, 0]}
+        renderOrder={-1}
+      >
+        <ringGeometry args={[2.4, 3.4, 48]} />
+        <meshBasicMaterial
+          ref={highlightRingMaterialRef}
+          transparent
+          opacity={0}
+          blending={AdditiveBlending}
+          depthWrite={false}
+          color={FACTORY_RING}
+          toneMapped={false}
         />
       </mesh>
 
@@ -603,7 +685,7 @@ export const Factory = () => {
   return (
     <>
       {factories.map((factory) => (
-        <FactoryModel key={factory.id} position={factory.position} />
+        <FactoryModel key={factory.id} factory={factory} />
       ))}
       <FactoryTransferFX />
     </>
