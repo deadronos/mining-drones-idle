@@ -109,14 +109,14 @@ export const Scene = () => {
     <>
       <color attach="background" args={[FOG_COLOR]} />
       <fog attach="fog" args={[FOG_COLOR, fogRange.near, fogRange.far]} />
-      <ambientLight intensity={0.35} />
+      <ambientLight intensity={0.5} />
       <directionalLight
         position={[6, 12, 8]}
-        intensity={1.3}
+        intensity={5.3}
         castShadow
         shadow-mapSize={[1024, 1024]}
       />
-      <pointLight position={[-8, 4, -6]} intensity={0.6} color="#38bdf8" />
+      <pointLight position={[-8, 4, -6]} intensity={5.6} color="#38bdf8" />
       <Suspense fallback={null}>
         <Stars radius={120} depth={60} count={4000} factor={4} fade speed={0.2} />
         <Warehouse />
