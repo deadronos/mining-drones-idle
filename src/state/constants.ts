@@ -14,7 +14,7 @@ import type {
   PrestigeInvestmentState,
 } from './types';
 
-export const SAVE_VERSION = '0.3.4';
+export const SAVE_VERSION = '0.3.5';
 export const saveVersion = SAVE_VERSION;
 
 export const GROWTH = 1.15;
@@ -60,6 +60,7 @@ export const initialSettings: StoreSettings = {
   notation: 'standard',
   throttleFloor: 0.25,
   showTrails: true,
+  showHaulerShips: true,
   performanceProfile: 'medium',
   inspectorCollapsed: false,
 };

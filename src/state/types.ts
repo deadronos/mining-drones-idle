@@ -120,10 +120,16 @@ export interface PendingTransfer {
   amount: number;
   status: 'scheduled' | 'in-transit' | 'completed';
   eta: number;
+  departedAt: number;
 }
 
 export interface LogisticsQueues {
   pendingTransfers: PendingTransfer[];
+}
+
+export interface HighlightedFactories {
+  sourceId: string | null;
+  destId: string | null;
 }
 
 export type DroneFlightPhase = 'toAsteroid' | 'returning';
@@ -178,6 +184,7 @@ export interface StoreSettings {
   notation: NotationMode;
   throttleFloor: number;
   showTrails: boolean;
+  showHaulerShips: boolean;
   performanceProfile: PerformanceProfile;
   inspectorCollapsed: boolean;
 }
@@ -226,6 +233,7 @@ export interface StoreState {
   selectedAsteroidId: string | null;
   selectedFactoryId: string | null;
   droneOwners: Record<string, string | null>;
+  highlightedFactories: HighlightedFactories;
   addResources(this: void, delta: Partial<Resources>, options?: { capacityAware?: boolean }): void;
   addOre(this: void, amount: number): void;
   buy(this: void, id: ModuleId): void;
@@ -287,6 +295,7 @@ export interface StoreState {
   triggerFactoryAutofit(this: void): void;
   resetCamera(this: void): void;
   resetGame(this: void): void;
+  setHighlightedFactories(this: void, highlight: HighlightedFactories): void;
 }
 
 export type StoreApiType = StoreApi<StoreState>;
