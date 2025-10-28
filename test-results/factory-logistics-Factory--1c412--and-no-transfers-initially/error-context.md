@@ -2,343 +2,406 @@
 
 ```yaml
 - generic [ref=e3]:
-    - complementary "Warehouse overview" [ref=e8]:
-        - generic [ref=e9]:
-            - generic [ref=e10]:
-                - heading "Warehouse" [level=2] [ref=e11]
-                - paragraph [ref=e12]: Global inventory ledger
-            - button "Settings" [ref=e13] [cursor=pointer]: ⚙️
-        - generic [ref=e14]:
-            - heading "Resources" [level=3] [ref=e15]
-            - generic [ref=e16]:
-                - generic [ref=e17]:
-                    - term [ref=e18]: Ore
-                    - definition [ref=e19]: '0.0'
-                - generic [ref=e20]:
-                    - term [ref=e21]: Metals
-                    - definition [ref=e22]: '0.0'
-                - generic [ref=e23]:
-                    - term [ref=e24]: Crystals
-                    - definition [ref=e25]: '0.0'
-                - generic [ref=e26]:
-                    - term [ref=e27]: Organics
-                    - definition [ref=e28]: '0.0'
-                - generic [ref=e29]:
-                    - term [ref=e30]: Ice
-                    - definition [ref=e31]: '0.0'
-                - generic [ref=e32]:
-                    - term [ref=e33]: Bars
-                    - definition [ref=e34]: '0.0'
-                - generic [ref=e35]:
-                    - term [ref=e36]: Energy
-                    - definition [ref=e37]: '100'
-                - generic [ref=e38]:
-                    - term [ref=e39]: Drones
-                    - definition [ref=e40]: '1'
-        - region "Global hauler modules" [ref=e41]:
-            - generic [ref=e42]:
-                - heading "Logistics Modules" [level=3] [ref=e43]
-                - button "Global hauler module help" [ref=e44]: ⓘ
-            - paragraph [ref=e45]: Global logistics modules apply automatically to every hauler. Use per-factory overrides when you need a single factory to push beyond the global baseline.
-            - paragraph [ref=e46]: Network Capacity +0 • Speed ×1.00 • Overhead ×1.00
-            - list [ref=e47]:
-                - listitem [ref=e48]:
-                    - generic [ref=e49]:
-                        - generic [ref=e50]:
-                            - generic [ref=e51]: Hauler Depot
-                            - generic [ref=e52]: Level 0/20
-                        - paragraph [ref=e53]: +10 capacity, +5% speed per level
-                        - paragraph [ref=e54]: +0 capacity, +0% speed
-                    - button "Buy · 60 metals" [disabled] [ref=e56]
-                - listitem [ref=e57]:
-                    - generic [ref=e58]:
-                        - generic [ref=e59]:
-                            - generic [ref=e60]: Logistics Hub
-                            - generic [ref=e61]: Level 0/15
-                        - paragraph [ref=e62]: −10% pickup/dropoff overhead per level
-                        - paragraph [ref=e63]: '-0% pickup/dropoff time'
-                    - button "Buy · 80 metals + 10 bars" [disabled] [ref=e65]
-                - listitem [ref=e66]:
-                    - generic [ref=e67]:
-                        - generic [ref=e68]:
-                            - generic [ref=e69]: Routing Protocol
-                            - generic [ref=e70]: Level 0/10
-                        - paragraph [ref=e71]: +2% routing efficiency per level
-                        - paragraph [ref=e72]: +0% routing efficiency
-                    - button "Buy · 100 crystals + 15 bars" [disabled] [ref=e74]
-        - generic [ref=e75]:
-            - heading "Resource Bonuses" [level=3] [ref=e76]
-            - list [ref=e77]:
-                - listitem "Metals bonus 0.0% boosts cargo pods." [ref=e78]:
-                    - generic [ref=e79]: Drone Capacity
-                    - generic [ref=e80]: 0.0%
-                - listitem "Metals bonus 0.0% reinforces chassis." [ref=e81]:
-                    - generic [ref=e82]: Drone Battery
-                    - generic [ref=e83]: 0.0%
-                - listitem "Crystals bonus 0.0% tunes refinement." [ref=e84]:
-                    - generic [ref=e85]: Refinery Yield
-                    - generic [ref=e86]: 0.0%
-                - listitem "Organics bonus 0.0% accelerates fabrication." [ref=e87]:
-                    - generic [ref=e88]: Drone Output Speed
-                    - generic [ref=e89]: 0.0%
-                - listitem "Ice bonus 0.0% expands capacitor banks." [ref=e90]:
-                    - generic [ref=e91]: Energy Storage
-                    - generic [ref=e92]: 0.0%
-                - listitem "Organics bonus 0.0% boosts passive regen." [ref=e93]:
-                    - generic [ref=e94]: Energy Generation
-                    - generic [ref=e95]: 0.0%
-                - listitem "Ice bonus 0.0% cools systems to reduce drain." [ref=e96]:
-                    - generic [ref=e97]: Energy Drain
-                    - generic [ref=e98]: 0.0%
-    - generic [ref=e99]:
-        - complementary [ref=e100]:
-            - heading "Upgrades" [level=3] [ref=e101]
-            - generic [ref=e102]:
-                - generic [ref=e103]:
-                    - strong [ref=e104]: Drone Bay
-                    - generic [ref=e105]: Lv 1
-                    - generic [ref=e106]: +1 drone, +5% travel speed
-                - button "Buy (5 warehouse bars)" [disabled] [ref=e108]
-            - generic [ref=e109]:
-                - generic [ref=e110]:
-                    - strong [ref=e111]: Refinery
-                    - generic [ref=e112]: Lv 0
-                    - generic [ref=e113]: +10% bar output
-                - button "Buy (8 warehouse bars)" [disabled] [ref=e115]
-            - generic [ref=e116]:
-                - generic [ref=e117]:
-                    - strong [ref=e118]: Storage
-                    - generic [ref=e119]: Lv 0
-                    - generic [ref=e120]: +100 ore capacity
-                - button "Buy (3 warehouse bars)" [disabled] [ref=e122]
-            - generic [ref=e123]:
-                - generic [ref=e124]:
-                    - strong [ref=e125]: Solar Array
-                    - generic [ref=e126]: Lv 0
-                    - generic [ref=e127]: +5 energy/s, +25 max energy
-                - button "Buy (4 warehouse bars)" [disabled] [ref=e129]
-            - generic [ref=e130]:
-                - generic [ref=e131]:
-                    - strong [ref=e132]: Scanner
-                    - generic [ref=e133]: Lv 0
-                    - generic [ref=e134]: +5% new asteroid richness
-                - button "Buy (12 warehouse bars)" [disabled] [ref=e136]
-            - separator [ref=e137]
-            - heading "Prestige" [level=3] [ref=e138]
-            - generic [ref=e139]: 'Warehouse Bars: 0 → Next Cores: 0'
-            - button "Prestige Run" [disabled] [ref=e140]
-            - generic [ref=e141]: 'Cores: 0 • Bonus: +0%'
-        - generic [ref=e142]:
-            - heading "Logistics Network" [level=4] [ref=e143]
-            - generic [ref=e144]:
-                - generic [ref=e145]:
-                    - generic [ref=e146]: 'Haulers:'
-                    - generic [ref=e147]: '1'
-                - generic [ref=e148]:
-                    - generic [ref=e149]: 'Active Transfers:'
-                    - generic [ref=e150]: '0'
-                - generic [ref=e151]:
-                    - generic [ref=e152]: 'Completed:'
-                    - generic [ref=e153]: '0'
-                - generic [ref=e154]:
-                    - generic [ref=e155]: 'Warehouse Bars:'
-                    - generic [ref=e156]: '0'
-                - generic [ref=e157]:
-                    - generic [ref=e158]: 'Network Bonus:'
-                    - generic [ref=e159]: +0 cap · ×1.00 speed
-            - generic [ref=e160]:
-                - heading "Active Transfers" [level=5] [ref=e162]
-                - paragraph [ref=e163]: No transfers in progress
-        - complementary [ref=e164]:
-            - heading "Factories" [level=3] [ref=e165]
-            - paragraph [ref=e166]:
-                - text: 'Owned:'
-                - strong [ref=e167]: '1'
-            - generic [ref=e168]:
-                - button "Autofit Camera" [ref=e169] [cursor=pointer]
-                - button "Reset Camera" [ref=e170] [cursor=pointer]
-            - generic [ref=e171]:
-                - generic [ref=e172]: 'Cost: 100 metals + 50 crystals'
-                - button "Buy Factory" [disabled] [ref=e173]
-            - generic [ref=e174]:
-                - generic [ref=e175]:
-                    - generic [ref=e176]:
-                        - button "Previous factory" [disabled] [ref=e177]: ◀
-                        - generic [ref=e178]: factory-0
-                        - button "Next factory" [disabled] [ref=e179]: ▶
-                        - generic [ref=e180]: 1 / 1
-                    - button "Pin factory card" [ref=e181] [cursor=pointer]: 📍
-                - generic [ref=e182]:
-                    - generic [ref=e183]:
-                        - heading "Docking" [level=4] [ref=e184]
-                        - paragraph [ref=e185]: 1/3 docks
-                        - list [ref=e186]:
-                            - listitem [ref=e187]: 🛬 drone-ca
-                    - generic [ref=e188]:
-                        - heading "Energy" [level=4] [ref=e189]
-                        - paragraph [ref=e190]: 17 / 80
-                        - paragraph [ref=e193]: 'Solar regen: 1.25/s'
-                    - generic [ref=e194]:
-                        - heading "Storage" [level=4] [ref=e195]
-                        - list [ref=e196]:
-                            - 'listitem "Ore: 0 / 300 (buffer: 50)" [ref=e197]':
-                                - generic [ref=e198]: Ore
-                                - generic [ref=e199]: '0 / 300 (buf: 50)'
-                            - 'listitem "Bars: 60 (buffer: 5)" [ref=e200]':
-                                - generic [ref=e201]: Bars
-                                - generic [ref=e202]: '60 (buf: 5)'
-                            - 'listitem "Metals: 0 (buffer: 20)" [ref=e203]':
-                                - generic [ref=e204]: Metals
-                                - generic [ref=e205]: '0 (buf: 20)'
-                            - 'listitem "Crystals: 0 (buffer: 20)" [ref=e206]':
-                                - generic [ref=e207]: Crystals
-                                - generic [ref=e208]: '0 (buf: 20)'
-                            - 'listitem "Organics: 0 (buffer: 20)" [ref=e209]':
-                                - generic [ref=e210]: Organics
-                                - generic [ref=e211]: '0 (buf: 20)'
-                            - 'listitem "Ice: 0 (buffer: 20)" [ref=e212]':
-                                - generic [ref=e213]: Ice
-                                - generic [ref=e214]: '0 (buf: 20)'
-                            - 'listitem "Credits: 0 (buffer: 15)" [ref=e215]':
-                                - generic [ref=e216]: Credits
-                                - generic [ref=e217]: '0 (buf: 15)'
-                - generic [ref=e218]:
-                    - heading "Upgrades" [level=4] [ref=e219]
-                    - generic [ref=e220]:
-                        - generic [ref=e221]:
-                            - strong [ref=e222]: Landing Bay
-                            - generic [ref=e223]: Lv 0
-                            - generic [ref=e224]: +1 docking slot for concurrent drones
-                            - generic [ref=e225]:
-                                - generic [ref=e226]: Pay with
-                                - combobox "Pay with" [ref=e227]:
-                                    - option "Bars (1350 bars)" [selected]
-                                    - option "Metals (900 metals)"
-                        - button "Upgrade (Bars)" [disabled] [ref=e229]
-                    - generic [ref=e230]:
-                        - generic [ref=e231]:
-                            - strong [ref=e232]: Refinery Line
-                            - generic [ref=e233]: Lv 0
-                            - generic [ref=e234]: +1 refine slot for parallel batches
-                            - generic [ref=e235]:
-                                - generic [ref=e236]: Pay with
-                                - combobox "Pay with" [ref=e237]:
-                                    - option "Bars (1350 bars)" [selected]
-                                    - option "Organics (500 organics + 250 metals)"
-                        - button "Upgrade (Bars)" [disabled] [ref=e239]
-                    - generic [ref=e240]:
-                        - generic [ref=e241]:
-                            - strong [ref=e242]: Bulk Storage
-                            - generic [ref=e243]: Lv 0
-                            - generic [ref=e244]: +150 ore storage capacity
-                            - generic [ref=e245]:
-                                - generic [ref=e246]: Pay with
-                                - combobox "Pay with" [ref=e247]:
-                                    - option "Bars (1350 bars)" [selected]
-                                    - option "Organics (1000 organics)"
-                        - button "Upgrade (Bars)" [disabled] [ref=e249]
-                    - generic [ref=e250]:
-                        - generic [ref=e251]:
-                            - strong [ref=e252]: Capacitors
-                            - generic [ref=e253]: Lv 0
-                            - generic [ref=e254]: +30 local energy capacity
-                            - generic [ref=e255]:
-                                - generic [ref=e256]: Pay with
-                                - combobox "Pay with" [ref=e257]:
-                                    - option "Bars (1350 bars)" [selected]
-                                    - option "Ice (750 ice + 150 metals)"
-                        - button "Upgrade (Bars)" [disabled] [ref=e259]
-                    - generic [ref=e260]:
-                        - generic [ref=e261]:
-                            - strong [ref=e262]: Solar Collectors
-                            - generic [ref=e263]: Lv 0
-                            - generic [ref=e264]: Regenerates local energy each second
-                            - generic [ref=e265]:
-                                - generic [ref=e266]: Pay with
-                                - combobox "Pay with" [ref=e267]:
-                                    - option "Bars (1350 bars)" [selected]
-                                    - option "Crystals (250 crystals + 100 metals)"
-                        - button "Upgrade (Bars)" [disabled] [ref=e269]
-                - generic [ref=e270]:
-                    - heading "Owned Drones" [level=4] [ref=e271]
-                    - paragraph [ref=e272]: No drones assigned yet.
-                - generic [ref=e273]:
-                    - heading "Hauler Logistics" [level=4] [ref=e274]
-                    - generic [ref=e275]:
-                        - generic [ref=e276]:
-                            - generic [ref=e277]: 'Assigned Haulers:'
-                            - generic [ref=e278]: '1'
-                        - generic [ref=e279]:
-                            - button "Add hauler" [ref=e280] [cursor=pointer]: +
-                            - button "Remove hauler" [ref=e281] [cursor=pointer]: '-'
-                    - generic [ref=e282]:
-                        - paragraph [ref=e283]: This factory has 1 hauler assigned.
-                        - paragraph [ref=e284]: 'Next: 12 bars'
-                    - paragraph [ref=e286]:
-                        - text: 'Capacity:'
-                        - strong [ref=e287]: '50'
-                        - text: '· Speed:'
-                        - strong [ref=e288]: '1.00'
-                        - text: '· Overhead:'
-                        - strong [ref=e289]: 1.00s
-                    - generic [ref=e290]:
-                        - generic [ref=e291]:
-                            - heading "Per-Factory Upgrades" [level=5] [ref=e292]
-                            - button "Per-factory hauler override help" [ref=e293]: ⓘ
-                        - paragraph [ref=e294]: Overrides stack on top of global modules but only boost this factory’s haulers.
-                        - list [ref=e295]:
-                            - listitem [ref=e296]:
-                                - generic [ref=e297]:
-                                    - text: capacityBoost
-                                    - generic [ref=e298]: Level 0/15
-                                    - paragraph [ref=e299]: +5 capacity per level
-                                - button "50 metals + 20 bars" [disabled] [ref=e301]
-                            - listitem [ref=e302]:
-                                - generic [ref=e303]:
-                                    - text: speedBoost
-                                    - generic [ref=e304]: Level 0/12
-                                    - paragraph [ref=e305]: +0.1 speed per level
-                                - button "40 metals + 15 bars" [disabled] [ref=e307]
-                            - listitem [ref=e308]:
-                                - generic [ref=e309]:
-                                    - text: efficiencyBoost
-                                    - generic [ref=e310]: Level 0/10
-                                    - paragraph [ref=e311]: '-5% overhead per level'
-                                - button "60 crystals + 25 bars" [disabled] [ref=e313]
-    - generic [ref=e314]:
-        - generic [ref=e315]:
+  - complementary "Warehouse overview" [ref=e8]:
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - heading "Warehouse" [level=2] [ref=e11]
+        - paragraph [ref=e12]: Global inventory ledger
+      - button "Settings" [ref=e13] [cursor=pointer]: ⚙️
+    - generic [ref=e14]:
+      - heading "Resources" [level=3] [ref=e15]
+      - generic [ref=e16]:
+        - generic [ref=e17]:
+          - term [ref=e18]: Ore
+          - definition [ref=e19]: "0.0"
+        - generic [ref=e20]:
+          - term [ref=e21]: Metals
+          - definition [ref=e22]: "0.0"
+        - generic [ref=e23]:
+          - term [ref=e24]: Crystals
+          - definition [ref=e25]: "0.0"
+        - generic [ref=e26]:
+          - term [ref=e27]: Organics
+          - definition [ref=e28]: "0.0"
+        - generic [ref=e29]:
+          - term [ref=e30]: Ice
+          - definition [ref=e31]: "0.0"
+        - generic [ref=e32]:
+          - term [ref=e33]: Bars
+          - definition [ref=e34]: "0.0"
+        - generic [ref=e35]:
+          - term [ref=e36]: Energy
+          - definition [ref=e37]: "100"
+        - generic [ref=e38]:
+          - term [ref=e39]: Drones
+          - definition [ref=e40]: "1"
+    - generic [ref=e41]:
+      - heading "Specialization Techs" [level=3] [ref=e42]
+      - list [ref=e43]:
+        - listitem [ref=e44]:
+          - generic [ref=e45]:
+            - generic [ref=e46]:
+              - generic [ref=e47]: Ore Magnet
+              - generic [ref=e48]: Level 0 / 20
+            - generic [ref=e49]: "Total Bonus: 0.0%"
+          - paragraph [ref=e50]: +3% ore mined per level
+          - paragraph [ref=e51]: Locked · Spend 50,000 metals to unlock (current 0)
+          - generic [ref=e52]:
+            - button "Invest 8,000 metals" [disabled] [ref=e53]
+            - generic [ref=e54]: +3.0% per level
+        - listitem [ref=e55]:
+          - generic [ref=e56]:
+            - generic [ref=e57]:
+              - generic [ref=e58]: Crystal Resonance
+              - generic [ref=e59]: Level 0 / 20
+            - generic [ref=e60]: "Total Bonus: 0.0%"
+          - paragraph [ref=e61]: +2% asteroid richness per level
+          - paragraph [ref=e62]: Locked · Spend 50,000 crystals to unlock (current 0)
+          - generic [ref=e63]:
+            - button "Invest 7,500 crystals" [disabled] [ref=e64]
+            - generic [ref=e65]: +2.0% per level
+        - listitem [ref=e66]:
+          - generic [ref=e67]:
+            - generic [ref=e68]:
+              - generic [ref=e69]: Biotech Farming
+              - generic [ref=e70]: Level 0 / 20
+            - generic [ref=e71]: "Total Bonus: 0.0%"
+          - paragraph [ref=e72]: +3% refinery yield per level
+          - paragraph [ref=e73]: Locked · Spend 50,000 organics to unlock (current 0)
+          - generic [ref=e74]:
+            - button "Invest 6,500 organics" [disabled] [ref=e75]
+            - generic [ref=e76]: +3.0% per level
+        - listitem [ref=e77]:
+          - generic [ref=e78]:
+            - generic [ref=e79]:
+              - generic [ref=e80]: Cryo-Preservation
+              - generic [ref=e81]: Level 0 / 15
+            - generic [ref=e82]: "Total Bonus: 0.0%"
+          - paragraph [ref=e83]: +5% offline gains per level
+          - paragraph [ref=e84]: Locked · Spend 50,000 ice to unlock (current 0)
+          - generic [ref=e85]:
+            - button "Invest 5,000 ice" [disabled] [ref=e86]
+            - generic [ref=e87]: +5.0% per level
+    - generic [ref=e88]:
+      - heading "Prestige Investment Board" [level=3] [ref=e89]
+      - paragraph [ref=e90]:
+        - text: "Global bonuses stack with specialization techs. Current multipliers:"
+        - generic "Drone Velocity" [ref=e91]: Speed 0.0%
+        - text: ","
+        - generic "Asteroid Abundance" [ref=e92]: Spawn 0.0%
+        - text: ","
+        - generic "Refinery Mastery" [ref=e93]: Refinery 0.0%
+        - text: ","
+        - generic "Offline Efficiency" [ref=e94]: Offline 0.0%
+      - list [ref=e95]:
+        - listitem [ref=e96]:
+          - generic [ref=e97]:
+            - generic [ref=e98]:
+              - generic [ref=e99]: Drone Velocity
+              - generic [ref=e100]: Tier 0
+            - generic [ref=e101]: "Total Bonus: 0.0%"
+          - paragraph [ref=e102]: +2% travel speed per tier
+          - generic [ref=e103]:
+            - button "Invest 1,000 metals" [disabled] [ref=e104]
+            - generic [ref=e105]: +2.0% per tier
+        - listitem [ref=e106]:
+          - generic [ref=e107]:
+            - generic [ref=e108]:
+              - generic [ref=e109]: Asteroid Abundance
+              - generic [ref=e110]: Tier 0
+            - generic [ref=e111]: "Total Bonus: 0.0%"
+          - paragraph [ref=e112]: +2% spawn rate per tier
+          - generic [ref=e113]:
+            - button "Invest 1,000 crystals" [disabled] [ref=e114]
+            - generic [ref=e115]: +2.0% per tier
+        - listitem [ref=e116]:
+          - generic [ref=e117]:
+            - generic [ref=e118]:
+              - generic [ref=e119]: Refinery Mastery
+              - generic [ref=e120]: Tier 0
+            - generic [ref=e121]: "Total Bonus: 0.0%"
+          - paragraph [ref=e122]: +1% refinery yield per tier
+          - generic [ref=e123]:
+            - button "Invest 1,000 organics" [disabled] [ref=e124]
+            - generic [ref=e125]: +1.0% per tier
+        - listitem [ref=e126]:
+          - generic [ref=e127]:
+            - generic [ref=e128]:
+              - generic [ref=e129]: Offline Efficiency
+              - generic [ref=e130]: Tier 0
+            - generic [ref=e131]: "Total Bonus: 0.0%"
+          - paragraph [ref=e132]: +3% offline gains per tier
+          - generic [ref=e133]:
+            - button "Invest 1,000 ice" [disabled] [ref=e134]
+            - generic [ref=e135]: +3.0% per tier
+    - region "Global hauler modules" [ref=e136]:
+      - generic [ref=e137]:
+        - heading "Logistics Modules" [level=3] [ref=e138]
+        - button "Global hauler module help" [ref=e139]: ⓘ
+      - paragraph [ref=e140]: Global logistics modules apply automatically to every hauler. Use per-factory overrides when you need a single factory to push beyond the global baseline.
+      - paragraph [ref=e141]: Network Capacity +0 • Speed ×1.00 • Overhead ×1.00
+      - list [ref=e142]:
+        - listitem [ref=e143]:
+          - generic [ref=e144]:
+            - generic [ref=e145]:
+              - generic [ref=e146]: Hauler Depot
+              - generic [ref=e147]: Level 0/20
+            - paragraph [ref=e148]: +10 capacity, +5% speed per level
+            - paragraph [ref=e149]: +0 capacity, +0% speed
+          - button "Buy · 60 metals" [disabled] [ref=e151]
+        - listitem [ref=e152]:
+          - generic [ref=e153]:
+            - generic [ref=e154]:
+              - generic [ref=e155]: Logistics Hub
+              - generic [ref=e156]: Level 0/15
+            - paragraph [ref=e157]: −10% pickup/dropoff overhead per level
+            - paragraph [ref=e158]: "-0% pickup/dropoff time"
+          - button "Buy · 80 metals + 10 bars" [disabled] [ref=e160]
+        - listitem [ref=e161]:
+          - generic [ref=e162]:
+            - generic [ref=e163]:
+              - generic [ref=e164]: Routing Protocol
+              - generic [ref=e165]: Level 0/10
+            - paragraph [ref=e166]: +2% routing efficiency per level
+            - paragraph [ref=e167]: +0% routing efficiency
+          - button "Buy · 100 crystals + 15 bars" [disabled] [ref=e169]
+    - generic [ref=e170]:
+      - heading "Resource Bonuses" [level=3] [ref=e171]
+      - list [ref=e172]:
+        - listitem "Metals bonus 0.0% boosts cargo pods." [ref=e173]:
+          - generic [ref=e174]: Drone Capacity
+          - generic [ref=e175]: 0.0%
+        - listitem "Metals bonus 0.0% reinforces chassis." [ref=e176]:
+          - generic [ref=e177]: Drone Battery
+          - generic [ref=e178]: 0.0%
+        - listitem "Crystals bonus 0.0% tunes refinement." [ref=e179]:
+          - generic [ref=e180]: Refinery Yield
+          - generic [ref=e181]: 0.0%
+        - listitem "Organics bonus 0.0% accelerates fabrication." [ref=e182]:
+          - generic [ref=e183]: Drone Output Speed
+          - generic [ref=e184]: 0.0%
+        - listitem "Ice bonus 0.0% expands capacitor banks." [ref=e185]:
+          - generic [ref=e186]: Energy Storage
+          - generic [ref=e187]: 0.0%
+        - listitem "Organics bonus 0.0% boosts passive regen." [ref=e188]:
+          - generic [ref=e189]: Energy Generation
+          - generic [ref=e190]: 0.0%
+        - listitem "Ice bonus 0.0% cools systems to reduce drain." [ref=e191]:
+          - generic [ref=e192]: Energy Drain
+          - generic [ref=e193]: 0.0%
+  - generic [ref=e194]:
+    - complementary [ref=e195]:
+      - heading "Upgrades" [level=3] [ref=e196]
+      - generic [ref=e197]:
+        - generic [ref=e198]:
+          - strong [ref=e199]: Drone Bay
+          - generic [ref=e200]: Lv 1
+          - generic [ref=e201]: +1 drone, +5% travel speed
+        - button "Buy (5 warehouse bars)" [disabled] [ref=e203]
+      - generic [ref=e204]:
+        - generic [ref=e205]:
+          - strong [ref=e206]: Refinery
+          - generic [ref=e207]: Lv 0
+          - generic [ref=e208]: +10% bar output
+        - button "Buy (8 warehouse bars)" [disabled] [ref=e210]
+      - generic [ref=e211]:
+        - generic [ref=e212]:
+          - strong [ref=e213]: Storage
+          - generic [ref=e214]: Lv 0
+          - generic [ref=e215]: +100 ore capacity
+        - button "Buy (3 warehouse bars)" [disabled] [ref=e217]
+      - generic [ref=e218]:
+        - generic [ref=e219]:
+          - strong [ref=e220]: Solar Array
+          - generic [ref=e221]: Lv 0
+          - generic [ref=e222]: +5 energy/s, +25 max energy
+        - button "Buy (4 warehouse bars)" [disabled] [ref=e224]
+      - generic [ref=e225]:
+        - generic [ref=e226]:
+          - strong [ref=e227]: Scanner
+          - generic [ref=e228]: Lv 0
+          - generic [ref=e229]: +5% new asteroid richness
+        - button "Buy (12 warehouse bars)" [disabled] [ref=e231]
+      - separator [ref=e232]
+      - heading "Prestige" [level=3] [ref=e233]
+      - generic [ref=e234]: "Warehouse Bars: 0 → Next Cores: 0"
+      - button "Prestige Run" [disabled] [ref=e235]
+      - generic [ref=e236]: "Cores: 0 • Bonus: +0%"
+    - generic [ref=e237]:
+      - heading "Logistics Network" [level=4] [ref=e238]
+      - generic [ref=e239]:
+        - generic [ref=e240]:
+          - generic [ref=e241]: "Haulers:"
+          - generic [ref=e242]: "1"
+        - generic [ref=e243]:
+          - generic [ref=e244]: "Active Transfers:"
+          - generic [ref=e245]: "0"
+        - generic [ref=e246]:
+          - generic [ref=e247]: "Completed:"
+          - generic [ref=e248]: "0"
+        - generic [ref=e249]:
+          - generic [ref=e250]: "Warehouse Bars:"
+          - generic [ref=e251]: "0"
+        - generic [ref=e252]:
+          - generic [ref=e253]: "Network Bonus:"
+          - generic [ref=e254]: +0 cap · ×1.00 speed
+      - generic [ref=e255]:
+        - heading "Active Transfers" [level=5] [ref=e257]
+        - paragraph [ref=e258]: No transfers in progress
+    - complementary [ref=e259]:
+      - heading "Factories" [level=3] [ref=e260]
+      - paragraph [ref=e261]:
+        - text: "Owned:"
+        - strong [ref=e262]: "1"
+      - generic [ref=e263]:
+        - button "Autofit Camera" [ref=e264] [cursor=pointer]
+        - button "Reset Camera" [ref=e265] [cursor=pointer]
+      - generic [ref=e266]:
+        - generic [ref=e267]: "Cost: 100 metals + 50 crystals"
+        - button "Buy Factory" [disabled] [ref=e268]
+      - generic [ref=e269]:
+        - generic [ref=e270]:
+          - generic [ref=e271]:
+            - button "Previous factory" [disabled] [ref=e272]: ◀
+            - generic [ref=e273]: factory-0
+            - button "Next factory" [disabled] [ref=e274]: ▶
+            - generic [ref=e275]: 1 / 1
+          - button "Pin factory card" [ref=e276] [cursor=pointer]: 📍
+        - generic [ref=e277]:
+          - generic [ref=e278]:
+            - heading "Docking" [level=4] [ref=e279]
+            - paragraph [ref=e280]: 1/3 docks
+            - list [ref=e281]:
+              - listitem [ref=e282]: 🛬 drone-ca
+          - generic [ref=e283]:
+            - heading "Energy" [level=4] [ref=e284]
+            - paragraph [ref=e285]: 17 / 80
+            - paragraph [ref=e288]: "Solar regen: 1.25/s"
+          - generic [ref=e289]:
+            - heading "Storage" [level=4] [ref=e290]
+            - list [ref=e291]:
+              - 'listitem "Ore: 0 / 300 (buffer: 50)" [ref=e292]':
+                - generic [ref=e293]: Ore
+                - generic [ref=e294]: "0 / 300 (buf: 50)"
+              - 'listitem "Bars: 60 (buffer: 5)" [ref=e295]':
+                - generic [ref=e296]: Bars
+                - generic [ref=e297]: "60 (buf: 5)"
+              - 'listitem "Metals: 0 (buffer: 20)" [ref=e298]':
+                - generic [ref=e299]: Metals
+                - generic [ref=e300]: "0 (buf: 20)"
+              - 'listitem "Crystals: 0 (buffer: 20)" [ref=e301]':
+                - generic [ref=e302]: Crystals
+                - generic [ref=e303]: "0 (buf: 20)"
+              - 'listitem "Organics: 0 (buffer: 20)" [ref=e304]':
+                - generic [ref=e305]: Organics
+                - generic [ref=e306]: "0 (buf: 20)"
+              - 'listitem "Ice: 0 (buffer: 20)" [ref=e307]':
+                - generic [ref=e308]: Ice
+                - generic [ref=e309]: "0 (buf: 20)"
+              - 'listitem "Credits: 0 (buffer: 15)" [ref=e310]':
+                - generic [ref=e311]: Credits
+                - generic [ref=e312]: "0 (buf: 15)"
+        - generic [ref=e313]:
+          - heading "Upgrades" [level=4] [ref=e314]
+          - generic [ref=e315]:
             - generic [ref=e316]:
-                - heading "Ice Fracture" [level=3] [ref=e317]
-                - paragraph [ref=e318]: Asteroid asteroid-2
-            - generic [ref=e319]:
-                - button "Previous asteroid" [ref=e320] [cursor=pointer]: ◀
-                - generic [ref=e321]: 1 / 200
-                - button "Next asteroid" [ref=e322] [cursor=pointer]: ▶
-                - button "Collapse asteroid inspector" [ref=e323] [cursor=pointer]: ▼
-        - generic [ref=e324]:
-            - generic [ref=e326]: Primary Biome
-            - generic [ref=e328]:
-                - generic [ref=e329]: Gravity
-                - generic [ref=e330]: 0.90g
-            - generic [ref=e331]:
-                - generic [ref=e332]: Dominant Resource
-                - generic [ref=e333]: Ice
-            - generic [ref=e334]:
-                - generic [ref=e335]: Hazard
-                - generic [ref=e336]: Ion Storm
-        - generic [ref=e337]:
-            - generic [ref=e338]: Resource Mix
-            - list [ref=e339]:
-                - listitem [ref=e340]:
-                    - generic [ref=e341]: Ice
-                    - generic [ref=e342]: 51%
-                - listitem [ref=e343]:
-                    - generic [ref=e344]: Ore
-                    - generic [ref=e345]: 31%
-                - listitem [ref=e346]:
-                    - generic [ref=e347]: Metals
-                    - generic [ref=e348]: 10%
-        - generic [ref=e349]:
-            - generic [ref=e350]: Regions
-            - paragraph [ref=e351]: No fractures recorded.
+              - strong [ref=e317]: Landing Bay
+              - generic [ref=e318]: Lv 0
+              - generic [ref=e319]: +1 docking slot for concurrent drones
+              - generic [ref=e320]:
+                - generic [ref=e321]: Pay with
+                - combobox "Pay with" [ref=e322]:
+                  - option "Bars (13 bars)" [selected]
+                  - option "Metals (50 metals)"
+            - button "Upgrade (Bars)" [ref=e324] [cursor=pointer]
+          - generic [ref=e325]:
+            - generic [ref=e326]:
+              - strong [ref=e327]: Refinery Line
+              - generic [ref=e328]: Lv 0
+              - generic [ref=e329]: +1 refine slot for parallel batches
+              - generic [ref=e330]:
+                - generic [ref=e331]: Pay with
+                - combobox "Pay with" [ref=e332]:
+                  - option "Bars (13 bars)" [selected]
+                  - option "Organics (25 organics + 25 metals)"
+            - button "Upgrade (Bars)" [ref=e334] [cursor=pointer]
+          - generic [ref=e335]:
+            - generic [ref=e336]:
+              - strong [ref=e337]: Bulk Storage
+              - generic [ref=e338]: Lv 0
+              - generic [ref=e339]: +150 storage capacity
+              - generic [ref=e340]:
+                - generic [ref=e341]: Pay with
+                - combobox "Pay with" [ref=e342]:
+                  - option "Bars (13 bars)" [selected]
+                  - option "Organics (20 organics)"
+            - button "Upgrade (Bars)" [ref=e344] [cursor=pointer]
+          - generic [ref=e345]:
+            - generic [ref=e346]:
+              - strong [ref=e347]: Capacitors
+              - generic [ref=e348]: Lv 0
+              - generic [ref=e349]: +30 local energy capacity
+              - generic [ref=e350]:
+                - generic [ref=e351]: Pay with
+                - combobox "Pay with" [ref=e352]:
+                  - option "Bars (13 bars)" [selected]
+                  - option "Ice (30 ice + 15 metals)"
+            - button "Upgrade (Bars)" [ref=e354] [cursor=pointer]
+          - generic [ref=e355]:
+            - generic [ref=e356]:
+              - strong [ref=e357]: Solar Collectors
+              - generic [ref=e358]: Lv 0
+              - generic [ref=e359]: Regenerates local energy each second
+              - generic [ref=e360]:
+                - generic [ref=e361]: Pay with
+                - combobox "Pay with" [ref=e362]:
+                  - option "Bars (13 bars)" [selected]
+                  - option "Crystals (25 crystals + 10 metals)"
+            - button "Upgrade (Bars)" [ref=e364] [cursor=pointer]
+        - generic [ref=e365]:
+          - heading "Hauler Logistics" [level=4] [ref=e366]
+          - generic [ref=e367]:
+            - generic [ref=e368]:
+              - generic [ref=e369]: "Assigned Haulers:"
+              - generic [ref=e370]: "1"
+            - generic [ref=e371]:
+              - button "Add hauler" [ref=e372] [cursor=pointer]: +
+              - button "Remove hauler" [ref=e373] [cursor=pointer]: "-"
+          - generic [ref=e374]:
+            - paragraph [ref=e375]: This factory has 1 hauler assigned.
+            - paragraph [ref=e376]: "Next: 12 bars"
+          - paragraph [ref=e378]:
+            - text: "Capacity:"
+            - strong [ref=e379]: "50"
+            - text: "· Speed:"
+            - strong [ref=e380]: "1.00"
+            - text: "· Overhead:"
+            - strong [ref=e381]: 1.00s
+          - generic [ref=e382]:
+            - generic [ref=e383]:
+              - heading "Per-Factory Upgrades" [level=5] [ref=e384]
+              - button "Per-factory hauler override help" [ref=e385]: ⓘ
+            - paragraph [ref=e386]: Overrides stack on top of global modules but only boost this factory’s haulers.
+            - list [ref=e387]:
+              - listitem [ref=e388]:
+                - generic [ref=e389]:
+                  - text: capacityBoost
+                  - generic [ref=e390]: Level 0/15
+                  - paragraph [ref=e391]: +5 capacity per level
+                - button "50 metals + 20 bars" [disabled] [ref=e393]
+              - listitem [ref=e394]:
+                - generic [ref=e395]:
+                  - text: speedBoost
+                  - generic [ref=e396]: Level 0/12
+                  - paragraph [ref=e397]: +0.1 speed per level
+                - button "40 metals + 15 bars" [disabled] [ref=e399]
+              - listitem [ref=e400]:
+                - generic [ref=e401]:
+                  - text: efficiencyBoost
+                  - generic [ref=e402]: Level 0/10
+                  - paragraph [ref=e403]: "-5% overhead per level"
+                - button "60 crystals + 25 bars" [disabled] [ref=e405]
+  - generic [ref=e406]:
+    - button "Expand asteroid inspector" [ref=e407] [cursor=pointer]: ▲ Inspector
+    - generic [ref=e408]: 200 asteroids
 ```
