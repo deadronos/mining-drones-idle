@@ -1,6 +1,6 @@
 ---
 
-id: DES025
+id: DES031
 title: Factory Metrics (Factory Dashboards & Mini-Charts)
 status: Draft
 added: 2025-10-29
