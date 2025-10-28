@@ -50,7 +50,7 @@ High-level phases (small, testable commits):
 
 - Unit tests: circular buffer behavior.
 - Integration test: simulated ticks produce expected delta samples (Vitest).
-- Update `memory/designs/DES025-factory-metrics.md` and task index (done).
+- Update `memory/designs/DES031-factory-metrics.md` and task index (done).
 
 Total estimate: 6–9 dev-days depending on polish and UI interactions.
 
