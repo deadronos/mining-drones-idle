@@ -148,6 +148,11 @@ describe('migrations', () => {
         showHaulerShips: true,
         performanceProfile: 'medium',
         inspectorCollapsed: false,
+        metrics: {
+          enabled: true,
+          intervalSeconds: 5,
+          retentionSeconds: 300,
+        },
       },
       factories: [
         {
@@ -278,6 +283,11 @@ describe('migrations', () => {
         throttleFloor: 0.25,
         showTrails: true,
         showHaulerShips: true,
+        metrics: {
+          enabled: true,
+          intervalSeconds: 5,
+          retentionSeconds: 300,
+        },
         performanceProfile: 'medium',
         inspectorCollapsed: false,
       },

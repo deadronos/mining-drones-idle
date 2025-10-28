@@ -63,6 +63,11 @@ export const initialSettings: StoreSettings = {
   showHaulerShips: true,
   performanceProfile: 'medium',
   inspectorCollapsed: false,
+  metrics: {
+    enabled: true,
+    intervalSeconds: 5,
+    retentionSeconds: 300,
+  },
 };
 
 export const initialResources: Resources = {

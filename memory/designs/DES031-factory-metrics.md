@@ -2,11 +2,13 @@
 
 id: DES031
 title: Factory Metrics (Factory Dashboards & Mini-Charts)
-status: Draft
+status: In Progress
 added: 2025-10-29
 authors:
 
 - agent
+
+# Factory Metrics (Factory Dashboards & Mini-Charts)
 
 ## Summary
 
@@ -60,6 +62,90 @@ Storage options:
 
 Recommendation: Option A with `store.settings.performanceProfile` gating to disable or throttle sampling.
 
+## Architecture Overview
+
+- **Metrics runtime slice** — non-serialized store segment `{ buffers: Record<FactoryId, MetricsBuffer>, lastSnapshots: Record<FactoryId, FactorySnapshotLite>, config: { intervalMs, retentionMs, enabled } }`. Clears on reset/import.
+- **Sampling driver** — `collectFactoryMetrics(state, dt)` orchestrated from `processFactories` tick and a `metricsAccumulator` timer. Tracks elapsed time and samples once `intervalMs` is reached (respecting performance profile overrides).
+- **Logistics integration** — `recordHaulerThroughput(factoryId, delta)` invoked from logistics arrival handling to accumulate per-interval transfer counts consumed by the next sample.
+- **UI consumption** — selector hooks (`useFactoryMetrics(factoryId)`) feed `FactoryMetricsTab` and inline sparkline components. Rendering uses lightweight SVG paths (no third-party chart libs).
+- **Settings bridge** — extends `StoreSettings` with `metrics: { enabled: boolean; intervalSeconds: number; retentionSeconds: number }`, normalized with defaults and performance-profile gating.
+
+## Data Flow
+
+1. `tick(dt)` adds to a metrics accumulator. If metrics disabled, accumulator resets and no buffers mutate.
+2. When accumulator ≥ active interval, `collectFactoryMetrics` iterates factories:
+   - Pulls latest factory state (ore, bars, energy, active refines, haulers).
+   - Diffs against `lastSnapshots` to compute ore delta, bar delta, energy delta, and consumes any pending `haulerDelta` recorded since previous sample.
+   - Pushes structured sample into the per-factory circular buffer, trimming overflow.
+   - Stores current snapshot for next iteration.
+3. Logistics processing calls `metrics.recordHaulerTransfer(factoryId, amount)` whenever a factory completes an inbound/outbound transfer. The metrics module aggregates totals until the next sampling tick, then resets the accumulator.
+4. UI components subscribe to `buffers[factoryId]` and re-render sparklines via memoized selectors. Last value, average, and extrema are derived on read to keep buffers write-only.
+5. When factories are removed/reset, metrics slice deletes the associated buffer and snapshot entries; imports/reset clear entire slice.
+
+## Interfaces & Contracts
+
+```ts
+interface MetricSample {
+  ts: number; // epoch ms
+  value: number;
+}
+
+interface MetricsSeries {
+  id: 'oreIn' | 'barsOut' | 'energy' | 'hauler';
+  unit: 'ore/min' | 'bars/min' | 'energy/sec' | 'items/min';
+  buffer: MetricSample[];
+}
+
+interface FactoryMetricsState {
+  buffers: Record<string, Record<MetricsSeries['id'], MetricSample[]>>;
+  lastSnapshots: Record<
+    string,
+    {
+      ore: number;
+      bars: number;
+      energy: number;
+      timestamp: number;
+    }
+  >;
+  pendingHauler: Record<string, number>;
+  accumulatorMs: number;
+  intervalMs: number;
+  retentionMs: number;
+  enabled: boolean;
+}
+
+type MetricsMode = 'enabled' | 'throttled' | 'disabled';
+
+function collectFactoryMetrics(
+  state: StoreState,
+  dt: number,
+): FactoryMetricsState;
+function recordHaulerTransfer(
+  factoryId: string,
+  amount: number,
+  direction: 'in' | 'out',
+): void;
+function clearFactoryMetrics(factoryId: string): void;
+```
+
+## Error Handling Matrix
+
+| Scenario                                     | Detection                               | Mitigation                                                                              |
+| -------------------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------- |
+| Metrics disabled via settings                | `enabled === false`                     | Skip sampling, reset accumulator, zero pending hauler deltas                            |
+| Performance profile set to low               | `settings.performanceProfile === 'low'` | Force `intervalMs = max(intervalMs, 15000)` and reduce retention to 60s to bound memory |
+| Factory removed mid-sampling                 | Buffer lookup returns undefined         | Treat as no-op; ensure `clearFactoryMetrics` invoked by slice before next sample        |
+| Hauler transfer recorded for unknown factory | Metrics map lacks entry                 | Lazily initialize pending counter but skip buffer write until factory exists            |
+| Import/reset applied                         | `applySnapshot` or `resetGame` invoked  | Recreate metrics state defaults and drop all buffers to release memory                  |
+
+## Unit Testing Strategy
+
+- **Buffer helper tests**: Validate that pushes respect capacity, oldest samples rotate out, and timestamps remain monotonic.
+- **Sampling cadence test**: Stub store state, advance time across multiple intervals, and ensure ore/bar/energy deltas reflect simulated changes; verify accumulator resets exactly once per interval.
+- **Performance profile gate test**: Flip settings to `low` and confirm sampling occurs at ≥15s cadence and buffers stop growing when metrics disabled.
+- **Hauler throughput accumulation test**: Simulate logistics completions calling `recordHaulerTransfer`, then run sampling and assert items/min computed from aggregated amount and interval duration.
+- **Lifecycle cleanup test**: Remove a factory and ensure buffers/pending counters clear; run `resetGame` to verify metrics state returns to defaults with empty maps.
+
 ## Sampling & computation
 
 - At each sampling tick (driven by existing game loop / UI tick):
@@ -111,14 +197,20 @@ Accessibility:
 
 ## Files to change / add
 
-- Add: `memory/designs/DES025-factory-metrics.md` (this file)
-- Add: `src/ui/FactoryMetrics.tsx` (new)
-- Add: `src/ui/FactoryMetricsInline.tsx` (new)
-- Modify: `src/ui/FactoryPanel.tsx` (add tab)
-- Modify: `src/state/types.ts` (Metric types)
-- Modify: `src/state/processing/gameProcessing.ts` (hook sampling call) OR add new `src/state/processing/metricsProcessing.ts`
-- Modify: `src/state/slices/settingsSlice.ts` (metrics settings)
-- Add tests: `src/state/processing/metricsProcessing.test.ts`
+- Modify: `memory/designs/DES031-factory-metrics.md` (this document)
+- Add: `src/state/metrics/buffers.ts` (circular buffer helpers and helpers)
+- Add: `src/state/metrics/index.ts` (exports + recordHaulerTransfer/collectFactoryMetrics API)
+- Modify: `src/state/types.ts` (Metric types + settings extension)
+- Modify: `src/state/slices/settingsSlice.ts` (metrics defaults & toggles)
+- Modify: `src/state/slices/factorySlice.ts` (clear metrics on remove)
+- Modify: `src/state/store.ts` (wire metrics slice defaults + reset/import cleanup)
+- Modify: `src/state/processing/gameProcessing.ts` (invoke metrics sampler)
+- Modify: `src/state/processing/logisticsProcessing.ts` (emit throughput deltas)
+- Add: `src/ui/FactoryMetricsTab.tsx` (new main tab component)
+- Add: `src/ui/FactoryMetricsInline.tsx` (inline sparkline component)
+- Modify: `src/ui/FactoryManager/index.tsx` (add Metrics tab + inline sparkline usage)
+- Add: `tests/unit/metricsBuffer.spec.ts` (buffer tests)
+- Add: `tests/unit/metricsSampling.spec.ts` (sampling cadence / cleanup)
 
 ## Acceptance Criteria
 

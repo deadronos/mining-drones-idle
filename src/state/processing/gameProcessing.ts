@@ -34,23 +34,39 @@ export function processRefinery(
  * Handles energy distribution, drains, refining processes, and bar production.
  * Returns the new state slice with updated factories and resources.
  */
+interface FactoryTickTelemetry {
+  barsProduced: number;
+  oreConsumed: number;
+  energySpent: number;
+}
+
 export function processFactories(
   state: StoreState,
   dt: number,
-): { factories: BuildableFactory[]; resources: Resources; factoryProcessSequence: number } {
+): {
+  factories: BuildableFactory[];
+  resources: Resources;
+  factoryProcessSequence: number;
+  metrics: Record<string, FactoryTickTelemetry>;
+} {
   if (dt <= 0 || state.factories.length === 0) {
     return {
       factories: state.factories,
       resources: state.resources,
       factoryProcessSequence: state.factoryProcessSequence,
+      metrics: {},
     };
   }
 
   let processesStarted = 0;
   let remainingEnergy = Math.max(0, state.resources.energy);
+  const metrics: Record<string, FactoryTickTelemetry> = {};
 
   const updatedFactories = state.factories.map((factory) => {
     const working = cloneFactory(factory);
+    let barsProduced = 0;
+    let oreConsumed = 0;
+    let energySpent = 0;
 
     // Local-first: Factories consume their local energy for idle, haulers, and refining.
     // No proactive pull from global; factories sit at zero if depleted.
@@ -59,7 +75,9 @@ export function processFactories(
     // Apply idle energy drain (local)
     const idleDrain = working.idleEnergyPerSec * dt;
     if (idleDrain > 0) {
+      const before = working.energy;
       working.energy = Math.max(0, working.energy - idleDrain);
+      energySpent += before - working.energy;
     }
 
     // Apply hauler maintenance drain (local)
@@ -68,7 +86,9 @@ export function processFactories(
         ? computeHaulerMaintenanceCost(working.haulersAssigned ?? 0) * dt
         : 0;
     if (haulerDrain > 0) {
+      const before = working.energy;
       working.energy = Math.max(0, working.energy - haulerDrain);
+      energySpent += before - working.energy;
     }
 
     // Start new refining processes if possible
@@ -88,6 +108,7 @@ export function processFactories(
         break;
       }
       processesStarted += 1;
+      oreConsumed += started.amount;
     }
 
     // Enforce at least one refining if possible
@@ -101,14 +122,22 @@ export function processFactories(
       const drain = working.energyPerRefine * dt * process.speedMultiplier;
       const consumed = Math.min(drain, working.energy);
       working.energy = Math.max(0, working.energy - consumed);
+      energySpent += consumed;
       const refined = tickRefineProcess(working, process, dt);
       if (refined > 0) {
         working.resources.bars += refined;
+        barsProduced += refined;
       }
     }
 
     // Update storage tracking
     working.currentStorage = working.resources.ore;
+
+    metrics[working.id] = {
+      barsProduced,
+      oreConsumed,
+      energySpent,
+    };
 
     return working;
   });
@@ -122,6 +151,7 @@ export function processFactories(
     factories: updatedFactories,
     resources,
     factoryProcessSequence: state.factoryProcessSequence + processesStarted,
+    metrics,
   };
 }
 
@@ -143,3 +173,5 @@ export function tick(state: StoreState, dt: number) {
     factoryProcessSequence: factoryResult.factoryProcessSequence,
   };
 }
+
+export type { FactoryTickTelemetry };

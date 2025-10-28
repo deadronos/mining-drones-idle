@@ -14,6 +14,12 @@ import { processLogistics } from './processing/logisticsProcessing';
 import { LOGISTICS_CONFIG } from '@/ecs/logistics';
 import { logLogistics } from '@/lib/debug';
 import {
+  createMetricsState,
+  collectFactoryMetrics as collectMetrics,
+  accumulateHaulerThroughput,
+  resetMetricsState,
+} from './metrics';
+import {
   normalizeSnapshot,
   snapshotToFactory,
   cloneDroneFlight,
@@ -77,6 +83,11 @@ export type {
   PrestigeInvestmentState,
   SpecTechId,
   PrestigeInvestmentId,
+  MetricsState,
+  MetricSample,
+  FactoryMetricSeries,
+  FactoryMetricSeriesId,
+  FactoryMetricSnapshot,
 } from './types';
 
 export {
@@ -165,6 +176,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
     selectedFactoryId: initialSelectedFactory,
     factories: defaultFactories,
     logisticsQueues: { pendingTransfers: [] },
+    metrics: createMetricsState(),
     highlightedFactories: { sourceId: null, destId: null },
 
     // Game loop tick orchestrator
@@ -190,8 +202,20 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
     processFactories: (dt) => {
       if (dt <= 0 || get().factories.length === 0) return;
       const state = get();
-      const { factories, resources, factoryProcessSequence } = processFactories(state, dt);
-      set({ factories, resources, factoryProcessSequence });
+      const result = processFactories(state, dt);
+      set((current) => ({
+        factories: result.factories,
+        resources: result.resources,
+        factoryProcessSequence: result.factoryProcessSequence,
+        metrics: collectMetrics({
+          metrics: current.metrics,
+          factories: result.factories,
+          telemetry: result.metrics,
+          settings: current.settings,
+          dt,
+          gameTime: current.gameTime,
+        }),
+      }));
 
       // Detect upgrade shortfalls and create requests, then clear expired ones
       const getState = get as () => StoreState & FactorySliceMethods;
@@ -224,11 +248,12 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
         newLogisticsTick,
         LOGISTICS_CONFIG.scheduling_interval,
       );
-      const { logisticsQueues } = processLogistics(state);
-      set({
+      const { logisticsQueues, throughputByFactory } = processLogistics(state);
+      set((current) => ({
         logisticsQueues,
         logisticsTick: newLogisticsTick - LOGISTICS_CONFIG.scheduling_interval,
-      });
+        metrics: accumulateHaulerThroughput(current.metrics, throughputByFactory),
+      }));
     },
 
     // Snapshot and import/export
@@ -283,6 +308,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
           selectedFactoryId,
           droneOwners: normalizeDroneOwners(normalized.droneOwners ?? {}),
           highlightedFactories: { sourceId: null, destId: null },
+          metrics: resetMetricsState(),
         };
       }),
 
@@ -326,6 +352,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
           selectedFactoryId,
           droneOwners: {},
           highlightedFactories: { sourceId: null, destId: null },
+          metrics: resetMetricsState(),
         };
       });
     },

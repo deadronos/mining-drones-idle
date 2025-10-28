@@ -30,6 +30,7 @@ const WAREHOUSE_POSITION = new Vector3(0, 0, 0);
 export function processLogistics(state: StoreState): {
   logisticsQueues: LogisticsQueues;
   logisticsTick: number;
+  throughputByFactory: Record<string, number>;
 } {
   const updatedQueues: LogisticsQueues = {
     pendingTransfers: [...state.logisticsQueues.pendingTransfers],
@@ -399,6 +400,7 @@ export function processLogistics(state: StoreState): {
   }
 
   const completedTransfers: string[] = [];
+  const throughputByFactory: Record<string, number> = {};
   for (const transfer of updatedQueues.pendingTransfers) {
     if (state.gameTime >= transfer.eta && transfer.status === 'scheduled') {
       logLogistics(
@@ -427,6 +429,8 @@ export function processLogistics(state: StoreState): {
           (state.resources as unknown as Record<string, number>)[transfer.resource] =
             updatedWarehouse;
 
+          throughputByFactory[sourceFactory.id] =
+            (throughputByFactory[sourceFactory.id] ?? 0) + transfer.amount;
           completedTransfers.push(transfer.id);
         }
       } else if (transfer.fromFactoryId === WAREHOUSE_NODE_ID) {
@@ -500,6 +504,8 @@ export function processLogistics(state: StoreState): {
               );
           }
 
+              throughputByFactory[destFactory.id] =
+                (throughputByFactory[destFactory.id] ?? 0) + transfer.amount;
           completedTransfers.push(transfer.id);
         }
       } else {
@@ -508,6 +514,10 @@ export function processLogistics(state: StoreState): {
 
         if (sourceFactory && destFactory) {
           executeArrival(sourceFactory, destFactory, transfer.resource, transfer.amount);
+              throughputByFactory[sourceFactory.id] =
+                (throughputByFactory[sourceFactory.id] ?? 0) + transfer.amount;
+              throughputByFactory[destFactory.id] =
+                (throughputByFactory[destFactory.id] ?? 0) + transfer.amount;
           completedTransfers.push(transfer.id);
         }
       }
@@ -520,6 +530,7 @@ export function processLogistics(state: StoreState): {
 
   return {
     logisticsQueues: updatedQueues,
-    logisticsTick: 0,
+        logisticsTick: 0,
+        throughputByFactory,
   };
 }
