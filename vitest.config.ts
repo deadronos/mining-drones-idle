@@ -20,7 +20,8 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'json'],
-      all: true,
+      // 'all' was removed from the typed Coverage options in newer Vitest
+      // versions. Tests should rely on `include`/`exclude` to control files.
       include: ['src/**/*.{ts,tsx,js,jsx}'],
       exclude: ['**/node_modules/**', 'test/**', 'src/**/*.test.{ts,tsx}'],
       // Use thresholds to enforce minimum coverage
