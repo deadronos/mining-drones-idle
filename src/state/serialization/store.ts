@@ -214,6 +214,34 @@ export const normalizeSettings = (snapshot?: Partial<StoreSettings>): StoreSetti
     typeof snapshot?.inspectorCollapsed === 'boolean'
       ? snapshot.inspectorCollapsed
       : initialSettings.inspectorCollapsed,
+  metrics: {
+    enabled:
+      typeof snapshot?.metrics === 'object' && typeof snapshot.metrics.enabled === 'boolean'
+        ? snapshot.metrics.enabled
+        : initialSettings.metrics.enabled,
+    intervalSeconds: Math.max(
+      1,
+      Math.floor(
+        coerceNumber(
+          snapshot?.metrics && 'intervalSeconds' in snapshot.metrics
+            ? (snapshot.metrics as Partial<StoreSettings['metrics']>).intervalSeconds
+            : initialSettings.metrics.intervalSeconds,
+          initialSettings.metrics.intervalSeconds,
+        ),
+      ),
+    ),
+    retentionSeconds: Math.max(
+      initialSettings.metrics.intervalSeconds,
+      Math.floor(
+        coerceNumber(
+          snapshot?.metrics && 'retentionSeconds' in snapshot.metrics
+            ? (snapshot.metrics as Partial<StoreSettings['metrics']>).retentionSeconds
+            : initialSettings.metrics.retentionSeconds,
+          initialSettings.metrics.retentionSeconds,
+        ),
+      ),
+    ),
+  },
 });
 
 export const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapshot => ({

@@ -163,6 +163,26 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
     updateSettings({ performanceProfile: event.target.value as PerformanceProfile });
   };
 
+  const handleMetricsToggle: ChangeEventHandler<HTMLInputElement> = (event) => {
+    updateSettings({ metrics: { ...settings.metrics, enabled: event.target.checked } });
+  };
+
+  const handleMetricsInterval: ChangeEventHandler<HTMLInputElement> = (event) => {
+    const next = Number(event.target.value);
+    const intervalSeconds = Number.isFinite(next)
+      ? Math.max(1, Math.floor(next))
+      : settings.metrics.intervalSeconds;
+    updateSettings({ metrics: { ...settings.metrics, intervalSeconds } });
+  };
+
+  const handleMetricsRetention: ChangeEventHandler<HTMLInputElement> = (event) => {
+    const next = Number(event.target.value);
+    const retentionSeconds = Number.isFinite(next)
+      ? Math.max(settings.metrics.intervalSeconds, Math.floor(next))
+      : settings.metrics.retentionSeconds;
+    updateSettings({ metrics: { ...settings.metrics, retentionSeconds } });
+  };
+
   return (
     <div className="settings-backdrop" role="presentation">
       <div
@@ -264,9 +284,6 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
                 step={0.05}
                 value={settings.throttleFloor}
                 onChange={handleThrottle}
-                aria-valuemin={0}
-                aria-valuemax={1}
-                aria-valuenow={Number(settings.throttleFloor.toFixed(2))}
               />
               <span className="settings-value">{Math.round(settings.throttleFloor * 100)}%</span>
             </label>
@@ -314,6 +331,51 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
             </label>
           </section>
           <section className="settings-section">
+            <h3>Metrics</h3>
+            <p className="settings-note">
+              Lightweight factory metrics highlight short-term production trends. Low performance
+              profile automatically slows sampling to protect frame rate.
+            </p>
+            <label className="settings-row">
+              <span>
+                Factory metrics
+                <small>Pause or resume sampling without opening the factory panel.</small>
+              </span>
+              <input
+                type="checkbox"
+                checked={settings.metrics.enabled}
+                onChange={handleMetricsToggle}
+                aria-label="Toggle factory metrics sampling"
+              />
+            </label>
+            <label className="settings-row">
+              <span>
+                Sampling interval (seconds)
+                <small>Minimum 1 second. Larger intervals reduce CPU cost.</small>
+              </span>
+              <input
+                type="number"
+                min={1}
+                step={1}
+                value={settings.metrics.intervalSeconds}
+                onChange={handleMetricsInterval}
+              />
+            </label>
+            <label className="settings-row">
+              <span>
+                Retention window (seconds)
+                <small>Minimum equals the interval. Controls sparkline history length.</small>
+              </span>
+              <input
+                type="number"
+                min={settings.metrics.intervalSeconds}
+                step={1}
+                value={settings.metrics.retentionSeconds}
+                onChange={handleMetricsRetention}
+              />
+            </label>
+          </section>
+          <section className="settings-section">
             <h3>Data tools</h3>
             <div className="settings-actions">
               <button type="button" onClick={handleExport} aria-label="Export save data">
@@ -334,7 +396,8 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
                 type="file"
                 accept="application/json"
                 onChange={handleImport}
-                style={{ display: 'none' }}
+                className="settings-file-input"
+                aria-label="Import save file input"
               />
             </div>
             <p className="settings-meta">Last saved: {formattedLastSave}</p>
