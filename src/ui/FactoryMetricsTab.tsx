@@ -42,6 +42,25 @@ const METRIC_META: Record<FactoryMetricSeriesId, { label: string; unit: string; 
 const trimSamples = (samples: MetricSample[], limit = 64): MetricSample[] =>
   samples.length > limit ? samples.slice(samples.length - limit) : samples;
 
+const formatElapsedTime = (seconds: number): string => {
+  if (!Number.isFinite(seconds) || seconds <= 0.9) {
+    return 'just now';
+  }
+  if (seconds < 60) {
+    return `${Math.round(seconds)}s ago`;
+  }
+  const minutes = seconds / 60;
+  if (minutes < 60) {
+    return `${Math.round(minutes)}m ago`;
+  }
+  const hours = minutes / 60;
+  if (hours < 24) {
+    return `${Math.round(hours)}h ago`;
+  }
+  const days = hours / 24;
+  return `${Math.round(days)}d ago`;
+};
+
 interface MetricsCardProps {
   metric: FactoryMetricSeriesId;
   samples: MetricSample[];
@@ -116,6 +135,7 @@ export const FactoryMetricsTab = ({ factoryId }: FactoryMetricsTabProps) => {
   const settings = useStore((state) => state.settings);
   const metrics = useStore((state) => state.metrics);
   const updateSettings = useStore((state) => state.updateSettings);
+  const gameTime = useStore((state) => state.gameTime);
 
   const config = useMemo(() => resolveMetricsConfig(settings), [settings]);
   const intervalSeconds = Math.round(config.intervalMs / 1000);
@@ -166,6 +186,17 @@ export const FactoryMetricsTab = ({ factoryId }: FactoryMetricsTabProps) => {
   });
 
   const hasData = cards.some((card) => card.summary.hasData);
+  const latestSampleTimestamp = cards.reduce((latest, card) => {
+    if (!card.summary.hasData || card.samples.length === 0) {
+      return latest;
+    }
+    const lastSample = card.samples[card.samples.length - 1];
+    return lastSample.ts > latest ? lastSample.ts : latest;
+  }, 0);
+
+  const lastSampleLabel = hasData && latestSampleTimestamp > 0
+    ? formatElapsedTime(Math.max(0, gameTime - latestSampleTimestamp / 1000))
+    : null;
 
   return (
     <div className="factory-metrics-tab">
@@ -189,6 +220,11 @@ export const FactoryMetricsTab = ({ factoryId }: FactoryMetricsTabProps) => {
         {config.mode === 'throttled' ? (
           <p className="factory-metrics-banner__note">
             Low performance profile detected — sampling slows to preserve frame time.
+          </p>
+        ) : null}
+        {lastSampleLabel ? (
+          <p className="factory-metrics-banner__note">
+            Last sample {lastSampleLabel}
           </p>
         ) : null}
         {!hasData ? (

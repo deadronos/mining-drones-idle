@@ -159,7 +159,7 @@ Where to hook:
 
 ## UI: Components & placement
 
-- `src/ui/FactoryMetricsTab.tsx` — renders four sparklines (ore intake, bars output, energy usage, hauler throughput) with summary stats, sampling banner, and pause toggle. Uses plain SVG helpers to avoid heavy chart libs.
+- `src/ui/FactoryMetricsTab.tsx` — renders four sparklines (ore intake, bars output, energy usage, hauler throughput) with summary stats, sampling banner (interval, retention, last-sample recency), and pause toggle. Uses plain SVG helpers to avoid heavy chart libs.
 - `src/ui/FactoryManager/index.tsx` — wires the tab into the factory manager tabset; metrics tab is enabled when settings permit sampling.
 - Inline sparklines:
   - `src/ui/FactoryMetricsInline.tsx` renders a compact bars-output sparkline embedded within factory cards and hides automatically when metrics disabled or empty.
