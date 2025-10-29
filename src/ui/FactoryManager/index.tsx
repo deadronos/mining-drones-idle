@@ -8,7 +8,6 @@ import { UpgradeSection } from './sections/UpgradeSection';
 import { HaulerSection } from './sections/HaulerSection';
 import { RefineSection } from './sections/RefineSection';
 import { FactoryMetricsTab } from '../FactoryMetricsTab';
-import { FactoryMetricsInline } from '../FactoryMetricsInline';
 import '../FactoryManager.css';
 
 /**
@@ -149,7 +148,6 @@ const SelectedFactoryCard = ({
           </span>
         </div>
         <div className="factory-card-actions">
-          <FactoryMetricsInline factoryId={factory.id} />
           <button
             type="button"
             className="pin-button"
