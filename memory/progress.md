@@ -2,6 +2,7 @@
 
 ## Summary
 
+- 2025-10-30: **TASK038 – Factory Metrics UI & coverage** – Implemented Factory Metrics tab banner/actions, sparkline cards, inline sparkline component, and Settings metrics controls. Added buffer/sampling/UI unit tests and verified npm run typecheck, npm run lint, and npm run test (209 tests) succeed.
 - 2025-10-29: **TASK038 – Factory Metrics infrastructure** – Added metrics settings schema, circular buffer helpers, runtime metrics slice, factory sampling driver, and logistics throughput accumulation. Metrics honors performance-profile gating, resets on import/reset, and Vitest suite green (200 tests).
 - 2025-10-23: **Completed TASK035 & TASK036** – Removed unused `ownedDrones` historical record (150+ lines of dead code) and implemented position-based drone unload trigger to fix queue jamming. All 189 tests pass, TypeScript clean, linting clean. Both tasks ready for deployment.
 - 2025-10-23: Kicked off TASK034 Phases 2 & 3 (specialization techs and prestige investments) to extend resource sinks beyond Tier 1; updated active context accordingly and preparing implementation work.
@@ -42,7 +43,7 @@
 
 ## Open Items
 
-- Build Factory Metrics UI surfaces (Metrics tab, inline sparkline) and expose metrics settings controls.
+- Validate sparkline rendering performance and consider throttling safeguards for large factory counts.
 - Execute TASK021 to deliver the factory solar regeneration upgrade and surface regen telemetry in the inspector.
 - Track UI follow-up for surfacing per-drone battery levels and throttle warnings in the HUD.
 - Validate seeded RNG integration across save import/export flows and plan any reset tooling.

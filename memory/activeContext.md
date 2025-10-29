@@ -2,17 +2,16 @@
 
 ## Current Work
 
-🚧 **TASK038 – Factory Metrics & Mini-Charts** is in progress.
-
-- Runtime metrics infrastructure landed: metrics settings schema, buffer helpers, store slice wiring, factory sampling, and logistics throughput accumulation now operational.
-- Metrics sampling honors performance profile gating (`low` stretches to ≥15s) and clears state on reset/import. Logistics now emits per-factory throughput totals consumed by the metrics slice.
-- Upcoming focus: build Metrics tab UI, inline sparklines, and expose settings controls before polishing validation coverage.
+- 🚧 **TASK038 – Factory Metrics & Mini-Charts** is in progress.
+  - Factory Metrics tab now renders four sparklines with summary stats, sampling banner, and pause control.
+  - Inline sparkline component ships on factory cards and hides when sampling disabled or empty.
+  - Settings panel exposes metrics toggle, interval, and retention inputs; metrics helpers covered by new unit tests.
 
 🔭 **Open follow-ups**
 
-- Implement `FactoryMetricsTab` UI and inline sparkline components with lightweight SVG rendering.
-- Surface metrics enable/interval controls in Settings, including low-profile messaging.
-- Expand Vitest coverage for buffer helpers and sampling cadence; add UI tests post-component implementation.
+- Add hover tooltips / accessibility copy for sparkline data points if needed.
+- Extend coverage to integration/e2e flows and ensure throttled profile messaging surfaces in low-profile runs.
+- Profile rendering cost of sparklines under large factory counts; add guardrails if necessary.
 
 **Design Reference:** `/memory/designs/DES031-factory-metrics.md`
 
@@ -28,6 +27,6 @@
 
 ## Next Steps
 
-1. Build Metrics UI surfaces (factory tab + inline sparkline) and wire selectors.
-2. Add settings controls for metrics enable/interval with low-profile messaging.
-3. Expand automated coverage for buffer helpers, sampling cadence, and throughput accumulation edge cases.
+1. Validate sparkline rendering performance under stress scenarios and document thresholds.
+2. Layer in UX polish (tooltips, aria descriptions) for metrics surfaces.
+3. Plan Playwright coverage once metrics UI stabilizes and evaluate throttled-profile acceptance.

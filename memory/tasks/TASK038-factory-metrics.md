@@ -2,7 +2,7 @@
 
 **Status:** In Progress  
 **Added:** 2025-10-29  
-**Updated:** 2025-10-29
+**Updated:** 2025-10-30
 
 ## Original Request
 
@@ -48,19 +48,19 @@ Phased approach with granular subtasks (tracked below):
 
 ### Subtasks
 
-| ID  | Description                                         | Status      | Updated    | Notes                                                                   |
-| --- | --------------------------------------------------- | ----------- | ---------- | ----------------------------------------------------------------------- |
-| 1.1 | Define metrics types and settings schema            | Completed   | 2025-10-29 | Types + settings normalization landed in `types.ts` and serialization.  |
-| 1.2 | Implement metrics buffer utilities                  | Completed   | 2025-10-29 | `src/state/metrics/buffers.ts` created with tests pending.              |
-| 1.3 | Add metrics slice to store + reset/backfill hooks   | Completed   | 2025-10-29 | Metrics state initialized/reset on snapshot/reset/import.               |
-| 2.1 | Create sampling driver (collectFactoryMetrics)      | Completed   | 2025-10-29 | Sampling wired via `processFactories` with performance gating.          |
-| 2.2 | Wire logistics throughput accumulation              | Completed   | 2025-10-29 | Logistics returns per-factory throughput map consumed by metrics slice. |
-| 3.1 | Build Factory Metrics tab UI (sparklines + stats)   | Not Started | —          |                                                                         |
-| 3.2 | Add inline sparkline to factory list cards          | Not Started | —          |                                                                         |
-| 3.3 | Expose metrics toggle/interval controls in settings | Not Started | —          |                                                                         |
-| 4.1 | Cleanup buffers on factory removal/reset/import     | Completed   | 2025-10-29 | Metrics cleared on reset/import and per-factory removal helpers ready.  |
-| 5.1 | Add unit tests for buffers & sampling cadence       | Not Started | —          |                                                                         |
-| 5.2 | Add UI test for Metrics tab render                  | Not Started | —          |                                                                         |
+| ID  | Description                                         | Status    | Updated    | Notes                                                                   |
+| --- | --------------------------------------------------- | --------- | ---------- | ----------------------------------------------------------------------- |
+| 1.1 | Define metrics types and settings schema            | Completed | 2025-10-29 | Types + settings normalization landed in `types.ts` and serialization.  |
+| 1.2 | Implement metrics buffer utilities                  | Completed | 2025-10-29 | `src/state/metrics/buffers.ts` created with tests pending.              |
+| 1.3 | Add metrics slice to store + reset/backfill hooks   | Completed | 2025-10-29 | Metrics state initialized/reset on snapshot/reset/import.               |
+| 2.1 | Create sampling driver (collectFactoryMetrics)      | Completed | 2025-10-29 | Sampling wired via `processFactories` with performance gating.          |
+| 2.2 | Wire logistics throughput accumulation              | Completed | 2025-10-29 | Logistics returns per-factory throughput map consumed by metrics slice. |
+| 3.1 | Build Factory Metrics tab UI (sparklines + stats)   | Completed | 2025-10-30 | Tab includes enable/pause CTA, sampling banner, four metric cards.      |
+| 3.2 | Add inline sparkline to factory list cards          | Completed | 2025-10-30 | Inline component renders bars output sparkline + value summary.         |
+| 3.3 | Expose metrics toggle/interval controls in settings | Completed | 2025-10-30 | Settings panel adds enable toggle, interval, retention inputs.          |
+| 4.1 | Cleanup buffers on factory removal/reset/import     | Completed | 2025-10-29 | Metrics cleared on reset/import and per-factory removal helpers ready.  |
+| 5.1 | Add unit tests for buffers & sampling cadence       | Completed | 2025-10-30 | `metricsBuffer.spec.ts` and `metricsSampling.spec.ts` cover helpers.    |
+| 5.2 | Add UI test for Metrics tab render                  | Completed | 2025-10-30 | `FactoryMetricsTab.spec.tsx` validates banner actions and cards.        |
 
 ## Acceptance Criteria
 
@@ -93,3 +93,4 @@ Total estimate: 6–9 dev-days depending on polish and UI interactions.
 2025-10-29: Task created and moved to In Progress. Design and task files added to memory.
 2025-10-29: Updated design DES031 with architecture, interfaces, error handling matrix, and unit testing strategy; added RQ-063–RQ-066 requirements.
 2025-10-29: Implemented runtime metrics plumbing — types, buffer helpers, metrics slice wiring, factory sampling, and logistics throughput accumulation with passing Vitest suite.
+2025-10-30: Delivered Factory Metrics tab UI, inline sparkline, and Settings controls. Added metrics buffer/sampling/FactoryMetricsTab unit tests. Ran npm run typecheck, npm run lint, and npm run test (209 tests) successfully.

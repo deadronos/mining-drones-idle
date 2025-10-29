@@ -114,10 +114,13 @@ export const accumulateHaulerThroughput = (
   let changed = false;
   const nextPending = { ...state.pendingHauler };
   for (const [factoryId, amount] of Object.entries(deltas)) {
-    if (!factoryId || !Number.isFinite(amount) || amount === undefined || amount === 0) {
+    if (!factoryId || !Number.isFinite(amount) || amount === undefined) {
       continue;
     }
-    nextPending[factoryId] = (nextPending[factoryId] ?? 0) + Math.max(0, amount);
+    if (amount <= 0) {
+      continue;
+    }
+    nextPending[factoryId] = (nextPending[factoryId] ?? 0) + amount;
     changed = true;
   }
   if (!changed) {

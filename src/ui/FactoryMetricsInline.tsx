@@ -1,0 +1,46 @@
+import { useMemo } from 'react';
+import { useStore } from '@/state/store';
+import type { MetricSample } from '@/state/types';
+import { summarizeSamples, buildSparklinePath, formatMetricValue } from './FactoryMetricsShared';
+import './FactoryMetrics.css';
+
+export interface FactoryMetricsInlineProps {
+  factoryId: string;
+}
+
+const trimInlineSamples = (samples: MetricSample[], limit = 32): MetricSample[] =>
+  samples.length > limit ? samples.slice(samples.length - limit) : samples;
+
+const EMPTY_SAMPLES: MetricSample[] = [];
+
+export const FactoryMetricsInline = ({ factoryId }: FactoryMetricsInlineProps) => {
+  const metricsSettings = useStore((state) => state.settings.metrics);
+  const series = useStore((state) => state.metrics.series[factoryId]);
+
+  const samples = series?.barsOut ?? EMPTY_SAMPLES;
+  const summary = useMemo(() => summarizeSamples(samples), [samples]);
+  const trimmed = useMemo(() => trimInlineSamples(samples), [samples]);
+  const path = useMemo(() => buildSparklinePath(trimmed, 96, 28), [trimmed]);
+
+  if (!metricsSettings.enabled || !summary.hasData) {
+    return null;
+  }
+
+  return (
+    <div className="factory-metrics-inline" aria-label={`Bars output trend for ${factoryId}`}>
+      <svg
+        className="factory-metrics-inline__sparkline"
+        viewBox="0 0 96 28"
+        preserveAspectRatio="none"
+        role="img"
+        aria-label={`Bars output sparkline showing ${trimmed.length} samples`}
+        focusable="false"
+      >
+        <path d={path} fill="none" stroke="#f97316" strokeWidth={2.2} strokeLinecap="round" />
+      </svg>
+      <span className="factory-metrics-inline__value">
+        {formatMetricValue(summary.last)} <span className="factory-metrics-inline__unit">bars/min</span>
+      </span>
+    </div>
+  );
+};

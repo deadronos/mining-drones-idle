@@ -159,13 +159,11 @@ Where to hook:
 
 ## UI: Components & placement
 
-- `src/ui/FactoryMetrics.tsx` — new component rendering 3 sparklines and a small legend and last sample numeric values. Minimal dependency: use plain SVG or lightweight sparkline helper; avoid heavy chart libs.
-- `src/ui/FactoryPanel.tsx` — add a `Metrics` tab. Use existing tab infrastructure (if present) or add a new tab button. Metrics tab shows:
-  - Row of 3 sparklines (ore-in, bars-produced, hauler throughput).
-  - Small numeric summary: avg/min/max over window.
-  - Optional toggles: sampling interval dropdown (5s/10s/30s) and a "pause metrics" toggle.
+- `src/ui/FactoryMetricsTab.tsx` — renders four sparklines (ore intake, bars output, energy usage, hauler throughput) with summary stats, sampling banner, and pause toggle. Uses plain SVG helpers to avoid heavy chart libs.
+- `src/ui/FactoryManager/index.tsx` — wires the tab into the factory manager tabset; metrics tab is enabled when settings permit sampling.
 - Inline sparklines:
-  - Add compact `FactoryMetricsInline.tsx` to be used in factory list rows/cards; single-line sparkline for barsProduced (or oreIn), with tooltip on hover.
+  - `src/ui/FactoryMetricsInline.tsx` renders a compact bars-output sparkline embedded within factory cards and hides automatically when metrics disabled or empty.
+- Settings panel (`src/ui/Settings.tsx`) exposes metrics enable toggle plus interval and retention numeric inputs so players can tune sampling cost without opening the factory panel.
 
 Colors and theme:
 
@@ -187,10 +185,10 @@ Accessibility:
   - `src/ui/FactoryMetrics.tsx` (main tab)
   - `src/ui/FactoryMetricsInline.tsx` (compact sparkline)
   - Hook components into `src/ui/FactoryPanel.tsx` by adding new tab and rendering the component.
-- Add settings toggle in `src/state/slices/settingsSlice.ts` to expose `metrics.samplingInterval` and `metrics.enabled`.
+- Add settings toggle in `src/state/slices/settingsSlice.ts` to expose `metrics.samplingInterval` and `metrics.enabled`. ✅ Implemented via Settings panel controls and settings normalization.
 - Add tests:
-  - Unit test for buffer logic (`src/state/processing/metricsProcessing.test.ts`).
-  - Integration test for sample deltas in `gameProcessing.test.ts`.
+  - Unit tests for buffer logic (`tests/unit/metricsBuffer.spec.ts`) and sampling cadence (`tests/unit/metricsSampling.spec.ts`).
+  - UI test verifying banner actions and card rendering (`tests/unit/FactoryMetricsTab.spec.tsx`).
 - Ensure cleanup: when factory removed, clear its buffer.
 - Performance checks: add guard to skip sampling when `performanceProfile === 'low'` (or use larger intervals).
 - Documentation: update `memory/designs/_index.md` and `memory/progress.md` when implemented.
