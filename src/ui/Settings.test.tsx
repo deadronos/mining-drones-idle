@@ -48,6 +48,7 @@ describe('ui/Settings', () => {
         throttleFloor: 0.25,
         showTrails: true,
         showHaulerShips: true,
+        showDebugPanel: true,
         metrics: {
           enabled: true,
           intervalSeconds: 5,

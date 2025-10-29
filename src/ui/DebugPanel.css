@@ -1,0 +1,88 @@
+.debug-panel {
+  position: absolute;
+  width: 420px;
+  max-width: calc(100vw - 32px);
+  background: rgba(6, 8, 20, 0.96);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  color: #e6eef6;
+  z-index: 120;
+  overflow: hidden;
+  font-size: 0.9rem;
+}
+
+.debug-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: grab;
+  user-select: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.debug-panel-title {
+  font-weight: 700;
+}
+
+.debug-panel-tabs .tab {
+  background: transparent;
+  border: none;
+  color: inherit;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.debug-panel-tabs .tab--active {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+}
+
+.debug-panel-body {
+  padding: 8px;
+  max-height: 60vh;
+  overflow: auto;
+}
+
+.debug-panel-list-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 80px;
+  gap: 8px;
+  padding: 6px 8px;
+  opacity: 0.9;
+  font-size: 0.85rem;
+}
+
+.debug-panel-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.debug-panel-list-item {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 80px;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.debug-panel-list-item .actions button {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: rgba(14, 165, 233, 0.12);
+  color: inherit;
+}
+
+.debug-panel-pagination {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px;
+}

@@ -208,6 +208,8 @@ export interface StoreSettings {
   throttleFloor: number;
   showTrails: boolean;
   showHaulerShips: boolean;
+  /** Toggle visibility of the floating debug panel */
+  showDebugPanel: boolean;
   performanceProfile: PerformanceProfile;
   inspectorCollapsed: boolean;
   metrics: {
@@ -296,6 +298,11 @@ export interface StoreState {
     droneId: string,
     options?: { transferOwnership?: boolean },
   ): void;
+  /**
+   * Forcefully remove a drone from any factory queues/docks, clear its ownership, and persist the change.
+   * Intended for developer tooling (e.g. debug panel) to recover stuck drones.
+   */
+  unstickDrone(this: void, droneId: string): void;
   transferOreToFactory(this: void, factoryId: string, amount: number): number;
   addResourcesToFactory(this: void, factoryId: string, delta: Partial<FactoryResources>): void;
   allocateFactoryEnergy(this: void, factoryId: string, amount: number): number;

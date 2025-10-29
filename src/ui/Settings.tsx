@@ -183,6 +183,10 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
     updateSettings({ metrics: { ...settings.metrics, retentionSeconds } });
   };
 
+  const handleDebugPanelToggle: ChangeEventHandler<HTMLInputElement> = (event) => {
+    updateSettings({ showDebugPanel: event.target.checked });
+  };
+
   return (
     <div className="settings-backdrop" role="presentation">
       <div
@@ -222,6 +226,22 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
                 full, haulers will route the overflow to the warehouse on their next run.
               </li>
             </ul>
+          </section>
+          <section className="settings-section">
+            <h3>Debug</h3>
+            <p className="settings-note">Developer tools for inspecting runtime state. Toggle to show the floating debug panel.</p>
+            <label className="settings-row">
+              <span>
+                Show debug panel
+                <small>Enables a draggable debug overlay for troubleshooting (non-persistent tools).</small>
+              </span>
+              <input
+                type="checkbox"
+                checked={settings.showDebugPanel}
+                onChange={handleDebugPanelToggle}
+                aria-label="Toggle debug panel"
+              />
+            </label>
           </section>
           <section className="settings-section">
             <h3>Persistence</h3>

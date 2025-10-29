@@ -35,6 +35,7 @@ export interface FactorySliceMethods {
     droneId: string,
     options?: { transferOwnership?: boolean },
   ) => void;
+  unstickDrone: (droneId: string) => void;
   transferOreToFactory: (factoryId: string, amount: number) => number;
   addResourcesToFactory: (factoryId: string, delta: Partial<FactoryResources>) => void;
   allocateFactoryEnergy: (factoryId: string, amount: number) => number;
@@ -186,6 +187,26 @@ export const createFactorySlice: StateCreator<
     }
 
     set(() => ({ factories, droneOwners: nextDroneOwners }));
+  },
+
+  unstickDrone: (droneId) => {
+    set((state) => {
+      // Remove droneId from any factory queuedDrones
+      const factories = state.factories.map((factory) => ({ ...cloneFactory(factory) }));
+      for (const f of factories) {
+        if (Array.isArray(f.queuedDrones) && f.queuedDrones.includes(droneId)) {
+          f.queuedDrones = f.queuedDrones.filter((d) => d !== droneId);
+        }
+      }
+
+      // Clear owner mapping for the drone
+      const droneOwners = { ...state.droneOwners };
+      if (droneOwners[droneId] !== undefined) {
+        droneOwners[droneId] = null;
+      }
+
+      return { factories, droneOwners };
+    });
   },
 
   transferOreToFactory: (factoryId, amount) => {
