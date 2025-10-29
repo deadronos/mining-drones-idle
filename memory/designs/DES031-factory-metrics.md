@@ -171,7 +171,7 @@ Colors and theme:
 
 Accessibility:
 
-- Provide aria labels for each chart and numeric values; keyboard focus shows tooltip with last N samples.
+- Provide aria labels for each chart and numeric values; connect sparklines to visible stats via `aria-describedby`, emit `<title>` nodes for screen readers, and supply inline trend tooltips narrating last/avg/peak values.
 
 ## Implementation steps (high-level todo)
 
@@ -188,7 +188,7 @@ Accessibility:
 - Add settings toggle in `src/state/slices/settingsSlice.ts` to expose `metrics.samplingInterval` and `metrics.enabled`. ✅ Implemented via Settings panel controls and settings normalization.
 - Add tests:
   - Unit tests for buffer logic (`tests/unit/metricsBuffer.spec.ts`) and sampling cadence (`tests/unit/metricsSampling.spec.ts`).
-  - UI test verifying banner actions and card rendering (`tests/unit/FactoryMetricsTab.spec.tsx`).
+  - UI test verifying banner actions and card rendering (`tests/unit/FactoryMetricsTab.spec.tsx`) plus inline accessibility coverage (`tests/unit/FactoryMetricsInline.spec.tsx`).
 - Ensure cleanup: when factory removed, clear its buffer.
 - Performance checks: add guard to skip sampling when `performanceProfile === 'low'` (or use larger intervals).
 - Documentation: update `memory/designs/_index.md` and `memory/progress.md` when implemented.

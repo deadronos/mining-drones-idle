@@ -94,3 +94,4 @@ Total estimate: 6–9 dev-days depending on polish and UI interactions.
 2025-10-29: Updated design DES031 with architecture, interfaces, error handling matrix, and unit testing strategy; added RQ-063–RQ-066 requirements.
 2025-10-29: Implemented runtime metrics plumbing — types, buffer helpers, metrics slice wiring, factory sampling, and logistics throughput accumulation with passing Vitest suite.
 2025-10-30: Delivered Factory Metrics tab UI, inline sparkline, and Settings controls. Added metrics buffer/sampling/FactoryMetricsTab unit tests. Ran npm run typecheck, npm run lint, and npm run test (209 tests) successfully.
+2025-10-30: Added descriptive sparkline tooltips/ARIA bindings and inline metrics narration. Created FactoryMetricsInline Vitest coverage and updated FactoryMetricsTab test to assert accessibility hooks.

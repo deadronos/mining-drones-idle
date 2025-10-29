@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import { useStore } from '@/state/store';
 import { resolveMetricsConfig } from '@/state/metrics';
 import type { FactoryMetricSeries, FactoryMetricSeriesId, MetricSample } from '@/state/types';
@@ -52,9 +52,18 @@ const MetricsCard = ({ metric, samples, summary }: MetricsCardProps) => {
   const meta = METRIC_META[metric];
   const trimmed = useMemo(() => trimSamples(samples), [samples]);
   const path = useMemo(() => buildSparklinePath(trimmed, 160, 48), [trimmed]);
+  const statsId = useId();
+
+  const sparklineDescription = summary.hasData
+    ? `${meta.label} recent values — last ${formatMetricValue(summary.last)} ${meta.unit}, average ${formatMetricValue(summary.average)}, peak ${formatMetricValue(summary.max)}, low ${formatMetricValue(summary.min)} across ${trimmed.length} samples.`
+    : `${meta.label} sparkline is waiting for samples.`;
 
   return (
-    <section className="factory-metrics-card" aria-label={`${meta.label} metrics`}>
+    <section
+      className="factory-metrics-card"
+      aria-label={`${meta.label} metrics`}
+      title={sparklineDescription}
+    >
       <header className="factory-metrics-card__header">
         <div>
           <p className="factory-metrics-card__label">{meta.label}</p>
@@ -72,14 +81,16 @@ const MetricsCard = ({ metric, samples, summary }: MetricsCardProps) => {
           preserveAspectRatio="none"
           role="img"
           aria-label={`${meta.label} sparkline over last ${trimmed.length} samples`}
+          aria-describedby={statsId}
           focusable="false"
         >
+          <title>{sparklineDescription}</title>
           <path d={path} fill="none" stroke={meta.color} strokeWidth={2.4} strokeLinecap="round" />
         </svg>
       ) : (
         <p className="factory-metrics-card__empty">Waiting for samples…</p>
       )}
-      <dl className="factory-metrics-card__stats">
+      <dl className="factory-metrics-card__stats" id={statsId}>
         <div>
           <dt>Average</dt>
           <dd>{summary.hasData ? `${formatMetricValue(summary.average)} ${meta.unit}` : '—'}</dd>

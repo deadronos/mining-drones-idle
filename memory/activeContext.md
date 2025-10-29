@@ -6,12 +6,13 @@
   - Factory Metrics tab now renders four sparklines with summary stats, sampling banner, and pause control.
   - Inline sparkline component ships on factory cards and hides when sampling disabled or empty.
   - Settings panel exposes metrics toggle, interval, and retention inputs; metrics helpers covered by new unit tests.
+  - Sparklines now include descriptive titles/ARIA wiring and inline component gains narrated labels with dedicated Vitest coverage.
 
 🔭 **Open follow-ups**
 
-- Add hover tooltips / accessibility copy for sparkline data points if needed.
 - Extend coverage to integration/e2e flows and ensure throttled profile messaging surfaces in low-profile runs.
 - Profile rendering cost of sparklines under large factory counts; add guardrails if necessary.
+- Surface last-sampled timestamps or contextual hints to help players connect trends to recent gameplay.
 
 **Design Reference:** `/memory/designs/DES031-factory-metrics.md`
 
@@ -28,5 +29,5 @@
 ## Next Steps
 
 1. Validate sparkline rendering performance under stress scenarios and document thresholds.
-2. Layer in UX polish (tooltips, aria descriptions) for metrics surfaces.
+2. Explore contextual data (last sample timestamps, aggregate deltas) to complement visual trends.
 3. Plan Playwright coverage once metrics UI stabilizes and evaluate throttled-profile acceptance.

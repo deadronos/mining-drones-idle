@@ -68,10 +68,21 @@ describe('ui/FactoryMetricsTab', () => {
     expect(banner).not.toBeNull();
     const normalizedBannerText = banner?.textContent?.replace(/\s+/g, ' ').trim();
     expect(normalizedBannerText).toContain('Sampling every 5s with a retention window of 2m.');
-    expect(screen.getByText(/Ore Intake/i)).toBeInTheDocument();
-    expect(screen.getByText(/Bars Output/i)).toBeInTheDocument();
-    expect(screen.getByText(/Energy Usage/i)).toBeInTheDocument();
-    expect(screen.getByText(/Hauler Flow/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Ore Intake metrics/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Bars Output metrics/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Energy Usage metrics/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Hauler Flow metrics/i)).toBeInTheDocument();
+
+    const oreSparkline = screen.getByLabelText(/Ore Intake sparkline/i);
+    const describedBy = oreSparkline.getAttribute('aria-describedby');
+    expect(describedBy).toBeTruthy();
+    if (describedBy) {
+      const statsId = describedBy.split(' ')[0] ?? '';
+      const statsElement = document.getElementById(statsId);
+      expect(statsElement).not.toBeNull();
+    }
+    const oreTitle = oreSparkline.querySelector('title');
+    expect(oreTitle?.textContent).toContain('Ore Intake recent values');
 
     await act(async () => {
       fireEvent.click(pauseButton);
