@@ -35,6 +35,7 @@ describe('migrations', () => {
         notation: 'standard',
         throttleFloor: 0.25,
         showHaulerShips: true,
+        showDebugPanel: false,
       },
     } as Partial<StoreSnapshot>;
 
@@ -86,6 +87,7 @@ describe('migrations', () => {
         showTrails: false,
         showHaulerShips: true,
         performanceProfile: 'medium',
+        showDebugPanel: false,
       },
       specTechs: {
         oreMagnet: 0,
@@ -153,6 +155,7 @@ describe('migrations', () => {
           intervalSeconds: 5,
           retentionSeconds: 300,
         },
+        showDebugPanel: false,
       },
       factories: [
         {
@@ -290,6 +293,7 @@ describe('migrations', () => {
         },
         performanceProfile: 'medium',
         inspectorCollapsed: false,
+        showDebugPanel: false,
       },
     } satisfies Partial<StoreSnapshot>;
 

@@ -61,6 +61,7 @@ export const initialSettings: StoreSettings = {
   throttleFloor: 0.25,
   showTrails: true,
   showHaulerShips: true,
+  showDebugPanel: false,
   performanceProfile: 'medium',
   inspectorCollapsed: false,
   metrics: {

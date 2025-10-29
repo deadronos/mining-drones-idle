@@ -70,16 +70,26 @@ export const tickRefineProcess = (
   process: RefineProcess,
   dt: number,
 ): number => {
+  // Advance progress according to speed multiplier and return the amount of
+  // refined output produced during this tick. Previously this function only
+  // returned the full process.amount when the process completed which made
+  // per-tick throughput appear as zero until completion. To provide a smooth
+  // throughput metric (and more accurate accounting) we return the fraction of
+  // the process.amount that finished during this tick (delta progress * amount).
   const adjustedDt = dt * process.speedMultiplier;
-  process.progress = Math.min(1, process.progress + adjustedDt / process.timeTotal);
+  const prevProgress = process.progress;
+  const newProgress = Math.min(1, prevProgress + adjustedDt / process.timeTotal);
+  const delta = Math.max(0, newProgress - prevProgress);
+  process.progress = newProgress;
+
+  const refinedThisTick = process.amount * delta;
 
   if (process.progress >= 1) {
-    // Refine completed
+    // Process completed: remove it from active list
     factory.activeRefines = factory.activeRefines.filter((p) => p.id !== process.id);
-    return process.amount; // Return refined amount
   }
 
-  return 0;
+  return refinedThisTick;
 };
 
 /**

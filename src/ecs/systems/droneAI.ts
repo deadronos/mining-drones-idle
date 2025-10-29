@@ -453,9 +453,16 @@ export const createDroneAISystem = (world: GameWorld, store: StoreApiType) => {
           drone.targetRegionId = null;
           startTravel(drone, assignment.position, 'returning', store, { recordDockingFrom: true });
         } else {
+          // If the drone was queued for docking, assignReturnFactory will set
+          // drone.targetFactoryId and return null. In that case we must NOT
+          // clear targetFactoryId here, otherwise the drone will lose its
+          // queued assignment and never travel to the factory (becoming
+          // stuck in the 'returning' state). Only clear the factory id when
+          // there is genuinely no candidate selected (i.e. targetFactoryId
+          // is already null).
           drone.flightSeed = null;
           drone.targetRegionId = null;
-          drone.targetFactoryId = null;
+          // leave drone.targetFactoryId as-is (null or previously set)
         }
       }
     }

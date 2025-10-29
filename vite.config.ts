@@ -94,7 +94,7 @@ export default defineConfig(async ({ mode }) => {
       },
     },
     build: {
-      target: 'es2020',
+      target: 'es2022',
       sourcemap: mode === 'development',
       // raise warning threshold for large chunks in playground repos
       chunkSizeWarningLimit: 2000,

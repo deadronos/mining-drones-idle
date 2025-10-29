@@ -209,6 +209,10 @@ export const normalizeSettings = (snapshot?: Partial<StoreSettings>): StoreSetti
     typeof snapshot?.showHaulerShips === 'boolean'
       ? snapshot.showHaulerShips
       : initialSettings.showHaulerShips,
+  showDebugPanel:
+    typeof snapshot?.showDebugPanel === 'boolean'
+      ? snapshot.showDebugPanel
+      : initialSettings.showDebugPanel,
   performanceProfile: normalizePerformanceProfile(snapshot?.performanceProfile),
   inspectorCollapsed:
     typeof snapshot?.inspectorCollapsed === 'boolean'
