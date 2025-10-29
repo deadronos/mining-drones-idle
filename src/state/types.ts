@@ -132,6 +132,29 @@ export interface HighlightedFactories {
   destId: string | null;
 }
 
+export interface MetricSample {
+  ts: number;
+  value: number;
+}
+
+export type FactoryMetricSeriesId = 'oreIn' | 'barsOut' | 'energyUse' | 'haulerThroughput';
+
+export type FactoryMetricSeries = Record<FactoryMetricSeriesId, MetricSample[]>;
+
+export interface FactoryMetricSnapshot {
+  ore: number;
+  bars: number;
+  energy: number;
+  timestamp: number;
+}
+
+export interface MetricsState {
+  series: Record<string, FactoryMetricSeries>;
+  snapshots: Record<string, FactoryMetricSnapshot>;
+  pendingHauler: Record<string, number>;
+  accumulatorMs: number;
+}
+
 export type DroneFlightPhase = 'toAsteroid' | 'returning';
 
 export interface DroneFlightState {
@@ -187,6 +210,11 @@ export interface StoreSettings {
   showHaulerShips: boolean;
   performanceProfile: PerformanceProfile;
   inspectorCollapsed: boolean;
+  metrics: {
+    enabled: boolean;
+    intervalSeconds: number;
+    retentionSeconds: number;
+  };
 }
 
 export interface RefineryStats {
@@ -230,6 +258,7 @@ export interface StoreState {
   factoryAutofitSequence: number;
   cameraResetSequence: number;
   logisticsTick: number;
+  metrics: MetricsState;
   selectedAsteroidId: string | null;
   selectedFactoryId: string | null;
   droneOwners: Record<string, string | null>;

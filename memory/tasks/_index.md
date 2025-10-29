@@ -40,6 +40,8 @@
 | TASK036 | Fix Drone Unload Trigger - Position Arrival  | Completed   | 2025-10-25 |
 | TASK037 | Hauler Ship Visuals Implementation           | Pending     | 2025-10-26 |
 
+| TASK038 | Factory Metrics & Mini-Charts | In Progress | 2025-10-30 |
+
 ```
 
 ```

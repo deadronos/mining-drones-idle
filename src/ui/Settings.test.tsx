@@ -48,6 +48,11 @@ describe('ui/Settings', () => {
         throttleFloor: 0.25,
         showTrails: true,
         showHaulerShips: true,
+        metrics: {
+          enabled: true,
+          intervalSeconds: 5,
+          retentionSeconds: 300,
+        },
         performanceProfile: 'medium',
         inspectorCollapsed: false,
       },
@@ -109,6 +114,24 @@ describe('ui/Settings', () => {
     expect(toggle.checked).toBe(true);
     fireEvent.click(toggle);
     expect(storeApi.getState().settings.showHaulerShips).toBe(false);
+  });
+
+  it('updates factory metrics controls', () => {
+    const persistence = createPersistenceMock();
+    render(<SettingsPanel onClose={() => undefined} persistence={persistence} />);
+
+    const toggle = screen.getByLabelText<HTMLInputElement>(/toggle factory metrics sampling/i);
+    expect(toggle.checked).toBe(true);
+    fireEvent.click(toggle);
+    expect(storeApi.getState().settings.metrics.enabled).toBe(false);
+
+    const intervalInput = screen.getByLabelText<HTMLInputElement>(/sampling interval/i);
+    fireEvent.change(intervalInput, { target: { value: '12.6' } });
+    expect(storeApi.getState().settings.metrics.intervalSeconds).toBe(12);
+
+    const retentionInput = screen.getByLabelText<HTMLInputElement>(/retention window/i);
+    fireEvent.change(retentionInput, { target: { value: '37.9' } });
+    expect(storeApi.getState().settings.metrics.retentionSeconds).toBe(37);
   });
 
   it('changes factory performance profile', () => {

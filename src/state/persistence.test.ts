@@ -42,6 +42,11 @@ describe('state/persistence', () => {
         throttleFloor: 0.25,
         showTrails: true,
         showHaulerShips: true,
+        metrics: {
+          enabled: true,
+          intervalSeconds: 5,
+          retentionSeconds: 300,
+        },
         performanceProfile: 'medium' as const,
       },
       rngSeed: 123456789,

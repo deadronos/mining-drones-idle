@@ -247,3 +247,19 @@ WHEN a player hovers a hauler ship, THE SYSTEM SHALL display a tooltip containin
 ## RQ-062 Hauler Visual Toggle
 
 WHEN the player disables "Show Hauler Ships" in Settings, THE SYSTEM SHALL hide hauler ships and fall back to the legacy transfer lines while persisting the preference across saves. [Acceptance: Settings test toggles the option, verifies store state persists, and asserts the scene swaps between components accordingly.]
+
+## RQ-063 Factory Metrics Tab Visibility
+
+WHEN the player inspects a factory, THE SYSTEM SHALL surface a Metrics tab containing ore-in, bars-produced, and hauler throughput sparklines plus the latest numeric summaries within the panel. [Acceptance: React UI test opens the factory inspector and asserts the Metrics tab renders three labeled charts and numeric readouts for the selected factory.]
+
+## RQ-064 Factory Metrics Sampling Buffer
+
+WHEN the simulation advances while metrics are enabled, THE SYSTEM SHALL collect per-factory ore delta, bar delta, hauler throughput, and energy samples at the configured interval and maintain at least the last five minutes of data. [Acceptance: Store-level test simulates ticks over five minutes and verifies each factory buffer contains approximately 60 samples with correct timestamps and computed rates.]
+
+## RQ-065 Metrics Performance Profile Gating
+
+WHEN the player sets the performance profile to "low" or toggles metrics off, THE SYSTEM SHALL throttle sampling to no more frequently than every fifteen seconds or suspend sampling entirely to protect frame time. [Acceptance: Settings/metrics test updates the profile to "low" and confirms the effective sampling interval meets or exceeds 15 seconds and buffers stop accumulating when metrics are disabled.]
+
+## RQ-066 Metrics Lifecycle Cleanup
+
+WHEN a factory is removed or the game resets, THE SYSTEM SHALL clear the associated metrics buffers to prevent stale data and memory leaks. [Acceptance: Store integration test removes a factory and asserts its metrics entry is removed immediately; resetGame test verifies all metrics maps are empty afterward.]

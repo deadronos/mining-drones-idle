@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { computeFactoryCost, type BuildableFactory } from '@/ecs/factories';
 import { useStore, type FactoryUpgradeCostVariantId, type FactoryUpgradeId } from '@/state/store';
 import { DockingSection } from './sections/DockingSection';
@@ -7,6 +7,7 @@ import { StorageSection } from './sections/StorageSection';
 import { UpgradeSection } from './sections/UpgradeSection';
 import { HaulerSection } from './sections/HaulerSection';
 import { RefineSection } from './sections/RefineSection';
+import { FactoryMetricsTab } from '../FactoryMetricsTab';
 import '../FactoryManager.css';
 
 /**
@@ -123,6 +124,9 @@ const SelectedFactoryCard = ({
   onTogglePin,
   onAssignHaulers,
 }: SelectedFactoryCardProps) => {
+  const [activeTab, setActiveTab] = useState<'overview' | 'metrics'>('overview');
+  const isMetricsSelected = activeTab === 'metrics';
+
   return (
     <div className="factory-card selected">
       <div className="factory-card-header">
@@ -143,28 +147,52 @@ const SelectedFactoryCard = ({
             {Math.min(index + 1, total)} / {total}
           </span>
         </div>
+        <div className="factory-card-actions">
+          <button
+            type="button"
+            className="pin-button"
+            onClick={() => onTogglePin(factory.id)}
+            aria-label={factory.pinned ? 'Unpin factory card' : 'Pin factory card'}
+          >
+            {factory.pinned ? '📌' : '📍'}
+          </button>
+        </div>
+      </div>
+
+      <div className="factory-card-tabs">
         <button
           type="button"
-          className="pin-button"
-          onClick={() => onTogglePin(factory.id)}
-          aria-pressed={factory.pinned ? 'true' : 'false'}
-          aria-label={factory.pinned ? 'Unpin factory card' : 'Pin factory card'}
+          className={activeTab === 'overview' ? 'factory-card-tab factory-card-tab--active' : 'factory-card-tab'}
+          onClick={() => setActiveTab('overview')}
         >
-          {factory.pinned ? '📌' : '📍'}
+          Overview
+        </button>
+        <button
+          type="button"
+          className={activeTab === 'metrics' ? 'factory-card-tab factory-card-tab--active' : 'factory-card-tab'}
+          onClick={() => setActiveTab('metrics')}
+        >
+          Metrics
         </button>
       </div>
 
-      <div className="factory-grid">
-        <DockingSection factory={factory} />
-        <EnergySection factory={factory} />
-        <StorageSection factory={factory} />
-      </div>
+      {isMetricsSelected ? (
+        <FactoryMetricsTab factoryId={factory.id} />
+      ) : (
+        <>
+          <div className="factory-grid">
+            <DockingSection factory={factory} />
+            <EnergySection factory={factory} />
+            <StorageSection factory={factory} />
+          </div>
 
-      <UpgradeSection factory={factory} onUpgrade={onUpgrade} />
+          <UpgradeSection factory={factory} onUpgrade={onUpgrade} />
 
-      <RefineSection factory={factory} />
+          <RefineSection factory={factory} />
 
-      <HaulerSection factory={factory} onAssignHaulers={onAssignHaulers} />
+          <HaulerSection factory={factory} onAssignHaulers={onAssignHaulers} />
+        </>
+      )}
     </div>
   );
 };
