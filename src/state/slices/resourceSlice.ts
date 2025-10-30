@@ -93,7 +93,7 @@ export const createResourceSlice: StateCreator<
       if (!definition) {
         return state;
       }
-      const currentLevel = (state.modules as unknown as Record<string, number>)[id] ?? 0;
+      const currentLevel = state.modules[id as keyof Modules] ?? 0;
       const cost = costForLevel(definition.baseCost, currentLevel);
       if (state.resources.bars < cost) {
         return state;
