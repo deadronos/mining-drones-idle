@@ -105,3 +105,7 @@ npm run typecheck   # TypeScript project references
 Playwright end-to-end tests are available with `npm run e2e` after running `npm run build`.
 
 Prettier (with the Tailwind plugin) enforces formatting via `npm run format`.
+
+## Documentation
+
+For a comprehensive overview of the game's architecture and how all systems work together, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
