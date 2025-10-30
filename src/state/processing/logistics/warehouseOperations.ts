@@ -1,5 +1,6 @@
 import { Vector3 } from 'three';
 import type { StoreState, LogisticsQueues } from '@/state/types';
+import type { resolveFactoryHaulerConfig } from '@/lib/haulerUpgrades';
 import type { FactoryTransferEvent } from '@/ecs/world';
 import type { TransportableResource } from '@/ecs/logistics';
 import {
@@ -20,7 +21,7 @@ export function scheduleWarehouseToFactoryTransfers(
   state: StoreState,
   resource: TransportableResource,
   warehouseAvailable: number,
-  resolvedConfigs: Map<string, ReturnType<typeof import('@/lib/haulerUpgrades').resolveFactoryHaulerConfig>>,
+  resolvedConfigs: Map<string, ReturnType<typeof resolveFactoryHaulerConfig>>,
   updatedQueues: LogisticsQueues,
 ): number {
   let remainingAvailable = warehouseAvailable;
@@ -109,7 +110,7 @@ export function scheduleFactoryToWarehouseTransfers(
   state: StoreState,
   resource: TransportableResource,
   warehouseSpace: number,
-  resolvedConfigs: Map<string, ReturnType<typeof import('@/lib/haulerUpgrades').resolveFactoryHaulerConfig>>,
+  resolvedConfigs: Map<string, ReturnType<typeof resolveFactoryHaulerConfig>>,
   updatedQueues: LogisticsQueues,
 ): number {
   let remainingSpace = warehouseSpace;

@@ -36,11 +36,9 @@ export function processCompletedTransfers(
             sourceFactory.currentStorage = sourceFactory.resources.ore;
           }
 
-          const currentWarehouse =
-            (state.resources as unknown as Record<string, number>)[transfer.resource] ?? 0;
+          const currentWarehouse = state.resources[transfer.resource] ?? 0;
           const updatedWarehouse = Math.min(warehouseCapacity, currentWarehouse + transfer.amount);
-          (state.resources as unknown as Record<string, number>)[transfer.resource] =
-            updatedWarehouse;
+          state.resources[transfer.resource] = updatedWarehouse;
 
           throughputByFactory[sourceFactory.id] =
             (throughputByFactory[sourceFactory.id] ?? 0) + transfer.amount;
@@ -49,12 +47,8 @@ export function processCompletedTransfers(
       } else if (transfer.fromFactoryId === WAREHOUSE_NODE_ID) {
         const destFactory = state.factories.find((f) => f.id === transfer.toFactoryId);
         if (destFactory) {
-          const currentWarehouse =
-            (state.resources as unknown as Record<string, number>)[transfer.resource] ?? 0;
-          (state.resources as unknown as Record<string, number>)[transfer.resource] = Math.max(
-            0,
-            currentWarehouse - transfer.amount,
-          );
+            const currentWarehouse = state.resources[transfer.resource] ?? 0;
+            state.resources[transfer.resource] = Math.max(0, currentWarehouse - transfer.amount);
 
           const key = transfer.resource as keyof typeof destFactory.resources;
           const currentValue = destFactory.resources[key] ?? 0;

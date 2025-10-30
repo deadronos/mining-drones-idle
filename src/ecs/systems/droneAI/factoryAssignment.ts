@@ -1,4 +1,4 @@
-import { Vector3 } from 'three';
+import type { Vector3 } from 'three';
 import type { DroneEntity } from '@/ecs/world';
 import type { RandomSource } from '@/lib/rng';
 import type { StoreApiType } from '@/state/store';

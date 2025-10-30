@@ -1,5 +1,4 @@
 import type { StoreState, LogisticsQueues } from '@/state/types';
-import type { TransportableResource } from '@/ecs/logistics';
 import {
   RESOURCE_TYPES,
   WAREHOUSE_NODE_ID,
@@ -71,7 +70,8 @@ export function processLogistics(state: StoreState): {
   for (const resource of RESOURCE_TYPES) {
     if (state.factories.length === 0) continue;
 
-    const warehouseStock = (state.resources as unknown as Record<string, number>)[resource] ?? 0;
+    // state.resources is strongly typed with known resource keys; index directly
+    const warehouseStock = state.resources[resource] ?? 0;
     let warehouseSpace =
       warehouseCapacity - warehouseStock - (warehouseInboundReservations.get(resource) ?? 0);
     let warehouseAvailable = warehouseStock - (warehouseOutboundReservations.get(resource) ?? 0);
@@ -87,7 +87,7 @@ export function processLogistics(state: StoreState): {
       warehouseAvailable,
     );
 
-    scheduleFactoryToFactoryTransfers(state, resource as TransportableResource, resolvedConfigs, updatedQueues);
+    scheduleFactoryToFactoryTransfers(state, resource, resolvedConfigs, updatedQueues);
 
     if (!networkHasHaulers) {
       logLogistics(
@@ -98,33 +98,15 @@ export function processLogistics(state: StoreState): {
     }
 
     if (warehouseSpace > 0) {
-      warehouseSpace = scheduleFactoryToWarehouseTransfers(
-        state,
-        resource as TransportableResource,
-        warehouseSpace,
-        resolvedConfigs,
-        updatedQueues,
-      );
+      warehouseSpace = scheduleFactoryToWarehouseTransfers(state, resource, warehouseSpace, resolvedConfigs, updatedQueues);
     }
 
     if (warehouseAvailable > 0) {
-      warehouseAvailable = scheduleWarehouseToFactoryTransfers(
-        state,
-        resource as TransportableResource,
-        warehouseAvailable,
-        resolvedConfigs,
-        updatedQueues,
-      );
+      warehouseAvailable = scheduleWarehouseToFactoryTransfers(state, resource, warehouseAvailable, resolvedConfigs, updatedQueues);
     }
 
     if (warehouseAvailable > 0) {
-      warehouseAvailable = scheduleUpgradeRequests(
-        state,
-        resource as TransportableResource,
-        warehouseAvailable,
-        resolvedConfigs,
-        updatedQueues,
-      );
+      warehouseAvailable = scheduleUpgradeRequests(state, resource, warehouseAvailable, resolvedConfigs, updatedQueues);
     }
   }
 

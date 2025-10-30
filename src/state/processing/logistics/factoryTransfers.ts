@@ -1,5 +1,6 @@
 import { Vector3 } from 'three';
 import type { StoreState, LogisticsQueues } from '@/state/types';
+import type { resolveFactoryHaulerConfig } from '@/lib/haulerUpgrades';
 import type { FactoryTransferEvent } from '@/ecs/world';
 import type { TransportableResource } from '@/ecs/logistics';
 import {
@@ -13,7 +14,7 @@ import { logLogistics } from '@/lib/debug';
 export function scheduleFactoryToFactoryTransfers(
   state: StoreState,
   resource: TransportableResource,
-  resolvedConfigs: Map<string, ReturnType<typeof import('@/lib/haulerUpgrades').resolveFactoryHaulerConfig>>,
+  resolvedConfigs: Map<string, ReturnType<typeof resolveFactoryHaulerConfig>>,
   updatedQueues: LogisticsQueues,
 ): void {
   const proposedTransfers = matchSurplusToNeed(

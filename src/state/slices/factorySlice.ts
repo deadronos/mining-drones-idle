@@ -306,15 +306,15 @@ export const createFactorySlice: StateCreator<
       return false;
     }
     const base = state.factories[index];
-    const level = (base.upgrades as unknown as Record<string, number>)[upgrade] ?? 0;
+    const level = base.upgrades[upgrade as keyof typeof base.upgrades] ?? 0;
     const cost = computeFactoryUpgradeCost(upgrade as never, level, variant);
-    for (const [key, value] of Object.entries(cost) as [keyof FactoryResources, number][]) {
+      for (const [key, value] of Object.entries(cost) as [keyof FactoryResources, number][]) {
       if (value > 0 && (base.resources[key] ?? 0) < value) {
         return false;
       }
     }
     const updated = cloneFactory(base);
-    for (const [key, value] of Object.entries(cost) as [keyof FactoryResources, number][]) {
+      for (const [key, value] of Object.entries(cost) as [keyof FactoryResources, number][]) {
       if (value <= 0) continue;
       updated.resources[key] = Math.max(0, (updated.resources[key] ?? 0) - value);
       if (key === 'ore') {
@@ -340,7 +340,7 @@ export const createFactorySlice: StateCreator<
       ];
       for (const key of secondaryResourceKeys) {
         if (key in cost) {
-          const value = (cost as unknown as Record<string, number>)[key];
+          const value = (cost as Record<string, number>)[key] ?? 0;
           if (value > 0) {
             specTechSpent[key] = (specTechSpent[key] ?? 0) + value;
           }
