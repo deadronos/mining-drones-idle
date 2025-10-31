@@ -3,6 +3,7 @@ import { useStore } from '@/state/store';
 import { WAREHOUSE_NODE_ID } from '@/ecs/logistics';
 import { getHaulerModuleBonuses } from '@/lib/haulerUpgrades';
 import { PaginationControls } from '@/ui/shared/PaginationControls';
+import { formatInteger } from '@/lib/formatters';
 import './LogisticsPanel.css';
 
 const TRANSFERS_PAGE_SIZE = 5;
@@ -62,7 +63,7 @@ export const LogisticsPanel = () => {
         </div>
         <div className="summary-item">
           <span className="label">Warehouse Bars:</span>
-          <span className="value">{Math.floor(resources.bars).toLocaleString()}</span>
+          <span className="value">{formatInteger(Math.floor(resources.bars))}</span>
         </div>
         <div className="summary-item">
           <span className="label">Network Bonus:</span>

@@ -10,9 +10,7 @@ import {
   getSpecTechUnlockProgress,
   getSpecTechMaxLevel,
 } from '@/state/sinks';
-
-const integerFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
-const percentFormatter = (value: number) => `${(value * 100).toFixed(1)}%`;
+import { formatInteger, formatPercent } from '@/lib/formatters';
 
 interface TechEntry {
   id: SpecTechId;
@@ -52,7 +50,7 @@ export const SpecializationTechsPanel = () => {
       const maxed = level >= maxLevel;
       let lockedReason: string | undefined;
       if (!unlocked) {
-        lockedReason = `Spend ${integerFormatter.format(required)} ${resource} to unlock`;
+        lockedReason = `Spend ${formatInteger(required)} ${resource} to unlock`;
       }
       return {
         id,
@@ -92,16 +90,16 @@ export const SpecializationTechsPanel = () => {
                 </span>
               </div>
               <span className="warehouse-panel__tech-bonus">
-                Total Bonus: {percentFormatter(tech.totalBonus)}
+                Total Bonus: {formatPercent(tech.totalBonus)}
               </span>
             </header>
             <p className="warehouse-panel__tech-description">{tech.description}</p>
             <p className="warehouse-panel__tech-progress">
               {tech.unlocked ? (
-                <>Spent {integerFormatter.format(tech.spent)} {tech.resource}</>
+                <>Spent {formatInteger(tech.spent)} {tech.resource}</>
               ) : (
                 <>
-                  Locked · {tech.lockedReason} (current {integerFormatter.format(tech.spent)})
+                  Locked · {tech.lockedReason} (current {formatInteger(tech.spent)})
                 </>
               )}
             </p>
@@ -114,10 +112,10 @@ export const SpecializationTechsPanel = () => {
               >
                 {tech.maxed
                   ? 'Maxed'
-                  : `Invest ${integerFormatter.format(tech.cost)} ${tech.resource}`}
+                  : `Invest ${formatInteger(tech.cost)} ${tech.resource}`}
               </button>
               <span className="warehouse-panel__tech-effect">
-                +{percentFormatter(tech.bonusPerLevel)} per level
+                +{formatPercent(tech.bonusPerLevel)} per level
               </span>
             </div>
           </li>

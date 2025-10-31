@@ -4,6 +4,7 @@ import { ResourceModifiersDebug } from '@/ui/ResourceModifiersDebug';
 import { HaulerModulesPanel } from './HaulerModulesPanel';
 import { SpecializationTechsPanel } from './SpecializationTechsPanel';
 import { InvestmentBoardPanel } from './InvestmentBoardPanel';
+import { formatDecimalOne, formatInteger } from '@/lib/formatters';
 import './WarehousePanel.css';
 
 interface WarehousePanelProps {
@@ -15,19 +16,6 @@ interface ResourceDisplay {
   label: string;
   value: string;
 }
-
-const decimalFormatter = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
-
-const integerFormatter = new Intl.NumberFormat('en-US', {
-  maximumFractionDigits: 0,
-});
-
-const formatDecimal = (value: number) => decimalFormatter.format(value);
-
-const formatInteger = (value: number) => integerFormatter.format(value);
 
 export const WarehousePanel = ({ onOpenSettings }: WarehousePanelProps) => {
   const ore = useStore((state) => state.resources.ore);
@@ -41,12 +29,12 @@ export const WarehousePanel = ({ onOpenSettings }: WarehousePanelProps) => {
 
   const entries = useMemo<ResourceDisplay[]>(
     () => [
-      { key: 'ore', label: 'Ore', value: formatDecimal(ore) },
-      { key: 'metals', label: 'Metals', value: formatDecimal(metals) },
-      { key: 'crystals', label: 'Crystals', value: formatDecimal(crystals) },
-      { key: 'organics', label: 'Organics', value: formatDecimal(organics) },
-      { key: 'ice', label: 'Ice', value: formatDecimal(ice) },
-      { key: 'bars', label: 'Bars', value: formatDecimal(bars) },
+      { key: 'ore', label: 'Ore', value: formatDecimalOne(ore) },
+      { key: 'metals', label: 'Metals', value: formatDecimalOne(metals) },
+      { key: 'crystals', label: 'Crystals', value: formatDecimalOne(crystals) },
+      { key: 'organics', label: 'Organics', value: formatDecimalOne(organics) },
+      { key: 'ice', label: 'Ice', value: formatDecimalOne(ice) },
+      { key: 'bars', label: 'Bars', value: formatDecimalOne(bars) },
       { key: 'energy', label: 'Energy', value: formatInteger(energy) },
       { key: 'drones', label: 'Drones', value: formatInteger(droneBay) },
     ],
