@@ -1,4 +1,5 @@
 import { Vector3 } from 'three';
+import { calculateExponentialCost } from '@/lib/math';
 import { getResourceModifiers, type ResourceModifierSnapshot } from '@/lib/resourceModifiers';
 import type { BuildableFactory } from '@/ecs/factories';
 import type {
@@ -47,6 +48,17 @@ export const generateSeed = () => {
     return (buffer[0] << 16) ^ buffer[1];
   }
   return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+};
+
+/**
+ * Generate a unique ID using timestamp and random component.
+ * @param prefix Optional prefix for the ID (e.g., 'factory-', 'toast-')
+ * @returns A unique ID string
+ */
+export const generateUniqueId = (prefix = ''): string => {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).slice(2, 8);
+  return `${prefix}${timestamp}-${random}`;
 };
 
 export const computeFactoryPlacement = (factories: BuildableFactory[]): Vector3 => {
@@ -134,7 +146,7 @@ export const computeFactoryUpgradeCost = (
     keyof FactoryResources,
     number,
   ][]) {
-    result[key] = Math.ceil(value * Math.pow(FACTORY_UPGRADE_GROWTH, level));
+    result[key] = calculateExponentialCost(value, FACTORY_UPGRADE_GROWTH, level);
   }
   return result;
 };
@@ -209,7 +221,7 @@ export const applyRefineryProduction = (state: StoreState, stats: RefineryStats)
 });
 
 export const costForLevel = (base: number, level: number) =>
-  Math.ceil(base * Math.pow(GROWTH, level));
+  calculateExponentialCost(base, GROWTH, level);
 
 export const computePrestigeGain = (bars: number) => Math.floor(Math.pow(bars / 1_000, 0.6));
 

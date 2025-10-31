@@ -2,6 +2,7 @@
  * Factory configuration constants and cost calculations.
  */
 
+import { calculateExponentialCost } from '@/lib/math';
 import type { FactoryResources, FactoryUpgrades } from './models';
 
 /**
@@ -81,7 +82,11 @@ export const computeUpgradeCost = (
   const result: Partial<FactoryResources> = {};
   for (const [key, value] of Object.entries(def.baseCost)) {
     if (typeof value === 'number') {
-      result[key as keyof FactoryResources] = Math.ceil(value * Math.pow(def.growth, currentLevel));
+      result[key as keyof FactoryResources] = calculateExponentialCost(
+        value,
+        def.growth,
+        currentLevel,
+      );
     }
   }
   return result;

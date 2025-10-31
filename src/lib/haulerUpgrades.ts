@@ -7,6 +7,7 @@ import type {
   Resources,
   FactoryResources,
 } from '@/state/types';
+import { calculateExponentialCost } from '@/lib/math';
 import { LOGISTICS_CONFIG } from '@/ecs/logistics';
 import {
   HAULER_DEPOT_CAPACITY_PER_LEVEL,
@@ -110,7 +111,7 @@ export const getHaulerModuleCost = (
     keyof Resources,
     number,
   ][]) {
-    cost[resource] = Math.ceil(amount * Math.pow(definition.costGrowth, nextLevel - 1));
+    cost[resource] = calculateExponentialCost(amount, definition.costGrowth, nextLevel - 1);
   }
   return cost;
 };
@@ -125,7 +126,7 @@ export const getFactoryHaulerUpgradeCost = (
     keyof FactoryResources,
     number,
   ][]) {
-    cost[resource] = Math.ceil(amount * Math.pow(definition.costGrowth, nextLevel - 1));
+    cost[resource] = calculateExponentialCost(amount, definition.costGrowth, nextLevel - 1);
   }
   return cost;
 };
