@@ -9,7 +9,7 @@ import {
   transferOreToFactory,
   detectUpgradeShortfall,
 } from '@/ecs/factories';
-import { computeFactoryUpgradeCost, computeFactoryPlacement } from '../utils';
+import { computeFactoryUpgradeCost, computeFactoryPlacement, generateUniqueId } from '../utils';
 import { cloneFactory } from '../serialization';
 import { factoryUpgradeDefinitions } from '../constants';
 
@@ -99,7 +99,7 @@ export const createFactorySlice: StateCreator<
     if (state.resources.metals < cost.metals || state.resources.crystals < cost.crystals) {
       return false;
     }
-    const id = `factory-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+    const id = generateUniqueId('factory-');
     const position = computeFactoryPlacement(state.factories);
     const factory = createFactory(id, position);
     set((current) => {

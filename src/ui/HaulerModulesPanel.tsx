@@ -7,6 +7,7 @@ import {
   getHaulerModuleCost,
   getHaulerModuleMaxLevel,
 } from '@/lib/haulerUpgrades';
+import { formatCost } from '@/ui/FactoryManager/utils/upgradeFormatting';
 
 const moduleOrder: HaulerModuleId[] = ['haulerDepot', 'logisticsHub', 'routingProtocol'];
 
@@ -85,11 +86,7 @@ export const HaulerModulesPanel = () => {
                     disabled={!affordable}
                     onClick={() => purchase(moduleId)}
                   >
-                    Buy ·{' '}
-                    {nextCost &&
-                      Object.entries(nextCost)
-                        .map(([resource, amount]) => `${amount} ${resource}`)
-                        .join(' + ')}
+                    Buy · {nextCost && formatCost(nextCost)}
                   </button>
                 )}
               </div>

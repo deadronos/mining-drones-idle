@@ -1,3 +1,4 @@
+import { calculateExponentialCost } from '@/lib/math';
 import type { BuildableFactory } from '@/ecs/factories';
 import type { HaulerConfig } from '@/state/store';
 import type { TransportableResource } from './config';
@@ -100,7 +101,7 @@ export const computeTravelTime = (
  * @returns Cost in ore/resources
  */
 export const computeHaulerCost = (level: number, baseCost = 10, growth = 1.15): number => {
-  return Math.ceil(baseCost * Math.pow(growth, level));
+  return calculateExponentialCost(baseCost, growth, level);
 };
 
 /**
