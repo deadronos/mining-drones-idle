@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useStore } from '@/state/store';
 import { usePagination } from '@/ui/FactoryManager/hooks/usePagination';
+import { PaginationControls } from '@/ui/shared/PaginationControls';
 import './DebugPanel.css';
 
 const DRONES_PAGE_SIZE = 12;
@@ -113,24 +114,14 @@ export const DebugPanel = () => {
               ))}
             </ul>
 
-            {totalPages > 1 && (
-              <div className="debug-panel-pagination">
-                <button type="button" onClick={goPrev} disabled={page === 0} aria-label="Previous page">
-                  ◀
-                </button>
-                <span>
-                  {page + 1} / {totalPages}
-                </span>
-                <button
-                  type="button"
-                  onClick={goNext}
-                  disabled={page >= totalPages - 1}
-                  aria-label="Next page"
-                >
-                  ▶
-                </button>
-              </div>
-            )}
+            <PaginationControls
+              currentPage={page}
+              totalPages={totalPages}
+              onNextPage={goNext}
+              onPrevPage={goPrev}
+              className="debug-panel-pagination"
+              ariaLabelPrefix="page"
+            />
           </div>
         ) : null}
       </div>
