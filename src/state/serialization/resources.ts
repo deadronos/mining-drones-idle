@@ -94,17 +94,16 @@ export const normalizeRefineSnapshot = (value: unknown): RefineProcessSnapshot |
  * Used by all three public functions since RefineProcess and RefineProcessSnapshot
  * have identical structure.
  */
-const copyRefineProcessShape = (
-  source: RefineProcess | RefineProcessSnapshot,
-): RefineProcess & RefineProcessSnapshot => ({
-  id: source.id,
-  oreType: source.oreType,
-  amount: source.amount,
-  progress: source.progress,
-  timeTotal: source.timeTotal,
-  energyRequired: source.energyRequired,
-  speedMultiplier: source.speedMultiplier,
-});
+const copyRefineProcessShape = <T extends RefineProcess | RefineProcessSnapshot>(source: T): T =>
+  ({
+    id: source.id,
+    oreType: source.oreType,
+    amount: source.amount,
+    progress: source.progress,
+    timeTotal: source.timeTotal,
+    energyRequired: source.energyRequired,
+    speedMultiplier: source.speedMultiplier,
+  }) as T;
 
 export const refineProcessToSnapshot = (process: RefineProcess): RefineProcessSnapshot =>
   copyRefineProcessShape(process);
