@@ -110,14 +110,7 @@ export const cloneRefineProcess = (process: RefineProcess): RefineProcess =>
 /**
  * Converts snapshot to RefineProcess.
  * Since RefineProcess and RefineProcessSnapshot have identical structure,
- * this creates a new object with the same properties.
+ * this delegates to refineProcessToSnapshot with appropriate type casting.
  */
-export const snapshotToRefineProcess = (snapshot: RefineProcessSnapshot): RefineProcess => ({
-  id: snapshot.id,
-  oreType: snapshot.oreType,
-  amount: snapshot.amount,
-  progress: snapshot.progress,
-  timeTotal: snapshot.timeTotal,
-  energyRequired: snapshot.energyRequired,
-  speedMultiplier: snapshot.speedMultiplier,
-});
+export const snapshotToRefineProcess = (snapshot: RefineProcessSnapshot): RefineProcess =>
+  refineProcessToSnapshot(snapshot as RefineProcess) as RefineProcess;
