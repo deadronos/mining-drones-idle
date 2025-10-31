@@ -5,6 +5,7 @@ import {
   getFactoryEffectiveEnergyCapacity,
 } from '@/state/store';
 import { useStore } from '@/state/store';
+import { formatInteger } from '@/lib/formatters';
 
 interface EnergySectionProps {
   factory: BuildableFactory;
@@ -34,8 +35,8 @@ export const EnergySection = ({ factory }: EnergySectionProps) => {
     <div>
       <h4>Energy</h4>
       <p>
-        {Math.round(factory.energy).toLocaleString()} /{' '}
-        {Math.round(effectiveCapacity).toLocaleString()}
+        {formatInteger(Math.round(factory.energy))} /{' '}
+        {formatInteger(Math.round(effectiveCapacity))}
       </p>
       <div className="factory-bar">
         <div

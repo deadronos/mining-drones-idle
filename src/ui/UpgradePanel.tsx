@@ -7,6 +7,7 @@ import {
   type ModuleId,
   useStore,
 } from '@/state/store';
+import { formatInteger } from '@/lib/formatters';
 
 const moduleRows = Object.entries(moduleDefinitions) as [
   ModuleId,
@@ -43,7 +44,7 @@ export const UpgradePanel = () => {
             </div>
             <div className="right">
               <button type="button" disabled={!affordable} onClick={() => buy(id)}>
-                Buy ({cost.toLocaleString()} warehouse bars)
+                Buy ({formatInteger(cost)} warehouse bars)
               </button>
             </div>
           </div>
@@ -52,14 +53,14 @@ export const UpgradePanel = () => {
       <hr />
       <h3>Prestige</h3>
       <div className="prestige-info">
-        Warehouse Bars: {Math.floor(resources.bars).toLocaleString()} → Next Cores:{' '}
-        {nextCores.toLocaleString()}
+        Warehouse Bars: {formatInteger(Math.floor(resources.bars))} → Next Cores:{' '}
+        {formatInteger(nextCores)}
       </div>
       <button type="button" disabled={prestigeDisabled} onClick={doPrestige}>
         Prestige Run
       </button>
       <div className="muted">
-        Cores: {prestige.cores.toLocaleString()} • Bonus: +{bonusPercent}%
+        Cores: {formatInteger(prestige.cores)} • Bonus: +{bonusPercent}%
       </div>
     </aside>
   );
