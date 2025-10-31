@@ -99,22 +99,16 @@ export const refineProcessToSnapshot = (process: RefineProcess): RefineProcessSn
   speedMultiplier: process.speedMultiplier,
 });
 
-export const cloneRefineProcess = (process: RefineProcess): RefineProcess => ({
-  id: process.id,
-  oreType: process.oreType,
-  amount: process.amount,
-  progress: process.progress,
-  timeTotal: process.timeTotal,
-  energyRequired: process.energyRequired,
-  speedMultiplier: process.speedMultiplier,
-});
+/**
+ * Creates a shallow copy of a refine process.
+ * Alias for refineProcessToSnapshot since RefineProcess and RefineProcessSnapshot
+ * have identical structure.
+ */
+export const cloneRefineProcess = refineProcessToSnapshot;
 
-export const snapshotToRefineProcess = (snapshot: RefineProcessSnapshot): RefineProcess => ({
-  id: snapshot.id,
-  oreType: snapshot.oreType,
-  amount: snapshot.amount,
-  progress: snapshot.progress,
-  timeTotal: snapshot.timeTotal,
-  energyRequired: snapshot.energyRequired,
-  speedMultiplier: snapshot.speedMultiplier,
-});
+/**
+ * Converts snapshot to RefineProcess.
+ * Alias for refineProcessToSnapshot since RefineProcess and RefineProcessSnapshot
+ * have identical structure.
+ */
+export const snapshotToRefineProcess = refineProcessToSnapshot;
