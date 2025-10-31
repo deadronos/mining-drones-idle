@@ -52,12 +52,13 @@ export const generateSeed = () => {
 
 /**
  * Generate a unique ID using timestamp and random component.
+ * Uses a 6-character random suffix for better collision resistance.
  * @param prefix Optional prefix for the ID (e.g., 'factory-', 'toast-')
- * @returns A unique ID string
+ * @returns A unique ID string in format: prefix + timestamp-random
  */
 export const generateUniqueId = (prefix = ''): string => {
   const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).slice(2, 8);
+  const random = Math.random().toString(36).slice(2, 8); // 6 characters
   return `${prefix}${timestamp}-${random}`;
 };
 
