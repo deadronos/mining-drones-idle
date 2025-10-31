@@ -1,5 +1,6 @@
 import type { BuildableFactory } from '@/ecs/factories';
 import { computeBufferTarget, type TransportableResource } from '@/ecs/logistics';
+import { formatInteger } from '@/lib/formatters';
 
 /**
  * Storage resource ordering and labels for consistent UI display.
@@ -33,9 +34,9 @@ export const formatStorageAmount = (
   storageCapacity?: number,
 ): string => {
   if (key === 'ore' && storageCapacity) {
-    return `${Math.floor(amount).toLocaleString()} / ${storageCapacity.toLocaleString()}`;
+    return `${formatInteger(Math.floor(amount))} / ${formatInteger(storageCapacity)}`;
   }
-  return Math.floor(amount).toLocaleString();
+  return formatInteger(Math.floor(amount));
 };
 
 /**
