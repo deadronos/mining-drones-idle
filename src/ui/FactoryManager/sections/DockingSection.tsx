@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { BuildableFactory } from '@/ecs/factories';
 import { usePagination } from '../hooks/usePagination';
 import { DOCKING_PAGE_SIZE } from '../utils/constants';
+import { PaginationControls } from '@/ui/shared/PaginationControls';
 
 interface DockingSectionProps {
   factory: BuildableFactory;
@@ -51,31 +52,14 @@ export const DockingSection = ({ factory }: DockingSectionProps) => {
           ))
         )}
       </ul>
-      {totalPages > 1 ? (
-        <div className="factory-pagination">
-          <button
-            type="button"
-            className="factory-page-btn"
-            onClick={goPrev}
-            disabled={page === 0}
-            aria-label="Previous docking page"
-          >
-            ◀
-          </button>
-          <span className="factory-page-indicator">
-            {page + 1} / {totalPages}
-          </span>
-          <button
-            type="button"
-            className="factory-page-btn"
-            onClick={goNext}
-            disabled={page >= totalPages - 1}
-            aria-label="Next docking page"
-          >
-            ▶
-          </button>
-        </div>
-      ) : null}
+      <PaginationControls
+        currentPage={page}
+        totalPages={totalPages}
+        onNextPage={goNext}
+        onPrevPage={goPrev}
+        className="factory-pagination"
+        ariaLabelPrefix="docking page"
+      />
     </div>
   );
 };
