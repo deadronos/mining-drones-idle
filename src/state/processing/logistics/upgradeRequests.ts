@@ -1,15 +1,14 @@
 import { Vector3 } from 'three';
 import type { StoreState, LogisticsQueues } from '@/state/types';
 import type { resolveFactoryHaulerConfig } from '@/lib/haulerUpgrades';
-import type { FactoryTransferEvent } from '@/ecs/world';
 import type { TransportableResource } from '@/ecs/logistics';
 import {
   LOGISTICS_CONFIG,
   WAREHOUSE_NODE_ID,
   generateTransferId,
   computeTravelTime,
+  emitTransferFX,
 } from '@/ecs/logistics';
-import { gameWorld } from '@/ecs/world';
 
 const WAREHOUSE_POSITION = new Vector3(0, 0, 0);
 
@@ -84,24 +83,14 @@ export function scheduleUpgradeRequests(
       },
     ];
 
-    try {
-      const fromPos = WAREHOUSE_POSITION.clone().add(new Vector3(0, 0.6, 0));
-      const toPos = factory.position.clone().add(new Vector3(0, 0.6, 0));
-      const duration = Math.max(0.1, eta - state.gameTime);
-      const event: FactoryTransferEvent = {
-        id: transferId,
-        amount: transferAmount,
-        from: fromPos,
-        to: toPos,
-        duration,
-      };
-      gameWorld.events.transfers.push(event);
-      if (gameWorld.events.transfers.length > 48) {
-        gameWorld.events.transfers.splice(0, gameWorld.events.transfers.length - 48);
-      }
-    } catch {
-      // ignore FX failures
-    }
+    emitTransferFX(
+      transferId,
+      transferAmount,
+      WAREHOUSE_POSITION,
+      factory.position,
+      eta,
+      state.gameTime,
+    );
 
     remainingAvailable = Math.max(0, remainingAvailable - transferAmount);
   }
