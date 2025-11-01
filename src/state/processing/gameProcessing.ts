@@ -1,6 +1,8 @@
 import type { StoreState, Resources } from '../types';
 import type { BuildableFactory } from '@/ecs/factories';
 import { enforceMinOneRefining, startRefineProcess, tickRefineProcess } from '@/ecs/factories';
+import { getResourceModifiers } from '@/lib/resourceModifiers';
+import { getFactoryEffectiveEnergyCapacity } from '@/state/utils';
 import { computeHaulerMaintenanceCost } from '@/ecs/logistics';
 import { computeRefineryProduction, applyRefineryProduction } from '../utils';
 import { cloneFactory } from '../serialization';
@@ -60,6 +62,9 @@ export function processFactories(
 
   let processesStarted = 0;
   let remainingEnergy = Math.max(0, state.resources.energy);
+  // Global modifiers (based on warehouse/global resources)
+  const modifiers = getResourceModifiers(state.resources, state.prestige.cores);
+  const solarArrayLevel = state.modules?.solar ?? 0;
   const metrics: Record<string, FactoryTickTelemetry> = {};
 
   const updatedFactories = state.factories.map((factory) => {
@@ -72,8 +77,8 @@ export function processFactories(
     // No proactive pull from global; factories sit at zero if depleted.
     // (Drones fall back to global charging via power system if factory is empty.)
 
-    // Apply idle energy drain (local)
-    const idleDrain = working.idleEnergyPerSec * dt;
+    // Apply idle energy drain (local) adjusted by energy drain modifier
+    const idleDrain = working.idleEnergyPerSec * dt * (modifiers?.energyDrainMultiplier ?? 1);
     if (idleDrain > 0) {
       const before = working.energy;
       working.energy = Math.max(0, working.energy - idleDrain);
@@ -83,7 +88,7 @@ export function processFactories(
     // Apply hauler maintenance drain (local)
     const haulerDrain =
       (working.haulersAssigned ?? 0) > 0
-        ? computeHaulerMaintenanceCost(working.haulersAssigned ?? 0) * dt
+        ? computeHaulerMaintenanceCost(working.haulersAssigned ?? 0) * dt * (modifiers?.energyDrainMultiplier ?? 1)
         : 0;
     if (haulerDrain > 0) {
       const before = working.energy;
@@ -92,6 +97,10 @@ export function processFactories(
     }
 
     // Start new refining processes if possible
+    // Determine effective storage capacity (mods can boost storage)
+    const effectiveStorageCapacity =
+      working.storageCapacity * (modifiers?.storageCapacityMultiplier ?? 1);
+
     while (
       working.resources.ore > 0 &&
       working.activeRefines.length < working.refineSlots &&
@@ -100,33 +109,44 @@ export function processFactories(
       const slotTarget = Math.max(1, working.refineSlots);
       const batchSize = Math.min(
         working.resources.ore,
-        Math.max(10, working.storageCapacity / slotTarget),
+        Math.max(10, effectiveStorageCapacity / slotTarget),
       );
       const processId = `${working.id}-p${state.factoryProcessSequence + processesStarted + 1}`;
       const started = startRefineProcess(working, 'ore', batchSize, processId);
       if (!started) {
         break;
       }
+      // Apply factory-local production speed modifier (organics -> production speed)
+      started.speedMultiplier = (started.speedMultiplier ?? 1) * (modifiers?.droneProductionSpeedMultiplier ?? 1);
       processesStarted += 1;
       oreConsumed += started.amount;
     }
 
-    // Enforce at least one refining if possible
+    // Enforce at least one refining if possible (use effective energy capacity with modifiers)
     if (working.activeRefines.length > 0) {
-      enforceMinOneRefining(working, working.energy, working.energyCapacity);
+      const effectiveEnergyCapacity = getFactoryEffectiveEnergyCapacity(
+        working,
+        solarArrayLevel,
+        modifiers,
+      );
+      enforceMinOneRefining(working, working.energy, effectiveEnergyCapacity);
     }
 
     // Progress refining processes (consume local energy)
     for (let i = working.activeRefines.length - 1; i >= 0; i -= 1) {
       const process = working.activeRefines[i];
-      const drain = working.energyPerRefine * dt * process.speedMultiplier;
+      // Apply energy drain modifier to per-refine energy consumption
+      const drain = working.energyPerRefine * dt * (process.speedMultiplier ?? 1) * (modifiers?.energyDrainMultiplier ?? 1);
       const consumed = Math.min(drain, working.energy);
       working.energy = Math.max(0, working.energy - consumed);
       energySpent += consumed;
+      // Tick; refinedThisTick is fraction of process.amount
       const refined = tickRefineProcess(working, process, dt);
       if (refined > 0) {
-        working.resources.bars += refined;
-        barsProduced += refined;
+        // Apply refinery yield modifier (crystals -> yield)
+        const finalRefined = refined * (modifiers?.refineryYieldMultiplier ?? 1);
+        working.resources.bars += finalRefined;
+        barsProduced += finalRefined;
       }
     }
 
