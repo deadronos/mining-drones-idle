@@ -26,3 +26,6 @@ export {
   releaseReservation,
   executeArrival,
 } from './reservations';
+
+// Visual effects
+export { emitTransferFX } from './transferFX';

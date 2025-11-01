@@ -1,17 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { EnergySection } from './EnergySection';
-import { createFactory } from '@/ecs/factories';
-import type { BuildableFactory } from '@/ecs/factories';
-import { Vector3 } from 'three';
-
-const createMockFactory = (overrides?: Partial<BuildableFactory>): BuildableFactory => {
-  const factory = createFactory('factory-1', new Vector3(0, 0, 0));
-  return {
-    ...factory,
-    ...overrides,
-  };
-};
+import { createMockFactory } from './testHelpers';
 
 describe('EnergySection', () => {
   it('renders energy display with capacity', () => {

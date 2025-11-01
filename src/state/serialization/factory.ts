@@ -220,6 +220,20 @@ export const normalizeFactorySnapshot = (value: unknown): FactorySnapshot | null
   };
 };
 
+/**
+ * Clone an upgrade request object.
+ */
+const cloneUpgradeRequest = (
+  req: FactoryUpgradeRequest | FactoryUpgradeRequestSnapshot,
+): FactoryUpgradeRequest => ({
+  upgrade: req.upgrade,
+  resourceNeeded: { ...req.resourceNeeded },
+  fulfilledAmount: { ...req.fulfilledAmount },
+  status: req.status,
+  createdAt: req.createdAt,
+  expiresAt: req.expiresAt,
+});
+
 export const cloneFactory = (factory: BuildableFactory): BuildableFactory => ({
   id: factory.id,
   position: factory.position.clone(),
@@ -236,14 +250,7 @@ export const cloneFactory = (factory: BuildableFactory): BuildableFactory => ({
   energyCapacity: factory.energyCapacity,
   resources: { ...factory.resources },
   upgrades: { ...factory.upgrades },
-  upgradeRequests: factory.upgradeRequests.map((req) => ({
-    upgrade: req.upgrade,
-    resourceNeeded: { ...req.resourceNeeded },
-    fulfilledAmount: { ...req.fulfilledAmount },
-    status: req.status,
-    createdAt: req.createdAt,
-    expiresAt: req.expiresAt,
-  })),
+  upgradeRequests: factory.upgradeRequests.map(cloneUpgradeRequest),
   haulersAssigned: factory.haulersAssigned,
   haulerConfig: factory.haulerConfig ? { ...factory.haulerConfig } : undefined,
   haulerUpgrades: factory.haulerUpgrades ? { ...factory.haulerUpgrades } : undefined,
@@ -271,14 +278,7 @@ export const snapshotToFactory = (snapshot: FactorySnapshot): BuildableFactory =
   energyCapacity: snapshot.energyCapacity,
   resources: { ...snapshot.resources },
   upgrades: { ...snapshot.upgrades },
-  upgradeRequests: (snapshot.upgradeRequests ?? []).map((req) => ({
-    upgrade: req.upgrade,
-    resourceNeeded: { ...req.resourceNeeded },
-    fulfilledAmount: { ...req.fulfilledAmount },
-    status: req.status,
-    createdAt: req.createdAt,
-    expiresAt: req.expiresAt,
-  })),
+  upgradeRequests: (snapshot.upgradeRequests ?? []).map(cloneUpgradeRequest),
   haulersAssigned: snapshot.haulersAssigned,
   haulerConfig: snapshot.haulerConfig ? { ...snapshot.haulerConfig } : undefined,
   haulerUpgrades: snapshot.haulerUpgrades ? { ...snapshot.haulerUpgrades } : undefined,
@@ -306,14 +306,7 @@ export const factoryToSnapshot = (factory: BuildableFactory): FactorySnapshot =>
   energyCapacity: factory.energyCapacity,
   resources: { ...factory.resources },
   upgrades: { ...factory.upgrades },
-  upgradeRequests: factory.upgradeRequests.map((req) => ({
-    upgrade: req.upgrade,
-    resourceNeeded: { ...req.resourceNeeded },
-    fulfilledAmount: { ...req.fulfilledAmount },
-    status: req.status,
-    createdAt: req.createdAt,
-    expiresAt: req.expiresAt,
-  })),
+  upgradeRequests: factory.upgradeRequests.map(cloneUpgradeRequest),
   haulersAssigned: factory.haulersAssigned,
   haulerConfig: factory.haulerConfig ? { ...factory.haulerConfig } : undefined,
   haulerUpgrades: factory.haulerUpgrades ? { ...factory.haulerUpgrades } : undefined,
