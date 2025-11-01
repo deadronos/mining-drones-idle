@@ -55,23 +55,23 @@ export const computeUpgradeCost = (
     { baseCost: Partial<FactoryResources>; growth: number }
   > = {
     docking: {
-      baseCost: { bars: 1350 },
+      baseCost: { bars: 13 },
       growth: 1.35,
     },
     refine: {
-      baseCost: { bars: 1350 },
+      baseCost: { bars: 13 },
       growth: 1.35,
     },
     storage: {
-      baseCost: { bars: 1350 },
+      baseCost: { bars: 13 },
       growth: 1.35,
     },
     energy: {
-      baseCost: { bars: 1350 },
+      baseCost: { bars: 13 },
       growth: 1.35,
     },
     solar: {
-      baseCost: { bars: 1350 },
+      baseCost: { bars: 13 },
       growth: 1.35,
     },
   };
