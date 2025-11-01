@@ -177,10 +177,12 @@ export const getSolarArrayLocalMaxEnergy = (level: number): number => {
 export const getFactoryEffectiveEnergyCapacity = (
   factory: BuildableFactory,
   solarArrayLevel: number,
+  modifiers?: ResourceModifierSnapshot,
 ): number => {
   // Base capacity from factory upgrades (stored in factory.energyCapacity)
   // + bonus from global Solar Array module
-  return factory.energyCapacity + getSolarArrayLocalMaxEnergy(solarArrayLevel);
+  const base = factory.energyCapacity + getSolarArrayLocalMaxEnergy(solarArrayLevel);
+  return base * (modifiers?.energyStorageMultiplier ?? 1);
 };
 
 export const computeRefineryProduction = (

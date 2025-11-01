@@ -5,6 +5,7 @@ import {
   getFactoryEffectiveEnergyCapacity,
 } from '@/state/store';
 import { useStore } from '@/state/store';
+import { getResourceModifiers } from '@/lib/resourceModifiers';
 import { formatInteger } from '@/lib/formatters';
 
 interface EnergySectionProps {
@@ -22,14 +23,21 @@ export const EnergySection = ({ factory }: EnergySectionProps) => {
   const allModules = useStore((s) => s.modules);
   const solarCollectorLevel = factory.upgrades?.solar ?? 0;
   const solarArrayLevel = allModules.solar ?? 0;
-
-  // Use effective capacity (includes Solar Array bonus)
-  const effectiveCapacity = getFactoryEffectiveEnergyCapacity(factory, solarArrayLevel);
-  const energyPercent = effectiveCapacity > 0 ? factory.energy / effectiveCapacity : 0;
+  // Subscribe to resources and prestige for global modifiers
+  const resources = useStore((s) => s.resources);
+  const prestigeCores = useStore((s) => s.prestige.cores);
+  const modifiers = getResourceModifiers(resources, prestigeCores);
 
   const collectorRegen = getFactorySolarRegen(solarCollectorLevel);
   const arrayBonusRegen = getSolarArrayLocalRegen(solarArrayLevel);
   const totalRegen = collectorRegen + arrayBonusRegen;
+
+  // Use effective capacity (includes Solar Array bonus and global modifiers)
+  const effectiveCapacity = getFactoryEffectiveEnergyCapacity(factory, solarArrayLevel, modifiers);
+  const energyPercent = effectiveCapacity > 0 ? factory.energy / effectiveCapacity : 0;
+
+  const globalRegenBonus =
+    totalRegen > 0 ? totalRegen * (modifiers?.energyGenerationMultiplier - 1) : 0;
 
   return (
     <div>
@@ -51,6 +59,12 @@ export const EnergySection = ({ factory }: EnergySectionProps) => {
             <>
               {' '}
               + {arrayBonusRegen.toFixed(2)}/s (Array L{solarArrayLevel})
+            </>
+          )}
+          {globalRegenBonus > 0 && (
+            <>
+              <br />
+              <small>* Global regen bonus: {globalRegenBonus.toFixed(2)}/s</small>
             </>
           )}
         </p>
