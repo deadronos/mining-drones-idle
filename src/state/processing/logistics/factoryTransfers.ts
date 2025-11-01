@@ -1,4 +1,3 @@
-import { Vector3 } from 'three';
 import type { StoreState, LogisticsQueues } from '@/state/types';
 import type { resolveFactoryHaulerConfig } from '@/lib/haulerUpgrades';
 import type { TransportableResource } from '@/ecs/logistics';
