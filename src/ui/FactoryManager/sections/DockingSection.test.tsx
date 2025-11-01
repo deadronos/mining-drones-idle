@@ -1,18 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { DockingSection } from './DockingSection';
-import { createFactory } from '@/ecs/factories';
-import type { BuildableFactory } from '@/ecs/factories';
-import { Vector3 } from 'three';
-
-const createMockFactory = (overrides?: Partial<BuildableFactory>): BuildableFactory => {
-  const factory = createFactory('factory-1', new Vector3(0, 0, 0));
-  return {
-    ...factory,
-    queuedDrones: ['drone-1', 'drone-2', 'drone-3'],
-    ...overrides,
-  };
-};
+import { createMockFactory } from './testHelpers';
 
 describe('DockingSection', () => {
   it('renders docking information with correct status indicators', () => {

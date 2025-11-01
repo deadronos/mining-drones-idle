@@ -1,7 +1,6 @@
 import { Vector3 } from 'three';
 import type { StoreState, LogisticsQueues } from '@/state/types';
 import type { resolveFactoryHaulerConfig } from '@/lib/haulerUpgrades';
-import type { FactoryTransferEvent } from '@/ecs/world';
 import type { TransportableResource } from '@/ecs/logistics';
 import {
   LOGISTICS_CONFIG,
@@ -11,8 +10,8 @@ import {
   computeMinReserve,
   computeTravelTime,
   reserveOutbound,
+  emitTransferFX,
 } from '@/ecs/logistics';
-import { gameWorld } from '@/ecs/world';
 import { logLogistics } from '@/lib/debug';
 
 const WAREHOUSE_POSITION = new Vector3(0, 0, 0);
@@ -79,24 +78,14 @@ export function scheduleWarehouseToFactoryTransfers(
         },
       ];
 
-      try {
-        const fromPos = WAREHOUSE_POSITION.clone().add(new Vector3(0, 0.6, 0));
-        const toPos = factory.position.clone().add(new Vector3(0, 0.6, 0));
-        const duration = Math.max(0.1, eta - state.gameTime);
-        const event: FactoryTransferEvent = {
-          id: transferId,
-          amount: transferAmount,
-          from: fromPos,
-          to: toPos,
-          duration,
-        };
-        gameWorld.events.transfers.push(event);
-        if (gameWorld.events.transfers.length > 48) {
-          gameWorld.events.transfers.splice(0, gameWorld.events.transfers.length - 48);
-        }
-      } catch {
-        // ignore FX failures
-      }
+      emitTransferFX(
+        transferId,
+        transferAmount,
+        WAREHOUSE_POSITION,
+        factory.position,
+        eta,
+        state.gameTime,
+      );
 
       remainingAvailable = Math.max(0, remainingAvailable - transferAmount);
       remainingNeed -= transferAmount;
@@ -159,24 +148,14 @@ export function scheduleFactoryToWarehouseTransfers(
         departedAt: state.gameTime,
       });
 
-      try {
-        const fromPos = factory.position.clone().add(new Vector3(0, 0.6, 0));
-        const toPos = WAREHOUSE_POSITION.clone().add(new Vector3(0, 0.6, 0));
-        const duration = Math.max(0.1, eta - state.gameTime);
-        const event: FactoryTransferEvent = {
-          id: transferId,
-          amount: transferAmount,
-          from: fromPos,
-          to: toPos,
-          duration,
-        };
-        gameWorld.events.transfers.push(event);
-        if (gameWorld.events.transfers.length > 48) {
-          gameWorld.events.transfers.splice(0, gameWorld.events.transfers.length - 48);
-        }
-      } catch {
-        // ignore FX failures
-      }
+      emitTransferFX(
+        transferId,
+        transferAmount,
+        factory.position,
+        WAREHOUSE_POSITION,
+        eta,
+        state.gameTime,
+      );
 
       remainingSpace = Math.max(0, remainingSpace - transferAmount);
       available -= transferAmount;

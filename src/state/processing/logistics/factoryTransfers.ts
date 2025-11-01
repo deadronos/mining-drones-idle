@@ -1,14 +1,12 @@
-import { Vector3 } from 'three';
 import type { StoreState, LogisticsQueues } from '@/state/types';
 import type { resolveFactoryHaulerConfig } from '@/lib/haulerUpgrades';
-import type { FactoryTransferEvent } from '@/ecs/world';
 import type { TransportableResource } from '@/ecs/logistics';
 import {
   generateTransferId,
   matchSurplusToNeed,
   reserveOutbound,
+  emitTransferFX,
 } from '@/ecs/logistics';
-import { gameWorld } from '@/ecs/world';
 import { logLogistics } from '@/lib/debug';
 
 export function scheduleFactoryToFactoryTransfers(
@@ -56,23 +54,13 @@ export function scheduleFactoryToFactoryTransfers(
       departedAt: transfer.departedAt ?? state.gameTime,
     });
 
-    try {
-      const fromPos = sourceFactory.position.clone().add(new Vector3(0, 0.6, 0));
-      const toPos = destFactory.position.clone().add(new Vector3(0, 0.6, 0));
-      const duration = Math.max(0.1, transfer.eta - state.gameTime);
-      const event: FactoryTransferEvent = {
-        id: transferId,
-        amount: transfer.amount,
-        from: fromPos,
-        to: toPos,
-        duration,
-      };
-      gameWorld.events.transfers.push(event);
-      if (gameWorld.events.transfers.length > 48) {
-        gameWorld.events.transfers.splice(0, gameWorld.events.transfers.length - 48);
-      }
-    } catch {
-      // best-effort: do not crash the scheduler if FX can't be emitted
-    }
+    emitTransferFX(
+      transferId,
+      transfer.amount,
+      sourceFactory.position,
+      destFactory.position,
+      transfer.eta,
+      state.gameTime,
+    );
   }
 }
