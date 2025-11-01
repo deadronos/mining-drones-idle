@@ -273,7 +273,8 @@ describe('Factory Entity', () => {
       const dockingCost = computeUpgradeCost('docking', factory.upgrades.docking ?? 0);
       factory.upgrades.refine = 2; // Increase refine cost via level scaling
       const refineCost = computeUpgradeCost('refine', factory.upgrades.refine);
-      factory.resources.bars = (dockingCost.bars ?? 0) + 50; // enough for docking but below refine level 2
+      // Set resources to be enough for docking but below refine cost
+      factory.resources.bars = (dockingCost.bars ?? 0) + 1;
 
       const request = detectUpgradeShortfall(factory, ['docking', 'refine']);
 
@@ -313,11 +314,14 @@ describe('Factory Entity', () => {
     });
 
     it('creates request with 60s expiration', () => {
-      factory.resources.bars = 100;
+      const cost = computeUpgradeCost('docking', factory.upgrades.docking ?? 0);
+      // Make sure we are short by 1 bar so a request is created
+      factory.resources.bars = (cost.bars ?? 0) - 1;
       const before = Date.now();
       const request = detectUpgradeShortfall(factory, ['docking']);
       const after = Date.now();
 
+      expect(request).not.toBeNull();
       expect(request?.expiresAt).toBeGreaterThanOrEqual(before + 60000);
       expect(request?.expiresAt).toBeLessThanOrEqual(after + 60000);
     });

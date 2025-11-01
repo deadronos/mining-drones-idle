@@ -26,15 +26,15 @@ export const BASE_STORAGE = 400;
 export const STORAGE_PER_LEVEL = 100;
 export const BASE_ENERGY_CAP = 100;
 export const ENERGY_PER_SOLAR = 25;
-export const SOLAR_BASE_GEN = 5;
-export const DRONE_ENERGY_COST = 1.2;
+export const SOLAR_BASE_GEN = 7;
+export const DRONE_ENERGY_COST = 0.9;
 // Solar Collector upgrade (factory-local)
 export const FACTORY_SOLAR_BASE_REGEN = 1.25;
 export const FACTORY_SOLAR_REGEN_PER_LEVEL = 0.5;
 export const FACTORY_SOLAR_MAX_ENERGY_PER_LEVEL = 10; // +10 max energy per Solar Collector level
 
 // Solar Array module (global, provides local bonuses to all factories)
-export const SOLAR_ARRAY_LOCAL_REGEN_PER_LEVEL = 0.15;
+export const SOLAR_ARRAY_LOCAL_REGEN_PER_LEVEL = 0.25;
 export const SOLAR_ARRAY_LOCAL_MAX_ENERGY_PER_LEVEL = 3;
 
 export const FACTORY_MIN_DISTANCE = 10;
