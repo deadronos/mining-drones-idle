@@ -8,6 +8,7 @@ import {
   resolveFactoryHaulerConfig,
 } from '@/lib/haulerUpgrades';
 import { formatCost, hasResources } from '../utils/upgradeFormatting';
+import { getResourceModifiers } from '@/lib/resourceModifiers';
 
 const upgradeOrder: FactoryHaulerUpgradeId[] = ['capacityBoost', 'speedBoost', 'efficiencyBoost'];
 
@@ -21,13 +22,17 @@ interface HaulerSectionProps {
  */
 export const HaulerSection = ({ factory, onAssignHaulers }: HaulerSectionProps) => {
   const modules = useStore((state) => state.modules);
+  const resources = useStore((state) => state.resources);
+  const prestigeCores = useStore((state) => state.prestige.cores);
   const purchaseUpgrade = useStore((state) => state.purchaseFactoryHaulerUpgrade);
   const nextCost = computeHaulerCost(factory.haulersAssigned ?? 0);
   const canAffordNext = factory.resources.bars >= nextCost;
+  const modifiers = getResourceModifiers(resources, prestigeCores);
   const resolved = resolveFactoryHaulerConfig({
     baseConfig: factory.haulerConfig,
     modules,
     upgrades: factory.haulerUpgrades,
+    modifiers,
   });
 
   return (
@@ -84,7 +89,9 @@ export const HaulerSection = ({ factory, onAssignHaulers }: HaulerSectionProps) 
 
       <div className="hauler-config-summary">
         <p>
-          Capacity: <strong>{Math.round(resolved.capacity)}</strong> · Speed:{' '}
+          Capacity: <strong title={
+            `Includes metals/global storage bonus: ${Math.round((modifiers?.storageCapacityMultiplier ?? 1 - 1) * 100)}%`
+          }>{Math.round(resolved.capacity)}</strong> · Speed:{' '}
           <strong>{resolved.speed.toFixed(2)}</strong> · Overhead:{' '}
           <strong>{resolved.pickupOverhead.toFixed(2)}s</strong>
         </p>

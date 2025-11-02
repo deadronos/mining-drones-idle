@@ -7,6 +7,7 @@ import type {
   Resources,
   FactoryResources,
 } from '@/state/types';
+import type { ResourceModifierSnapshot } from '@/lib/resourceModifiers';
 import { calculateExponentialCost } from '@/lib/math';
 import { LOGISTICS_CONFIG } from '@/ecs/logistics';
 import {
@@ -61,7 +62,8 @@ export const resolveFactoryHaulerConfig = ({
   baseConfig,
   modules,
   upgrades,
-}: ResolveParams): ResolvedHaulerConfig => {
+  modifiers,
+}: ResolveParams & { modifiers?: ResourceModifierSnapshot }): ResolvedHaulerConfig => {
   const base: HaulerConfig = {
     capacity: baseConfig?.capacity ?? LOGISTICS_CONFIG.hauler_capacity,
     speed: baseConfig?.speed ?? LOGISTICS_CONFIG.hauler_speed,
@@ -73,7 +75,7 @@ export const resolveFactoryHaulerConfig = ({
   };
 
   const bonuses = getHaulerModuleBonuses(modules);
-  const upgradedCapacity = base.capacity + bonuses.capacityBonus;
+  let upgradedCapacity = base.capacity + bonuses.capacityBonus;
   const upgradedSpeed = base.speed * bonuses.speedMultiplier;
   const upgradedPickup = base.pickupOverhead * bonuses.pickupOverheadMultiplier;
   const upgradedDropoff = base.dropoffOverhead * bonuses.dropoffOverheadMultiplier;
@@ -89,8 +91,12 @@ export const resolveFactoryHaulerConfig = ({
     1 - FACTORY_HAULER_EFFICIENCY_PER_LEVEL * efficiencyLevels,
   );
 
+  // Apply metals/storage-based global modifier to hauler capacity if provided
+  const capacityMultiplier = modifiers?.storageCapacityMultiplier ?? 1;
+  const finalCapacity = Math.max(1, (upgradedCapacity + capacityFromFactory) * capacityMultiplier);
+
   return {
-    capacity: Math.max(1, upgradedCapacity + capacityFromFactory),
+    capacity: finalCapacity,
     speed: Math.max(0.05, upgradedSpeed + speedFromFactory),
     pickupOverhead: Math.max(0, upgradedPickup * efficiencyMultiplier),
     dropoffOverhead: Math.max(0, upgradedDropoff * efficiencyMultiplier),

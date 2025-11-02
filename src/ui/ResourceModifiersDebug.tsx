@@ -96,6 +96,9 @@ export const ResourceModifiersDebug = (props?: ResourceModifiersDebugProps) => {
           </li>
         ))}
       </ul>
+      <p className="muted small resource-modifiers__applied" title="Where these modifiers are used">
+        Applied to: Global systems and factories (refining, energy, storage, hauler capacity, drones).
+      </p>
     </section>
   );
 };

@@ -46,6 +46,7 @@ export function processLogistics(state: StoreState): {
         baseConfig: factory.haulerConfig,
         modules: state.modules,
         upgrades: factory.haulerUpgrades,
+        modifiers,
       }),
     );
   }

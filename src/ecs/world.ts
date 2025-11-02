@@ -171,28 +171,44 @@ export const DEFAULT_DRONE_SPEED = 14;
 export const DEFAULT_DRONE_MINING_RATE = 6;
 export const DEFAULT_DRONE_BATTERY = 24;
 
-const createDrone = (origin: Vector3): DroneEntity => ({
-  id: nextId('drone'),
-  kind: 'drone',
-  position: origin.clone(),
-  state: 'idle',
-  targetId: null,
-  targetRegionId: null,
-  targetFactoryId: null,
-  cargo: 0,
-  capacity: DEFAULT_DRONE_CAPACITY,
-  speed: DEFAULT_DRONE_SPEED,
-  miningRate: DEFAULT_DRONE_MINING_RATE,
-  travel: null,
-  miningAccumulator: 0,
-  battery: DEFAULT_DRONE_BATTERY,
-  maxBattery: DEFAULT_DRONE_BATTERY,
-  charging: false,
-  lastDockingFrom: null,
-  flightSeed: null,
-  cargoProfile: { ore: 0, metals: 0, crystals: 0, organics: 0, ice: 0 },
-  ownerFactoryId: null,
-});
+const createDrone = (origin: Vector3): DroneEntity => {
+  // Attempt to read current global modifiers from the store; fall back to defaults
+  let capacityMul = 1;
+  let batteryMul = 1;
+  try {
+    if (storeApi && typeof storeApi.getState === 'function') {
+      const s = storeApi.getState();
+      const modifiers = getResourceModifiers(s.resources, s.prestige?.cores ?? 0);
+      capacityMul = modifiers.droneCapacityMultiplier ?? 1;
+      batteryMul = modifiers.droneBatteryMultiplier ?? 1;
+    }
+  } catch {
+    // ignore - keep multipliers at 1
+  }
+
+  return {
+    id: nextId('drone'),
+    kind: 'drone',
+    position: origin.clone(),
+    state: 'idle',
+    targetId: null,
+    targetRegionId: null,
+    targetFactoryId: null,
+    cargo: 0,
+    capacity: Math.max(1, Math.round(DEFAULT_DRONE_CAPACITY * capacityMul)),
+    speed: DEFAULT_DRONE_SPEED,
+    miningRate: DEFAULT_DRONE_MINING_RATE,
+    travel: null,
+    miningAccumulator: 0,
+    battery: Math.max(1, Math.round(DEFAULT_DRONE_BATTERY * batteryMul)),
+    maxBattery: Math.max(1, Math.round(DEFAULT_DRONE_BATTERY * batteryMul)),
+    charging: false,
+    lastDockingFrom: null,
+    flightSeed: null,
+    cargoProfile: { ore: 0, metals: 0, crystals: 0, organics: 0, ice: 0 },
+    ownerFactoryId: null,
+  };
+};
 
 export const WAREHOUSE_POSITION = new Vector3(-8, -3, 3);
 
@@ -236,6 +252,44 @@ try {
 
 export const gameWorld = createGameWorld({ rng: createRng(initialSeed) });
 
+// Subscribe to the specific parts of store state that affect resource modifiers
+// (metals, crystals, organics, ice and prestige cores) and only re-apply
+// drone modifiers when any of those values actually change. This reduces
+// unnecessary calls compared to subscribing to the full resources object.
+try {
+  if (storeApi && typeof storeApi.subscribe === 'function') {
+    storeApi.subscribe(
+      (s) => ({
+        metals: s.resources.metals,
+        crystals: s.resources.crystals,
+        organics: s.resources.organics,
+        ice: s.resources.ice,
+        prestigeCores: s.prestige?.cores ?? 0,
+      }),
+      (newSel, oldSel) => {
+        try {
+          // If oldSel is undefined (some environments) or any tracked field changed,
+          // apply modifiers. Use strict inequality to detect numeric changes.
+          if (
+            !oldSel ||
+            newSel.metals !== oldSel.metals ||
+            newSel.crystals !== oldSel.crystals ||
+            newSel.organics !== oldSel.organics ||
+            newSel.ice !== oldSel.ice ||
+            newSel.prestigeCores !== oldSel.prestigeCores
+          ) {
+            applyModifiersToAllDrones(gameWorld);
+          }
+        } catch {
+          // ignore in environments where world may not be fully initialized
+        }
+      },
+    );
+  }
+} catch {
+  // ignore subscription failures in test or build environments
+}
+
 export const spawnDrone = (world: GameWorld) =>
   world.world.add(createDrone(world.factory.position));
 
@@ -249,6 +303,29 @@ export const spawnAsteroid = (
 
 export const removeAsteroid = (world: GameWorld, asteroid: AsteroidEntity) =>
   world.world.remove(asteroid);
+
+/**
+ * Apply current global resource modifiers to all existing drones in the world.
+ * This updates capacity and maxBattery and clamps current battery to the new max.
+ */
+export const applyModifiersToAllDrones = (world: GameWorld) => {
+  try {
+    if (storeApi && typeof storeApi.getState === 'function') {
+      const s = storeApi.getState();
+      const modifiers = getResourceModifiers(s.resources, s.prestige?.cores ?? 0);
+      for (const entity of world.world.where(isDrone)) {
+        const prevCapacity = entity.capacity;
+        const prevMaxBattery = entity.maxBattery;
+        entity.capacity = Math.max(1, Math.round(DEFAULT_DRONE_CAPACITY * (modifiers.droneCapacityMultiplier ?? 1)));
+        entity.maxBattery = Math.max(1, Math.round(DEFAULT_DRONE_BATTERY * (modifiers.droneBatteryMultiplier ?? 1)));
+        // Clamp current battery to the new max
+        entity.battery = Math.min(entity.battery, entity.maxBattery);
+      }
+    }
+  } catch {
+    // ignore failures in tests
+  }
+};
 
 export interface EnsureAsteroidOptions extends SpawnAsteroidOptions {
   scannerLevel: number;

@@ -42,10 +42,14 @@ export const formatStorageAmount = (
 /**
  * Build storage entries for display in the Storage section.
  */
-export function buildStorageEntries(factory: BuildableFactory) {
+export function buildStorageEntries(
+  factory: BuildableFactory,
+  modifiers?: { storageCapacityMultiplier?: number },
+) {
+  const effectiveStorageCapacity = factory.storageCapacity * (modifiers?.storageCapacityMultiplier ?? 1);
   return STORAGE_RESOURCE_ORDER.map((key) => {
     const amount = factory.resources[key] ?? 0;
-    const display = formatStorageAmount(key, amount, factory.storageCapacity);
+    const display = formatStorageAmount(key, amount, effectiveStorageCapacity);
     const bufferTarget = computeBufferTarget(factory, key as TransportableResource);
 
     return {
