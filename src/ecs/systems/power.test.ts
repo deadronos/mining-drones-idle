@@ -107,10 +107,6 @@ describe('ecs/systems/power', () => {
     expect(drone.battery).toBeCloseTo(expectedCharge2, 5);
     // Factory energy: 0 + factoryRegen, but all goes to drone charging => 0
     expect(factories[0]?.energy).toBeCloseTo(0, 5);
-    // Global energy: initial 10 - (charge applied from global) + generation
-    const factoryRegen2 = getFactorySolarRegen(0);
-    const globalGeneration = getEnergyGeneration(store.getState().modules, getResourceModifiers(store.getState().resources));
-    const expectedGlobalEnergy = 10 - Math.max(0, expectedCharge2 - factoryRegen2) + globalGeneration;
     expect(resources.energy).toBeGreaterThanOrEqual(0);
     expect(drone.charging).toBe(true);
   });

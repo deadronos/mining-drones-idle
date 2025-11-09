@@ -25,8 +25,15 @@ export interface ResourceModifierSnapshot {
   energyDrainMultiplier: number;
 }
 
+const safeNumber = (value: number, fallback = 0): number => {
+  if (!Number.isFinite(value)) return fallback;
+  if (value > 1e6) return 1e6;
+  if (value < -1e6) return -1e6;
+  return value;
+};
+
 const computeBonus = (amount: number, balance: ResourceBalanceEntry) => {
-  const safeAmount = Math.max(0, amount);
+  const safeAmount = Math.max(0, safeNumber(amount));
   const scale = balance.scale > 0 ? balance.scale : 1;
   const cap = balance.cap;
 
@@ -39,7 +46,8 @@ const computeBonus = (amount: number, balance: ResourceBalanceEntry) => {
   const overflow = Math.max(0, safeAmount - saturationPoint);
   const overflowBonus = (overflow / (scale * 10)) * cap;
 
-  return Math.max(0, primaryBonus + overflowBonus);
+  const total = primaryBonus + overflowBonus;
+  return total > 0 && Number.isFinite(total) ? total : 0;
 };
 
 const pickBonus = (resources: Resources, key: BalancedResource, prestigeCores = 0) => {
@@ -56,14 +64,24 @@ export const getResourceModifiers = (
   const organicsBonus = pickBonus(resources, 'organics', prestigeCores);
   const iceBonus = pickBonus(resources, 'ice', prestigeCores);
 
-  const droneBatteryMultiplier = 1 + metalsBonus;
-  const droneCapacityMultiplier = 1 + metalsBonus;
-  const storageCapacityMultiplier = 1 + metalsBonus;
-  const refineryYieldMultiplier = 1 + crystalsBonus;
-  const droneProductionSpeedMultiplier = 1 + ORGANICS_DRONE_OUTPUT_FACTOR * organicsBonus;
-  const energyGenerationMultiplier = 1 + ORGANICS_ENERGY_REGEN_FACTOR * organicsBonus;
-  const energyStorageMultiplier = 1 + iceBonus;
-  const energyDrainMultiplier = clamp(1 - ICE_DRAIN_REDUCTION_FACTOR * iceBonus, 0.5, 1);
+  const droneBatteryMultiplier = safeNumber(1 + metalsBonus, 1);
+  const droneCapacityMultiplier = safeNumber(1 + metalsBonus, 1);
+  const storageCapacityMultiplier = safeNumber(1 + metalsBonus, 1);
+  const refineryYieldMultiplier = safeNumber(1 + crystalsBonus, 1);
+  const droneProductionSpeedMultiplier = safeNumber(
+    1 + ORGANICS_DRONE_OUTPUT_FACTOR * organicsBonus,
+    1,
+  );
+  const energyGenerationMultiplier = safeNumber(
+    1 + ORGANICS_ENERGY_REGEN_FACTOR * organicsBonus,
+    1,
+  );
+  const energyStorageMultiplier = safeNumber(1 + iceBonus, 1);
+  const energyDrainMultiplier = clamp(
+    safeNumber(1 - ICE_DRAIN_REDUCTION_FACTOR * iceBonus, 1),
+    0.5,
+    1,
+  );
 
   return {
     metalsBonus,
