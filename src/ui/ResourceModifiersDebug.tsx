@@ -34,7 +34,19 @@ export const ResourceModifiersDebug = (props?: ResourceModifiersDebugProps) => {
     const snapshot = getResourceModifiers(resources, prestigeCores);
     // Guard against invalid snapshots to avoid NaN displays
     if (!snapshot || typeof snapshot !== 'object') {
-      return getResourceModifiers({}, 0 as never);
+      return getResourceModifiers(
+        {
+          ore: 0,
+          ice: 0,
+          metals: 0,
+          crystals: 0,
+          organics: 0,
+          bars: 0,
+          energy: 0,
+          credits: 0,
+        },
+        0 as never,
+      );
     }
     return snapshot;
   }, [resources, prestigeCores]);
