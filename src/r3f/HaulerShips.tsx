@@ -138,50 +138,106 @@ const hashScalar = (value: string) => {
   }
   return (hash % 2000) / 1000 - 1; // [-1, 1] range
 };
+const createHaulerVisualPool = () =>
+  Array.from({ length: MAX_HAULERS }, () => ({
+    id: '',
+    transfer: {} as PendingTransfer,
+    color: '#ffffff',
+    start: new Vector3(),
+    end: new Vector3(),
+    control1: new Vector3(),
+    control2: new Vector3(),
+    duration: 0,
+    departedAt: 0,
+    sourceLabel: '',
+    destLabel: '',
+    status: 'scheduled' as HaulerStatus,
+    sourceFactoryId: null,
+    destFactoryId: null,
+    averageSpeed: 0,
+  } satisfies HaulerVisual));
 
-const computeVisuals = (transfers: PendingTransfer[], factories: BuildableFactory[]): HaulerVisual[] => {
-  if (!transfers.length || factories.length === 0) {
-    return [];
+const createHaulerColorPool = () => Array.from({ length: MAX_HAULERS }, () => new Color());
+const haulerVisualPool = createHaulerVisualPool();
+const haulerBaseColors = createHaulerColorPool();
+const haulerFactoryMap = new Map<string, BuildableFactory>();
+
+interface VisualComputeResult {
+  visuals: HaulerVisual[];
+  count: number;
+}
+
+const sortHaulerVisuals = (visuals: HaulerVisual[], count: number) => {
+  for (let i = 0; i < count - 1; i += 1) {
+    let min = i;
+    for (let j = i + 1; j < count; j += 1) {
+      const a = visuals[min].transfer?.eta ?? Number.MAX_SAFE_INTEGER;
+      const b = visuals[j].transfer?.eta ?? Number.MAX_SAFE_INTEGER;
+      if (b < a) {
+        min = j;
+      }
+    }
+    if (min !== i) {
+      const temp = visuals[i];
+      visuals[i] = visuals[min];
+      visuals[min] = temp;
+    }
+  }
+};
+
+const computeVisuals = (
+  transfers: PendingTransfer[],
+  factories: BuildableFactory[],
+  pool: HaulerVisual[] = createHaulerVisualPool(),
+  factoryMap: Map<string, BuildableFactory> = new Map(),
+): VisualComputeResult => {
+  factoryMap.clear();
+  for (const factory of factories) {
+    factoryMap.set(factory.id, factory);
   }
 
-  const factoryMap = new Map(factories.map((factory) => [factory.id, factory]));
-  const visuals: HaulerVisual[] = [];
+  if (!transfers.length || factories.length === 0) {
+    return { visuals: pool, count: 0 };
+  }
 
+  let count = 0;
   for (const transfer of transfers) {
     if (transfer.status !== 'scheduled' && transfer.status !== 'in-transit') {
       continue;
     }
+    if (count >= MAX_HAULERS) break;
 
-    let start: Vector3 | null = null;
-    let sourceLabel = '';
+    const visual = pool[count];
+    visual.id = transfer.id;
+    visual.transfer = transfer;
+
     let sourceFactoryId: string | null = null;
+    let destFactoryId: string | null = null;
+
     if (transfer.fromFactoryId === WAREHOUSE_NODE_ID) {
-      start = WAREHOUSE_POSITION.clone().add(new Vector3(0, HEIGHT_OFFSET, 0));
-      sourceLabel = 'Whse';
+      visual.start.copy(WAREHOUSE_POSITION).addScaledVector(upVector, HEIGHT_OFFSET);
+      visual.sourceLabel = 'Whse';
     } else {
       const sourceFactory = factoryMap.get(transfer.fromFactoryId);
       if (!sourceFactory) continue;
-      start = sourceFactory.position.clone().add(new Vector3(0, HEIGHT_OFFSET, 0));
-      sourceLabel = sourceFactory.id.slice(0, 6);
+      visual.start.copy(sourceFactory.position).addScaledVector(upVector, HEIGHT_OFFSET);
+      visual.sourceLabel = sourceFactory.id.slice(0, 6);
       sourceFactoryId = sourceFactory.id;
     }
 
-    let end: Vector3 | null = null;
-    let destLabel = '';
-    let destFactoryId: string | null = null;
     if (transfer.toFactoryId === WAREHOUSE_NODE_ID) {
-      end = WAREHOUSE_POSITION.clone().add(new Vector3(0, HEIGHT_OFFSET, 0));
-      destLabel = 'Whse';
+      visual.end.copy(WAREHOUSE_POSITION).addScaledVector(upVector, HEIGHT_OFFSET);
+      visual.destLabel = 'Whse';
     } else {
       const destFactory = factoryMap.get(transfer.toFactoryId);
       if (!destFactory) continue;
-      end = destFactory.position.clone().add(new Vector3(0, HEIGHT_OFFSET, 0));
-      destLabel = destFactory.id.slice(0, 6);
+      visual.end.copy(destFactory.position).addScaledVector(upVector, HEIGHT_OFFSET);
+      visual.destLabel = destFactory.id.slice(0, 6);
       destFactoryId = destFactory.id;
     }
 
-    const direction = end.clone().sub(start);
-    const length = direction.length();
+    tempVec.copy(visual.end).sub(visual.start);
+    const length = tempVec.length();
     if (length < 0.05) {
       continue;
     }
@@ -189,50 +245,48 @@ const computeVisuals = (transfers: PendingTransfer[], factories: BuildableFactor
     const arcHeight = Math.max(0.6, length * 0.28);
     const lateralStrength = Math.min(1.1, length * 0.05);
     const lateralSeed = hashScalar(transfer.id);
-    const lateral = controlOffset.copy(direction).cross(upVector);
+    const lateral = controlOffset.copy(tempVec).cross(upVector);
     if (lateral.lengthSq() < 1e-4) {
-      lateral.set(direction.z, 0, -direction.x);
+      lateral.set(tempVec.z, 0, -tempVec.x);
     }
     lateral.normalize().multiplyScalar(lateralStrength * lateralSeed);
 
-    const control1 = start
-      .clone()
-      .addScaledVector(direction, 0.28)
-      .add(new Vector3(0, arcHeight, 0))
+    visual.control1
+      .copy(visual.start)
+      .addScaledVector(tempVec, 0.28)
+      .addScaledVector(upVector, arcHeight)
       .add(lateral);
-    const control2 = start
-      .clone()
-      .addScaledVector(direction, 0.72)
-      .add(new Vector3(0, arcHeight * 0.66, 0))
-      .add(lateral.clone().multiplyScalar(0.5));
+    visual.control2
+      .copy(visual.start)
+      .addScaledVector(tempVec, 0.72)
+      .addScaledVector(upVector, arcHeight * 0.66)
+      .add(controlOffset.copy(lateral).multiplyScalar(0.5));
 
     const duration = Math.max(0.1, transfer.eta - transfer.departedAt);
     const color = RESOURCE_COLORS[transfer.resource] ?? '#ffffff';
     const segments = Math.max(12, Math.min(48, Math.ceil(length * 6)));
-    const pathLength = approximateCubicBezierLength(start, control1, control2, end, segments);
+    const pathLength = approximateCubicBezierLength(
+      visual.start,
+      visual.control1,
+      visual.control2,
+      visual.end,
+      segments,
+    );
     const averageSpeed = pathLength / duration;
 
-    visuals.push({
-      id: transfer.id,
-      transfer,
-      color,
-      start,
-      end,
-      control1,
-      control2,
-      duration,
-      departedAt: transfer.departedAt,
-      sourceLabel,
-      destLabel,
-      status: transfer.status as HaulerStatus,
-      sourceFactoryId,
-      destFactoryId,
-      averageSpeed,
-    });
+    visual.color = color;
+    visual.duration = duration;
+    visual.departedAt = transfer.departedAt;
+    visual.status = transfer.status as HaulerStatus;
+    visual.sourceFactoryId = sourceFactoryId;
+    visual.destFactoryId = destFactoryId;
+    visual.averageSpeed = averageSpeed;
+
+    count += 1;
   }
 
-  visuals.sort((a, b) => a.transfer.eta - b.transfer.eta);
-  return visuals.slice(0, MAX_HAULERS);
+  sortHaulerVisuals(pool, count);
+  return { visuals: pool, count };
 };
 
 export const HaulerShips = () => {
@@ -242,27 +296,34 @@ export const HaulerShips = () => {
   const hullRef = useRef<InstancedMesh>(null);
   const noseRef = useRef<InstancedMesh>(null);
   const engineRef = useRef<InstancedMesh>(null);
-  const visualsRef = useRef<HaulerVisual[]>([]);
-  const baseColorsRef = useRef<Color[]>([]);
+  const visualCountRef = useRef(0);
   const hoveredPositionRef = useRef(new Vector3());
   const [tooltipPosition, setTooltipPosition] = useState<[number, number, number] | null>(null);
   const hoveredIndexRef = useRef<number | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const visualsResult = useMemo(() => {
+    const result = computeVisuals(
+      logisticsQueues.pendingTransfers ?? [],
+      factories,
+      haulerVisualPool,
+      haulerFactoryMap,
+    );
+    return { ...result, view: result.visuals.slice(0, result.count) };
+  }, [factories, logisticsQueues.pendingTransfers]);
 
-  const visuals = useMemo(
-    () => computeVisuals(logisticsQueues.pendingTransfers ?? [], factories),
-    [logisticsQueues.pendingTransfers, factories],
-  );
+  const visualCount = visualsResult.count;
+  const visualsView = visualsResult.view;
 
   useEffect(() => {
-    visualsRef.current = visuals;
-    baseColorsRef.current = visuals.map((visual) => new Color(visual.color));
-    const count = Math.min(visuals.length, MAX_HAULERS);
+    visualCountRef.current = visualCount;
+    const count = Math.min(visualCount, MAX_HAULERS);
     const hull = hullRef.current;
     const nose = noseRef.current;
     const engine = engineRef.current;
+    const baseColors = haulerBaseColors;
     for (let i = 0; i < count; i += 1) {
-      const baseColor = baseColorsRef.current[i];
+      const baseColor = baseColors[i];
+      baseColor.set(visualsView[i].color);
       if (hull) hull.setColorAt(i, baseColor);
       if (nose) nose.setColorAt(i, baseColor);
       if (engine) engine.setColorAt(i, tempColor.copy(baseColor).lerp(WHITE, 0.45));
@@ -270,10 +331,9 @@ export const HaulerShips = () => {
     if (hull?.instanceColor) hull.instanceColor.needsUpdate = true;
     if (nose?.instanceColor) nose.instanceColor.needsUpdate = true;
     if (engine?.instanceColor) engine.instanceColor.needsUpdate = true;
-  }, [visuals]);
+  }, [visualCount, visualsView]);
 
-  const safeHoveredIndex =
-    hoveredIndex !== null && hoveredIndex < visuals.length ? hoveredIndex : null;
+  const safeHoveredIndex = hoveredIndex !== null && hoveredIndex < visualCount ? hoveredIndex : null;
 
   useEffect(() => {
     hoveredIndexRef.current = safeHoveredIndex;
@@ -284,7 +344,7 @@ export const HaulerShips = () => {
       storeApi.getState().setHighlightedFactories({ sourceId: null, destId: null });
       return;
     }
-    const visual = visuals[safeHoveredIndex];
+    const visual = visualsView[safeHoveredIndex];
     if (!visual) {
       storeApi.getState().setHighlightedFactories({ sourceId: null, destId: null });
       return;
@@ -293,7 +353,7 @@ export const HaulerShips = () => {
       sourceId: visual.sourceFactoryId,
       destId: visual.destFactoryId,
     });
-  }, [safeHoveredIndex, visuals]);
+  }, [safeHoveredIndex, visualsView]);
 
   useEffect(
     () => () => {
@@ -308,9 +368,9 @@ export const HaulerShips = () => {
     const engine = engineRef.current;
     if (!hull || !nose || !engine) return;
 
-    const visualsList = visualsRef.current;
+    const visualsList = haulerVisualPool;
     const now = storeApi.getState().gameTime ?? 0;
-    const count = Math.min(visualsList.length, MAX_HAULERS);
+    const count = Math.min(visualCountRef.current, MAX_HAULERS);
     let hoveredFound = false;
     for (let i = 0; i < count; i += 1) {
       const visual = visualsList[i];
@@ -341,7 +401,7 @@ export const HaulerShips = () => {
       engineMatrix.compose(enginePosition, engineOrientation, ENGINE_SCALE);
       engine.setMatrixAt(i, engineMatrix);
 
-      const baseColor = baseColorsRef.current[i] ?? tempColor.set(visual.color);
+      const baseColor = haulerBaseColors[i] ?? tempColor.set(visual.color);
       tempColor.copy(baseColor);
       if (hoveredIndexRef.current === i) {
         tempColor.lerp(WHITE, 0.35);
@@ -402,7 +462,8 @@ export const HaulerShips = () => {
     setHoveredIndex(null);
   };
 
-  const hovered = safeHoveredIndex !== null ? visuals[safeHoveredIndex] ?? null : null;
+  const hovered =
+    safeHoveredIndex !== null ? visualsView[safeHoveredIndex] ?? null : null;
 
   return (
     <>

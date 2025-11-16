@@ -6,15 +6,18 @@ import { startTravel } from './droneAI/travelManagement';
 import { synchronizeDroneFlight } from './droneAI/flightSync';
 import { assignReturnFactory } from './droneAI/factoryAssignment';
 
+type DroneFlightSnapshot = ReturnType<StoreApiType['getState']>['droneFlights'][number];
+
 // Re-export for backward compatibility
 export { assignDroneTarget } from './droneAI/targetAssignment';
 
 export const createDroneAISystem = (world: GameWorld, store: StoreApiType) => {
   const { droneQuery, asteroidQuery, rng } = world;
+  const flightMap = new Map<string, DroneFlightSnapshot>();
 
   return (_dt: number) => {
     const flights = store.getState().droneFlights;
-    const flightMap = new Map<string, typeof flights[number]>();
+    flightMap.clear();
     for (const flight of flights) {
       flightMap.set(flight.droneId, flight);
     }
