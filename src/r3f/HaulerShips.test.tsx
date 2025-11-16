@@ -74,8 +74,9 @@ describe('r3f/HaulerShips', () => {
       },
     ];
 
-    const visuals = __internal.computeVisuals(transfers, [factoryA, factoryB]);
-    expect(visuals).toHaveLength(2);
+    const result = __internal.computeVisuals(transfers, [factoryA, factoryB]);
+    expect(result.count).toBe(2);
+    const visuals = result.visuals.slice(0, result.count);
     const [first, second] = visuals;
     expect(first.sourceFactoryId).toBe(factoryA.id);
     expect(first.destFactoryId).toBe(factoryB.id);

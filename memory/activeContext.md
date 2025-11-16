@@ -2,12 +2,17 @@
 
 ## Current Work
 
-- 🚧 **TASK038 – Factory Metrics & Mini-Charts** is in progress.
+- 🚧 **TASK038 – Factory Metrics & Mini-Charts** remains in progress.
   - Factory Metrics tab now renders four sparklines with summary stats, sampling banner, and pause control.
   - Inline sparkline component ships on factory cards and hides when sampling disabled or empty.
   - Settings panel exposes metrics toggle, interval, and retention inputs; metrics helpers covered by new unit tests.
   - Sparklines now include descriptive titles/ARIA wiring and inline component gains narrated labels with dedicated Vitest coverage.
   - Metrics banner now surfaces the most recent sampling time so players can relate charts to gameplay moments.
+
+- ✅ **TASK039 – Hotpath Instancing & Pooling** completed.
+  - Logistics transfer lines now render from a pooled visual buffer via instanced shafts/heads with hover-safe colors/tooltips.
+  - Hauler ships reuse a pooled visual/color map and expose sliceable views for rendering and tests.
+  - Drone AI tick reuses a hoisted Map of flights instead of re-allocating per frame.
 
 🔭 **Open follow-ups**
 
