@@ -2,6 +2,11 @@
 
 ## Current Work
 
+- 🚧 **TASK040 – Rust Simulation Core** underway.
+  - Recorded RQ-067–RQ-070 and DES033 to govern Rust/WASM migration and typed-array contracts.
+  - Scaffolding `/rust-engine` crate with RNG parity tests, snapshot import/export, layout planner, and step/offline hooks.
+  - Adding TS bridge (`wasmSimBridge`) for WASM export/layout validation; runtime wiring remains opt-in.
+
 - 🚧 **TASK038 – Factory Metrics & Mini-Charts** remains in progress.
   - Factory Metrics tab now renders four sparklines with summary stats, sampling banner, and pause control.
   - Inline sparkline component ships on factory cards and hides when sampling disabled or empty.
@@ -34,6 +39,7 @@
 
 ## Next Steps
 
-1. Validate sparkline rendering performance under stress scenarios and document thresholds.
-2. Explore contextual data (aggregate deltas, projected throughput) to complement visual trends.
-3. Plan Playwright coverage once metrics UI stabilizes and evaluate throttled-profile acceptance.
+1. Finalize Rust crate scaffolding, wasm-bindgen surface, and feature-flag plan before integrating with the store.
+2. Validate sparkline rendering performance under stress scenarios and document thresholds.
+3. Explore contextual data (aggregate deltas, projected throughput) to complement visual trends.
+4. Plan Playwright coverage once metrics UI stabilizes and evaluate throttled-profile acceptance.

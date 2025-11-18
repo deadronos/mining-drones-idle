@@ -42,3 +42,4 @@
 
 | TASK038 | Factory Metrics & Mini-Charts                | In Progress | 2025-10-30 |
 | TASK039 | Hotpath Instancing & Pooling                 | Completed   | 2025-11-03 |
+| TASK040 | Rust Simulation Core                         | In Progress | 2025-11-18 |

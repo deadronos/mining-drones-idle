@@ -16,6 +16,8 @@ db.sqlite
 # production
 /build
 /dist
+/rust-engine/target
+/rust-engine/pkg
 
 # misc
 .DS_Store

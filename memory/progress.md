@@ -2,6 +2,7 @@
 
 ## Summary
 
+- 2025-11-18: **TASK040 – Rust simulation bootstrap** – Captured RQ-067–RQ-070, drafted DES033 architecture, and began scaffolding `/rust-engine` crate plus TS bridge contracts for snapshot, RNG, and typed-array layout parity.
 - 2025-10-30: **TASK038 – Metrics recency cues** – Metrics banner now reports the last sampling time using game-time deltas, reinforcing when charts were last refreshed.
 - 2025-10-30: **TASK038 – Metrics accessibility polish** – Added descriptive sparkline titles/ARIA links, inline summary tooltips, and new FactoryMetricsInline Vitest coverage ensuring accessible wiring.
 - 2025-10-30: **TASK038 – Factory Metrics UI & coverage** – Implemented Factory Metrics tab banner/actions, sparkline cards, inline sparkline component, and Settings metrics controls. Added buffer/sampling/UI unit tests and verified npm run typecheck, npm run lint, and npm run test (209 tests) succeed.
