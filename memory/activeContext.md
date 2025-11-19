@@ -4,8 +4,10 @@
 
 - 🚧 **TASK040 – Rust Simulation Core** underway.
   - Recorded RQ-067–RQ-070 and DES033 to govern Rust/WASM migration and typed-array contracts.
-  - Scaffolding `/rust-engine` crate with RNG parity tests, snapshot import/export, layout planner, and step/offline hooks.
-  - Adding TS bridge (`wasmSimBridge`) for WASM export/layout validation; runtime wiring remains opt-in.
+  - Scaffolding `/rust-engine` crate completed with RNG parity tests, snapshot import/export, layout planner, and data buffer.
+  - Implemented TS bridge (`wasmSimBridge`) matching `wasm-bindgen` class structure for future integration.
+  - Verified `wasm-pack` build pipeline and added `useRustSim` feature flag to store settings.
+  - **Next**: Execute DES034 to port core systems (Refinery, Movement, Mining) to Rust.
 
 - 🚧 **TASK038 – Factory Metrics & Mini-Charts** remains in progress.
   - Factory Metrics tab now renders four sparklines with summary stats, sampling banner, and pause control.

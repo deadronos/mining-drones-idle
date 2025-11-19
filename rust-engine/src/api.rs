@@ -32,6 +32,7 @@ pub struct GameState {
     rng: Mulberry32,
     pub layout: EntityBufferLayout,
     pub game_time: f32,
+    pub data: Vec<u8>,
 }
 
 impl GameState {
@@ -43,11 +44,13 @@ impl GameState {
             asteroid_count(&snapshot),
             snapshot.factories.len(),
         )?;
+        let data = vec![0; layout.total_size_bytes];
         Ok(Self {
             snapshot,
             rng: Mulberry32::new(rng_seed),
             layout,
             game_time: 0.0,
+            data,
         })
     }
 
@@ -60,6 +63,7 @@ impl GameState {
             asteroid_count(&snapshot),
             snapshot.factories.len(),
         )?;
+        self.data = vec![0; self.layout.total_size_bytes];
         self.rng = Mulberry32::new(snapshot.rng_seed.unwrap_or(1));
         self.snapshot = snapshot;
         self.game_time = 0.0;

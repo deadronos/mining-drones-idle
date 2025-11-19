@@ -44,4 +44,8 @@ impl WasmGameState {
     pub fn layout_json(&self) -> Result<String, JsValue> {
         serde_json::to_string(&self.inner.layout).map_err(|err| JsValue::from_str(&err.to_string()))
     }
+
+    pub fn data_ptr(&self) -> *const u8 {
+        self.inner.data.as_ptr()
+    }
 }

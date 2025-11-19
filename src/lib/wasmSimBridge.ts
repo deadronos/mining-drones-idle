@@ -1,3 +1,5 @@
+import { StoreSnapshot } from '../state/types';
+
 export interface BufferSection {
   offset_bytes: number;
   length: number;
@@ -27,170 +29,117 @@ export interface RustSimLayout {
   total_size_bytes: number;
 }
 
-export interface RustSimExports {
-  memory?: WebAssembly.Memory;
-  get_layout?: () => RustSimLayout;
-  layout_json?: () => string;
-  export_snapshot?: () => string;
-  load_snapshot?: (snapshotJson: string) => void;
-  init_world?: (snapshotJson: string) => void;
-  step?: (dt: number) => void;
-  apply_command?: (commandJson: string) => void;
+// Interface for the wasm-bindgen generated module exports
+export interface WasmSimExports {
+  memory: WebAssembly.Memory;
+  WasmGameState: {
+    new (snapshot_json: string): WasmGameState;
+  };
 }
 
-export interface RustSimViews {
-  drones: {
-    positions: Float32Array;
-    velocities: Float32Array;
-    states: Uint32Array;
-  };
-  asteroids: {
-    positions: Float32Array;
-    oreRemaining: Float32Array;
-  };
-  factories: {
-    positions: Float32Array;
-    orientations: Float32Array;
-    activity: Float32Array;
-  };
+export interface WasmGameState {
+  free(): void;
+  load_snapshot(snapshot_json: string): void;
+  export_snapshot(): string;
+  step(dt: number): number;
+  apply_command(command_json: string): void;
+  layout_json(): string;
+  data_ptr(): number;
 }
 
 export interface RustSimBridge {
-  layout: RustSimLayout;
-  memory: WebAssembly.Memory;
-  views: RustSimViews;
-  step: (dt: number) => void;
-  loadSnapshot: (snapshotJson: string) => void;
-  exportSnapshot: () => string;
-  applyCommand: (commandJson: string) => void;
+  init(snapshot: StoreSnapshot): Promise<void>;
+  step(dt: number): number;
+  getLayout(): RustSimLayout;
+  getDronePositions(): Float32Array;
+  getDroneVelocities(): Float32Array;
+  getDroneStates(): Uint32Array;
+  getAsteroidPositions(): Float32Array;
+  getAsteroidOre(): Float32Array;
+  getFactoryPositions(): Float32Array;
+  getFactoryOrientations(): Float32Array;
+  getFactoryActivity(): Uint32Array;
 }
 
-const bytesPerElement = 4;
+export function buildRustSimBridge(
+  wasmExports: WasmSimExports,
+  snapshot: StoreSnapshot
+): RustSimBridge {
+  const json = JSON.stringify(snapshot);
+  let gameState: WasmGameState | null = new wasmExports.WasmGameState(json);
+  let layout: RustSimLayout = JSON.parse(gameState.layout_json());
 
-const assertSectionCapacity = (section: BufferSection, memory: WebAssembly.Memory, label: string) => {
-  const end = section.offset_bytes + section.length * bytesPerElement;
-  if (memory.buffer.byteLength < end) {
-    throw new Error(`WASM memory too small for ${label} view`);
-  }
-};
+  // Helper to create views
+  // Note: We recreate views on access because WASM memory buffer can detach on growth
+  const getViewF32 = (section: BufferSection) => {
+    if (!gameState) throw new Error('Game state not initialized');
+    const ptr = gameState.data_ptr();
+    return new Float32Array(
+      wasmExports.memory.buffer,
+      ptr + section.offset_bytes,
+      section.length
+    );
+  };
 
-const resolveLayout = (exports: RustSimExports): RustSimLayout => {
-  if (typeof exports.get_layout === 'function') {
-    return exports.get_layout();
-  }
-  if (typeof exports.layout_json === 'function') {
-    const layoutJson = exports.layout_json();
-    return JSON.parse(layoutJson) as RustSimLayout;
-  }
-  throw new Error('Rust WASM exports must provide get_layout or layout_json');
-};
-
-const requireMemory = (exports: RustSimExports): WebAssembly.Memory => {
-  if (!exports.memory) {
-    throw new Error('Rust WASM memory export is missing');
-  }
-  return exports.memory;
-};
-
-const selectLoader = (exports: RustSimExports) => {
-  if (typeof exports.load_snapshot === 'function') return exports.load_snapshot;
-  if (typeof exports.init_world === 'function') return exports.init_world;
-  throw new Error('Rust WASM exports must provide load_snapshot or init_world');
-};
-
-const selectStep = (exports: RustSimExports) => {
-  if (typeof exports.step !== 'function') {
-    throw new Error('Rust WASM exports must provide step');
-  }
-  return exports.step;
-};
-
-const selectExporter = (exports: RustSimExports) => {
-  if (typeof exports.export_snapshot !== 'function') {
-    throw new Error('Rust WASM exports must provide export_snapshot');
-  }
-  return exports.export_snapshot;
-};
-
-const selectCommander = (exports: RustSimExports) => {
-  if (typeof exports.apply_command !== 'function') {
-    throw new Error('Rust WASM exports must provide apply_command');
-  }
-  return exports.apply_command;
-};
-
-const createViews = (layout: RustSimLayout, memory: WebAssembly.Memory): RustSimViews => {
-  assertSectionCapacity(layout.drones.positions, memory, 'drone positions');
-  assertSectionCapacity(layout.drones.velocities, memory, 'drone velocities');
-  assertSectionCapacity(layout.drones.states, memory, 'drone states');
-  assertSectionCapacity(layout.asteroids.positions, memory, 'asteroid positions');
-  assertSectionCapacity(layout.asteroids.ore_remaining, memory, 'asteroid ore_remaining');
-  assertSectionCapacity(layout.factories.positions, memory, 'factory positions');
-  assertSectionCapacity(layout.factories.orientations, memory, 'factory orientations');
-  assertSectionCapacity(layout.factories.activity, memory, 'factory activity');
+  const getViewU32 = (section: BufferSection) => {
+    if (!gameState) throw new Error('Game state not initialized');
+    const ptr = gameState.data_ptr();
+    return new Uint32Array(
+      wasmExports.memory.buffer,
+      ptr + section.offset_bytes,
+      section.length
+    );
+  };
 
   return {
-    drones: {
-      positions: new Float32Array(
-        memory.buffer,
-        layout.drones.positions.offset_bytes,
-        layout.drones.positions.length,
-      ),
-      velocities: new Float32Array(
-        memory.buffer,
-        layout.drones.velocities.offset_bytes,
-        layout.drones.velocities.length,
-      ),
-      states: new Uint32Array(memory.buffer, layout.drones.states.offset_bytes, layout.drones.states.length),
+    async init(newSnapshot: StoreSnapshot) {
+      if (gameState) {
+        gameState.free();
+      }
+      const json = JSON.stringify(newSnapshot);
+      gameState = new wasmExports.WasmGameState(json);
+      layout = JSON.parse(gameState.layout_json());
     },
-    asteroids: {
-      positions: new Float32Array(
-        memory.buffer,
-        layout.asteroids.positions.offset_bytes,
-        layout.asteroids.positions.length,
-      ),
-      oreRemaining: new Float32Array(
-        memory.buffer,
-        layout.asteroids.ore_remaining.offset_bytes,
-        layout.asteroids.ore_remaining.length,
-      ),
+
+    step(dt: number) {
+      if (!gameState) throw new Error('Game state not initialized');
+      return gameState.step(dt);
     },
-    factories: {
-      positions: new Float32Array(
-        memory.buffer,
-        layout.factories.positions.offset_bytes,
-        layout.factories.positions.length,
-      ),
-      orientations: new Float32Array(
-        memory.buffer,
-        layout.factories.orientations.offset_bytes,
-        layout.factories.orientations.length,
-      ),
-      activity: new Float32Array(
-        memory.buffer,
-        layout.factories.activity.offset_bytes,
-        layout.factories.activity.length,
-      ),
+
+    getLayout() {
+      return layout;
+    },
+
+    getDronePositions() {
+      return getViewF32(layout.drones.positions);
+    },
+
+    getDroneVelocities() {
+      return getViewF32(layout.drones.velocities);
+    },
+
+    getDroneStates() {
+      return getViewU32(layout.drones.states);
+    },
+
+    getAsteroidPositions() {
+      return getViewF32(layout.asteroids.positions);
+    },
+
+    getAsteroidOre() {
+      return getViewF32(layout.asteroids.ore_remaining);
+    },
+
+    getFactoryPositions() {
+      return getViewF32(layout.factories.positions);
+    },
+
+    getFactoryOrientations() {
+      return getViewF32(layout.factories.orientations);
+    },
+
+    getFactoryActivity() {
+      return getViewU32(layout.factories.activity);
     },
   };
-};
-
-export const buildRustSimBridge = (exports: RustSimExports): RustSimBridge => {
-  const layout = resolveLayout(exports);
-  const memory = requireMemory(exports);
-  const views = createViews(layout, memory);
-  const loadSnapshot = selectLoader(exports);
-  const step = selectStep(exports);
-  const exportSnapshot = selectExporter(exports);
-  const applyCommand = selectCommander(exports);
-
-  return {
-    layout,
-    memory,
-    views,
-    step: (dt: number) => step(dt),
-    loadSnapshot: (snapshotJson: string) => loadSnapshot(snapshotJson),
-    exportSnapshot: () => exportSnapshot(),
-    applyCommand: (commandJson: string) => applyCommand(commandJson),
-  };
-};
+}

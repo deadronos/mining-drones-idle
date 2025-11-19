@@ -2,6 +2,7 @@
 
 ## Summary
 
+- 2025-11-19: **TASK040 – Rust simulation scaffolding** – Completed `/rust-engine` crate scaffolding with data buffer, RNG parity, and layout planning. Implemented `wasmSimBridge.ts` to expose WASM exports and typed-array views to TypeScript. Verified `wasm-pack` build pipeline and added `useRustSim` feature flag.
 - 2025-11-18: **TASK040 – Rust simulation bootstrap** – Captured RQ-067–RQ-070, drafted DES033 architecture, and began scaffolding `/rust-engine` crate plus TS bridge contracts for snapshot, RNG, and typed-array layout parity.
 - 2025-10-30: **TASK038 – Metrics recency cues** – Metrics banner now reports the last sampling time using game-time deltas, reinforcing when charts were last refreshed.
 - 2025-10-30: **TASK038 – Metrics accessibility polish** – Added descriptive sparkline titles/ARIA links, inline summary tooltips, and new FactoryMetricsInline Vitest coverage ensuring accessible wiring.
