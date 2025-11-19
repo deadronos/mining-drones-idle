@@ -109,3 +109,5 @@ Prettier (with the Tailwind plugin) enforces formatting via `npm run format`.
 ## Documentation
 
 For a comprehensive overview of the game's architecture and how all systems work together, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+For local Rust/WASM development and live-rebuild instructions, see [docs/rust-wasm-dev.md](docs/rust-wasm-dev.md).
