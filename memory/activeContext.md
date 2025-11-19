@@ -2,6 +2,12 @@
 
 ## Current Work
 
+- 🚧 **TASK041 – Rust Simulation Systems & Logic Port** underway.
+  - Expanded `GameState` with factory components (resources, energy, upgrades, refinery state).
+  - Implemented `sys_refinery` in Rust with unit tests and verified parity.
+  - Fixed memory alignment issues by switching `GameState.data` to `Vec<u32>`.
+  - **Next**: Implement Movement, Mining, and Energy systems in Rust.
+
 - 🚧 **TASK040 – Rust Simulation Core** underway.
   - Recorded RQ-067–RQ-070 and DES033 to govern Rust/WASM migration and typed-array contracts.
   - Scaffolding `/rust-engine` crate completed with RNG parity tests, snapshot import/export, layout planner, and data buffer.

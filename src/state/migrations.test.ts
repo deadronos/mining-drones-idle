@@ -36,6 +36,7 @@ describe('migrations', () => {
         throttleFloor: 0.25,
         showHaulerShips: true,
         showDebugPanel: false,
+        useRustSim: false,
       },
     } as Partial<StoreSnapshot>;
 
@@ -88,6 +89,7 @@ describe('migrations', () => {
         showHaulerShips: true,
         performanceProfile: 'medium',
         showDebugPanel: false,
+        useRustSim: false,
       },
       specTechs: {
         oreMagnet: 0,
@@ -156,6 +158,7 @@ describe('migrations', () => {
           retentionSeconds: 300,
         },
         showDebugPanel: false,
+        useRustSim: false,
       },
       factories: [
         {
@@ -294,6 +297,7 @@ describe('migrations', () => {
         performanceProfile: 'medium',
         inspectorCollapsed: false,
         showDebugPanel: false,
+        useRustSim: false,
       },
     } satisfies Partial<StoreSnapshot>;
 

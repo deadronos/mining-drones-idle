@@ -1,8 +1,8 @@
 # [TASK041] - Rust Simulation Systems & Logic Port
 
-**Status:** Pending
+**Status:** Completed
 **Added:** 2025-11-19
-**Updated:** 2025-11-19
+**Updated:** 2025-11-20
 **Design:** [DES034](../designs/DES034-rust-simulation-systems.md)
 
 ## Original Request
@@ -49,21 +49,39 @@ We must ensure that the Rust implementation produces the exact same results as t
 
 ## Progress Tracking
 
-**Overall Status:** Not Started - 0%
+**Overall Status:** Completed - 100%
 
 ### Subtasks
 
-| ID  | Description                   | Status      | Updated | Notes |
-| --- | ----------------------------- | ----------- | ------- | ----- |
-| 1.1 | Expand GameState struct (SoA) | Not Started |         |       |
-| 1.2 | Implement sys_refinery        | Not Started |         |       |
-| 1.3 | Implement sys_movement        | Not Started |         |       |
-| 1.4 | Implement sys_mining          | Not Started |         |       |
-| 1.5 | Implement sys_energy          | Not Started |         |       |
-| 1.6 | Update WASM Bridge contracts  | Not Started |         |       |
+| ID  | Description                   | Status    | Updated    | Notes                                                                   |
+| --- | ----------------------------- | --------- | ---------- | ----------------------------------------------------------------------- |
+| 1.1 | Expand GameState struct (SoA) | Completed | 2025-11-19 | Added factory components, updated layout, fixed alignment (`Vec<u32>`). |
+| 1.2 | Implement sys_refinery        | Completed | 2025-11-19 | Ported logic, added unit tests, verified pass.                          |
+| 1.3 | Implement sys_movement        | Completed | 2025-11-19 | Implemented with Bezier curves, energy drain, arrival logic.            |
+| 1.4 | Implement sys_mining          | Completed | 2025-11-19 | Implemented mining logic, added `target_index` to SoA.                  |
+| 1.5 | Implement sys_energy          | Completed | 2025-11-19 | Implemented as `sys_power` (generation, charging).                      |
+| 1.6 | Update WASM Bridge contracts  | Completed | 2025-11-20 | Updated `wasmSimBridge.ts` with new buffers and getters.                |
 
 ## Progress Log
+
+### 2025-11-20
+
+- Updated `wasmSimBridge.ts` to expose new SoA buffers (cargo, battery, target_index, factory resources/energy/upgrades/refinery).
+- Fixed type errors in `migrations.test.ts` and `Settings.test.tsx` related to `useRustSim` setting.
+- Verified TypeScript compilation with `npm run typecheck`.
+- Marked task as completed.
 
 ### 2025-11-19
 
 - Task created based on DES034.
+- Expanded `buffers.rs` with factory components (resources, energy, upgrades, refinery state).
+- Created `constants.rs` with game constants.
+- Implemented `sys_refinery` in Rust with unit tests.
+- Updated `api.rs` to use `Vec<u32>` for data storage to ensure 4-byte alignment for f32 slices.
+- Verified `sys_refinery` and alignment fix with `cargo test`.
+- Implemented `sys_movement` with energy consumption and state transitions.
+- Implemented `sys_power` for global energy generation and drone charging.
+- Implemented `sys_mining` for resource gathering.
+- Updated `buffers.rs` to include `target_index` for drones to support mining target tracking.
+- Integrated all systems into `api.rs` `step` function.
+- Verified all systems with `cargo test`.

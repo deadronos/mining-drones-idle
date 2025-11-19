@@ -1,4 +1,4 @@
-import { StoreSnapshot } from '../state/types';
+import type { StoreSnapshot } from '../state/types';
 
 export interface BufferSection {
   offset_bytes: number;
@@ -9,17 +9,26 @@ export interface DroneBuffers {
   positions: BufferSection;
   velocities: BufferSection;
   states: BufferSection;
+  cargo: BufferSection;
+  battery: BufferSection;
+  target_index: BufferSection;
 }
 
 export interface AsteroidBuffers {
   positions: BufferSection;
   ore_remaining: BufferSection;
+  max_ore: BufferSection;
 }
 
 export interface FactoryBuffers {
   positions: BufferSection;
   orientations: BufferSection;
   activity: BufferSection;
+  resources: BufferSection;
+  energy: BufferSection;
+  max_energy: BufferSection;
+  upgrades: BufferSection;
+  refinery_state: BufferSection;
 }
 
 export interface RustSimLayout {
@@ -32,9 +41,7 @@ export interface RustSimLayout {
 // Interface for the wasm-bindgen generated module exports
 export interface WasmSimExports {
   memory: WebAssembly.Memory;
-  WasmGameState: {
-    new (snapshot_json: string): WasmGameState;
-  };
+  WasmGameState: new (snapshot_json: string) => WasmGameState;
 }
 
 export interface WasmGameState {
@@ -54,11 +61,20 @@ export interface RustSimBridge {
   getDronePositions(): Float32Array;
   getDroneVelocities(): Float32Array;
   getDroneStates(): Uint32Array;
+  getDroneCargo(): Float32Array;
+  getDroneBattery(): Float32Array;
+  getDroneTargetIndex(): Float32Array;
   getAsteroidPositions(): Float32Array;
   getAsteroidOre(): Float32Array;
+  getAsteroidMaxOre(): Float32Array;
   getFactoryPositions(): Float32Array;
   getFactoryOrientations(): Float32Array;
   getFactoryActivity(): Uint32Array;
+  getFactoryResources(): Float32Array;
+  getFactoryEnergy(): Float32Array;
+  getFactoryMaxEnergy(): Float32Array;
+  getFactoryUpgrades(): Float32Array;
+  getFactoryRefineryState(): Float32Array;
 }
 
 export function buildRustSimBridge(
@@ -122,12 +138,28 @@ export function buildRustSimBridge(
       return getViewU32(layout.drones.states);
     },
 
+    getDroneCargo() {
+      return getViewF32(layout.drones.cargo);
+    },
+
+    getDroneBattery() {
+      return getViewF32(layout.drones.battery);
+    },
+
+    getDroneTargetIndex() {
+      return getViewF32(layout.drones.target_index);
+    },
+
     getAsteroidPositions() {
       return getViewF32(layout.asteroids.positions);
     },
 
     getAsteroidOre() {
       return getViewF32(layout.asteroids.ore_remaining);
+    },
+
+    getAsteroidMaxOre() {
+      return getViewF32(layout.asteroids.max_ore);
     },
 
     getFactoryPositions() {
@@ -140,6 +172,26 @@ export function buildRustSimBridge(
 
     getFactoryActivity() {
       return getViewU32(layout.factories.activity);
+    },
+
+    getFactoryResources() {
+      return getViewF32(layout.factories.resources);
+    },
+
+    getFactoryEnergy() {
+      return getViewF32(layout.factories.energy);
+    },
+
+    getFactoryMaxEnergy() {
+      return getViewF32(layout.factories.max_energy);
+    },
+
+    getFactoryUpgrades() {
+      return getViewF32(layout.factories.upgrades);
+    },
+
+    getFactoryRefineryState() {
+      return getViewF32(layout.factories.refinery_state);
     },
   };
 }

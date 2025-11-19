@@ -56,6 +56,7 @@ describe('ui/Settings', () => {
         },
         performanceProfile: 'medium',
         inspectorCollapsed: false,
+        useRustSim: false,
       },
       save: { ...state.save, lastSave: 1_700_000_000_000 },
     }));

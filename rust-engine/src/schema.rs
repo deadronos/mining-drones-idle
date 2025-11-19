@@ -96,7 +96,7 @@ pub struct LogisticsQueues {
     pub pending_transfers: Vec<serde_json::Value>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub struct Resources {
     pub ore: f32,
     pub ice: f32,
@@ -108,7 +108,7 @@ pub struct Resources {
     pub credits: f32,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub struct Modules {
     #[serde(rename = "droneBay")]
     pub drone_bay: i32,

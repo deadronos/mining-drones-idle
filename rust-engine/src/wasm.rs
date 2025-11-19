@@ -46,6 +46,6 @@ impl WasmGameState {
     }
 
     pub fn data_ptr(&self) -> *const u8 {
-        self.inner.data.as_ptr()
+        self.inner.data.as_ptr() as *const u8
     }
 }
