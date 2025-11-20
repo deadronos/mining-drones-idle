@@ -70,6 +70,8 @@ We will start by ensuring the WASM module can be loaded. Then we'll build the si
   - Updated tests in `migrations.test.ts` and `Settings.test.tsx` to include `shadowMode`.
   - Added `src/gen` to `eslint.config.js` ignores.
   - Fixed unsafe `any` assignment in `wasmSimBridge.ts`.
-  - **Fixed Runtime Error**: `pathSeed` generation in `targetAssignment.ts` was producing values > `i32::MAX`, causing WASM deserialization failure. Clamped to `0x7fffffff`.
-  - Fixed `generateSeed` in `utils.ts` to ensure positive 32-bit integers.
-- **Status**: Implementation verified. Runtime error fixed. Ready for re-testing.
+  - **Fixed Runtime Error #1**: `pathSeed` generation in `targetAssignment.ts` was producing values > `i32::MAX`, causing WASM deserialization failure. Clamped to `0x7fffffff`.
+  - **Fixed Runtime Error #2**: `generateSeed` in `utils.ts` was producing values > `i32::MAX` for `rngSeed`. Updated to mask with `0x7fffffff` to ensure all seeds fit in positive `i32` range.
+  - Fixed `wasm-pack` dependency and moved to `devDependencies`.
+  - Made `GameState.layout` and `GameState.data` public in Rust for WASM access.
+- **Status**: Implementation verified. Runtime errors fixed. Build successful. Ready for runtime testing.

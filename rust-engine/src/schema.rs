@@ -28,7 +28,7 @@ pub struct DroneFlight {
     #[serde(rename = "targetFactoryId")]
     pub target_factory_id: Option<String>,
     #[serde(rename = "pathSeed")]
-    pub path_seed: i32,
+    pub path_seed: u32,
     pub travel: TravelSnapshot,
 }
 
@@ -233,5 +233,27 @@ impl SimulationSnapshot {
             return Err(SimulationError::MissingField("settings.metrics"));
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn deserializes_large_path_seed() {
+        let json = r#"{
+            "droneId": "d1",
+            "state": "idle",
+            "pathSeed": 3132762181,
+            "travel": {
+                "from": [0.0, 0.0, 0.0],
+                "to": [0.0, 0.0, 0.0],
+                "elapsed": 0.0,
+                "duration": 0.0
+            }
+        }"#;
+        let flight: DroneFlight = serde_json::from_str(json).expect("should deserialize");
+        assert_eq!(flight.path_seed, 3132762181);
     }
 }
