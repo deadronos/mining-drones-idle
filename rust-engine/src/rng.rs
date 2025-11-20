@@ -12,7 +12,7 @@ impl Mulberry32 {
         }
     }
 
-    fn next_u32(&mut self) -> u32 {
+    pub fn next_u32(&mut self) -> u32 {
         self.state = self.state.wrapping_add(0x6d2b_79f5_u32 as i32);
         let mut t = (self.state ^ ((self.state as u32) >> 15) as i32).wrapping_mul(self.state | 1);
         t ^= t.wrapping_add((t ^ ((t as u32) >> 7) as i32).wrapping_mul(t | 61));

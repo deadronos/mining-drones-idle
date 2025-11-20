@@ -236,6 +236,17 @@ try {
 
 export const gameWorld = createGameWorld({ rng: createRng(initialSeed) });
 
+export const resetWorld = (seed: number) => {
+  gameWorld.rng = createRng(seed);
+  const entities = [...gameWorld.world.entities];
+  for (const e of entities) {
+    gameWorld.world.remove(e);
+  }
+  gameWorld.factory = gameWorld.world.add(createFactory());
+  gameWorld.warehouse = createWarehouse();
+  gameWorld.events.transfers = [];
+};
+
 export const spawnDrone = (world: GameWorld) =>
   world.world.add(createDrone(world.factory.position));
 

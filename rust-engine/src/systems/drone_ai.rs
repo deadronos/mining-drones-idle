@@ -1,0 +1,156 @@
+use crate::constants::{
+    DRONE_MAX_CARGO, DRONE_STATE_IDLE, DRONE_STATE_MINING, DRONE_STATE_RETURNING,
+    DRONE_STATE_TO_ASTEROID,
+};
+use crate::rng::Mulberry32;
+use crate::schema::{DroneFlight, TravelSnapshot};
+use std::collections::BTreeMap;
+
+pub fn sys_drone_ai(
+    drone_flights: &mut Vec<DroneFlight>,
+    drone_states: &mut [f32],
+    drone_cargo: &[f32],
+    drone_positions: &[f32],
+    drone_id_to_index: &BTreeMap<String, usize>,
+    factory_id_to_index: &BTreeMap<String, usize>,
+    asteroid_id_to_index: &BTreeMap<String, usize>,
+    factory_positions: &[f32],
+    asteroid_positions: &[f32],
+    asteroid_ore: &[f32],
+    rng: &mut Mulberry32,
+) {
+    // We need to iterate over all drones to check their state and make decisions.
+    // However, we only have SoA data and a map.
+    // We can iterate the map to get IDs and indices.
+
+    // We also need to know which drones already have active flights.
+    // We can build a set of active drone IDs.
+    let mut active_drones = std::collections::HashSet::new();
+    for flight in drone_flights.iter() {
+        active_drones.insert(flight.drone_id.clone());
+    }
+
+    // Collect new flights to add
+    let mut new_flights = Vec::new();
+
+    for (drone_id, &drone_idx) in drone_id_to_index.iter() {
+        if active_drones.contains(drone_id) {
+            continue;
+        }
+
+        let state = drone_states[drone_idx];
+        let position = [
+            drone_positions[drone_idx * 3],
+            drone_positions[drone_idx * 3 + 1],
+            drone_positions[drone_idx * 3 + 2],
+        ];
+
+        if state == DRONE_STATE_IDLE {
+            // Find target asteroid
+            // Simple logic: pick random asteroid with ore > 0
+            // TODO: Spatial query or smarter selection
+            let asteroid_count = asteroid_positions.len() / 3;
+            if asteroid_count > 0 {
+                // Try 5 times to find valid asteroid
+                for _ in 0..5 {
+                    let idx = (rng.next_u32() as usize) % asteroid_count;
+                    if asteroid_ore[idx] > 0.0 {
+                        // Found one
+                        // Find ID
+                        let target_id = asteroid_id_to_index
+                            .iter()
+                            .find(|&(_, &v)| v == idx)
+                            .map(|(k, _)| k.clone());
+
+                        if let Some(target_id) = target_id {
+                            let target_pos = [
+                                asteroid_positions[idx * 3],
+                                asteroid_positions[idx * 3 + 1],
+                                asteroid_positions[idx * 3 + 2],
+                            ];
+
+                            // Create flight
+                            let dist = distance(position, target_pos);
+                            let speed = 10.0; // TODO: Get from modules/upgrades
+                            let duration = dist / speed;
+
+                            new_flights.push(DroneFlight {
+                                drone_id: drone_id.clone(),
+                                state: "toAsteroid".to_string(),
+                                target_asteroid_id: Some(target_id),
+                                target_region_id: None,
+                                target_factory_id: None,
+                                path_seed: rng.next_u32(),
+                                travel: TravelSnapshot {
+                                    from: position,
+                                    to: target_pos,
+                                    elapsed: 0.0,
+                                    duration,
+                                    control: None, // TODO: Bezier
+                                },
+                            });
+
+                            // Update state immediately to prevent double assignment
+                            drone_states[drone_idx] = DRONE_STATE_TO_ASTEROID;
+                            break;
+                        }
+                    }
+                }
+            }
+        } else if state == DRONE_STATE_MINING {
+            let cargo = drone_cargo[drone_idx];
+            if cargo >= DRONE_MAX_CARGO {
+                // Full, return to factory
+                // Find nearest factory
+                // For now, just pick first factory
+                if !factory_positions.is_empty() {
+                    let factory_idx = 0; // TODO: Find nearest
+                    let target_pos = [
+                        factory_positions[factory_idx * 3],
+                        factory_positions[factory_idx * 3 + 1],
+                        factory_positions[factory_idx * 3 + 2],
+                    ];
+
+                    // Find ID
+                    let target_id = factory_id_to_index
+                        .iter()
+                        .find(|&(_, &v)| v == factory_idx)
+                        .map(|(k, _)| k.clone());
+
+                    if let Some(target_id) = target_id {
+                        let dist = distance(position, target_pos);
+                        let speed = 10.0; // TODO: Get from modules/upgrades
+                        let duration = dist / speed;
+
+                        new_flights.push(DroneFlight {
+                            drone_id: drone_id.clone(),
+                            state: "returning".to_string(),
+                            target_asteroid_id: None,
+                            target_region_id: None,
+                            target_factory_id: Some(target_id),
+                            path_seed: rng.next_u32(),
+                            travel: TravelSnapshot {
+                                from: position,
+                                to: target_pos,
+                                elapsed: 0.0,
+                                duration,
+                                control: None,
+                            },
+                        });
+
+                        drone_states[drone_idx] = DRONE_STATE_RETURNING;
+                    }
+                }
+            }
+        }
+    }
+
+    drone_flights.extend(new_flights);
+}
+
+fn distance(a: [f32; 3], b: [f32; 3]) -> f32 {
+    let dx = a[0] - b[0];
+    let dy = a[1] - b[1];
+    let dz = a[2] - b[2];
+    (dx * dx + dy * dy + dz * dz).sqrt()
+}

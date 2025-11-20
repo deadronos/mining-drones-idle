@@ -1,9 +1,9 @@
 import { useFrame, useThree } from '@react-three/fiber';
-import { Suspense, useMemo } from 'react';
+import { Suspense, useMemo, useState, useEffect } from 'react';
 import { Stars } from '@react-three/drei';
 import { Vector3 } from 'three';
 import type { PerspectiveCamera } from 'three';
-import { gameWorld } from '@/ecs/world';
+import { gameWorld, resetWorld } from '@/ecs/world';
 import { storeApi, useStore } from '@/state/store';
 import { createTimeSystem } from '@/ecs/systems/time';
 import { createFleetSystem } from '@/ecs/systems/fleet';
@@ -37,7 +37,9 @@ const PARITY_CHECK_INTERVAL = 60; // Check every 60 frames
 type SystemRunner = (dt: number) => void;
 
 export const Scene = () => {
-  const { bridge, isLoaded } = useRustEngine();
+  const rngSeed = useStore((state) => state.rngSeed);
+  const [ready, setReady] = useState(false);
+  const { bridge, isLoaded } = useRustEngine(ready);
   const time = useMemo(() => createTimeSystem(0.1), []);
   const showTrails = useStore((state) => state.settings.showTrails);
   const showHaulerShips = useStore((state) => state.settings.showHaulerShips);
@@ -93,6 +95,18 @@ export const Scene = () => {
     } satisfies Record<string, SystemRunner>;
   }, []);
 
+  // Handle reset and initial population
+  useEffect(() => {
+    // Reset world with new seed
+    resetWorld(rngSeed);
+
+    // Force populate systems
+    systems.asteroids(0);
+    systems.fleet(0);
+
+    setReady(true);
+  }, [rngSeed, systems]);
+
   useFrame((_state, delta) => {
     const clamped = Math.min(delta, 0.25);
     time.update(clamped, (step) => {
@@ -133,7 +147,12 @@ export const Scene = () => {
       if (shadowMode && isLoaded && bridge) {
         frameCount.current++;
         if (frameCount.current % PARITY_CHECK_INTERVAL === 0) {
-          const report = checkParity(storeApi.getState(), bridge, frameCount.current);
+          const report = checkParity(
+            storeApi.getState(),
+            bridge,
+            frameCount.current,
+            gameWorld.droneQuery.size,
+          );
           if (report) {
             console.warn(`[Parity Check] Frame ${report.frame} Divergences:`, report.divergences);
           }
@@ -159,7 +178,7 @@ export const Scene = () => {
         <Warehouse />
         <Factory />
         <Asteroids />
-        {useRustSim ? <RustDrones /> : <Drones />}
+        {useRustSim ? <RustDrones bridge={bridge} /> : <Drones />}
         {showTrails ? <DroneTrails /> : null}
         {showHaulerShips ? <HaulerShips /> : <TransferLines />}
       </Suspense>

@@ -2,8 +2,8 @@ import { useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
 import type { InstancedMesh } from 'three';
 import { Matrix4, Quaternion, Vector3, Color } from 'three';
-import { useRustEngine } from '@/hooks/useRustEngine';
 import { colorForState } from '@/r3f/droneColors';
+import type { RustSimBridge } from '@/lib/wasmSimBridge';
 
 const DRONE_LIMIT = 5000;
 const baseMatrix = new Matrix4();
@@ -24,13 +24,16 @@ const STATE_MAP: Record<number, string> = {
   4: 'unloading',
 };
 
-export const RustDrones = () => {
+interface RustDronesProps {
+  bridge: RustSimBridge | null;
+}
+
+export const RustDrones = ({ bridge }: RustDronesProps) => {
   const ref = useRef<InstancedMesh>(null);
-  const { bridge, isLoaded } = useRustEngine();
 
   useFrame(() => {
     const mesh = ref.current;
-    if (!mesh || !isLoaded || !bridge) return;
+    if (!mesh || !bridge) return;
 
     const positions = bridge.getDronePositions();
     const velocities = bridge.getDroneVelocities();

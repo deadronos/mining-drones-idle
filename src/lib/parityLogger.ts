@@ -11,7 +11,8 @@ interface ParityReport {
 export function checkParity(
   tsState: StoreState,
   rustBridge: RustSimBridge,
-  frame: number
+  frame: number,
+  tsDroneCount: number
 ): ParityReport | null {
   const divergences: string[] = [];
 
@@ -19,8 +20,10 @@ export function checkParity(
   const rustDronePositions = rustBridge.getDronePositions();
 
   // Check count
-  if (tsDrones.length * 3 !== rustDronePositions.length) {
-    divergences.push(`Drone count mismatch: TS=${tsDrones.length}, Rust=${rustDronePositions.length / 3}`);
+  if (tsDroneCount !== rustDronePositions.length / 3) {
+    divergences.push(
+      `Drone count mismatch: TS=${tsDroneCount}, Rust=${rustDronePositions.length / 3}`,
+    );
   }
 
   const tsFactories = tsState.factories;

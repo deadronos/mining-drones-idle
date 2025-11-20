@@ -44,7 +44,7 @@ impl GameState {
         snapshot.ensure_required()?;
         let rng_seed = snapshot.rng_seed.unwrap_or(1);
 
-        let drone_count = snapshot.drone_owners.len();
+        let drone_count = snapshot.drone_flights.len();
         let factory_count = snapshot.factories.len();
 
         let layout = plan_layout(
@@ -58,8 +58,8 @@ impl GameState {
         let data = vec![0; size_u32];
 
         let mut drone_id_to_index = BTreeMap::new();
-        for (i, (id, _)) in snapshot.drone_owners.iter().enumerate() {
-            drone_id_to_index.insert(id.clone(), i);
+        for (i, flight) in snapshot.drone_flights.iter().enumerate() {
+            drone_id_to_index.insert(flight.drone_id.clone(), i);
         }
 
         let mut factory_id_to_index = BTreeMap::new();
@@ -76,7 +76,7 @@ impl GameState {
             }
         }
 
-        Ok(Self {
+        let mut state = Self {
             snapshot,
             rng: Mulberry32::new(rng_seed),
             layout,
@@ -85,7 +85,10 @@ impl GameState {
             drone_id_to_index,
             factory_id_to_index,
             asteroid_id_to_index,
-        })
+        };
+
+        state.initialize_data_from_snapshot();
+        Ok(state)
     }
 
     pub fn load_snapshot_str(&mut self, payload: &str) -> Result<(), SimulationError> {
@@ -93,7 +96,7 @@ impl GameState {
             serde_json::from_str(payload).map_err(SimulationError::parse)?;
         snapshot.ensure_required()?;
 
-        let drone_count = snapshot.drone_owners.len();
+        let drone_count = snapshot.drone_flights.len();
         let factory_count = snapshot.factories.len();
 
         self.layout = plan_layout(
@@ -106,8 +109,8 @@ impl GameState {
         self.rng = Mulberry32::new(snapshot.rng_seed.unwrap_or(1));
 
         self.drone_id_to_index.clear();
-        for (i, (id, _)) in snapshot.drone_owners.iter().enumerate() {
-            self.drone_id_to_index.insert(id.clone(), i);
+        for (i, flight) in snapshot.drone_flights.iter().enumerate() {
+            self.drone_id_to_index.insert(flight.drone_id.clone(), i);
         }
 
         self.factory_id_to_index.clear();
@@ -126,7 +129,109 @@ impl GameState {
 
         self.snapshot = snapshot;
         self.game_time = 0.0;
+        self.initialize_data_from_snapshot();
         Ok(())
+    }
+
+    fn initialize_data_from_snapshot(&mut self) {
+        // Initialize factories
+        let factories = &self.snapshot.factories;
+        let factory_map = &self.factory_id_to_index;
+        let layout = &self.layout;
+        let data = &mut self.data;
+
+        for factory in factories {
+            if let Some(&index) = factory_map.get(&factory.id) {
+                let offset = layout.factories.positions.offset_bytes / 4 + index * 3;
+                data[offset] = factory.position[0].to_bits();
+                data[offset + 1] = factory.position[1].to_bits();
+                data[offset + 2] = factory.position[2].to_bits();
+
+                let offset = layout.factories.resources.offset_bytes / 4 + index * 7;
+                data[offset] = factory.resources.ore.to_bits();
+                data[offset + 1] = factory.resources.ice.to_bits();
+                data[offset + 2] = factory.resources.metals.to_bits();
+                data[offset + 3] = factory.resources.crystals.to_bits();
+                data[offset + 4] = factory.resources.organics.to_bits();
+                data[offset + 5] = factory.resources.bars.to_bits();
+                data[offset + 6] = factory.resources.credits.to_bits();
+
+                let offset = layout.factories.energy.offset_bytes / 4 + index;
+                data[offset] = factory.energy.to_bits();
+
+                let offset = layout.factories.max_energy.offset_bytes / 4 + index;
+                data[offset] = factory.energy_capacity.to_bits();
+
+                let offset = layout.factories.upgrades.offset_bytes / 4 + index * 5;
+                data[offset] = (factory.upgrades.docking as f32).to_bits();
+                data[offset + 1] = (factory.upgrades.refine as f32).to_bits();
+                data[offset + 2] = (factory.upgrades.storage as f32).to_bits();
+                data[offset + 3] = (factory.upgrades.energy as f32).to_bits();
+                data[offset + 4] = (factory.upgrades.solar as f32).to_bits();
+            }
+        }
+
+        // Initialize drones
+        let flights = &self.snapshot.drone_flights;
+        let drone_map = &self.drone_id_to_index;
+        let asteroid_map = &self.asteroid_id_to_index;
+
+        for flight in flights {
+            if let Some(&index) = drone_map.get(&flight.drone_id) {
+                let offset = layout.drones.positions.offset_bytes / 4 + index * 3;
+                data[offset] = flight.travel.from[0].to_bits();
+                data[offset + 1] = flight.travel.from[1].to_bits();
+                data[offset + 2] = flight.travel.from[2].to_bits();
+
+                let offset = layout.drones.states.offset_bytes / 4 + index;
+                let state_val: f32 = match flight.state.as_str() {
+                    "idle" => 0.0,
+                    "toAsteroid" => 1.0,
+                    "mining" => 2.0,
+                    "returning" => 3.0,
+                    "unloading" => 4.0,
+                    _ => 0.0,
+                };
+                data[offset] = state_val.to_bits();
+
+                let offset = layout.drones.target_index.offset_bytes / 4 + index;
+                let mut target_idx = -1.0;
+                if let Some(target_id) = &flight.target_asteroid_id {
+                     if let Some(&idx) = asteroid_map.get(target_id) {
+                         target_idx = idx as f32;
+                     }
+                }
+                data[offset] = target_idx.to_bits();
+            }
+        }
+
+        // Initialize asteroids
+        if let Some(asteroids) = self.snapshot.extra.get("asteroids").and_then(|v| v.as_array()) {
+            for asteroid in asteroids {
+                if let Some(id) = asteroid.get("id").and_then(|v| v.as_str()) {
+                    if let Some(&index) = asteroid_map.get(id) {
+                        if let Some(pos) = asteroid.get("position").and_then(|v| v.as_array()) {
+                            if pos.len() >= 3 {
+                                let offset = layout.asteroids.positions.offset_bytes / 4 + index * 3;
+                                data[offset] = (pos[0].as_f64().unwrap_or(0.0) as f32).to_bits();
+                                data[offset + 1] = (pos[1].as_f64().unwrap_or(0.0) as f32).to_bits();
+                                data[offset + 2] = (pos[2].as_f64().unwrap_or(0.0) as f32).to_bits();
+                            }
+                        }
+
+                        if let Some(ore) = asteroid.get("oreRemaining").and_then(|v| v.as_f64()) {
+                            let offset = layout.asteroids.ore_remaining.offset_bytes / 4 + index;
+                            data[offset] = (ore as f32).to_bits();
+                        }
+
+                        if let Some(max_ore) = asteroid.get("maxOre").and_then(|v| v.as_f64()) {
+                            let offset = layout.asteroids.max_ore.offset_bytes / 4 + index;
+                            data[offset] = (max_ore as f32).to_bits();
+                        }
+                    }
+                }
+            }
+        }
     }
 
     pub fn export_snapshot_str(&self) -> Result<String, SimulationError> {
@@ -228,6 +333,44 @@ impl GameState {
                 dt,
                 1.0, // mining_multiplier
             );
+
+            // Unload System
+            let drone_states = get_slice_mut(&self.layout.drones.states);
+            let drone_cargo = get_slice_mut(&self.layout.drones.cargo);
+            let factory_resources = get_slice_mut(&self.layout.factories.resources);
+
+            crate::systems::unload::sys_unload(
+                drone_states,
+                drone_cargo,
+                &self.snapshot.drone_owners,
+                &self.drone_id_to_index,
+                &self.factory_id_to_index,
+                factory_resources,
+                &mut self.snapshot.resources,
+                dt,
+            );
+
+            // Drone AI System
+            let drone_states = get_slice_mut(&self.layout.drones.states);
+            let drone_cargo = get_slice_mut(&self.layout.drones.cargo);
+            let drone_positions = get_slice_mut(&self.layout.drones.positions);
+            let factory_positions = get_slice_mut(&self.layout.factories.positions);
+            let asteroid_positions = get_slice_mut(&self.layout.asteroids.positions);
+            let asteroid_ore = get_slice_mut(&self.layout.asteroids.ore_remaining);
+
+            crate::systems::drone_ai::sys_drone_ai(
+                &mut self.snapshot.drone_flights,
+                drone_states,
+                drone_cargo,
+                drone_positions,
+                &self.drone_id_to_index,
+                &self.factory_id_to_index,
+                &self.asteroid_id_to_index,
+                factory_positions,
+                asteroid_positions,
+                asteroid_ore,
+                &mut self.rng,
+            );
         }
 
         TickResult {
@@ -298,6 +441,13 @@ impl GameState {
     pub fn get_asteroid_max_ore_mut(&mut self) -> &mut [f32] {
         let offset = self.layout.asteroids.max_ore.offset_bytes / 4;
         let length = self.layout.asteroids.max_ore.length;
+        let slice = &mut self.data[offset..offset + length];
+        unsafe { std::slice::from_raw_parts_mut(slice.as_mut_ptr() as *mut f32, length) }
+    }
+
+    pub fn get_asteroid_ore_remaining_mut(&mut self) -> &mut [f32] {
+        let offset = self.layout.asteroids.ore_remaining.offset_bytes / 4;
+        let length = self.layout.asteroids.ore_remaining.length;
         let slice = &mut self.data[offset..offset + length];
         unsafe { std::slice::from_raw_parts_mut(slice.as_mut_ptr() as *mut f32, length) }
     }
