@@ -2,7 +2,17 @@
 
 ## Summary
 
-- 2025-11-20: **TASK041 – Rust simulation systems** – Completed the port of core ECS systems to Rust. Updated `wasmSimBridge.ts` to expose all new SoA buffers (drone cargo/battery/target, factory resources/energy/upgrades). Verified TypeScript integration with `npm run typecheck`.
+## Recent Achievements
+
+- **2025-11-20**: Started TASK042 (Rust Integration).
+  - Configured Vite for WASM support.
+  - Implemented `useRustEngine` hook to load and initialize the Rust simulation.
+  - Integrated the Rust simulation step into the main game loop in `Scene.tsx`.
+  - Added a toggle for "Use Rust Simulation" in the Settings panel.
+- **2025-11-20**: Completed TASK041 (Rust Systems Port).
+  - Ported Movement, Mining, Power, and Refinery systems to Rust.
+  - Verified parity with unit tests.
+
 - 2025-11-19: **TASK041 – Rust simulation systems** – Implemented core ECS systems in Rust: `sys_movement` (Bezier curves, energy drain, arrival logic), `sys_mining` (resource gathering, target tracking), and `sys_power` (global generation, factory regen, drone charging). Updated `GameState` SoA layout to include `target_index` for drones. Verified all systems with unit tests.
 - 2025-11-19: **TASK041 – Rust simulation systems** – Expanded `GameState` with factory components (resources, energy, upgrades, refinery state). Implemented `sys_refinery` in Rust with unit tests and verified parity. Fixed memory alignment issues by switching `GameState.data` to `Vec<u32>`.
 - 2025-11-19: **TASK040 – Rust simulation scaffolding** – Completed `/rust-engine` crate scaffolding with data buffer, RNG parity, and layout planning. Implemented `wasmSimBridge.ts` to expose WASM exports and typed-array views to TypeScript. Verified `wasm-pack` build pipeline and added `useRustSim` feature flag.

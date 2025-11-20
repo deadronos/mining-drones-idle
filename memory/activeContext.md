@@ -2,18 +2,20 @@
 
 ## Current Work
 
-- 🚧 **TASK041 – Rust Simulation Systems & Logic Port** underway.
-  - Expanded `GameState` with factory components (resources, energy, upgrades, refinery state).
-  - Implemented `sys_refinery` in Rust with unit tests and verified parity.
-  - Fixed memory alignment issues by switching `GameState.data` to `Vec<u32>`.
-  - **Next**: Implement Movement, Mining, and Energy systems in Rust.
+## Active Tasks
 
-- 🚧 **TASK040 – Rust Simulation Core** underway.
-  - Recorded RQ-067–RQ-070 and DES033 to govern Rust/WASM migration and typed-array contracts.
-  - Scaffolding `/rust-engine` crate completed with RNG parity tests, snapshot import/export, layout planner, and data buffer.
-  - Implemented TS bridge (`wasmSimBridge`) matching `wasm-bindgen` class structure for future integration.
-  - Verified `wasm-pack` build pipeline and added `useRustSim` feature flag to store settings.
-  - **Next**: Execute DES034 to port core systems (Refinery, Movement, Mining) to Rust.
+### 🔄 **TASK042 – Rust Integration & Parity Verification**
+
+- **Goal**: Integrate `rust-engine` into the main game loop and verify parity.
+- **Status**: Implementation Complete. Validation Pending.
+- **Recent**:
+  - Implemented `checkParity` and Shadow Mode.
+  - Created `RustDrones` for direct WASM visualization.
+  - Updated `Scene.tsx` to support engine switching.
+- **Next Steps**:
+  - Run the game and verify "Shadow Mode" logs.
+  - Fix any divergences found.
+  - Implement `RustFactories` and `RustAsteroids` for full visual parity.
 
 - 🚧 **TASK038 – Factory Metrics & Mini-Charts** remains in progress.
   - Factory Metrics tab now renders four sparklines with summary stats, sampling banner, and pause control.
@@ -22,28 +24,20 @@
   - Sparklines now include descriptive titles/ARIA wiring and inline component gains narrated labels with dedicated Vitest coverage.
   - Metrics banner now surfaces the most recent sampling time so players can relate charts to gameplay moments.
 
-- ✅ **TASK039 – Hotpath Instancing & Pooling** completed.
-  - Logistics transfer lines now render from a pooled visual buffer via instanced shafts/heads with hover-safe colors/tooltips.
-  - Hauler ships reuse a pooled visual/color map and expose sliceable views for rendering and tests.
-  - Drone AI tick reuses a hoisted Map of flights instead of re-allocating per frame.
-
-🔭 **Open follow-ups**
-
-- Extend coverage to integration/e2e flows and ensure throttled profile messaging surfaces in low-profile runs.
-- Profile rendering cost of sparklines under large factory counts; add guardrails if necessary.
-- Evaluate whether to surface sampling status/recency cues beyond the inspector (e.g., HUD toast) for better visibility.
-
-**Design Reference:** `/memory/designs/DES031-factory-metrics.md`
-
 ---
 
 ## Recent Completions
 
-✅ **Completed: TASK037 – Hauler Ship Visuals** (for historical context)
+✅ **Completed: TASK041 – Rust Simulation Systems & Logic Port**
 
-- Animated hauler ships replaced transfer lines with instanced meshes, cubic Bezier motion, and hover tooltips.
-- Persistent `showHaulerShips` toggle delivered across settings, serialization, and migrations with regression coverage.
-- FX system now records `departedAt` timestamps for transfers to drive motion and metrics.
+- Implemented core ECS systems in Rust: Movement, Mining, Power, Refinery.
+- Updated `wasmSimBridge.ts` to expose all SoA buffers.
+- Verified parity with unit tests.
+
+✅ **Completed: TASK040 – Rust Simulation Core**
+
+- Scaffolding `/rust-engine` crate completed with RNG parity tests, snapshot import/export, layout planner, and data buffer.
+- Implemented TS bridge (`wasmSimBridge`) matching `wasm-bindgen` class structure.
 
 ## Next Steps
 

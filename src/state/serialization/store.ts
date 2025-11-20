@@ -215,6 +215,8 @@ export const normalizeSettings = (snapshot?: Partial<StoreSettings>): StoreSetti
       : initialSettings.showDebugPanel,
   useRustSim:
     typeof snapshot?.useRustSim === 'boolean' ? snapshot.useRustSim : initialSettings.useRustSim,
+  shadowMode:
+    typeof snapshot?.shadowMode === 'boolean' ? snapshot.shadowMode : initialSettings.shadowMode,
   performanceProfile: normalizePerformanceProfile(snapshot?.performanceProfile),
   inspectorCollapsed:
     typeof snapshot?.inspectorCollapsed === 'boolean'

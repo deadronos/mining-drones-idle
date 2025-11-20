@@ -4,13 +4,13 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev:wasm:watch": "cd rust-engine && cargo watch -s \"wasm-pack build --target web --out-dir ../src/gen --features wasm\"",
+    "dev:wasm:watch": "cd rust-engine && cargo watch -s \"npx wasm-pack build --target web --out-dir ../src/gen --features wasm\"",
     "dev": "concurrently \"npm:dev:wasm:watch\" \"vite\"",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "coverage": "vitest run --coverage",
-    "build:wasm": "cd rust-engine && wasm-pack build --target web --out-dir ../src/gen --features wasm",
+    "build:wasm": "cd rust-engine && npx wasm-pack build --target web --out-dir ../src/gen --features wasm",
     "build": "npm run build:wasm && tsc -b && vite build",
     "build:output": "npm run build",
     "deploy:pages": "echo 'Use GitHub Actions to deploy on tag push'",
@@ -37,7 +37,7 @@
     "three": "^0.180.0",
     "tslib": "^2.8.1",
     "use-sync-external-store": "^1.6.0",
-    "wasm-pack": "^0.13.1",
+    "wasm-pack": "^0.0.0",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
@@ -56,6 +56,7 @@
     "@vitest/coverage-v8": "^4.0.6",
     "autoprefixer": "^10.4.21",
     "babel-plugin-react-compiler": "^1.0.0",
+    "concurrently": "^8.2.0",
     "coverage-v8": "^0.0.1-security",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
@@ -72,12 +73,14 @@
     "postcss-preset-env": "^10.4.0",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.7.1",
+    "rollup": "^4.53.3",
     "sass-embedded": "^1.93.2",
     "stylus": "^0.64.0",
     "typescript": "^5.9.3",
     "vite": "npm:rolldown-vite@7.1.14",
-    "vitest": "^4.0.4",
-    "concurrently": "^8.2.0"
+    "vite-plugin-top-level-await": "^1.6.0",
+    "vite-plugin-wasm": "^3.5.0",
+    "vitest": "^4.0.4"
   },
   "overrides": {
     "vite": "npm:rolldown-vite@7.1.14"

@@ -60,7 +60,7 @@ export interface RustSimBridge {
   getLayout(): RustSimLayout;
   getDronePositions(): Float32Array;
   getDroneVelocities(): Float32Array;
-  getDroneStates(): Uint32Array;
+  getDroneStates(): Float32Array;
   getDroneCargo(): Float32Array;
   getDroneBattery(): Float32Array;
   getDroneTargetIndex(): Float32Array;
@@ -83,7 +83,7 @@ export function buildRustSimBridge(
 ): RustSimBridge {
   const json = JSON.stringify(snapshot);
   let gameState: WasmGameState | null = new wasmExports.WasmGameState(json);
-  let layout: RustSimLayout = JSON.parse(gameState.layout_json());
+  let layout: RustSimLayout = JSON.parse(gameState.layout_json()) as RustSimLayout;
 
   // Helper to create views
   // Note: We recreate views on access because WASM memory buffer can detach on growth
@@ -114,7 +114,7 @@ export function buildRustSimBridge(
       }
       const json = JSON.stringify(newSnapshot);
       gameState = new wasmExports.WasmGameState(json);
-      layout = JSON.parse(gameState.layout_json());
+      layout = JSON.parse(gameState.layout_json()) as RustSimLayout;
     },
 
     step(dt: number) {
@@ -135,7 +135,15 @@ export function buildRustSimBridge(
     },
 
     getDroneStates() {
-      return getViewU32(layout.drones.states);
+      // Rust stores states as f32 in the buffer, even though they are logically enums/ints.
+      // We read them as f32 and the consumer can cast to int if needed.
+      // Wait, if we return Float32Array, the consumer gets floats like 1.0, 2.0.
+      // If we want Uint32Array, we need to read the raw bytes as Uint32?
+      // No, Rust writes `2.0` (float) into the buffer.
+      // If we read that memory as Uint32, we get the IEEE 754 representation of 2.0.
+      // We must read as Float32Array to get `2.0`.
+      // Then we can map `2.0` -> `2`.
+      return getViewF32(layout.drones.states);
     },
 
     getDroneCargo() {
