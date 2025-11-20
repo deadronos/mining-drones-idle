@@ -45,9 +45,11 @@ export const generateSeed = () => {
   if (typeof crypto !== 'undefined' && 'getRandomValues' in crypto) {
     const buffer = new Uint32Array(2);
     crypto.getRandomValues(buffer);
-    return (buffer[0] << 16) ^ buffer[1];
+    // Use unsigned right shift to ensure positive 32-bit integer
+    return ((buffer[0] << 16) ^ buffer[1]) >>> 0;
   }
-  return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+  // Fallback to random 32-bit integer
+  return Math.floor(Math.random() * 0xffffffff);
 };
 
 /**

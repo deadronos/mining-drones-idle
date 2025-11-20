@@ -70,4 +70,6 @@ We will start by ensuring the WASM module can be loaded. Then we'll build the si
   - Updated tests in `migrations.test.ts` and `Settings.test.tsx` to include `shadowMode`.
   - Added `src/gen` to `eslint.config.js` ignores.
   - Fixed unsafe `any` assignment in `wasmSimBridge.ts`.
-- **Status**: Implementation verified. Ready for runtime testing.
+  - **Fixed Runtime Error**: `pathSeed` generation in `targetAssignment.ts` was producing values > `i32::MAX`, causing WASM deserialization failure. Clamped to `0x7fffffff`.
+  - Fixed `generateSeed` in `utils.ts` to ensure positive 32-bit integers.
+- **Status**: Implementation verified. Runtime error fixed. Ready for re-testing.

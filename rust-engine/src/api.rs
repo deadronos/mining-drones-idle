@@ -31,9 +31,9 @@ use std::collections::BTreeMap;
 pub struct GameState {
     snapshot: SimulationSnapshot,
     rng: Mulberry32,
-    layout: EntityBufferLayout,
+    pub layout: EntityBufferLayout,
     game_time: f32,
-    data: Vec<u32>,
+    pub data: Vec<u32>,
     drone_id_to_index: BTreeMap<String, usize>,
     factory_id_to_index: BTreeMap<String, usize>,
     asteroid_id_to_index: BTreeMap<String, usize>,
