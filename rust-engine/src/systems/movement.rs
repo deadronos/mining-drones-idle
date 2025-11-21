@@ -75,9 +75,9 @@ pub fn sys_movement(
         let mut arrived = false;
 
         // 1. Position-based (if returning to factory)
-        if flight.state == "returning" {
-            if let Some(factory_id) = &flight.target_factory_id {
-                if let Some(&factory_idx) = factory_id_to_index.get(factory_id) {
+        if flight.state == "returning"
+            && let Some(factory_id) = &flight.target_factory_id
+                && let Some(&factory_idx) = factory_id_to_index.get(factory_id) {
                     // Update target_factory_index
                     target_factory_index[drone_idx] = factory_idx as f32;
 
@@ -98,8 +98,6 @@ pub fn sys_movement(
                         positions[drone_idx * 3 + 2] = fz;
                     }
                 }
-            }
-        }
 
         // 2. Time-based trigger
         if !arrived && travel.elapsed >= travel.duration - 1e-4 {
@@ -113,11 +111,10 @@ pub fn sys_movement(
         if arrived {
             // Update state to next state
             let next_state = if flight.state == "toAsteroid" {
-                if let Some(asteroid_id) = &flight.target_asteroid_id {
-                    if let Some(&idx) = asteroid_id_to_index.get(asteroid_id) {
+                if let Some(asteroid_id) = &flight.target_asteroid_id
+                    && let Some(&idx) = asteroid_id_to_index.get(asteroid_id) {
                         target_asteroid_index[drone_idx] = idx as f32;
                     }
-                }
                 DRONE_STATE_MINING
             } else if flight.state == "returning" {
                 DRONE_STATE_UNLOADING

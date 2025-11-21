@@ -58,7 +58,7 @@ impl GameState {
         )?;
 
         // Ensure size is multiple of 4
-        let size_u32 = (layout.total_size_bytes + 3) / 4;
+        let size_u32 = layout.total_size_bytes.div_ceil(4);
         let data = vec![0; size_u32];
 
         let mut drone_id_to_index = BTreeMap::new();
@@ -73,13 +73,12 @@ impl GameState {
         }
 
         // 2. Map other known owners
-        for (drone_id, _) in &snapshot.drone_owners {
-            if !drone_id_to_index.contains_key(drone_id) {
-                if next_index < total_drone_count {
+        for drone_id in snapshot.drone_owners.keys() {
+            if !drone_id_to_index.contains_key(drone_id)
+                && next_index < total_drone_count {
                     drone_id_to_index.insert(drone_id.clone(), next_index);
                     next_index += 1;
                 }
-            }
         }
 
         // 3. Fill remaining slots
@@ -134,7 +133,7 @@ impl GameState {
             asteroid_count,
             factory_count,
         )?;
-        let size_u32 = (self.layout.total_size_bytes + 3) / 4;
+        let size_u32 = self.layout.total_size_bytes.div_ceil(4);
         self.data = vec![0; size_u32];
         self.rng = Mulberry32::new(snapshot.rng_seed.unwrap_or(1));
 
@@ -148,13 +147,12 @@ impl GameState {
             }
         }
 
-        for (drone_id, _) in &snapshot.drone_owners {
-            if !self.drone_id_to_index.contains_key(drone_id) {
-                if next_index < total_drone_count {
+        for drone_id in snapshot.drone_owners.keys() {
+            if !self.drone_id_to_index.contains_key(drone_id)
+                && next_index < total_drone_count {
                     self.drone_id_to_index.insert(drone_id.clone(), next_index);
                     next_index += 1;
                 }
-            }
         }
 
         while next_index < total_drone_count {
@@ -229,11 +227,10 @@ impl GameState {
 
         for (drone_id, &index) in drone_map {
              let mut owner_idx = 0;
-             if let Some(Some(factory_id)) = self.snapshot.drone_owners.get(drone_id) {
-                 if let Some(&idx) = factory_map.get(factory_id) {
+             if let Some(Some(factory_id)) = self.snapshot.drone_owners.get(drone_id)
+                 && let Some(&idx) = factory_map.get(factory_id) {
                      owner_idx = idx;
                  }
-             }
 
              let mut fx = 0.0;
              let mut fy = 0.0;
@@ -297,29 +294,26 @@ impl GameState {
 
                 let offset = layout.drones.target_asteroid_index.offset_bytes / 4 + index;
                 let mut target_idx = -1.0;
-                if let Some(target_id) = &flight.target_asteroid_id {
-                     if let Some(&idx) = asteroid_map.get(target_id) {
+                if let Some(target_id) = &flight.target_asteroid_id
+                     && let Some(&idx) = asteroid_map.get(target_id) {
                          target_idx = idx as f32;
                      }
-                }
                 data[offset] = target_idx.to_bits();
 
                 let offset = layout.drones.target_factory_index.offset_bytes / 4 + index;
                 let mut target_idx = -1.0;
-                if let Some(target_id) = &flight.target_factory_id {
-                     if let Some(&idx) = factory_map.get(target_id) {
+                if let Some(target_id) = &flight.target_factory_id
+                     && let Some(&idx) = factory_map.get(target_id) {
                          target_idx = idx as f32;
                      }
-                }
                 data[offset] = target_idx.to_bits();
 
                 let offset = layout.drones.owner_factory_index.offset_bytes / 4 + index;
                 let mut owner_idx = -1.0;
-                if let Some(owner_id) = &flight.owner_factory_id {
-                     if let Some(&idx) = factory_map.get(owner_id) {
+                if let Some(owner_id) = &flight.owner_factory_id
+                     && let Some(&idx) = factory_map.get(owner_id) {
                          owner_idx = idx as f32;
                      }
-                }
                 data[offset] = owner_idx.to_bits();
 
                 if let Some(profile) = &flight.cargo_profile {
@@ -336,16 +330,15 @@ impl GameState {
         // Initialize asteroids
         if let Some(asteroids) = self.snapshot.extra.get("asteroids").and_then(|v| v.as_array()) {
             for asteroid in asteroids {
-                if let Some(id) = asteroid.get("id").and_then(|v| v.as_str()) {
-                    if let Some(&index) = asteroid_map.get(id) {
-                        if let Some(pos) = asteroid.get("position").and_then(|v| v.as_array()) {
-                            if pos.len() >= 3 {
+                if let Some(id) = asteroid.get("id").and_then(|v| v.as_str())
+                    && let Some(&index) = asteroid_map.get(id) {
+                        if let Some(pos) = asteroid.get("position").and_then(|v| v.as_array())
+                            && pos.len() >= 3 {
                                 let offset = layout.asteroids.positions.offset_bytes / 4 + index * 3;
                                 data[offset] = (pos[0].as_f64().unwrap_or(0.0) as f32).to_bits();
                                 data[offset + 1] = (pos[1].as_f64().unwrap_or(0.0) as f32).to_bits();
                                 data[offset + 2] = (pos[2].as_f64().unwrap_or(0.0) as f32).to_bits();
                             }
-                        }
 
                         if let Some(ore) = asteroid.get("oreRemaining").and_then(|v| v.as_f64()) {
                             let offset = layout.asteroids.ore_remaining.offset_bytes / 4 + index;
@@ -381,7 +374,6 @@ impl GameState {
                             data[base_offset + 4] = (0.0f32).to_bits();
                         }
                     }
-                }
             }
         }
     }

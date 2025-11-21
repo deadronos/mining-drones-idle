@@ -162,7 +162,7 @@ pub fn sys_drone_ai(
                                 duration,
                                 control: None,
                             },
-                            cargo: cargo,
+                            cargo,
                             battery: drone_battery[drone_idx],
                             max_battery,
                             capacity,
