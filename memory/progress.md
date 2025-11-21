@@ -12,6 +12,11 @@
 - **2025-11-20**: Completed TASK041 (Rust Systems Port).
   - Ported Movement, Mining, Power, and Refinery systems to Rust.
   - Verified parity with unit tests.
+- **2025-11-20**: In Progress TASK043 (Rust Parity Rewrite).
+  - Ported remaining systems (Refinery, Power, Unload) to Rust.
+  - Updated ECS buffer layout with `haulers_assigned`.
+  - Wired all systems into `api.rs` `step` function with correct modifiers.
+  - Verified compilation of the full Rust codebase.
 
 - 2025-11-19: **TASK041 – Rust simulation systems** – Implemented core ECS systems in Rust: `sys_movement` (Bezier curves, energy drain, arrival logic), `sys_mining` (resource gathering, target tracking), and `sys_power` (global generation, factory regen, drone charging). Updated `GameState` SoA layout to include `target_index` for drones. Verified all systems with unit tests.
 - 2025-11-19: **TASK041 – Rust simulation systems** – Expanded `GameState` with factory components (resources, energy, upgrades, refinery state). Implemented `sys_refinery` in Rust with unit tests and verified parity. Fixed memory alignment issues by switching `GameState.data` to `Vec<u32>`.

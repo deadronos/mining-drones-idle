@@ -16,7 +16,8 @@ pub fn sys_movement(
     positions: &mut [f32],     // [x, y, z] * N
     states: &mut [f32],        // [state] * N
     battery: &mut [f32],       // [energy] * N
-    target_index: &mut [f32],  // [target_idx] * N
+    target_asteroid_index: &mut [f32],  // [target_idx] * N
+    target_factory_index: &mut [f32],   // [target_idx] * N
     factory_positions: &[f32], // [x, y, z] * M
     dt: f32,
     throttle_floor: f32,
@@ -52,8 +53,13 @@ pub fn sys_movement(
         }
 
         // Energy
-        let consumption =
-            consume_drone_energy(&mut battery[drone_idx], dt, throttle_floor, drain_rate);
+        let consumption = consume_drone_energy(
+            &mut battery[drone_idx],
+            flight.max_battery,
+            dt,
+            throttle_floor,
+            drain_rate,
+        );
 
         travel.elapsed = (travel.elapsed + dt * consumption.fraction).min(travel.duration);
 
@@ -72,6 +78,9 @@ pub fn sys_movement(
         if flight.state == "returning" {
             if let Some(factory_id) = &flight.target_factory_id {
                 if let Some(&factory_idx) = factory_id_to_index.get(factory_id) {
+                    // Update target_factory_index
+                    target_factory_index[drone_idx] = factory_idx as f32;
+
                     let fx = factory_positions[factory_idx * 3];
                     let fy = factory_positions[factory_idx * 3 + 1];
                     let fz = factory_positions[factory_idx * 3 + 2];
@@ -106,7 +115,7 @@ pub fn sys_movement(
             let next_state = if flight.state == "toAsteroid" {
                 if let Some(asteroid_id) = &flight.target_asteroid_id {
                     if let Some(&idx) = asteroid_id_to_index.get(asteroid_id) {
-                        target_index[drone_idx] = idx as f32;
+                        target_asteroid_index[drone_idx] = idx as f32;
                     }
                 }
                 DRONE_STATE_MINING
@@ -169,6 +178,7 @@ mod tests {
             target_asteroid_id: None,
             target_region_id: None,
             target_factory_id: None,
+            owner_factory_id: None,
             path_seed: 0,
             travel: TravelSnapshot {
                 from: [0.0, 0.0, 0.0],
@@ -177,6 +187,13 @@ mod tests {
                 duration: 10.0,
                 control: None,
             },
+            cargo: 0.0,
+            battery: 100.0,
+            max_battery: 100.0,
+            capacity: 40.0,
+            mining_rate: 1.0,
+            cargo_profile: None,
+            charging: false,
         }];
         let mut drone_map = BTreeMap::new();
         drone_map.insert("d1".to_string(), 0);
@@ -184,7 +201,8 @@ mod tests {
         let mut positions = vec![0.0, 0.0, 0.0];
         let mut battery = vec![100.0];
         let mut states = vec![0.0];
-        let mut target_index = vec![0.0];
+        let mut target_asteroid_index = vec![0.0];
+        let mut target_factory_index = vec![0.0];
         let factory_positions = vec![];
         let asteroid_map = BTreeMap::new();
 
@@ -196,7 +214,8 @@ mod tests {
             &mut positions,
             &mut states,
             &mut battery,
-            &mut target_index,
+            &mut target_asteroid_index,
+            &mut target_factory_index,
             &factory_positions,
             1.0,
             0.0,

@@ -1,7 +1,8 @@
 use crate::constants::{
-    DRONE_MAX_CARGO, DRONE_STATE_IDLE, DRONE_STATE_MINING, DRONE_STATE_RETURNING,
-    DRONE_STATE_TO_ASTEROID,
+    DRONE_MAX_BATTERY, DRONE_MAX_CARGO, DRONE_MINING_RATE, DRONE_SPEED, DRONE_STATE_IDLE,
+    DRONE_STATE_MINING, DRONE_STATE_RETURNING, DRONE_STATE_TO_ASTEROID,
 };
+use crate::modifiers::ResourceModifierSnapshot;
 use crate::rng::Mulberry32;
 use crate::schema::{DroneFlight, TravelSnapshot};
 use std::collections::BTreeMap;
@@ -11,6 +12,12 @@ pub fn sys_drone_ai(
     drone_states: &mut [f32],
     drone_cargo: &[f32],
     drone_positions: &[f32],
+    drone_battery: &[f32],
+    drone_max_battery: &mut [f32],
+    drone_capacity: &mut [f32],
+    drone_mining_rate: &mut [f32],
+    _drone_target_asteroid_index: &mut [f32], // New
+    _drone_target_factory_index: &mut [f32],  // New
     drone_id_to_index: &BTreeMap<String, usize>,
     factory_id_to_index: &BTreeMap<String, usize>,
     asteroid_id_to_index: &BTreeMap<String, usize>,
@@ -18,6 +25,7 @@ pub fn sys_drone_ai(
     asteroid_positions: &[f32],
     asteroid_ore: &[f32],
     rng: &mut Mulberry32,
+    modifiers: &ResourceModifierSnapshot,
 ) {
     // We need to iterate over all drones to check their state and make decisions.
     // However, we only have SoA data and a map.
@@ -45,6 +53,17 @@ pub fn sys_drone_ai(
             drone_positions[drone_idx * 3 + 2],
         ];
 
+        // Calculate stats based on modifiers
+        let speed = DRONE_SPEED; // TODO: Add speed modifier
+        let capacity = DRONE_MAX_CARGO * modifiers.drone_capacity_multiplier;
+        let max_battery = DRONE_MAX_BATTERY * modifiers.drone_battery_multiplier;
+        let mining_rate = DRONE_MINING_RATE; // TODO: Add mining rate modifier
+
+        // Update SoA with current stats
+        drone_capacity[drone_idx] = capacity;
+        drone_max_battery[drone_idx] = max_battery;
+        drone_mining_rate[drone_idx] = mining_rate;
+
         if state == DRONE_STATE_IDLE {
             // Find target asteroid
             // Simple logic: pick random asteroid with ore > 0
@@ -71,7 +90,6 @@ pub fn sys_drone_ai(
 
                             // Create flight
                             let dist = distance(position, target_pos);
-                            let speed = 10.0; // TODO: Get from modules/upgrades
                             let duration = dist / speed;
 
                             new_flights.push(DroneFlight {
@@ -80,6 +98,7 @@ pub fn sys_drone_ai(
                                 target_asteroid_id: Some(target_id),
                                 target_region_id: None,
                                 target_factory_id: None,
+                                owner_factory_id: None, // TODO: Get from SoA
                                 path_seed: rng.next_u32(),
                                 travel: TravelSnapshot {
                                     from: position,
@@ -88,6 +107,13 @@ pub fn sys_drone_ai(
                                     duration,
                                     control: None, // TODO: Bezier
                                 },
+                                cargo: 0.0,
+                                battery: drone_battery[drone_idx],
+                                max_battery,
+                                capacity,
+                                mining_rate,
+                                cargo_profile: None,
+                                charging: false,
                             });
 
                             // Update state immediately to prevent double assignment
@@ -99,7 +125,7 @@ pub fn sys_drone_ai(
             }
         } else if state == DRONE_STATE_MINING {
             let cargo = drone_cargo[drone_idx];
-            if cargo >= DRONE_MAX_CARGO {
+            if cargo >= capacity {
                 // Full, return to factory
                 // Find nearest factory
                 // For now, just pick first factory
@@ -119,7 +145,6 @@ pub fn sys_drone_ai(
 
                     if let Some(target_id) = target_id {
                         let dist = distance(position, target_pos);
-                        let speed = 10.0; // TODO: Get from modules/upgrades
                         let duration = dist / speed;
 
                         new_flights.push(DroneFlight {
@@ -128,6 +153,7 @@ pub fn sys_drone_ai(
                             target_asteroid_id: None,
                             target_region_id: None,
                             target_factory_id: Some(target_id),
+                            owner_factory_id: None,
                             path_seed: rng.next_u32(),
                             travel: TravelSnapshot {
                                 from: position,
@@ -136,6 +162,13 @@ pub fn sys_drone_ai(
                                 duration,
                                 control: None,
                             },
+                            cargo: cargo,
+                            battery: drone_battery[drone_idx],
+                            max_battery,
+                            capacity,
+                            mining_rate,
+                            cargo_profile: None,
+                            charging: false,
                         });
 
                         drone_states[drone_idx] = DRONE_STATE_RETURNING;

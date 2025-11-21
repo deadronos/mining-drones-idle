@@ -1,10 +1,8 @@
-use crate::constants::DRONE_MAX_BATTERY;
-
-pub fn compute_drone_energy_fraction(battery: f32, throttle_floor: f32) -> f32 {
-    if DRONE_MAX_BATTERY <= 0.0 {
+pub fn compute_drone_energy_fraction(battery: f32, max_battery: f32, throttle_floor: f32) -> f32 {
+    if max_battery <= 0.0 {
         return 1.0;
     }
-    let normalized = battery / DRONE_MAX_BATTERY;
+    let normalized = battery / max_battery;
     if !normalized.is_finite() {
         return 1.0;
     }
@@ -18,11 +16,12 @@ pub struct EnergyConsumption {
 
 pub fn consume_drone_energy(
     battery: &mut f32,
+    max_battery: f32,
     dt: f32,
     throttle_floor: f32,
     rate: f32,
 ) -> EnergyConsumption {
-    let fraction = compute_drone_energy_fraction(*battery, throttle_floor);
+    let fraction = compute_drone_energy_fraction(*battery, max_battery, throttle_floor);
     if dt <= 0.0 || rate <= 0.0 {
         return EnergyConsumption {
             fraction,

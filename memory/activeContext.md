@@ -4,6 +4,20 @@
 
 ## Active Tasks
 
+### 🔄 **TASK043 – Full Rust → TypeScript Parity Rewrite**
+
+- **Goal**: Replace Rust simulation skeleton with a 1:1 mapping of TS state, systems, and modifiers.
+- **Status**: Implementation (Systems Complete).
+- **Recent**:
+  - Ported all remaining systems: Refinery, Power, Unload.
+  - Updated ECS buffer layout with `haulers_assigned`.
+  - Wired all systems into `api.rs` `step` function with correct modifiers.
+  - Verified compilation of the full Rust codebase.
+- **Next Steps**:
+  - Verify runtime behavior (WASM build & integration).
+  - Debug any logic mismatches.
+  - Complete the TS-side integration (if not already done).
+
 ### 🔄 **TASK042 – Rust Integration & Parity Verification**
 
 - **Goal**: Integrate `rust-engine` into the main game loop and verify parity.

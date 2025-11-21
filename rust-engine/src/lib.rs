@@ -2,8 +2,10 @@ pub mod api;
 pub mod buffers;
 pub mod constants;
 pub mod error;
+pub mod modifiers;
 pub mod rng;
 pub mod schema;
+pub mod sinks;
 pub mod systems;
 
 #[cfg(feature = "wasm")]

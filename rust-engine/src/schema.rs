@@ -27,9 +27,25 @@ pub struct DroneFlight {
     pub target_region_id: Option<String>,
     #[serde(rename = "targetFactoryId")]
     pub target_factory_id: Option<String>,
+    #[serde(rename = "ownerFactoryId")]
+    pub owner_factory_id: Option<String>,
     #[serde(rename = "pathSeed")]
     pub path_seed: u32,
     pub travel: TravelSnapshot,
+    #[serde(default)]
+    pub cargo: f32,
+    #[serde(default)]
+    pub battery: f32,
+    #[serde(default, rename = "maxBattery")]
+    pub max_battery: f32,
+    #[serde(default)]
+    pub capacity: f32,
+    #[serde(default, rename = "miningRate")]
+    pub mining_rate: f32,
+    #[serde(default, rename = "cargoProfile")]
+    pub cargo_profile: Option<Resources>,
+    #[serde(default)]
+    pub charging: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]

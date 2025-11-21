@@ -1,9 +1,12 @@
 use crate::buffers::EntityBufferLayout;
 use crate::buffers::plan_layout;
 use crate::error::SimulationError;
+use crate::modifiers::get_resource_modifiers;
 use crate::rng::Mulberry32;
 use crate::schema::{Modules, Resources, SimulationSnapshot, StoreSettings};
 use serde::{Deserialize, Serialize};
+use std::cmp;
+use std::collections::BTreeMap;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct TickResult {
@@ -26,8 +29,6 @@ pub enum SimulationCommand {
     SetSettings(StoreSettings),
 }
 
-use std::collections::BTreeMap;
-
 pub struct GameState {
     snapshot: SimulationSnapshot,
     rng: Mulberry32,
@@ -44,12 +45,15 @@ impl GameState {
         snapshot.ensure_required()?;
         let rng_seed = snapshot.rng_seed.unwrap_or(1);
 
-        let drone_count = snapshot.drone_flights.len();
+        let drone_bay_level = snapshot.modules.drone_bay;
+        let total_drone_count = cmp::max(1, drone_bay_level as usize);
+
         let factory_count = snapshot.factories.len();
+        let asteroid_count = asteroid_count(&snapshot);
 
         let layout = plan_layout(
-            drone_count,
-            asteroid_count(&snapshot),
+            total_drone_count,
+            asteroid_count,
             factory_count,
         )?;
 
@@ -58,8 +62,31 @@ impl GameState {
         let data = vec![0; size_u32];
 
         let mut drone_id_to_index = BTreeMap::new();
-        for (i, flight) in snapshot.drone_flights.iter().enumerate() {
-            drone_id_to_index.insert(flight.drone_id.clone(), i);
+        let mut next_index = 0;
+
+        // 1. Map existing flights
+        for flight in &snapshot.drone_flights {
+            if next_index < total_drone_count {
+                drone_id_to_index.insert(flight.drone_id.clone(), next_index);
+                next_index += 1;
+            }
+        }
+
+        // 2. Map other known owners
+        for (drone_id, _) in &snapshot.drone_owners {
+            if !drone_id_to_index.contains_key(drone_id) {
+                if next_index < total_drone_count {
+                    drone_id_to_index.insert(drone_id.clone(), next_index);
+                    next_index += 1;
+                }
+            }
+        }
+
+        // 3. Fill remaining slots
+        while next_index < total_drone_count {
+            let id = format!("drone-rust-{}", next_index);
+            drone_id_to_index.insert(id, next_index);
+            next_index += 1;
         }
 
         let mut factory_id_to_index = BTreeMap::new();
@@ -96,12 +123,15 @@ impl GameState {
             serde_json::from_str(payload).map_err(SimulationError::parse)?;
         snapshot.ensure_required()?;
 
-        let drone_count = snapshot.drone_flights.len();
+        let drone_bay_level = snapshot.modules.drone_bay;
+        let total_drone_count = cmp::max(1, drone_bay_level as usize);
+
         let factory_count = snapshot.factories.len();
+        let asteroid_count = asteroid_count(&snapshot);
 
         self.layout = plan_layout(
-            drone_count,
-            asteroid_count(&snapshot),
+            total_drone_count,
+            asteroid_count,
             factory_count,
         )?;
         let size_u32 = (self.layout.total_size_bytes + 3) / 4;
@@ -109,8 +139,28 @@ impl GameState {
         self.rng = Mulberry32::new(snapshot.rng_seed.unwrap_or(1));
 
         self.drone_id_to_index.clear();
-        for (i, flight) in snapshot.drone_flights.iter().enumerate() {
-            self.drone_id_to_index.insert(flight.drone_id.clone(), i);
+        let mut next_index = 0;
+
+        for flight in &snapshot.drone_flights {
+            if next_index < total_drone_count {
+                self.drone_id_to_index.insert(flight.drone_id.clone(), next_index);
+                next_index += 1;
+            }
+        }
+
+        for (drone_id, _) in &snapshot.drone_owners {
+            if !self.drone_id_to_index.contains_key(drone_id) {
+                if next_index < total_drone_count {
+                    self.drone_id_to_index.insert(drone_id.clone(), next_index);
+                    next_index += 1;
+                }
+            }
+        }
+
+        while next_index < total_drone_count {
+            let id = format!("drone-rust-{}", next_index);
+            self.drone_id_to_index.insert(id, next_index);
+            next_index += 1;
         }
 
         self.factory_id_to_index.clear();
@@ -168,12 +218,39 @@ impl GameState {
                 data[offset + 2] = (factory.upgrades.storage as f32).to_bits();
                 data[offset + 3] = (factory.upgrades.energy as f32).to_bits();
                 data[offset + 4] = (factory.upgrades.solar as f32).to_bits();
+
+                let offset = layout.factories.haulers_assigned.offset_bytes / 4 + index;
+                data[offset] = (factory.haulers_assigned.unwrap_or(0) as f32).to_bits();
             }
         }
 
-        // Initialize drones
-        let flights = &self.snapshot.drone_flights;
+        // Initialize drones (defaults)
         let drone_map = &self.drone_id_to_index;
+
+        for (drone_id, &index) in drone_map {
+             let mut owner_idx = 0;
+             if let Some(Some(factory_id)) = self.snapshot.drone_owners.get(drone_id) {
+                 if let Some(&idx) = factory_map.get(factory_id) {
+                     owner_idx = idx;
+                 }
+             }
+
+             let f_offset = layout.factories.positions.offset_bytes / 4 + owner_idx * 3;
+             let fx = f32::from_bits(data[f_offset]);
+             let fy = f32::from_bits(data[f_offset + 1]);
+             let fz = f32::from_bits(data[f_offset + 2]);
+
+             let offset = layout.drones.positions.offset_bytes / 4 + index * 3;
+             data[offset] = fx.to_bits();
+             data[offset + 1] = fy.to_bits();
+             data[offset + 2] = fz.to_bits();
+
+             let offset = layout.drones.owner_factory_index.offset_bytes / 4 + index;
+             data[offset] = (owner_idx as f32).to_bits();
+        }
+
+        // Initialize drones (flights)
+        let flights = &self.snapshot.drone_flights;
         let asteroid_map = &self.asteroid_id_to_index;
 
         for flight in flights {
@@ -194,7 +271,25 @@ impl GameState {
                 };
                 data[offset] = state_val.to_bits();
 
-                let offset = layout.drones.target_index.offset_bytes / 4 + index;
+                let offset = layout.drones.cargo.offset_bytes / 4 + index;
+                data[offset] = flight.cargo.to_bits();
+
+                let offset = layout.drones.battery.offset_bytes / 4 + index;
+                data[offset] = flight.battery.to_bits();
+
+                let offset = layout.drones.max_battery.offset_bytes / 4 + index;
+                data[offset] = flight.max_battery.to_bits();
+
+                let offset = layout.drones.capacity.offset_bytes / 4 + index;
+                data[offset] = flight.capacity.to_bits();
+
+                let offset = layout.drones.mining_rate.offset_bytes / 4 + index;
+                data[offset] = flight.mining_rate.to_bits();
+
+                let offset = layout.drones.charging.offset_bytes / 4 + index;
+                data[offset] = (if flight.charging { 1.0f32 } else { 0.0f32 }).to_bits();
+
+                let offset = layout.drones.target_asteroid_index.offset_bytes / 4 + index;
                 let mut target_idx = -1.0;
                 if let Some(target_id) = &flight.target_asteroid_id {
                      if let Some(&idx) = asteroid_map.get(target_id) {
@@ -202,6 +297,33 @@ impl GameState {
                      }
                 }
                 data[offset] = target_idx.to_bits();
+
+                let offset = layout.drones.target_factory_index.offset_bytes / 4 + index;
+                let mut target_idx = -1.0;
+                if let Some(target_id) = &flight.target_factory_id {
+                     if let Some(&idx) = factory_map.get(target_id) {
+                         target_idx = idx as f32;
+                     }
+                }
+                data[offset] = target_idx.to_bits();
+
+                let offset = layout.drones.owner_factory_index.offset_bytes / 4 + index;
+                let mut owner_idx = -1.0;
+                if let Some(owner_id) = &flight.owner_factory_id {
+                     if let Some(&idx) = factory_map.get(owner_id) {
+                         owner_idx = idx as f32;
+                     }
+                }
+                data[offset] = owner_idx.to_bits();
+
+                if let Some(profile) = &flight.cargo_profile {
+                    let base_offset = layout.drones.cargo_profile.offset_bytes / 4 + index * 5;
+                    data[base_offset] = profile.ore.to_bits();
+                    data[base_offset + 1] = profile.ice.to_bits();
+                    data[base_offset + 2] = profile.metals.to_bits();
+                    data[base_offset + 3] = profile.crystals.to_bits();
+                    data[base_offset + 4] = profile.organics.to_bits();
+                }
             }
         }
 
@@ -228,6 +350,30 @@ impl GameState {
                             let offset = layout.asteroids.max_ore.offset_bytes / 4 + index;
                             data[offset] = (max_ore as f32).to_bits();
                         }
+
+                        // Initialize resource profile
+                        if let Some(profile) = asteroid.get("resourceProfile").and_then(|v| v.as_object()) {
+                            let base_offset = layout.asteroids.resource_profile.offset_bytes / 4 + index * 5;
+                            let ore = profile.get("ore").and_then(|v| v.as_f64()).unwrap_or(0.0) as f32;
+                            let ice = profile.get("ice").and_then(|v| v.as_f64()).unwrap_or(0.0) as f32;
+                            let metals = profile.get("metals").and_then(|v| v.as_f64()).unwrap_or(0.0) as f32;
+                            let crystals = profile.get("crystals").and_then(|v| v.as_f64()).unwrap_or(0.0) as f32;
+                            let organics = profile.get("organics").and_then(|v| v.as_f64()).unwrap_or(0.0) as f32;
+
+                            data[base_offset] = ore.to_bits();
+                            data[base_offset + 1] = ice.to_bits();
+                            data[base_offset + 2] = metals.to_bits();
+                            data[base_offset + 3] = crystals.to_bits();
+                            data[base_offset + 4] = organics.to_bits();
+                        } else {
+                            // Default to 100% ore if missing
+                            let base_offset = layout.asteroids.resource_profile.offset_bytes / 4 + index * 5;
+                            data[base_offset] = (1.0f32).to_bits();
+                            data[base_offset + 1] = (0.0f32).to_bits();
+                            data[base_offset + 2] = (0.0f32).to_bits();
+                            data[base_offset + 3] = (0.0f32).to_bits();
+                            data[base_offset + 4] = (0.0f32).to_bits();
+                        }
                     }
                 }
             }
@@ -248,7 +394,9 @@ impl GameState {
         }
         self.game_time += dt;
 
-        // Run systems
+        let modifiers = get_resource_modifiers(&self.snapshot.resources, self.snapshot.prestige.cores);
+        let sink_bonuses = crate::sinks::get_sink_bonuses(&self.snapshot);
+
         unsafe {
             let data_ptr = self.data.as_mut_ptr();
 
@@ -263,21 +411,28 @@ impl GameState {
             let resources = get_slice_mut(&self.layout.factories.resources);
             let upgrades = get_slice_mut(&self.layout.factories.upgrades);
             let refinery_state = get_slice_mut(&self.layout.factories.refinery_state);
+            let haulers_assigned = get_slice_mut(&self.layout.factories.haulers_assigned);
             let energy = get_slice_mut(&self.layout.factories.energy);
 
             crate::systems::refinery::sys_refinery(
                 resources,
                 upgrades,
                 refinery_state,
+                haulers_assigned,
                 energy,
                 dt,
+                modifiers.energy_drain_multiplier,
+                modifiers.storage_capacity_multiplier,
+                modifiers.drone_production_speed_multiplier,
+                modifiers.refinery_yield_multiplier,
             );
 
             // Movement System
             let drone_positions = get_slice_mut(&self.layout.drones.positions);
             let drone_battery = get_slice_mut(&self.layout.drones.battery);
             let drone_states = get_slice_mut(&self.layout.drones.states);
-            let drone_target_index = get_slice_mut(&self.layout.drones.target_index);
+            let drone_target_asteroid_index = get_slice_mut(&self.layout.drones.target_asteroid_index);
+            let drone_target_factory_index = get_slice_mut(&self.layout.drones.target_factory_index);
             let factory_positions = get_slice_mut(&self.layout.factories.positions);
 
             crate::systems::movement::sys_movement(
@@ -288,11 +443,12 @@ impl GameState {
                 drone_positions,
                 drone_states,
                 drone_battery,
-                drone_target_index,
+                drone_target_asteroid_index,
+                drone_target_factory_index,
                 factory_positions,
                 dt,
                 self.snapshot.settings.throttle_floor,
-                1.0, // TODO: energy_drain_multiplier
+                modifiers.energy_drain_multiplier,
             );
 
             // Power System
@@ -300,7 +456,10 @@ impl GameState {
             let factory_max_energy = get_slice_mut(&self.layout.factories.max_energy);
             let factory_upgrades = get_slice_mut(&self.layout.factories.upgrades);
             let drone_battery = get_slice_mut(&self.layout.drones.battery);
+            let drone_max_battery = get_slice_mut(&self.layout.drones.max_battery);
             let drone_states = get_slice_mut(&self.layout.drones.states);
+            let drone_owner_factory_index = get_slice_mut(&self.layout.drones.owner_factory_index);
+            let drone_charging = get_slice_mut(&self.layout.drones.charging);
 
             crate::systems::power::sys_power(
                 &mut self.snapshot.resources,
@@ -309,42 +468,64 @@ impl GameState {
                 factory_max_energy,
                 factory_upgrades,
                 drone_battery,
+                drone_max_battery,
                 drone_states,
-                &self.snapshot.drone_owners,
+                drone_owner_factory_index,
+                drone_charging,
                 &self.drone_id_to_index,
                 &self.factory_id_to_index,
                 dt,
-                1.0, // energy_generation_multiplier
-                1.0, // energy_storage_multiplier
+                modifiers.energy_generation_multiplier,
+                modifiers.energy_storage_multiplier,
             );
 
             // Mining System
             let drone_cargo = get_slice_mut(&self.layout.drones.cargo);
-            let asteroid_max_ore = get_slice_mut(&self.layout.asteroids.max_ore);
+            let drone_cargo_profile = get_slice_mut(&self.layout.drones.cargo_profile);
             let drone_states = get_slice_mut(&self.layout.drones.states);
-            let drone_target_index = get_slice_mut(&self.layout.drones.target_index);
+            let drone_target_asteroid_index = get_slice_mut(&self.layout.drones.target_asteroid_index);
+            let drone_capacity = get_slice_mut(&self.layout.drones.capacity);
+            let drone_mining_rate = get_slice_mut(&self.layout.drones.mining_rate);
+            let drone_battery = get_slice_mut(&self.layout.drones.battery);
+            let drone_max_battery = get_slice_mut(&self.layout.drones.max_battery);
+            let asteroid_ore_remaining = get_slice_mut(&self.layout.asteroids.ore_remaining);
+            let asteroid_resource_profile = get_slice_mut(&self.layout.asteroids.resource_profile);
 
             crate::systems::mining::sys_mining(
                 drone_states,
                 drone_cargo,
-                drone_target_index,
-                asteroid_max_ore,
-                &self.snapshot.modules,
+                drone_cargo_profile,
+                drone_target_asteroid_index,
+                drone_capacity,
+                drone_mining_rate,
+                drone_battery,
+                drone_max_battery,
+                asteroid_ore_remaining,
+                asteroid_resource_profile,
                 dt,
-                1.0, // mining_multiplier
+                self.snapshot.settings.throttle_floor,
+                modifiers.energy_drain_multiplier,
+                sink_bonuses.ore_yield_multiplier,
             );
 
             // Unload System
             let drone_states = get_slice_mut(&self.layout.drones.states);
             let drone_cargo = get_slice_mut(&self.layout.drones.cargo);
+            let drone_cargo_profile = get_slice_mut(&self.layout.drones.cargo_profile);
+            let drone_target_factory_index = get_slice_mut(&self.layout.drones.target_factory_index);
+            let drone_owner_factory_index = get_slice_mut(&self.layout.drones.owner_factory_index);
+            let drone_positions = get_slice_mut(&self.layout.drones.positions);
+            let factory_positions = get_slice_mut(&self.layout.factories.positions);
             let factory_resources = get_slice_mut(&self.layout.factories.resources);
 
             crate::systems::unload::sys_unload(
                 drone_states,
                 drone_cargo,
-                &self.snapshot.drone_owners,
-                &self.drone_id_to_index,
-                &self.factory_id_to_index,
+                drone_cargo_profile,
+                drone_target_factory_index,
+                drone_owner_factory_index,
+                drone_positions,
+                factory_positions,
                 factory_resources,
                 &mut self.snapshot.resources,
                 dt,
@@ -354,15 +535,27 @@ impl GameState {
             let drone_states = get_slice_mut(&self.layout.drones.states);
             let drone_cargo = get_slice_mut(&self.layout.drones.cargo);
             let drone_positions = get_slice_mut(&self.layout.drones.positions);
+            let drone_target_asteroid_index = get_slice_mut(&self.layout.drones.target_asteroid_index);
+            let drone_target_factory_index = get_slice_mut(&self.layout.drones.target_factory_index);
             let factory_positions = get_slice_mut(&self.layout.factories.positions);
             let asteroid_positions = get_slice_mut(&self.layout.asteroids.positions);
             let asteroid_ore = get_slice_mut(&self.layout.asteroids.ore_remaining);
+            let drone_battery = get_slice_mut(&self.layout.drones.battery);
+            let drone_max_battery = get_slice_mut(&self.layout.drones.max_battery);
+            let drone_capacity = get_slice_mut(&self.layout.drones.capacity);
+            let drone_mining_rate = get_slice_mut(&self.layout.drones.mining_rate);
 
             crate::systems::drone_ai::sys_drone_ai(
                 &mut self.snapshot.drone_flights,
                 drone_states,
                 drone_cargo,
                 drone_positions,
+                drone_battery,
+                drone_max_battery,
+                drone_capacity,
+                drone_mining_rate,
+                drone_target_asteroid_index,
+                drone_target_factory_index,
                 &self.drone_id_to_index,
                 &self.factory_id_to_index,
                 &self.asteroid_id_to_index,
@@ -370,6 +563,7 @@ impl GameState {
                 asteroid_positions,
                 asteroid_ore,
                 &mut self.rng,
+                &modifiers,
             );
         }
 
@@ -380,6 +574,7 @@ impl GameState {
         }
     }
 
+    // ... rest of file ...
     pub fn apply_command(&mut self, command: SimulationCommand) -> Result<(), SimulationError> {
         match command {
             SimulationCommand::UpdateResources(resources) => {
@@ -600,3 +795,5 @@ mod tests {
         assert!(state.game_time > 0.0);
     }
 }
+
+

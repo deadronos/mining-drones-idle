@@ -5,8 +5,13 @@ pub fn sys_refinery(
     resources: &mut [f32],      // [ore, bars, metals, crystals, organics, ice, credits] * N
     upgrades: &[f32],           // [docking, refine, storage, energy, solar] * N
     refinery_state: &mut [f32], // [active, amount, progress, speed] * MAX_REFINE_SLOTS * N
+    haulers_assigned: &[f32],   // [count] * N
     energy: &mut [f32],         // [energy] * N
     dt: f32,
+    energy_drain_multiplier: f32,
+    storage_capacity_multiplier: f32,
+    production_speed_multiplier: f32,
+    refinery_yield_multiplier: f32,
 ) {
     let factory_count = energy.len();
     let stride_res = 7;
@@ -23,16 +28,21 @@ pub fn sys_refinery(
         let storage_level = upgrades[upg_idx + 2] as i32;
         let energy_level = upgrades[upg_idx + 3] as i32;
         let solar_level = upgrades[upg_idx + 4] as i32;
+        let hauler_count = haulers_assigned[i];
 
         let refine_slots = (FACTORY_REFINE_SLOTS as i32 + refine_level) as usize;
-        let storage_capacity = FACTORY_STORAGE_CAPACITY + (storage_level as f32 * 150.0);
+        let storage_capacity = (FACTORY_STORAGE_CAPACITY + (storage_level as f32 * 150.0)) * storage_capacity_multiplier;
         let energy_capacity = FACTORY_ENERGY_CAPACITY
             + (energy_level as f32 * 30.0)
             + (solar_level as f32 * FACTORY_SOLAR_MAX_ENERGY_PER_LEVEL);
 
         // Idle drain
-        let idle_drain = FACTORY_IDLE_ENERGY_PER_SEC * dt;
+        let idle_drain = FACTORY_IDLE_ENERGY_PER_SEC * dt * energy_drain_multiplier;
         current_energy = (current_energy - idle_drain).max(0.0);
+
+        // Hauler drain
+        let hauler_drain = hauler_count * 0.5 * dt * energy_drain_multiplier;
+        current_energy = (current_energy - hauler_drain).max(0.0);
 
         // Count active processes
         let mut active_count = 0;
@@ -44,10 +54,6 @@ pub fn sys_refinery(
 
         // Start new processes
         let mut ore = resources[res_idx]; // Ore is at index 0
-
-        // Determine effective storage capacity (simplified, assuming ore is the main storage user)
-        // In TS, currentStorage tracks ore.
-        // batchSize = min(ore, max(10, capacity / slots))
 
         while active_count < refine_slots && ore > 0.0 && current_energy > 0.0 {
             let slot_target = refine_slots.max(1) as f32;
@@ -62,7 +68,7 @@ pub fn sys_refinery(
                     refinery_state[slot_offset] = 1.0; // Active
                     refinery_state[slot_offset + 1] = batch_size; // Amount
                     refinery_state[slot_offset + 2] = 0.0; // Progress
-                    refinery_state[slot_offset + 3] = 1.0; // Speed multiplier (default)
+                    refinery_state[slot_offset + 3] = 1.0 * production_speed_multiplier; // Speed multiplier
 
                     ore -= batch_size;
                     active_count += 1;
@@ -71,13 +77,12 @@ pub fn sys_refinery(
                 }
             }
             if !slot_found {
-                break; // Should not happen if active_count < refine_slots and MAX_REFINE_SLOTS is large enough
+                break;
             }
         }
         resources[res_idx] = ore;
 
         // Enforce min one refining / energy scaling
-        // TS: if energyFraction < 0.2, reduce speed.
         let energy_fraction = if energy_capacity > 0.0 {
             current_energy / energy_capacity
         } else {
@@ -92,23 +97,13 @@ pub fn sys_refinery(
         for s in 0..MAX_REFINE_SLOTS {
             let slot_offset = ref_idx + s * 4;
             if refinery_state[slot_offset] > 0.5 {
-                // Update speed multiplier based on energy
-                // TS: if low energy, first one gets reduced speed, others paused.
-                // This is tricky to map to "first one" without order.
-                // I'll assume slot index 0 is "first" or just iterate.
-                // But slots might be fragmented.
-                // I'll just apply to all for now, or try to match TS logic.
+                let mut speed_mult = 1.0 * production_speed_multiplier;
 
-                // Simplified logic: if low energy, all run at reduced speed?
-                // TS: activeRefines[0].speedMultiplier = ... others 0.
-                // This implies priority.
-
-                let mut speed_mult = 1.0;
                 if low_energy {
                     // Find if this is the "first" active slot
                     let is_first = (0..s).all(|prev| refinery_state[ref_idx + prev * 4] < 0.5);
                     if is_first {
-                        speed_mult = (energy_fraction * 2.0).max(0.1);
+                        speed_mult *= (energy_fraction * 2.0).max(0.1);
                     } else {
                         speed_mult = 0.0;
                     }
@@ -118,17 +113,9 @@ pub fn sys_refinery(
                 let amount = refinery_state[slot_offset + 1];
                 let mut progress = refinery_state[slot_offset + 2];
 
-                let drain = FACTORY_ENERGY_PER_REFINE * dt * speed_mult;
+                let drain = FACTORY_ENERGY_PER_REFINE * dt * speed_mult * energy_drain_multiplier;
                 let consumed = drain.min(current_energy);
                 current_energy = (current_energy - consumed).max(0.0);
-
-                // If we couldn't consume full energy, should we reduce speed further?
-                // TS logic: consumed = min(drain, energy).
-                // Then tickRefineProcess uses speed_mult.
-                // It doesn't check if energy was actually consumed?
-                // TS: working.energy = Math.max(0, working.energy - consumed);
-                // tickRefineProcess(working, process, dt);
-                // So yes, it runs even if energy ran out in this tick, but speed was set before.
 
                 let adjusted_dt = dt * speed_mult;
                 let prev_progress = progress;
@@ -138,10 +125,9 @@ pub fn sys_refinery(
                 refinery_state[slot_offset + 2] = progress;
 
                 let refined_this_tick = amount * delta;
-                bars_produced += refined_this_tick;
+                bars_produced += refined_this_tick * refinery_yield_multiplier;
 
                 if progress >= 1.0 {
-                    // Complete
                     refinery_state[slot_offset] = 0.0;
                     refinery_state[slot_offset + 1] = 0.0;
                     refinery_state[slot_offset + 2] = 0.0;
@@ -168,10 +154,22 @@ mod tests {
             0.0, 0.0, 0.0, 0.0, 0.0, // Factory 1
         ];
         let mut refinery_state = vec![0.0; MAX_REFINE_SLOTS * 4];
+        let haulers_assigned = vec![0.0];
         let mut energy = vec![100.0];
         let dt = 1.0;
 
-        sys_refinery(&mut resources, &upgrades, &mut refinery_state, &mut energy, dt);
+        sys_refinery(
+            &mut resources,
+            &upgrades,
+            &mut refinery_state,
+            &haulers_assigned,
+            &mut energy,
+            dt,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+        );
 
         // Should have started processes
         assert!(refinery_state[0] > 0.5); // Active
