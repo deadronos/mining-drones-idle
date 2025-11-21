@@ -235,10 +235,16 @@ impl GameState {
                  }
              }
 
-             let f_offset = layout.factories.positions.offset_bytes / 4 + owner_idx * 3;
-             let fx = f32::from_bits(data[f_offset]);
-             let fy = f32::from_bits(data[f_offset + 1]);
-             let fz = f32::from_bits(data[f_offset + 2]);
+             let mut fx = 0.0;
+             let mut fy = 0.0;
+             let mut fz = 0.0;
+
+             if layout.factories.positions.length > 0 {
+                 let f_offset = layout.factories.positions.offset_bytes / 4 + owner_idx * 3;
+                 fx = f32::from_bits(data[f_offset]);
+                 fy = f32::from_bits(data[f_offset + 1]);
+                 fz = f32::from_bits(data[f_offset + 2]);
+             }
 
              let offset = layout.drones.positions.offset_bytes / 4 + index * 3;
              data[offset] = fx.to_bits();

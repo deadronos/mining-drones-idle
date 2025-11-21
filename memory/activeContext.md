@@ -26,6 +26,9 @@
   - Implemented `checkParity` and Shadow Mode.
   - Created `RustDrones` for direct WASM visualization.
   - Updated `Scene.tsx` to support engine switching.
+  - **Fixed Parity Mismatch**: Fixed `sys_drone_ai` ignoring `RETURNING` state, causing drones to get stuck and not unload ore.
+  - Fixed `api.rs` crash when factory count is 0.
+  - Fixed `sys_power` unit test.
 - **Next Steps**:
   - Run the game and verify "Shadow Mode" logs.
   - Fix any divergences found.

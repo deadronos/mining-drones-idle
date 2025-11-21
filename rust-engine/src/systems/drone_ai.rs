@@ -123,9 +123,9 @@ pub fn sys_drone_ai(
                     }
                 }
             }
-        } else if state == DRONE_STATE_MINING {
+        } else if state == DRONE_STATE_MINING || state == DRONE_STATE_RETURNING {
             let cargo = drone_cargo[drone_idx];
-            if cargo >= capacity {
+            if state == DRONE_STATE_RETURNING || cargo >= capacity {
                 // Full, return to factory
                 // Find nearest factory
                 // For now, just pick first factory
@@ -186,4 +186,73 @@ fn distance(a: [f32; 3], b: [f32; 3]) -> f32 {
     let dy = a[1] - b[1];
     let dz = a[2] - b[2];
     (dx * dx + dy * dy + dz * dz).sqrt()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::schema::Resources;
+
+    #[test]
+    fn test_drone_ai_returning_state() {
+        let mut drone_flights = vec![];
+        let mut drone_states = vec![DRONE_STATE_RETURNING];
+        let drone_cargo = vec![10.0];
+        let drone_positions = vec![10.0, 0.0, 0.0];
+        let drone_battery = vec![100.0];
+        let mut drone_max_battery = vec![100.0];
+        let mut drone_capacity = vec![40.0];
+        let mut drone_mining_rate = vec![1.0];
+        let mut drone_target_asteroid_index = vec![-1.0];
+        let mut drone_target_factory_index = vec![-1.0];
+
+        let mut drone_id_to_index = BTreeMap::new();
+        drone_id_to_index.insert("d1".to_string(), 0);
+
+        let mut factory_id_to_index = BTreeMap::new();
+        factory_id_to_index.insert("f1".to_string(), 0);
+
+        let asteroid_id_to_index = BTreeMap::new();
+
+        let factory_positions = vec![0.0, 0.0, 0.0];
+        let asteroid_positions = vec![];
+        let asteroid_ore = vec![];
+
+        let mut rng = Mulberry32::new(1);
+        let modifiers = crate::modifiers::get_resource_modifiers(&Resources {
+            ore: 0.0,
+            ice: 0.0,
+            metals: 0.0,
+            crystals: 0.0,
+            organics: 0.0,
+            bars: 0.0,
+            energy: 0.0,
+            credits: 0.0,
+        }, 0);
+
+        sys_drone_ai(
+            &mut drone_flights,
+            &mut drone_states,
+            &drone_cargo,
+            &drone_positions,
+            &drone_battery,
+            &mut drone_max_battery,
+            &mut drone_capacity,
+            &mut drone_mining_rate,
+            &mut drone_target_asteroid_index,
+            &mut drone_target_factory_index,
+            &drone_id_to_index,
+            &factory_id_to_index,
+            &asteroid_id_to_index,
+            &factory_positions,
+            &asteroid_positions,
+            &asteroid_ore,
+            &mut rng,
+            &modifiers,
+        );
+
+        assert_eq!(drone_flights.len(), 1);
+        assert_eq!(drone_flights[0].state, "returning");
+        assert_eq!(drone_flights[0].target_factory_id, Some("f1".to_string()));
+    }
 }

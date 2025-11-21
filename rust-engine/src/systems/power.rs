@@ -125,7 +125,7 @@ mod tests {
         let mut factory_energy = vec![0.0];
         let factory_max_energy = vec![100.0];
         let factory_upgrades = vec![0.0, 0.0, 0.0, 0.0, 0.0];
-        let mut drone_battery = vec![0.0];
+        let mut drone_battery = vec![24.0];
         let drone_max_battery = vec![24.0];
         let drone_states = vec![0.0];
         let drone_owner_factory_index = vec![0.0];

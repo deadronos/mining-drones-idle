@@ -4,6 +4,11 @@
 
 ## Recent Achievements
 
+- **2025-11-21**: Fixed Parity Mismatch in Rust Simulation (TASK042).
+  - Identified and fixed a bug in `sys_drone_ai` where drones in `RETURNING` state were ignored, causing them to get stuck and not unload ore.
+  - Fixed a potential crash in `api.rs` when factory count is 0.
+  - Fixed a failing unit test in `sys_power`.
+  - Verified all Rust tests pass and built the WASM module.
 - **2025-11-20**: Started TASK042 (Rust Integration).
   - Configured Vite for WASM support.
   - Implemented `useRustEngine` hook to load and initialize the Rust simulation.
