@@ -63,7 +63,17 @@ export interface OfflineResult {
 export type SimulationCommand =
   | { type: 'UpdateResources'; payload: StoreSnapshot['resources'] }
   | { type: 'UpdateModules'; payload: StoreSnapshot['modules'] }
-  | { type: 'SetSettings'; payload: Partial<StoreSnapshot['settings']> };
+  | { type: 'SetSettings'; payload: Partial<StoreSnapshot['settings']> }
+  | { type: 'BuyModule'; payload: { moduleType: string; factoryId?: string } }
+  | { type: 'DoPrestige'; payload?: undefined }
+  | {
+      type: 'PurchaseFactoryUpgrade';
+      payload: { factoryId: string; upgradeType: string; costVariant?: string };
+    }
+  | { type: 'AssignHauler'; payload: { factoryId: string; count: number } }
+  | { type: 'ImportPayload'; payload: { snapshotJson: string } }
+  | { type: 'SpawnDrone'; payload: { factoryId: string } }
+  | { type: 'RecycleAsteroid'; payload: { asteroidId: string } };
 
 // Interface for the wasm-bindgen generated module exports
 export interface WasmSimExports {

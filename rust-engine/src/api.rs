@@ -23,10 +23,58 @@ pub struct OfflineResult {
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "type", content = "payload")]
 pub enum SimulationCommand {
+    // Existing commands for direct state updates
     UpdateResources(Resources),
     UpdateModules(Modules),
     SetSettings(StoreSettings),
+
+    // Module purchasing - deducts bars and increments module level
+    BuyModule {
+        #[serde(rename = "moduleType")]
+        module_type: String,
+        #[serde(rename = "factoryId")]
+        factory_id: Option<String>,
+    },
+
+    // Prestige reset - converts bars to cores, resets progress
+    DoPrestige,
+
+    // Factory upgrade purchasing
+    PurchaseFactoryUpgrade {
+        #[serde(rename = "factoryId")]
+        factory_id: String,
+        #[serde(rename = "upgradeType")]
+        upgrade_type: String,
+        #[serde(rename = "costVariant")]
+        cost_variant: Option<String>,
+    },
+
+    // Hauler assignment changes
+    AssignHauler {
+        #[serde(rename = "factoryId")]
+        factory_id: String,
+        count: i32,
+    },
+
+    // Import a full snapshot payload (for save loading)
+    ImportPayload {
+        #[serde(rename = "snapshotJson")]
+        snapshot_json: String,
+    },
+
+    // Spawn a new drone at a factory
+    SpawnDrone {
+        #[serde(rename = "factoryId")]
+        factory_id: String,
+    },
+
+    // Recycle/deplete an asteroid
+    RecycleAsteroid {
+        #[serde(rename = "asteroidId")]
+        asteroid_id: String,
+    },
 }
 
 pub struct GameState {
@@ -594,6 +642,31 @@ impl GameState {
             SimulationCommand::SetSettings(settings) => {
                 self.snapshot.settings = settings;
             }
+            SimulationCommand::BuyModule { module_type, factory_id: _ } => {
+                self.handle_buy_module(&module_type)?;
+            }
+            SimulationCommand::DoPrestige => {
+                self.handle_prestige()?;
+            }
+            SimulationCommand::PurchaseFactoryUpgrade {
+                factory_id,
+                upgrade_type,
+                cost_variant,
+            } => {
+                self.handle_factory_upgrade(&factory_id, &upgrade_type, cost_variant.as_deref())?;
+            }
+            SimulationCommand::AssignHauler { factory_id, count } => {
+                self.handle_assign_hauler(&factory_id, count)?;
+            }
+            SimulationCommand::ImportPayload { snapshot_json } => {
+                self.load_snapshot_str(&snapshot_json)?;
+            }
+            SimulationCommand::SpawnDrone { factory_id: _ } => {
+                // Drone spawning is handled by TypeScript ECS for now
+            }
+            SimulationCommand::RecycleAsteroid { asteroid_id } => {
+                self.handle_recycle_asteroid(&asteroid_id)?;
+            }
         }
         Ok(())
     }
@@ -670,6 +743,278 @@ impl GameState {
     pub fn get_factory_refinery_state_mut(&mut self) -> &mut [f32] {
         self.layout.factories.refinery_state.as_f32_slice_mut(&mut self.data)
             .expect("factory refinery_state buffer should be valid")
+    }
+
+    // Command handlers
+
+    fn handle_buy_module(&mut self, module_type: &str) -> Result<(), SimulationError> {
+        use crate::constants::UPGRADE_GROWTH;
+
+        let (current_level, base_cost) = match module_type {
+            "droneBay" => (self.snapshot.modules.drone_bay, 4.0),
+            "refinery" => (self.snapshot.modules.refinery, 8.0),
+            "storage" => (self.snapshot.modules.storage, 3.0),
+            "solar" => (self.snapshot.modules.solar, 4.0),
+            "scanner" => (self.snapshot.modules.scanner, 12.0),
+            "haulerDepot" => (self.snapshot.modules.hauler_depot, 60.0),
+            "logisticsHub" => (self.snapshot.modules.logistics_hub, 80.0),
+            "routingProtocol" => (self.snapshot.modules.routing_protocol, 100.0),
+            _ => return Ok(()), // Unknown module, ignore
+        };
+
+        let cost = base_cost * UPGRADE_GROWTH.powi(current_level);
+        if self.snapshot.resources.bars < cost {
+            return Ok(()); // Not enough bars
+        }
+
+        self.snapshot.resources.bars -= cost;
+        match module_type {
+            "droneBay" => self.snapshot.modules.drone_bay += 1,
+            "refinery" => self.snapshot.modules.refinery += 1,
+            "storage" => self.snapshot.modules.storage += 1,
+            "solar" => self.snapshot.modules.solar += 1,
+            "scanner" => self.snapshot.modules.scanner += 1,
+            "haulerDepot" => self.snapshot.modules.hauler_depot += 1,
+            "logisticsHub" => self.snapshot.modules.logistics_hub += 1,
+            "routingProtocol" => self.snapshot.modules.routing_protocol += 1,
+            _ => {}
+        }
+        Ok(())
+    }
+
+    fn handle_prestige(&mut self) -> Result<(), SimulationError> {
+        const PRESTIGE_THRESHOLD: f32 = 5000.0;
+
+        if self.snapshot.resources.bars < PRESTIGE_THRESHOLD {
+            return Ok(());
+        }
+
+        // Compute prestige gain: floor(log10(bars / threshold)) + 1
+        let ratio = self.snapshot.resources.bars / PRESTIGE_THRESHOLD;
+        let gain = (ratio.log10().floor() as i32).max(0) + 1;
+
+        self.snapshot.prestige.cores += gain;
+
+        // Reset resources to initial state
+        self.snapshot.resources = Resources {
+            ore: 0.0,
+            ice: 0.0,
+            metals: 0.0,
+            crystals: 0.0,
+            organics: 0.0,
+            bars: 0.0,
+            energy: crate::constants::BASE_ENERGY_CAP,
+            credits: 0.0,
+        };
+
+        // Reset modules to initial state
+        self.snapshot.modules = Modules {
+            drone_bay: 1,
+            refinery: 0,
+            storage: 0,
+            solar: 0,
+            scanner: 0,
+            hauler_depot: 0,
+            logistics_hub: 0,
+            routing_protocol: 0,
+        };
+
+        // Clear drone flights and owners
+        self.snapshot.drone_flights.clear();
+        self.snapshot.drone_owners.clear();
+
+        // Note: Factory reset is handled by TypeScript layer since
+        // factory creation involves position randomization
+
+        Ok(())
+    }
+
+    fn handle_factory_upgrade(
+        &mut self,
+        factory_id: &str,
+        upgrade_type: &str,
+        cost_variant: Option<&str>,
+    ) -> Result<(), SimulationError> {
+        use crate::constants::FACTORY_UPGRADE_GROWTH;
+
+        let factory_idx = match self.factory_id_to_index.get(factory_id) {
+            Some(&idx) => idx,
+            None => return Ok(()), // Factory not found
+        };
+
+        if factory_idx >= self.snapshot.factories.len() {
+            return Ok(());
+        }
+
+        let factory = &self.snapshot.factories[factory_idx];
+        let current_level = match upgrade_type {
+            "docking" => factory.upgrades.docking,
+            "refine" => factory.upgrades.refine,
+            "storage" => factory.upgrades.storage,
+            "energy" => factory.upgrades.energy,
+            "solar" => factory.upgrades.solar,
+            _ => return Ok(()), // Unknown upgrade
+        };
+
+        // Default to bars cost
+        let base_cost = 13.0;
+        let cost = base_cost * FACTORY_UPGRADE_GROWTH.powi(current_level);
+
+        // Check which resource to use based on cost variant
+        let can_afford = match cost_variant {
+            Some("metals") => {
+                let metal_cost = 50.0 * FACTORY_UPGRADE_GROWTH.powi(current_level);
+                factory.resources.metals >= metal_cost
+            }
+            Some("organics") => {
+                let organic_cost = match upgrade_type {
+                    "refine" => 25.0 * FACTORY_UPGRADE_GROWTH.powi(current_level),
+                    "storage" => 20.0 * FACTORY_UPGRADE_GROWTH.powi(current_level),
+                    _ => return Ok(()),
+                };
+                factory.resources.organics >= organic_cost
+            }
+            Some("ice") => {
+                let ice_cost = 30.0 * FACTORY_UPGRADE_GROWTH.powi(current_level);
+                factory.resources.ice >= ice_cost
+            }
+            Some("crystals") => {
+                let crystal_cost = 25.0 * FACTORY_UPGRADE_GROWTH.powi(current_level);
+                factory.resources.crystals >= crystal_cost
+            }
+            _ => factory.resources.bars >= cost,
+        };
+
+        if !can_afford {
+            return Ok(());
+        }
+
+        // Deduct cost and apply upgrade
+        let factory = &mut self.snapshot.factories[factory_idx];
+
+        match cost_variant {
+            Some("metals") => {
+                let metal_cost = 50.0 * FACTORY_UPGRADE_GROWTH.powi(current_level);
+                factory.resources.metals -= metal_cost;
+            }
+            Some("organics") => {
+                let organic_cost = match upgrade_type {
+                    "refine" => 25.0 * FACTORY_UPGRADE_GROWTH.powi(current_level),
+                    "storage" => 20.0 * FACTORY_UPGRADE_GROWTH.powi(current_level),
+                    _ => return Ok(()),
+                };
+                factory.resources.organics -= organic_cost;
+            }
+            Some("ice") => {
+                let ice_cost = 30.0 * FACTORY_UPGRADE_GROWTH.powi(current_level);
+                factory.resources.ice -= ice_cost;
+            }
+            Some("crystals") => {
+                let crystal_cost = 25.0 * FACTORY_UPGRADE_GROWTH.powi(current_level);
+                factory.resources.crystals -= crystal_cost;
+            }
+            _ => {
+                factory.resources.bars -= cost;
+            }
+        }
+
+        // Apply the upgrade effect
+        match upgrade_type {
+            "docking" => {
+                factory.docking_capacity += 1;
+                factory.upgrades.docking += 1;
+            }
+            "refine" => {
+                factory.refine_slots += 1;
+                factory.upgrades.refine += 1;
+            }
+            "storage" => {
+                factory.storage_capacity += 150.0;
+                factory.upgrades.storage += 1;
+            }
+            "energy" => {
+                factory.energy_capacity += 30.0;
+                factory.upgrades.energy += 1;
+            }
+            "solar" => {
+                factory.upgrades.solar += 1;
+                factory.energy_capacity += crate::constants::FACTORY_SOLAR_MAX_ENERGY_PER_LEVEL;
+            }
+            _ => {}
+        }
+
+        // Update buffer data
+        self.sync_factory_to_buffer(factory_idx);
+
+        Ok(())
+    }
+
+    fn handle_assign_hauler(&mut self, factory_id: &str, count: i32) -> Result<(), SimulationError> {
+        let factory_idx = match self.factory_id_to_index.get(factory_id) {
+            Some(&idx) => idx,
+            None => return Ok(()),
+        };
+
+        if factory_idx >= self.snapshot.factories.len() {
+            return Ok(());
+        }
+
+        let factory = &mut self.snapshot.factories[factory_idx];
+        let current = factory.haulers_assigned.unwrap_or(0);
+        let new_count = (current + count).max(0);
+        factory.haulers_assigned = Some(new_count);
+
+        // Update buffer
+        let offset = self.layout.factories.haulers_assigned.offset_bytes / 4 + factory_idx;
+        self.data[offset] = (new_count as f32).to_bits();
+
+        Ok(())
+    }
+
+    fn handle_recycle_asteroid(&mut self, asteroid_id: &str) -> Result<(), SimulationError> {
+        if let Some(&idx) = self.asteroid_id_to_index.get(asteroid_id) {
+            // Set ore remaining to 0
+            let offset = self.layout.asteroids.ore_remaining.offset_bytes / 4 + idx;
+            self.data[offset] = 0.0f32.to_bits();
+        }
+        Ok(())
+    }
+
+    fn sync_factory_to_buffer(&mut self, factory_idx: usize) {
+        if factory_idx >= self.snapshot.factories.len() {
+            return;
+        }
+
+        let factory = &self.snapshot.factories[factory_idx];
+
+        // Sync resources
+        let offset = self.layout.factories.resources.offset_bytes / 4 + factory_idx * 7;
+        self.data[offset] = factory.resources.ore.to_bits();
+        self.data[offset + 1] = factory.resources.ice.to_bits();
+        self.data[offset + 2] = factory.resources.metals.to_bits();
+        self.data[offset + 3] = factory.resources.crystals.to_bits();
+        self.data[offset + 4] = factory.resources.organics.to_bits();
+        self.data[offset + 5] = factory.resources.bars.to_bits();
+        self.data[offset + 6] = factory.resources.credits.to_bits();
+
+        // Sync energy
+        let offset = self.layout.factories.energy.offset_bytes / 4 + factory_idx;
+        self.data[offset] = factory.energy.to_bits();
+
+        let offset = self.layout.factories.max_energy.offset_bytes / 4 + factory_idx;
+        self.data[offset] = factory.energy_capacity.to_bits();
+
+        // Sync upgrades
+        let offset = self.layout.factories.upgrades.offset_bytes / 4 + factory_idx * 5;
+        self.data[offset] = (factory.upgrades.docking as f32).to_bits();
+        self.data[offset + 1] = (factory.upgrades.refine as f32).to_bits();
+        self.data[offset + 2] = (factory.upgrades.storage as f32).to_bits();
+        self.data[offset + 3] = (factory.upgrades.energy as f32).to_bits();
+        self.data[offset + 4] = (factory.upgrades.solar as f32).to_bits();
+
+        // Sync haulers
+        let offset = self.layout.factories.haulers_assigned.offset_bytes / 4 + factory_idx;
+        self.data[offset] = (factory.haulers_assigned.unwrap_or(0) as f32).to_bits();
     }
 }
 
