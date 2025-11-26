@@ -31,6 +31,7 @@ import {
   getSpecTechMaxLevel,
 } from '../sinks';
 import { mergeResourceDelta } from '@/lib/resourceMerging';
+import { getBridge, isBridgeReady } from '@/lib/rustBridgeRegistry';
 import { createDefaultFactories } from '../factory';
 import { generateSeed, deriveProcessSequence } from '../utils';
 
@@ -88,18 +89,39 @@ export const createResourceSlice: StateCreator<
   },
 
   buy: (id) => {
-    set((state) => {
+    const state = get();
+
+    // Route through Rust bridge when enabled and ready
+    if (state.settings.useRustSim && isBridgeReady()) {
+      const bridge = getBridge();
+      if (bridge) {
+        bridge.applyCommand({
+          type: 'BuyModule',
+          payload: { moduleType: id },
+        });
+        // Sync state from Rust snapshot
+        const snapshot = bridge.exportSnapshot();
+        set({
+          resources: snapshot.resources,
+          modules: snapshot.modules,
+        });
+        return;
+      }
+    }
+
+    // Fallback to TypeScript logic
+    set((currentState) => {
       const definition = moduleDefinitions[id as keyof typeof moduleDefinitions];
       if (!definition) {
-        return state;
+        return currentState;
       }
-      const currentLevel = state.modules[id as keyof Modules] ?? 0;
+      const currentLevel = currentState.modules[id as keyof Modules] ?? 0;
       const cost = costForLevel(definition.baseCost, currentLevel);
-      if (state.resources.bars < cost) {
-        return state;
+      if (currentState.resources.bars < cost) {
+        return currentState;
       }
-      const resources: Resources = { ...state.resources, bars: state.resources.bars - cost };
-      const modules: Modules = { ...state.modules, [id as keyof Modules]: currentLevel + 1 };
+      const resources: Resources = { ...currentState.resources, bars: currentState.resources.bars - cost };
+      const modules: Modules = { ...currentState.modules, [id as keyof Modules]: currentLevel + 1 };
       return { resources, modules };
     });
   },
@@ -185,12 +207,51 @@ export const createResourceSlice: StateCreator<
   },
 
   doPrestige: () => {
-    set((state) => {
-      if (state.resources.bars < PRESTIGE_THRESHOLD) {
-        return state;
+    const state = get();
+
+    // Route through Rust bridge when enabled and ready
+    if (state.settings.useRustSim && isBridgeReady()) {
+      const bridge = getBridge();
+      if (bridge) {
+        bridge.applyCommand({ type: 'DoPrestige', payload: undefined });
+        // Sync state from Rust snapshot
+        const snapshot = bridge.exportSnapshot();
+        // Factory creation is handled by TS since it requires position randomization
+        const factories = createDefaultFactories();
+        const selectedFactoryId = factories[0]?.id ?? null;
+        set({
+          prestige: snapshot.prestige,
+          resources: { ...initialResources, energy: BASE_ENERGY_CAP },
+          modules: { ...initialModules },
+          specTechs: { ...initialSpecTechs },
+          specTechSpent: { ...initialSpecTechSpent },
+          prestigeInvestments: { ...state.prestigeInvestments },
+          droneFlights: [],
+          droneOwners: {},
+          factories,
+          logisticsQueues: { pendingTransfers: [] },
+          logisticsTick: 0,
+          gameTime: 0,
+          factoryProcessSequence: deriveProcessSequence(factories),
+          factoryRoundRobin: 0,
+          factoryAutofitSequence: 0,
+          cameraResetSequence: 0,
+          selectedAsteroidId: null,
+          selectedFactoryId,
+          rngSeed: generateSeed(),
+          save: { ...initialSave, lastSave: Date.now() },
+        });
+        return;
       }
-      const gain = computePrestigeGain(state.resources.bars);
-      const prestige = { cores: state.prestige.cores + gain };
+    }
+
+    // Fallback to TypeScript logic
+    set((currentState) => {
+      if (currentState.resources.bars < PRESTIGE_THRESHOLD) {
+        return currentState;
+      }
+      const gain = computePrestigeGain(currentState.resources.bars);
+      const prestige = { cores: currentState.prestige.cores + gain };
       const factories = createDefaultFactories();
       const selectedFactoryId = factories[0]?.id ?? null;
       return {
@@ -199,7 +260,7 @@ export const createResourceSlice: StateCreator<
         modules: { ...initialModules },
         specTechs: { ...initialSpecTechs },
         specTechSpent: { ...initialSpecTechSpent },
-        prestigeInvestments: { ...state.prestigeInvestments },
+        prestigeInvestments: { ...currentState.prestigeInvestments },
         droneFlights: [],
         droneOwners: {},
         factories,

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import type { RustSimBridge } from '../lib/wasmSimBridge';
 import { loadWasmBridge } from '../lib/wasmLoader';
+import { registerBridge, unregisterBridge } from '../lib/rustBridgeRegistry';
 import { useStore } from '../state/store';
 import { serializeStore } from '../state/serialization/store';
 import { gameWorld } from '@/ecs/world';
@@ -87,6 +88,9 @@ export function useRustEngine(shouldInitialize: boolean): UseRustEngineResult {
     setFallbackReason(result.fallbackReason);
     setIsLoaded(result.bridge !== null);
 
+    // Register the bridge globally for store actions
+    registerBridge(result.bridge);
+
     if (result.bridge) {
       console.log('[WASM] Rust engine loaded successfully');
     }
@@ -94,6 +98,7 @@ export function useRustEngine(shouldInitialize: boolean): UseRustEngineResult {
 
   const reinitialize = useCallback(async () => {
     if (bridge) {
+      unregisterBridge();
       bridge.dispose();
       setBridge(null);
     }
@@ -124,6 +129,7 @@ export function useRustEngine(shouldInitialize: boolean): UseRustEngineResult {
   useEffect(() => {
     return () => {
       if (bridge) {
+        unregisterBridge();
         bridge.dispose();
       }
     };
