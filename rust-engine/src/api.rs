@@ -227,10 +227,11 @@ impl GameState {
 
         for (drone_id, &index) in drone_map {
              let mut owner_idx = 0;
-             if let Some(Some(factory_id)) = self.snapshot.drone_owners.get(drone_id)
-                 && let Some(&idx) = factory_map.get(factory_id) {
+             if let Some(Some(factory_id)) = self.snapshot.drone_owners.get(drone_id) {
+                 if let Some(&idx) = factory_map.get(factory_id) {
                      owner_idx = idx;
                  }
+             }
 
              let mut fx = 0.0;
              let mut fy = 0.0;
@@ -294,26 +295,29 @@ impl GameState {
 
                 let offset = layout.drones.target_asteroid_index.offset_bytes / 4 + index;
                 let mut target_idx = -1.0;
-                if let Some(target_id) = &flight.target_asteroid_id
-                     && let Some(&idx) = asteroid_map.get(target_id) {
-                         target_idx = idx as f32;
-                     }
+                if let Some(target_id) = &flight.target_asteroid_id {
+                    if let Some(&idx) = asteroid_map.get(target_id) {
+                        target_idx = idx as f32;
+                    }
+                }
                 data[offset] = target_idx.to_bits();
 
                 let offset = layout.drones.target_factory_index.offset_bytes / 4 + index;
                 let mut target_idx = -1.0;
-                if let Some(target_id) = &flight.target_factory_id
-                     && let Some(&idx) = factory_map.get(target_id) {
-                         target_idx = idx as f32;
-                     }
+                if let Some(target_id) = &flight.target_factory_id {
+                    if let Some(&idx) = factory_map.get(target_id) {
+                        target_idx = idx as f32;
+                    }
+                }
                 data[offset] = target_idx.to_bits();
 
                 let offset = layout.drones.owner_factory_index.offset_bytes / 4 + index;
                 let mut owner_idx = -1.0;
-                if let Some(owner_id) = &flight.owner_factory_id
-                     && let Some(&idx) = factory_map.get(owner_id) {
-                         owner_idx = idx as f32;
-                     }
+                if let Some(owner_id) = &flight.owner_factory_id {
+                    if let Some(&idx) = factory_map.get(owner_id) {
+                        owner_idx = idx as f32;
+                    }
+                }
                 data[offset] = owner_idx.to_bits();
 
                 if let Some(profile) = &flight.cargo_profile {
@@ -330,15 +334,16 @@ impl GameState {
         // Initialize asteroids
         if let Some(asteroids) = self.snapshot.extra.get("asteroids").and_then(|v| v.as_array()) {
             for asteroid in asteroids {
-                if let Some(id) = asteroid.get("id").and_then(|v| v.as_str())
-                    && let Some(&index) = asteroid_map.get(id) {
-                        if let Some(pos) = asteroid.get("position").and_then(|v| v.as_array())
-                            && pos.len() >= 3 {
+                if let Some(id) = asteroid.get("id").and_then(|v| v.as_str()) {
+                    if let Some(&index) = asteroid_map.get(id) {
+                        if let Some(pos) = asteroid.get("position").and_then(|v| v.as_array()) {
+                            if pos.len() >= 3 {
                                 let offset = layout.asteroids.positions.offset_bytes / 4 + index * 3;
                                 data[offset] = (pos[0].as_f64().unwrap_or(0.0) as f32).to_bits();
                                 data[offset + 1] = (pos[1].as_f64().unwrap_or(0.0) as f32).to_bits();
                                 data[offset + 2] = (pos[2].as_f64().unwrap_or(0.0) as f32).to_bits();
                             }
+                        }
 
                         if let Some(ore) = asteroid.get("oreRemaining").and_then(|v| v.as_f64()) {
                             let offset = layout.asteroids.ore_remaining.offset_bytes / 4 + index;
@@ -374,6 +379,7 @@ impl GameState {
                             data[base_offset + 4] = (0.0f32).to_bits();
                         }
                     }
+                }
             }
         }
     }
@@ -395,10 +401,14 @@ impl GameState {
         let modifiers = get_resource_modifiers(&self.snapshot.resources, self.snapshot.prestige.cores);
         let sink_bonuses = crate::sinks::get_sink_bonuses(&self.snapshot);
 
+        // SAFETY: All buffer sections are validated during layout planning.
+        // The unsafe helper creates non-overlapping slices for each system call.
+        // This is necessary because Rust's borrow checker cannot verify that
+        // different BufferSections point to non-overlapping memory regions.
         unsafe {
             let data_ptr = self.data.as_mut_ptr();
 
-            // Helper to get slice
+            // Encapsulated helper to get mutable f32 slice from buffer section
             let get_slice_mut = |section: &crate::buffers::BufferSection| -> &mut [f32] {
                 let offset_u32 = section.offset_bytes / 4;
                 let ptr = data_ptr.add(offset_u32) as *mut f32;
@@ -618,66 +628,48 @@ impl GameState {
     }
 
     pub fn get_drone_cargo_mut(&mut self) -> &mut [f32] {
-        let offset = self.layout.drones.cargo.offset_bytes / 4;
-        let length = self.layout.drones.cargo.length;
-        let slice = &mut self.data[offset..offset + length];
-        unsafe { std::slice::from_raw_parts_mut(slice.as_mut_ptr() as *mut f32, length) }
+        self.layout.drones.cargo.as_f32_slice_mut(&mut self.data)
+            .expect("drone cargo buffer should be valid")
     }
 
     pub fn get_drone_battery_mut(&mut self) -> &mut [f32] {
-        let offset = self.layout.drones.battery.offset_bytes / 4;
-        let length = self.layout.drones.battery.length;
-        let slice = &mut self.data[offset..offset + length];
-        unsafe { std::slice::from_raw_parts_mut(slice.as_mut_ptr() as *mut f32, length) }
+        self.layout.drones.battery.as_f32_slice_mut(&mut self.data)
+            .expect("drone battery buffer should be valid")
     }
 
     pub fn get_asteroid_max_ore_mut(&mut self) -> &mut [f32] {
-        let offset = self.layout.asteroids.max_ore.offset_bytes / 4;
-        let length = self.layout.asteroids.max_ore.length;
-        let slice = &mut self.data[offset..offset + length];
-        unsafe { std::slice::from_raw_parts_mut(slice.as_mut_ptr() as *mut f32, length) }
+        self.layout.asteroids.max_ore.as_f32_slice_mut(&mut self.data)
+            .expect("asteroid max_ore buffer should be valid")
     }
 
     pub fn get_asteroid_ore_remaining_mut(&mut self) -> &mut [f32] {
-        let offset = self.layout.asteroids.ore_remaining.offset_bytes / 4;
-        let length = self.layout.asteroids.ore_remaining.length;
-        let slice = &mut self.data[offset..offset + length];
-        unsafe { std::slice::from_raw_parts_mut(slice.as_mut_ptr() as *mut f32, length) }
+        self.layout.asteroids.ore_remaining.as_f32_slice_mut(&mut self.data)
+            .expect("asteroid ore_remaining buffer should be valid")
     }
 
     pub fn get_factory_resources_mut(&mut self) -> &mut [f32] {
-        let offset = self.layout.factories.resources.offset_bytes / 4;
-        let length = self.layout.factories.resources.length;
-        let slice = &mut self.data[offset..offset + length];
-        unsafe { std::slice::from_raw_parts_mut(slice.as_mut_ptr() as *mut f32, length) }
+        self.layout.factories.resources.as_f32_slice_mut(&mut self.data)
+            .expect("factory resources buffer should be valid")
     }
 
     pub fn get_factory_energy_mut(&mut self) -> &mut [f32] {
-        let offset = self.layout.factories.energy.offset_bytes / 4;
-        let length = self.layout.factories.energy.length;
-        let slice = &mut self.data[offset..offset + length];
-        unsafe { std::slice::from_raw_parts_mut(slice.as_mut_ptr() as *mut f32, length) }
+        self.layout.factories.energy.as_f32_slice_mut(&mut self.data)
+            .expect("factory energy buffer should be valid")
     }
 
     pub fn get_factory_max_energy_mut(&mut self) -> &mut [f32] {
-        let offset = self.layout.factories.max_energy.offset_bytes / 4;
-        let length = self.layout.factories.max_energy.length;
-        let slice = &mut self.data[offset..offset + length];
-        unsafe { std::slice::from_raw_parts_mut(slice.as_mut_ptr() as *mut f32, length) }
+        self.layout.factories.max_energy.as_f32_slice_mut(&mut self.data)
+            .expect("factory max_energy buffer should be valid")
     }
 
     pub fn get_factory_upgrades_mut(&mut self) -> &mut [f32] {
-        let offset = self.layout.factories.upgrades.offset_bytes / 4;
-        let length = self.layout.factories.upgrades.length;
-        let slice = &mut self.data[offset..offset + length];
-        unsafe { std::slice::from_raw_parts_mut(slice.as_mut_ptr() as *mut f32, length) }
+        self.layout.factories.upgrades.as_f32_slice_mut(&mut self.data)
+            .expect("factory upgrades buffer should be valid")
     }
 
     pub fn get_factory_refinery_state_mut(&mut self) -> &mut [f32] {
-        let offset = self.layout.factories.refinery_state.offset_bytes / 4;
-        let length = self.layout.factories.refinery_state.length;
-        let slice = &mut self.data[offset..offset + length];
-        unsafe { std::slice::from_raw_parts_mut(slice.as_mut_ptr() as *mut f32, length) }
+        self.layout.factories.refinery_state.as_f32_slice_mut(&mut self.data)
+            .expect("factory refinery_state buffer should be valid")
     }
 }
 

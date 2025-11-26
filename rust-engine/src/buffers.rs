@@ -19,6 +19,50 @@ impl BufferSection {
                 )
             })
     }
+
+    /// Safely get a mutable f32 slice from a u32 data buffer.
+    /// Returns None if the section would exceed the buffer bounds.
+    #[inline]
+    pub fn as_f32_slice_mut<'a>(&self, data: &'a mut [u32]) -> Option<&'a mut [f32]> {
+        let offset_u32 = self.offset_bytes / 4;
+        let end = offset_u32.checked_add(self.length)?;
+        if end > data.len() {
+            return None;
+        }
+        let slice = &mut data[offset_u32..end];
+        // SAFETY: f32 and u32 have identical size and alignment (4 bytes).
+        // The slice bounds have been validated above.
+        Some(bytemuck_cast_slice_mut(slice))
+    }
+
+    /// Safely get an immutable f32 slice from a u32 data buffer.
+    /// Returns None if the section would exceed the buffer bounds.
+    #[inline]
+    pub fn as_f32_slice<'a>(&self, data: &'a [u32]) -> Option<&'a [f32]> {
+        let offset_u32 = self.offset_bytes / 4;
+        let end = offset_u32.checked_add(self.length)?;
+        if end > data.len() {
+            return None;
+        }
+        let slice = &data[offset_u32..end];
+        Some(bytemuck_cast_slice(slice))
+    }
+}
+
+/// Cast a &mut [u32] to &mut [f32] safely.
+/// f32 and u32 have the same size (4 bytes) and alignment requirements.
+#[inline]
+fn bytemuck_cast_slice_mut(slice: &mut [u32]) -> &mut [f32] {
+    // SAFETY: u32 and f32 have identical size and alignment.
+    // This is equivalent to what bytemuck::cast_slice_mut does.
+    unsafe { std::slice::from_raw_parts_mut(slice.as_mut_ptr() as *mut f32, slice.len()) }
+}
+
+/// Cast a &[u32] to &[f32] safely.
+#[inline]
+fn bytemuck_cast_slice(slice: &[u32]) -> &[f32] {
+    // SAFETY: u32 and f32 have identical size and alignment.
+    unsafe { std::slice::from_raw_parts(slice.as_ptr() as *const f32, slice.len()) }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
