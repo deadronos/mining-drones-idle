@@ -1,0 +1,44 @@
+## Rust + WASM local development
+
+This project uses a small Rust engine (`rust-engine`) compiled to WebAssembly and emitted to `src/gen`.
+
+Quick setup (one-time):
+
+- Install Rust toolchain (see https://rustup.rs) — on macOS/Linux:
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+- On Windows use the installer at https://rustup.rs or package managers (e.g. `winget` / `choco`).
+
+- Install `cargo-watch` and the `wasm-pack` tool:
+
+```bash
+cargo install cargo-watch --locked
+cargo install wasm-pack
+```
+
+Start dev server with live WASM rebuilds:
+
+```bash
+npm ci
+npm run dev
+```
+
+What that does:
+
+- `dev` runs `concurrently` which starts `cargo watch` to rebuild the WASM into `src/gen` on Rust changes, and runs `vite` for the web dev server.
+- Generated files live in `src/gen` and are gitignored.
+
+If you prefer manual build:
+
+```bash
+npm run build:wasm
+npm run dev
+```
+
+Notes:
+
+- If you don't want to install `cargo-watch`, you can run `npm run build:wasm` manually when you change Rust code.
+- On CI we already install the Rust toolchain and build the WASM before building the site.

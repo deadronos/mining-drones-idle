@@ -210,6 +210,10 @@ export interface StoreSettings {
   showHaulerShips: boolean;
   /** Toggle visibility of the floating debug panel */
   showDebugPanel: boolean;
+  /** Enable the experimental Rust/WASM simulation engine */
+  useRustSim: boolean;
+  /** Run Rust simulation in background to verify parity */
+  shadowMode: boolean;
   performanceProfile: PerformanceProfile;
   inspectorCollapsed: boolean;
   metrics: {

@@ -196,6 +196,10 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
     updateSettings({ showDebugPanel: event.target.checked });
   };
 
+  const handleRustSimToggle: ChangeEventHandler<HTMLInputElement> = (event) => {
+    updateSettings({ useRustSim: event.target.checked });
+  };
+
   return (
     <div className="settings-backdrop" role="presentation">
       <div
@@ -215,7 +219,11 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
         </header>
         <div className="settings-content">
           <WarehousePrimerSection />
-          <DebugSettingsSection settings={settings} onToggle={handleDebugPanelToggle} />
+          <DebugSettingsSection
+            settings={settings}
+            onToggle={handleDebugPanelToggle}
+            onRustSimToggle={handleRustSimToggle}
+          />
           <PersistenceSettingsSection
             settings={settings}
             onAutosaveToggle={handleAutosaveToggle}

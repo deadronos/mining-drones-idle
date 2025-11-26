@@ -51,8 +51,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Install wasm-pack
+        uses: jetli/wasm-pack-action@v0.4.0
       - name: Install dependencies
         run: npm ci
+      - name: Build WASM
+        run: npm run build:wasm
       - name: Run unit tests (Vitest)
         run: npm test --silent
       - name: Upload vitest snapshots/logs on failure
