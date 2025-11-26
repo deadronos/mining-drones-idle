@@ -29,6 +29,7 @@ import { useRustEngine } from '@/hooks/useRustEngine';
 import { checkParity } from '@/lib/parityLogger';
 
 import { RustDrones } from '@/r3f/RustDrones';
+import { RustAsteroids } from '@/r3f/RustAsteroids';
 
 const FOG_COLOR = '#040713';
 const DEFAULT_FOG_RANGE = { near: 20, far: 90 } as const;
@@ -177,7 +178,7 @@ export const Scene = () => {
         <Stars radius={120} depth={60} count={4000} factor={4} fade speed={0.2} />
         <Warehouse />
         <Factory />
-        <Asteroids />
+        {useRustSim ? <RustAsteroids bridge={bridge} /> : <Asteroids />}
         {useRustSim ? <RustDrones bridge={bridge} /> : <Drones />}
         {showTrails ? <DroneTrails /> : null}
         {showHaulerShips ? <HaulerShips /> : <TransferLines />}
