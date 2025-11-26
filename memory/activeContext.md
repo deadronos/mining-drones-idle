@@ -4,6 +4,20 @@
 
 ## Active Tasks
 
+### ✅ **TASK045 – TypeScript WASM Bridge Implementation** (Just Completed)
+
+- **Goal**: Implement the TypeScript bridge layer with graceful fallback.
+- **Status**: Completed.
+- **Completed**:
+  - Extended `RustSimBridge` interface with full lifecycle: `init()`, `dispose()`, `isReady()`.
+  - Added simulation methods: `step()` returns `TickResult`, `applyCommand()`, `simulateOffline()`.
+  - Added snapshot methods: `exportSnapshot()`, `loadSnapshot()`.
+  - Updated buffer types to match Rust `buffers.rs` (14 drone, 4 asteroid, 9 factory sections).
+  - Created `src/lib/wasmLoader.ts` with WebAssembly feature detection and fallback.
+  - Updated `useRustEngine` hook with `reinitialize()` and proper cleanup.
+  - Created `useSimulationData` abstraction hook for TS/Rust data source switching.
+  - All 245 tests pass.
+
 ### 🔄 **TASK043 – Full Rust → TypeScript Parity Rewrite**
 
 - **Goal**: Replace Rust simulation skeleton with a 1:1 mapping of TS state, systems, and modifiers.
@@ -45,6 +59,19 @@
 
 ## Recent Completions
 
+✅ **Completed: TASK045 – TypeScript WASM Bridge Implementation**
+
+- Extended `RustSimBridge` interface with full lifecycle and snapshot methods.
+- Created `wasmLoader.ts` with WebAssembly feature detection and graceful fallback.
+- Created `useSimulationData` abstraction hook.
+- Updated `useRustEngine` with proper cleanup and reinitialize support.
+
+✅ **Completed: TASK044 – Rust Critical Fixes & WASM Build**
+
+- Fixed let-chain syntax errors (Rust 2024 feature in 2021 edition).
+- Added safe slice helper methods to BufferSection.
+- WASM build successful with wasm-pack.
+
 ✅ **Completed: TASK041 – Rust Simulation Systems & Logic Port**
 
 - Implemented core ECS systems in Rust: Movement, Mining, Power, Refinery.
@@ -58,7 +85,7 @@
 
 ## Next Steps
 
-1. Finalize Rust crate scaffolding, wasm-bindgen surface, and feature-flag plan before integrating with the store.
-2. Validate sparkline rendering performance under stress scenarios and document thresholds.
-3. Explore contextual data (aggregate deltas, projected throughput) to complement visual trends.
-4. Plan Playwright coverage once metrics UI stabilizes and evaluate throttled-profile acceptance.
+1. **TASK046** – Expand `SimulationCommand` enum to support `BuyModule`, `DoPrestige`, etc.
+2. **TASK047** – Store integration with feature flag routing commands through bridge.
+3. **TASK048** – Parity testing suite for RNG, step, and offline simulation.
+4. **TASK049** – Rendering integration to read positions from bridge when enabled.

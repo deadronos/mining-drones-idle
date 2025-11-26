@@ -1,96 +1,133 @@
-import { useEffect, useState } from 'react';
-import init, { WasmGameState } from '../gen/rust_engine';
-import { buildRustSimBridge, type RustSimBridge } from '../lib/wasmSimBridge';
+import { useEffect, useState, useCallback } from 'react';
+import type { RustSimBridge } from '../lib/wasmSimBridge';
+import { loadWasmBridge } from '../lib/wasmLoader';
 import { useStore } from '../state/store';
 import { serializeStore } from '../state/serialization/store';
 import { gameWorld } from '@/ecs/world';
 import type { StoreSnapshot, DroneFlightState } from '../state/types';
 
-export function useRustEngine(shouldInitialize: boolean) {
+export interface UseRustEngineResult {
+  bridge: RustSimBridge | null;
+  isLoaded: boolean;
+  error: Error | null;
+  fallbackReason: string | null;
+  reinitialize: () => Promise<void>;
+}
+
+/**
+ * React hook to manage Rust WASM simulation engine lifecycle.
+ * Provides graceful fallback to TypeScript ECS when WASM unavailable.
+ */
+export function useRustEngine(shouldInitialize: boolean): UseRustEngineResult {
   const [bridge, setBridge] = useState<RustSimBridge | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [fallbackReason, setFallbackReason] = useState<string | null>(null);
   const rngSeed = useStore((state) => state.rngSeed);
+
+  const buildSnapshot = useCallback((): StoreSnapshot & { extra: Record<string, unknown> } => {
+    const currentSnapshot = serializeStore(useStore.getState());
+
+    // Inject asteroid data from ECS
+    const asteroids = gameWorld.asteroidQuery.entities.map((entity) => ({
+      id: entity.id,
+      position: [entity.position.x, entity.position.y, entity.position.z],
+      oreRemaining: entity.oreRemaining,
+      maxOre: entity.oreRemaining,
+      resourceProfile: entity.resourceProfile ?? { ore: 1, ice: 0, metals: 0, crystals: 0, organics: 0 },
+    }));
+
+    // Inject drone data from ECS
+    const droneFlights = gameWorld.droneQuery.entities.map((entity) => ({
+      droneId: entity.id,
+      state: entity.state as DroneFlightState['state'],
+      targetAsteroidId: entity.targetId ?? null,
+      targetRegionId: entity.targetRegionId ?? null,
+      targetFactoryId: entity.targetFactoryId ?? null,
+      ownerFactoryId: entity.ownerFactoryId ?? null,
+      pathSeed: entity.flightSeed ?? 0,
+      cargo: entity.cargo ?? 0,
+      battery: entity.battery ?? 100,
+      maxBattery: entity.maxBattery ?? 100,
+      capacity: entity.capacity ?? 10,
+      miningRate: entity.miningRate ?? 1,
+      charging: entity.charging ?? false,
+      cargoProfile: entity.cargoProfile ?? { ore: 0, ice: 0, metals: 0, crystals: 0, organics: 0 },
+      travel: entity.travel
+        ? {
+            from: [entity.travel.from.x, entity.travel.from.y, entity.travel.from.z] as [number, number, number],
+            to: [entity.travel.to.x, entity.travel.to.y, entity.travel.to.z] as [number, number, number],
+            elapsed: entity.travel.elapsed,
+            duration: entity.travel.duration,
+            control: entity.travel.control
+              ? [entity.travel.control.x, entity.travel.control.y, entity.travel.control.z] as [number, number, number]
+              : undefined,
+          }
+        : {
+            from: [entity.position.x, entity.position.y, entity.position.z] as [number, number, number],
+            to: [entity.position.x, entity.position.y, entity.position.z] as [number, number, number],
+            elapsed: 0,
+            duration: 0,
+          },
+    }));
+
+    const snapshotWithExtra = currentSnapshot as StoreSnapshot & { extra: Record<string, unknown> };
+    snapshotWithExtra.extra = { asteroids };
+    snapshotWithExtra.droneFlights = droneFlights as DroneFlightState[];
+
+    return snapshotWithExtra;
+  }, []);
+
+  const initializeWasm = useCallback(async () => {
+    const snapshot = buildSnapshot();
+    const result = await loadWasmBridge(snapshot);
+
+    setBridge(result.bridge);
+    setError(result.error);
+    setFallbackReason(result.fallbackReason);
+    setIsLoaded(result.bridge !== null);
+
+    if (result.bridge) {
+      console.log('[WASM] Rust engine loaded successfully');
+    }
+  }, [buildSnapshot]);
+
+  const reinitialize = useCallback(async () => {
+    if (bridge) {
+      bridge.dispose();
+      setBridge(null);
+    }
+    setIsLoaded(false);
+    setError(null);
+    setFallbackReason(null);
+    await initializeWasm();
+  }, [bridge, initializeWasm]);
 
   useEffect(() => {
     if (!shouldInitialize) return;
 
     let mounted = true;
 
-    const loadWasm = async () => {
-      try {
-        const wasmModule = await init();
-
-        if (mounted) {
-          const exports = {
-            memory: wasmModule.memory,
-            WasmGameState: WasmGameState,
-          };
-
-          // Initialize with current store state
-          const currentSnapshot = serializeStore(useStore.getState());
-
-          // Inject asteroid data from ECS
-          const asteroids = gameWorld.asteroidQuery.entities.map((entity) => ({
-            id: entity.id,
-            position: [entity.position.x, entity.position.y, entity.position.z],
-            oreRemaining: entity.oreRemaining,
-            maxOre: entity.oreRemaining, // Assuming current is max for now, or we need to store max
-          }));
-
-          // Inject drone data from ECS to ensure parity with running simulation
-          const droneFlights = gameWorld.droneQuery.entities.map((entity) => ({
-            droneId: entity.id,
-            state: entity.state as any,
-            targetAsteroidId: entity.targetId ?? undefined,
-            targetRegionId: entity.targetRegionId ?? undefined,
-            targetFactoryId: entity.targetFactoryId ?? undefined,
-            pathSeed: entity.flightSeed ?? 0,
-            travel: entity.travel
-              ? {
-                  from: [entity.travel.from.x, entity.travel.from.y, entity.travel.from.z],
-                  to: [entity.travel.to.x, entity.travel.to.y, entity.travel.to.z],
-                  elapsed: entity.travel.elapsed,
-                  duration: entity.travel.duration,
-                  control: entity.travel.control
-                    ? [entity.travel.control.x, entity.travel.control.y, entity.travel.control.z]
-                    : undefined,
-                }
-              : {
-                  from: [entity.position.x, entity.position.y, entity.position.z],
-                  to: [entity.position.x, entity.position.y, entity.position.z],
-                  elapsed: 0,
-                  duration: 0,
-                },
-          }));
-
-          // We need to cast to extend the type because extra is not strictly typed in TS interface yet
-          const snapshotWithExtra = currentSnapshot as StoreSnapshot & { extra: Record<string, unknown> };
-          snapshotWithExtra.extra = {
-            asteroids,
-          };
-          // Override droneFlights with current ECS state
-          snapshotWithExtra.droneFlights = droneFlights as DroneFlightState[];
-
-          const newBridge = buildRustSimBridge(exports, snapshotWithExtra);
-          setBridge(newBridge);
-          setIsLoaded(true);
-          console.log('Rust engine loaded and initialized');
-        }
-      } catch (err) {
-        console.error('Failed to load WASM module:', err);
-        if (mounted) {
-          setError(err instanceof Error ? err : new Error('Unknown error loading WASM'));
-        }
-      }
+    const init = async () => {
+      if (!mounted) return;
+      await initializeWasm();
     };
 
-    void loadWasm();
+    void init();
 
     return () => {
       mounted = false;
     };
-  }, [shouldInitialize, rngSeed]);
+  }, [shouldInitialize, rngSeed, initializeWasm]);
 
-  return { bridge, isLoaded, error };
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (bridge) {
+        bridge.dispose();
+      }
+    };
+  }, [bridge]);
+
+  return { bridge, isLoaded, error, fallbackReason, reinitialize };
 }
