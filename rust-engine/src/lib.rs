@@ -1,3 +1,7 @@
+//! Core library for the Rust-based simulation engine.
+//! Provides game state management, memory layout planning for WASM interop,
+//! and simulation systems for movement, mining, and refining.
+
 pub mod api;
 pub mod buffers;
 pub mod constants;
