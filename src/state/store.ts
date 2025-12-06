@@ -141,6 +141,10 @@ export { createDefaultFactories } from './factory';
 /**
  * Main store creator that composes all slices and implements game loop orchestration.
  * Refactored into modular functions in src/state/store/ for better maintainability.
+ *
+ * @param set - Zustand set function.
+ * @param get - Zustand get function.
+ * @returns The complete store state definition.
  */
 const storeCreator: StateCreator<StoreState> = (set, get) => {
   const defaultFactories = createDefaultFactories();
@@ -376,9 +380,20 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
   };
 };
 
+/**
+ * Creates a vanilla (non-React) store instance.
+ * Useful for testing or usage outside of React components.
+ *
+ * @returns A fresh StoreState instance.
+ */
 export const createStoreInstance = () => createVanillaStore<StoreState>(storeCreator);
 
+/**
+ * The React hook for accessing the store.
+ */
 export const useStore = create<StoreState>()(storeCreator);
 
+/**
+ * Singleton API access to the store, useful for imperative updates.
+ */
 export const storeApi = useStore as unknown as StoreApiType;
-

@@ -7,6 +7,9 @@ import { FACTORY_CONFIG } from './config';
 
 /**
  * Returns the number of available refine slots.
+ *
+ * @param factory - The factory.
+ * @returns Number of free slots.
  */
 export const getAvailableRefineSlots = (factory: BuildableFactory): number =>
   Math.max(0, factory.refineSlots - factory.activeRefines.length);
@@ -14,6 +17,10 @@ export const getAvailableRefineSlots = (factory: BuildableFactory): number =>
 /**
  * Transfers ore from drone to factory storage.
  * Returns amount actually stored (capped by storage remaining).
+ *
+ * @param factory - The factory receiving the ore.
+ * @param amount - The amount of ore to transfer.
+ * @returns The actual amount accepted.
  */
 export const transferOreToFactory = (factory: BuildableFactory, amount: number): number => {
   const available = factory.storageCapacity - factory.resources.ore;
@@ -29,6 +36,12 @@ export const transferOreToFactory = (factory: BuildableFactory, amount: number):
 /**
  * Starts a refine process if conditions are met.
  * Returns the created RefineProcess or null if unable to start.
+ *
+ * @param factory - The factory to start refining in.
+ * @param oreType - The type of ore (e.g., 'ore').
+ * @param amount - The amount to refine.
+ * @param processId - Unique ID for the new process.
+ * @returns The new RefineProcess or null.
  */
 export const startRefineProcess = (
   factory: BuildableFactory,
@@ -64,6 +77,11 @@ export const startRefineProcess = (
  * Advances a refine process by dt seconds.
  * Returns the amount of refined output if completed (and removes from active).
  * Applies speedMultiplier to the time increment.
+ *
+ * @param factory - The factory owning the process.
+ * @param process - The refine process to tick.
+ * @param dt - Delta time in seconds.
+ * @returns The amount of refined product produced in this tick.
  */
 export const tickRefineProcess = (
   factory: BuildableFactory,
@@ -96,6 +114,11 @@ export const tickRefineProcess = (
  * Ensures at least one refine slot is allowed to run.
  * Under low energy, reduces speedMultiplier of active refines.
  * Returns true if at least one refine is active.
+ *
+ * @param factory - The factory.
+ * @param energyAvailable - Current available energy.
+ * @param energyCapacity - Maximum energy capacity.
+ * @returns True if any refining is active.
  */
 export const enforceMinOneRefining = (
   factory: BuildableFactory,

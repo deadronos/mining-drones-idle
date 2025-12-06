@@ -37,6 +37,14 @@ const PARITY_CHECK_INTERVAL = 60; // Check every 60 frames
 
 type SystemRunner = (dt: number) => void;
 
+/**
+ * Main 3D Scene component.
+ * Sets up lighting, fog, and renders the game world entities.
+ * Orchestrates the game loop (ECS systems, store updates) via `useFrame`.
+ * Handles both TypeScript-based and Rust/WASM-based simulation modes.
+ *
+ * @returns The rendered 3D scene.
+ */
 export const Scene = () => {
   const rngSeed = useStore((state) => state.rngSeed);
   const [ready, setReady] = useState(false);

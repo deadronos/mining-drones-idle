@@ -14,6 +14,13 @@ const moduleRows = Object.entries(moduleDefinitions) as [
   (typeof moduleDefinitions)[ModuleId],
 ][];
 
+/**
+ * UI Component for purchasing factory upgrades and managing prestige.
+ * Displays a list of available modules (docking, refinery, etc.) with their current levels and costs.
+ * Also provides the Prestige interface for resetting the game to gain Cores.
+ *
+ * @returns The rendered UpgradePanel component.
+ */
 export const UpgradePanel = () => {
   const modules = useStore((state) => state.modules);
   const resources = useStore((state) => state.resources);

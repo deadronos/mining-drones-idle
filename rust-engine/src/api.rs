@@ -8,29 +8,40 @@ use serde::{Deserialize, Serialize};
 use std::cmp;
 use std::collections::BTreeMap;
 
+/// Result of a single simulation tick.
 #[derive(Clone, Debug, PartialEq)]
 pub struct TickResult {
+    /// The time delta used for this tick.
     pub dt: f32,
+    /// The current total game time.
     pub game_time: f32,
+    /// A sample from the RNG for verification.
     pub rng_sample: f32,
 }
 
+/// Result of an offline simulation run.
 #[derive(Clone, Debug, PartialEq)]
 pub struct OfflineResult {
+    /// Total simulated time in seconds.
     pub elapsed: f32,
+    /// Number of steps executed.
     pub steps: u32,
+    /// The final state serialized to JSON.
     pub snapshot_json: String,
 }
 
+/// Commands accepted by the simulation engine to modify state.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", content = "payload")]
 pub enum SimulationCommand {
-    // Existing commands for direct state updates
+    /// Overwrites the global resource state.
     UpdateResources(Resources),
+    /// Overwrites the global module state.
     UpdateModules(Modules),
+    /// Overwrites the global settings.
     SetSettings(StoreSettings),
 
-    // Module purchasing - deducts bars and increments module level
+    /// Purchases a new module level, deducting costs.
     BuyModule {
         #[serde(rename = "moduleType")]
         module_type: String,
@@ -38,10 +49,10 @@ pub enum SimulationCommand {
         factory_id: Option<String>,
     },
 
-    // Prestige reset - converts bars to cores, resets progress
+    /// Performs a prestige reset, converting bars to cores.
     DoPrestige,
 
-    // Factory upgrade purchasing
+    /// Purchases an upgrade for a specific factory.
     PurchaseFactoryUpgrade {
         #[serde(rename = "factoryId")]
         factory_id: String,
@@ -51,37 +62,41 @@ pub enum SimulationCommand {
         cost_variant: Option<String>,
     },
 
-    // Hauler assignment changes
+    /// Modifies the number of haulers assigned to a factory.
     AssignHauler {
         #[serde(rename = "factoryId")]
         factory_id: String,
         count: i32,
     },
 
-    // Import a full snapshot payload (for save loading)
+    /// Imports a full game state from a JSON string.
     ImportPayload {
         #[serde(rename = "snapshotJson")]
         snapshot_json: String,
     },
 
-    // Spawn a new drone at a factory
+    /// Spawns a new drone at the specified factory.
     SpawnDrone {
         #[serde(rename = "factoryId")]
         factory_id: String,
     },
 
-    // Recycle/deplete an asteroid
+    /// Marks an asteroid as depleted/recycled.
     RecycleAsteroid {
         #[serde(rename = "asteroidId")]
         asteroid_id: String,
     },
 }
 
+/// The core game state managed by the Rust engine.
+/// Holds the current snapshot, RNG, memory layout, and entity buffers.
 pub struct GameState {
     snapshot: SimulationSnapshot,
     rng: Mulberry32,
+    /// Layout describing how entity data is mapped in the linear memory buffer.
     pub layout: EntityBufferLayout,
     game_time: f32,
+    /// The linear memory buffer containing entity data (SoA layout).
     pub data: Vec<u32>,
     drone_id_to_index: BTreeMap<String, usize>,
     factory_id_to_index: BTreeMap<String, usize>,
@@ -89,6 +104,8 @@ pub struct GameState {
 }
 
 impl GameState {
+    /// Creates a new GameState from a simulation snapshot.
+    /// Initializes the memory layout and populates buffers.
     pub fn from_snapshot(snapshot: SimulationSnapshot) -> Result<Self, SimulationError> {
         snapshot.ensure_required()?;
         let rng_seed = snapshot.rng_seed.unwrap_or(1);
@@ -165,6 +182,8 @@ impl GameState {
         Ok(state)
     }
 
+    /// Loads a new state from a JSON string payload.
+    /// Re-initializes layout and buffers to match the new snapshot.
     pub fn load_snapshot_str(&mut self, payload: &str) -> Result<(), SimulationError> {
         let snapshot: SimulationSnapshot =
             serde_json::from_str(payload).map_err(SimulationError::parse)?;
@@ -432,10 +451,13 @@ impl GameState {
         }
     }
 
+    /// Serializes the current internal state back to a JSON snapshot string.
     pub fn export_snapshot_str(&self) -> Result<String, SimulationError> {
         serde_json::to_string(&self.snapshot).map_err(SimulationError::parse)
     }
 
+    /// Advances the simulation by dt seconds.
+    /// Runs all systems (refinery, movement, power, mining, unload, AI).
     pub fn step(&mut self, dt: f32) -> TickResult {
         if dt.is_sign_negative() {
             return TickResult {
@@ -631,6 +653,7 @@ impl GameState {
     }
 
     // ... rest of file ...
+    /// Applies a SimulationCommand to modify the state.
     pub fn apply_command(&mut self, command: SimulationCommand) -> Result<(), SimulationError> {
         match command {
             SimulationCommand::UpdateResources(resources) => {
@@ -671,6 +694,8 @@ impl GameState {
         Ok(())
     }
 
+    /// Runs the simulation for a specified duration in offline mode.
+    /// Useful for catch-up mechanics.
     pub fn simulate_offline(
         &mut self,
         seconds: f32,
@@ -696,50 +721,60 @@ impl GameState {
         })
     }
 
+    /// Returns a reference to the current snapshot.
     pub fn snapshot(&self) -> &SimulationSnapshot {
         &self.snapshot
     }
 
+    /// Accessor for drone cargo buffer (for WASM interop).
     pub fn get_drone_cargo_mut(&mut self) -> &mut [f32] {
         self.layout.drones.cargo.as_f32_slice_mut(&mut self.data)
             .expect("drone cargo buffer should be valid")
     }
 
+    /// Accessor for drone battery buffer (for WASM interop).
     pub fn get_drone_battery_mut(&mut self) -> &mut [f32] {
         self.layout.drones.battery.as_f32_slice_mut(&mut self.data)
             .expect("drone battery buffer should be valid")
     }
 
+    /// Accessor for asteroid max ore buffer (for WASM interop).
     pub fn get_asteroid_max_ore_mut(&mut self) -> &mut [f32] {
         self.layout.asteroids.max_ore.as_f32_slice_mut(&mut self.data)
             .expect("asteroid max_ore buffer should be valid")
     }
 
+    /// Accessor for asteroid ore remaining buffer (for WASM interop).
     pub fn get_asteroid_ore_remaining_mut(&mut self) -> &mut [f32] {
         self.layout.asteroids.ore_remaining.as_f32_slice_mut(&mut self.data)
             .expect("asteroid ore_remaining buffer should be valid")
     }
 
+    /// Accessor for factory resources buffer (for WASM interop).
     pub fn get_factory_resources_mut(&mut self) -> &mut [f32] {
         self.layout.factories.resources.as_f32_slice_mut(&mut self.data)
             .expect("factory resources buffer should be valid")
     }
 
+    /// Accessor for factory energy buffer (for WASM interop).
     pub fn get_factory_energy_mut(&mut self) -> &mut [f32] {
         self.layout.factories.energy.as_f32_slice_mut(&mut self.data)
             .expect("factory energy buffer should be valid")
     }
 
+    /// Accessor for factory max energy buffer (for WASM interop).
     pub fn get_factory_max_energy_mut(&mut self) -> &mut [f32] {
         self.layout.factories.max_energy.as_f32_slice_mut(&mut self.data)
             .expect("factory max_energy buffer should be valid")
     }
 
+    /// Accessor for factory upgrades buffer (for WASM interop).
     pub fn get_factory_upgrades_mut(&mut self) -> &mut [f32] {
         self.layout.factories.upgrades.as_f32_slice_mut(&mut self.data)
             .expect("factory upgrades buffer should be valid")
     }
 
+    /// Accessor for factory refinery state buffer (for WASM interop).
     pub fn get_factory_refinery_state_mut(&mut self) -> &mut [f32] {
         self.layout.factories.refinery_state.as_f32_slice_mut(&mut self.data)
             .expect("factory refinery_state buffer should be valid")
@@ -1130,5 +1165,3 @@ mod tests {
         assert!(state.game_time > 0.0);
     }
 }
-
-

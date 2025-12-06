@@ -10,6 +10,11 @@ import { getAvailableDockingSlots } from './docking';
  * Finds the nearest factory to a given position with available docking capacity.
  * If multiple factories are equidistant, uses round-robin to select (based on counter).
  * Returns the factory and distance, or null if no factories available.
+ *
+ * @param factories - List of factories to check.
+ * @param position - The query position.
+ * @param roundRobinCounter - Counter to cycle through equidistant choices.
+ * @returns Object with selected factory and distance, or null.
  */
 export const findNearestAvailableFactory = (
   factories: BuildableFactory[],
@@ -54,5 +59,9 @@ export const findNearestAvailableFactory = (
 /**
  * Utility to compute distance between two Vector3 positions.
  * Helps with drone routing decisions.
+ *
+ * @param from - Start position.
+ * @param to - End position.
+ * @returns The Euclidean distance.
  */
 export const computeDistance = (from: Vector3, to: Vector3): number => from.distanceTo(to);
