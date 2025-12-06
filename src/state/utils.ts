@@ -42,12 +42,15 @@ export const tupleToVector3 = (tuple: VectorTuple): Vector3 =>
   new Vector3(tuple[0], tuple[1], tuple[2]);
 
 export const generateSeed = () => {
+  // Generate seed that fits in i32 for Rust compatibility (max 2,147,483,647)
   if (typeof crypto !== 'undefined' && 'getRandomValues' in crypto) {
-    const buffer = new Uint32Array(2);
+    const buffer = new Uint32Array(1);
     crypto.getRandomValues(buffer);
-    return (buffer[0] << 16) ^ buffer[1];
+    // Mask to ensure positive i32 range
+    return buffer[0] & 0x7fffffff;
   }
-  return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+  // Fallback: random positive i32
+  return Math.floor(Math.random() * 0x7fffffff);
 };
 
 /**

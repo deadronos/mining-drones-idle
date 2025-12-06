@@ -7,10 +7,10 @@ import { computeMinReserve } from './math';
  * Validates that a proposed transfer is safe and doesn't violate invariants.
  * Checks that sufficient resources are available and minimum reserves are not violated.
  *
- * @param factory Source factory
- * @param resource Resource to transfer
- * @param amount Amount to transfer
- * @returns true if safe to transfer, false otherwise
+ * @param factory - Source factory.
+ * @param resource - Resource to transfer.
+ * @param amount - Amount to transfer.
+ * @returns true if safe to transfer, false otherwise.
  */
 export const validateTransfer = (
   factory: BuildableFactory,
@@ -67,10 +67,10 @@ export const validateTransfer = (
  * Updates the factory's outbound reservations immediately to prevent double-booking.
  * Must be called before physically executing the transfer.
  *
- * @param factory Source factory
- * @param resource Resource to reserve
- * @param amount Amount to reserve
- * @returns true if reservation successful, false if validation failed
+ * @param factory - Source factory.
+ * @param resource - Resource to reserve.
+ * @param amount - Amount to reserve.
+ * @returns true if reservation successful, false if validation failed.
  */
 export const reserveOutbound = (
   factory: BuildableFactory,
@@ -116,9 +116,9 @@ export const reserveOutbound = (
  * Releases an outbound reservation (e.g., if a transfer is canceled).
  * Decrements the factory's outbound reservations for the given resource.
  *
- * @param factory Source factory
- * @param resource Resource to release
- * @param amount Amount to release
+ * @param factory - Source factory.
+ * @param resource - Resource to release.
+ * @param amount - Amount to release.
  */
 export const releaseReservation = (
   factory: BuildableFactory,
@@ -142,11 +142,11 @@ export const releaseReservation = (
  * Executes an arrival (finalizes a transfer at destination).
  * Decrements source resources, increments destination, and cleans up inbound schedules.
  *
- * @param sourceFactory Factory where resources came from
- * @param destFactory Factory where resources arrive
- * @param resource Resource type
- * @param amount Amount transferred
- * @returns true if successful, false if amount is invalid
+ * @param sourceFactory - Factory where resources came from.
+ * @param destFactory - Factory where resources arrive.
+ * @param resource - Resource type.
+ * @param amount - Amount transferred.
+ * @returns true if successful, false if amount is invalid.
  */
 export const executeArrival = (
   sourceFactory: BuildableFactory,

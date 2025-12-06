@@ -62,6 +62,8 @@ export const initialSettings: StoreSettings = {
   showTrails: true,
   showHaulerShips: true,
   showDebugPanel: false,
+  useRustSim: false,
+  shadowMode: true,
   performanceProfile: 'medium',
   inspectorCollapsed: false,
   metrics: {

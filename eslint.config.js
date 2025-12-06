@@ -15,7 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export default defineConfig([
-  globalIgnores(['dist', 'build', 'coverage', '.triplex']),
+  globalIgnores(['dist', 'build', 'coverage', '.triplex', 'src/gen']),
   // Provide shared settings for eslint plugins (react version detection)
   {
     settings: { react: { version: '19.2' } },

@@ -11,6 +11,15 @@ type DroneFlightSnapshot = ReturnType<StoreApiType['getState']>['droneFlights'][
 // Re-export for backward compatibility
 export { assignDroneTarget } from './droneAI/targetAssignment';
 
+/**
+ * Creates the Drone AI system which governs drone behavior.
+ * Handles state transitions (idle -> mining -> returning), target assignment,
+ * and synchronization with the persistent store (for offline travel).
+ *
+ * @param world - The ECS world containing entities.
+ * @param store - The application state store for persistence and global state.
+ * @returns A system update function accepting delta time (dt).
+ */
 export const createDroneAISystem = (world: GameWorld, store: StoreApiType) => {
   const { droneQuery, asteroidQuery, rng } = world;
   const flightMap = new Map<string, DroneFlightSnapshot>();

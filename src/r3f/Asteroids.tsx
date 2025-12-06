@@ -16,6 +16,13 @@ const tempScale = new Vector3();
 const up = new Vector3(0, 1, 0);
 const tempColor = new Color();
 
+/**
+ * InstancedMesh component for rendering the asteroid field.
+ * Handles instanced rendering of up to ASTEROID_LIMIT asteroids.
+ * Manages visual updates (rotation, biome coloring) and user interaction (selection via raycasting).
+ *
+ * @returns The InstancedMesh element for asteroids.
+ */
 export const Asteroids = () => {
   const ref = useRef<InstancedMesh>(null);
   const { asteroidQuery } = gameWorld;

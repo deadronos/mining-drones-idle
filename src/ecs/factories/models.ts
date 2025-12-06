@@ -6,13 +6,20 @@ import { FACTORY_CONFIG } from './config';
  * Tracks ore type, progress, and energy consumption.
  */
 export interface RefineProcess {
+  /** Unique identifier for this process instance. */
   id: string;
+  /** The type of ore being refined (e.g., 'ore'). */
   oreType: string;
+  /** The amount of ore involved in this batch. */
   amount: number;
-  progress: number; // 0..1
+  /** Current progress from 0.0 to 1.0. */
+  progress: number;
+  /** Total duration required for the process in seconds. */
   timeTotal: number; // seconds
+  /** Energy required to sustain the process. */
   energyRequired: number;
-  speedMultiplier: number; // reduces speed if energy low
+  /** Factor modifying process speed (e.g., based on power availability). */
+  speedMultiplier: number;
 }
 
 /**
@@ -21,70 +28,126 @@ export interface RefineProcess {
  * Warehouse logistics scheduler prioritizes fulfilling these requests.
  */
 export interface FactoryUpgradeRequest {
-  upgrade: string; // FactoryUpgradeId
-  resourceNeeded: Partial<FactoryResources>; // exact cost breakdown for the upgrade
-  fulfilledAmount: Partial<FactoryResources>; // how much has been delivered so far
+  /** The ID of the upgrade being requested (e.g., 'docking'). */
+  upgrade: string;
+  /** The exact resource cost required to complete the upgrade. */
+  resourceNeeded: Partial<FactoryResources>;
+  /** The amount of resources already delivered towards this request. */
+  fulfilledAmount: Partial<FactoryResources>;
+  /** Current status of the request. */
   status: 'pending' | 'partially_fulfilled' | 'fulfilled' | 'expired';
-  createdAt: number; // timestamp (Date.now()) for diagnostics and priority
-  expiresAt: number; // expiration timestamp (createdAt + 60s)
+  /** Timestamp (ms) when the request was created. */
+  createdAt: number;
+  /** Timestamp (ms) when the request expires. */
+  expiresAt: number;
+}
+
+/**
+ * Represents the inventory and financial resources held by a factory.
+ */
+export interface FactoryResources {
+  /** Raw ore available for refining. */
+  ore: number;
+  /** Refined metal bars. */
+  bars: number;
+  /** Refined metals. */
+  metals: number;
+  /** Refined crystals. */
+  crystals: number;
+  /** Refined organics. */
+  organics: number;
+  /** Refined ice. */
+  ice: number;
+  /** Liquid credits available. */
+  credits: number;
+}
+
+/**
+ * Tracks the level of installed upgrades in a factory.
+ */
+export interface FactoryUpgrades {
+  /** Level of docking bay upgrade (capacity). */
+  docking: number;
+  /** Level of refinery upgrade (speed/slots). */
+  refine: number;
+  /** Level of storage upgrade (capacity). */
+  storage: number;
+  /** Level of energy system upgrade (capacity/recharge). */
+  energy: number;
+  /** Level of solar array upgrade (passive generation). */
+  solar: number;
 }
 
 /**
  * Represents a purchasable, placeable Factory building.
  * Drones dock here to unload and refine resources.
  */
-export interface FactoryResources {
-  ore: number;
-  bars: number;
-  metals: number;
-  crystals: number;
-  organics: number;
-  ice: number;
-  credits: number;
-}
-
-export interface FactoryUpgrades {
-  docking: number;
-  refine: number;
-  storage: number;
-  energy: number;
-  solar: number;
-}
-
 export interface BuildableFactory {
+  /** Unique factory ID. */
   id: string;
+  /** World position of the factory. */
   position: Vector3;
+  /** Maximum number of drones that can dock simultaneously. */
   dockingCapacity: number;
+  /** Number of parallel refining slots available. */
   refineSlots: number;
+  /** Energy consumed per second when idle. */
   idleEnergyPerSec: number;
+  /** Energy consumed per active refine process. */
   energyPerRefine: number;
+  /** Maximum capacity for resource storage. */
   storageCapacity: number;
+  /** Current volume of stored resources. */
   currentStorage: number;
+  /** List of drone IDs currently in queue or docked. */
   queuedDrones: string[]; // queue order; first dockingCapacity entries are active docks
+  /** Active refining processes. */
   activeRefines: RefineProcess[];
+  /** Whether the factory is pinned in the UI/view. */
   pinned: boolean;
+  /** Current stored energy. */
   energy: number;
+  /** Maximum energy capacity. */
   energyCapacity: number;
+  /** Current resource inventory. */
   resources: FactoryResources;
+  /** Current upgrade levels. */
   upgrades: FactoryUpgrades;
-  upgradeRequests: FactoryUpgradeRequest[]; // active upgrade resource requests
+  /** Active requests for upgrade resources. */
+  upgradeRequests: FactoryUpgradeRequest[];
+  /** Number of haulers assigned to this factory. */
   haulersAssigned?: number;
+  /** Configuration for hauler behavior. */
   haulerConfig?: {
+    /** Cargo capacity per hauler. */
     capacity: number;
+    /** Movement speed of haulers. */
     speed: number;
+    /** Time taken to pick up resources. */
     pickupOverhead: number;
+    /** Time taken to drop off resources. */
     dropoffOverhead: number;
+    /** Allowed resources for transport. */
     resourceFilters: string[];
+    /** Logic mode for hauling. */
     mode: 'auto' | 'manual' | 'demand-first' | 'supply-first';
+    /** Priority level for scheduling. */
     priority: number;
   };
+  /** Applied upgrades for haulers. */
   haulerUpgrades?: {
+    /** Additional capacity. */
     capacityBoost?: number;
+    /** Additional speed. */
     speedBoost?: number;
+    /** Efficiency improvements. */
     efficiencyBoost?: number;
   };
+  /** Internal state for logistics system. */
   logisticsState?: {
+    /** Tracked outbound reservations by resource type. */
     outboundReservations: Record<string, number>;
+    /** Scheduled inbound deliveries. */
     inboundSchedules: Array<{
       fromFactoryId: string;
       resource: string;
@@ -95,8 +158,12 @@ export interface BuildableFactory {
 }
 
 /**
- * Creates a new factory at the given position.
+ * Creates a new factory instance at the given position with default configuration.
  * Called after purchase; position should be set by placement UI.
+ *
+ * @param id - The unique ID for the new factory.
+ * @param position - The world position for the factory.
+ * @returns A new BuildableFactory object initialized with defaults.
  */
 export const createFactory = (id: string, position: Vector3): BuildableFactory => ({
   id,

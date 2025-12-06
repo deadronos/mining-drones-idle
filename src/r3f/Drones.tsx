@@ -13,6 +13,13 @@ const forward = new Vector3(0, 1, 0);
 const direction = new Vector3();
 const color = new Color();
 
+/**
+ * InstancedMesh component for rendering drone entities.
+ * Efficiently renders up to DRONE_LIMIT drones using a single draw call.
+ * Updates instance matrices and colors per frame based on drone state and position.
+ *
+ * @returns The InstancedMesh element for drones.
+ */
 export const Drones = () => {
   const ref = useRef<InstancedMesh>(null);
   const { droneQuery } = gameWorld;

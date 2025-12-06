@@ -1,16 +1,29 @@
 import type { RandomSource } from '@/lib/rng';
 
+/** Unique identifier for a biome type. */
 export type BiomeId = 'ice' | 'metalRich' | 'crystal' | 'organic';
 
+/** Unique identifier for a hazard type. */
 export type HazardId = 'ionStorm' | 'solarFlare' | 'sporeBurst' | 'microQuakes';
+/** Severity level of a hazard. */
 export type HazardSeverity = 'low' | 'medium' | 'high';
 
+/**
+ * Defines a hazard that can occur within a biome.
+ */
 export interface HazardDefinition {
+  /** Unique ID of the hazard. */
   id: HazardId;
+  /** Probability weight of this hazard occurring. */
   weight: number;
+  /** Severity of the hazard event. */
   severity: HazardSeverity;
 }
 
+/**
+ * Defines the distribution of resources within a biome.
+ * Values are relative weights, normalized during generation.
+ */
 export interface ResourceWeights {
   ore: number;
   metals: number;
@@ -19,18 +32,31 @@ export interface ResourceWeights {
   ice: number;
 }
 
+/**
+ * Configuration for a specific biome type.
+ */
 export interface BiomeDefinition {
+  /** Unique ID. */
   id: BiomeId;
+  /** Display name. */
   name: string;
+  /** Color palette for UI/visuals. */
   palette: { primary: string; secondary: string };
+  /** Tint color for particle effects. */
   particleTint: string;
+  /** Gravity multiplier applied to entities in this biome. */
   gravityMultiplier: number;
+  /** Resource distribution profile. */
   resourceWeights: ResourceWeights;
+  /** List of potential hazards. */
   hazardProfile: HazardDefinition[];
+  /** Flavour text description. */
   description: string;
 }
 
+/** List of valid resource keys. */
 export const RESOURCE_KEYS = ['ore', 'metals', 'crystals', 'organics', 'ice'] as const;
+/** Union type of resource keys. */
 export type ResourceKey = (typeof RESOURCE_KEYS)[number];
 
 const BIOME_DEFINITIONS: Record<BiomeId, BiomeDefinition> = {
@@ -88,18 +114,38 @@ const BIOME_DEFINITIONS: Record<BiomeId, BiomeDefinition> = {
   },
 };
 
+/** Default biome ID used as fallback. */
 export const DEFAULT_BIOME_ID: BiomeId = 'metalRich';
+/** List of all available biome IDs. */
 export const BIOME_IDS: BiomeId[] = Object.keys(BIOME_DEFINITIONS) as BiomeId[];
 
 const clampGravity = (value: number) => Math.min(1.5, Math.max(0.5, value));
 
+/**
+ * Retrieves the definition for a given biome ID.
+ * Clamps gravity values to safe ranges.
+ *
+ * @param id - The biome ID to look up.
+ * @returns The biome definition.
+ */
 export const getBiomeDefinition = (id: BiomeId): BiomeDefinition => {
   const biome = BIOME_DEFINITIONS[id] ?? BIOME_DEFINITIONS[DEFAULT_BIOME_ID];
   return { ...biome, gravityMultiplier: clampGravity(biome.gravityMultiplier) };
 };
 
+/**
+ * Returns a list of all biome definitions.
+ *
+ * @returns Array of BiomeDefinition.
+ */
 export const listBiomes = (): BiomeDefinition[] => BIOME_IDS.map((id) => getBiomeDefinition(id));
 
+/**
+ * Normalizes a resource weight object so values sum to 1.
+ *
+ * @param weights - The resource weights to normalize.
+ * @returns A new ResourceWeights object with normalized values.
+ */
 export const normalizeResourceWeights = (weights: ResourceWeights): ResourceWeights => {
   const entries = Object.entries(weights) as [ResourceKey, number][];
   const total = entries.reduce((sum, [, value]) => sum + Math.max(0, value), 0);
@@ -113,6 +159,12 @@ export const normalizeResourceWeights = (weights: ResourceWeights): ResourceWeig
   return normalized;
 };
 
+/**
+ * Determines the dominant resource in a weight profile.
+ *
+ * @param weights - The resource weights to analyze.
+ * @returns The key of the resource with the highest weight.
+ */
 export const getDominantResource = (weights: ResourceWeights): ResourceKey => {
   let dominant: ResourceKey = 'ore';
   let highest = -Infinity;
@@ -126,10 +178,21 @@ export const getDominantResource = (weights: ResourceWeights): ResourceKey => {
   return dominant;
 };
 
+/**
+ * Options for selecting a biome.
+ */
 export interface BiomeSelectionOptions {
+  /** Optional bias to increase/decrease likelihood of specific biomes. */
   bias?: Partial<Record<BiomeId, number>>;
 }
 
+/**
+ * Randomly selects a biome based on weighted probability.
+ *
+ * @param rng - Random number source.
+ * @param options - Selection options (bias).
+ * @returns The selected BiomeDefinition.
+ */
 export const chooseBiome = (
   rng: RandomSource,
   options: BiomeSelectionOptions = {},
@@ -156,6 +219,13 @@ export const chooseBiome = (
   return weighted.at(-1)?.biome ?? getBiomeDefinition(DEFAULT_BIOME_ID);
 };
 
+/**
+ * Rolls for a random hazard event based on the biome's hazard profile.
+ *
+ * @param rng - Random number source.
+ * @param biome - The biome definition.
+ * @returns A selected HazardDefinition or null if none occur.
+ */
 export const rollHazard = (rng: RandomSource, biome: BiomeDefinition): HazardDefinition | null => {
   const { hazardProfile } = biome;
   if (!hazardProfile.length) return null;
@@ -177,5 +247,12 @@ export const rollHazard = (rng: RandomSource, biome: BiomeDefinition): HazardDef
   return normalized.at(-1)?.hazard ?? null;
 };
 
+/**
+ * Applies the biome's gravity multiplier to a base gravity value.
+ *
+ * @param base - Base gravity value.
+ * @param biome - The biome definition.
+ * @returns Adjusted gravity value.
+ */
 export const applyGravityModifier = (base: number, biome: BiomeDefinition) =>
   base * biome.gravityMultiplier;

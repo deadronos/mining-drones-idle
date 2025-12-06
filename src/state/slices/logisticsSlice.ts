@@ -16,6 +16,7 @@ import {
   getFactoryHaulerUpgradeCost,
   getFactoryHaulerUpgradeMaxLevel,
 } from '@/lib/haulerUpgrades';
+import { getBridge, isBridgeReady } from '@/lib/rustBridgeRegistry';
 
 export interface LogisticsSliceState {
   logisticsTick: number;
@@ -42,6 +43,20 @@ export const createLogisticsSlice: StateCreator<
   assignHaulers: (factoryId, delta) => {
     if (!Number.isFinite(delta) || delta === 0) {
       return false;
+    }
+
+    const state = get();
+
+    // Route through Rust bridge when enabled and ready (for hauler count tracking)
+    if (state.settings.useRustSim && isBridgeReady()) {
+      const bridge = getBridge();
+      if (bridge) {
+        bridge.applyCommand({
+          type: 'AssignHauler',
+          payload: { factoryId, count: delta },
+        });
+        // Note: Cost deduction is still handled by TS logic below
+      }
     }
 
     if (delta > 0) {

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useStore } from '@/state/store';
 import { usePagination } from '@/ui/FactoryManager/hooks/usePagination';
 import { PaginationControls } from '@/ui/shared/PaginationControls';
+import { isBridgeReady } from '@/lib/rustBridgeRegistry';
 import './DebugPanel.css';
 
 const DRONES_PAGE_SIZE = 12;
@@ -10,6 +11,8 @@ export const DebugPanel = () => {
   const droneFlights = useStore((s) => s.droneFlights);
   const unstickDrone = useStore((s) => s.unstickDrone);
   const clearDroneFlight = useStore((s) => s.clearDroneFlight);
+  const useRustSim = useStore((s) => s.settings.useRustSim);
+  const updateSettings = useStore((s) => s.updateSettings);
 
   const { page, totalPages, currentItems, goNext, goPrev } = usePagination(
     droneFlights,
@@ -122,6 +125,21 @@ export const DebugPanel = () => {
               className="debug-panel-pagination"
               ariaLabelPrefix="page"
             />
+
+            <div className="debug-panel-section">
+              <strong>Rust Engine</strong>
+              <label className="debug-panel-toggle">
+                <input
+                  type="checkbox"
+                  checked={useRustSim}
+                  onChange={(e) => updateSettings({ useRustSim: e.target.checked })}
+                />
+                <span>Use Rust WASM Simulation</span>
+              </label>
+              <span className="debug-panel-status">
+                {useRustSim ? (isBridgeReady() ? '✓ Active' : '⏳ Loading...') : '○ Disabled'}
+              </span>
+            </div>
           </div>
         ) : null}
       </div>

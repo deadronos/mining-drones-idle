@@ -30,6 +30,16 @@ const formatTimestamp = (value: number) => {
   }).format(new Date(value));
 };
 
+/**
+ * Settings panel component for configuring game options.
+ * Handles persistence (save/load/reset), visual settings, metrics, and debug tools.
+ * Rendered as a modal dialog overlay.
+ *
+ * @param props - Component properties.
+ * @param props.onClose - Callback invoked when the panel is closed.
+ * @param props.persistence - The persistence manager instance for save operations.
+ * @returns The SettingsPanel component.
+ */
 export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
   const settings = useStore((state) => state.settings);
   const updateSettings = useStore((state) => state.updateSettings);
@@ -196,6 +206,10 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
     updateSettings({ showDebugPanel: event.target.checked });
   };
 
+  const handleRustSimToggle: ChangeEventHandler<HTMLInputElement> = (event) => {
+    updateSettings({ useRustSim: event.target.checked });
+  };
+
   return (
     <div className="settings-backdrop" role="presentation">
       <div
@@ -215,7 +229,11 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
         </header>
         <div className="settings-content">
           <WarehousePrimerSection />
-          <DebugSettingsSection settings={settings} onToggle={handleDebugPanelToggle} />
+          <DebugSettingsSection
+            settings={settings}
+            onToggle={handleDebugPanelToggle}
+            onRustSimToggle={handleRustSimToggle}
+          />
           <PersistenceSettingsSection
             settings={settings}
             onAutosaveToggle={handleAutosaveToggle}
