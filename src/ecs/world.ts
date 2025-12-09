@@ -206,11 +206,14 @@ export interface CreateWorldOptions {
   rng?: RandomSource;
 }
 
-const nextId = (() => {
-  let counter = 0;
-  return (prefix: ModuleId | 'factory' | 'asteroid' | 'drone') =>
-    `${prefix}-${(counter += 1).toString(16)}`;
-})();
+let idCounter = 0;
+export const resetEntityIdCounter = () => {
+  idCounter = 0;
+};
+const nextId = (prefix: ModuleId | 'factory' | 'asteroid' | 'drone') => {
+  idCounter += 1;
+  return `${prefix}-${idCounter.toString(16)}`;
+};
 
 const BASE_ASTEROID_RICHNESS = 80;
 const ASTEROID_TARGET = 200;
