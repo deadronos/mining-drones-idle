@@ -106,6 +106,8 @@ export const Scene = () => {
 
   // Handle reset and initial population
   useEffect(() => {
+    let mounted = true;
+
     // Reset world with new seed
     resetWorld(rngSeed);
 
@@ -113,7 +115,15 @@ export const Scene = () => {
     systems.asteroids(0);
     systems.fleet(0);
 
-    setReady(true);
+    // Defer setting ready to avoid synchronous setState within effect
+    // which can trigger cascading renders.
+    void Promise.resolve().then(() => {
+      if (mounted) setReady(true);
+    });
+
+    return () => {
+      mounted = false;
+    };
   }, [rngSeed, systems]);
 
   useFrame((_state, delta) => {

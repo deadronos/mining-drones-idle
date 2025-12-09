@@ -27,6 +27,7 @@ import {
   specTechDefinitions,
 } from '../constants';
 import { coerceNumber } from './types';
+import { StoreSnapshotSchema } from './snapshotSchema';
 import { normalizeFactorySnapshot } from './factory';
 import { normalizeDroneFlights, cloneDroneFlight } from './drones';
 import { factoryToSnapshot } from './factory';
@@ -287,6 +288,40 @@ export const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapsh
       : undefined,
   logisticsQueues: normalizeLogisticsQueues(snapshot.logisticsQueues),
 });
+
+/**
+ * Validate a (partial) snapshot before it's passed to the WASM engine.
+ * Returns a list of human-friendly validation error messages. Empty array
+ * means the snapshot looks acceptable (it may still be normalized).
+ */
+export const validateSnapshotForWasm = (snapshot?: Partial<StoreSnapshot>): string[] => {
+  if (!snapshot || typeof snapshot !== 'object') return ['snapshot is not an object'];
+
+  const result = StoreSnapshotSchema.safeParse(snapshot);
+  if (!result.success) {
+    return result.error.issues.map((issue) => {
+      const path = issue.path.length ? issue.path.join('.') : 'root';
+      return `${path}: ${issue.message}`;
+    });
+  }
+
+  // Additional business rule: modules shouldn't be all zeros.
+  const modules = result.data.modules;
+  const allZero = [
+    modules.droneBay,
+    modules.refinery,
+    modules.storage,
+    modules.solar,
+    modules.scanner,
+    modules.haulerDepot,
+    modules.logisticsHub,
+    modules.routingProtocol,
+  ].every((v) => v === 0);
+
+  if (allZero) return ['modules: all zero (at least one module should be > 0)'];
+
+  return [];
+};
 
 export const serializeStore = (state: StoreState): StoreSnapshot => ({
   resources: { ...state.resources },

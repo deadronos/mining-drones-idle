@@ -3,7 +3,7 @@ import type { RustSimBridge } from '../lib/wasmSimBridge';
 import { loadWasmBridge } from '../lib/wasmLoader';
 import { registerBridge, unregisterBridge } from '../lib/rustBridgeRegistry';
 import { useStore } from '../state/store';
-import { serializeStore } from '../state/serialization/store';
+import { serializeStore, normalizeSnapshot } from '../state/serialization/store';
 import { gameWorld } from '@/ecs/world';
 import type { StoreSnapshot, DroneFlightState } from '../state/types';
 
@@ -26,8 +26,10 @@ export function useRustEngine(shouldInitialize: boolean): UseRustEngineResult {
   const [fallbackReason, setFallbackReason] = useState<string | null>(null);
   const rngSeed = useStore((state) => state.rngSeed);
 
-  const buildSnapshot = useCallback((): StoreSnapshot & { extra: Record<string, unknown> } => {
-    const currentSnapshot = serializeStore(useStore.getState());
+  const buildSnapshot = useCallback((): StoreSnapshot & Record<string, unknown> => {
+    // Ensure we pass a fully-normalized snapshot to the Rust engine so
+    // required numeric fields (like `bars`) are always present.
+    const currentSnapshot = normalizeSnapshot(serializeStore(useStore.getState()));
 
     // Inject asteroid data from ECS
     const asteroids = gameWorld.asteroidQuery.entities.map((entity) => ({
@@ -72,8 +74,10 @@ export function useRustEngine(shouldInitialize: boolean): UseRustEngineResult {
           },
     }));
 
-    const snapshotWithExtra = currentSnapshot as StoreSnapshot & { extra: Record<string, unknown> };
-    snapshotWithExtra.extra = { asteroids };
+    const snapshotWithExtra = currentSnapshot as StoreSnapshot & Record<string, unknown>;
+    // Place asteroid data at the top-level so Rust's `flatten`ed `extra` map
+    // will pick up the `asteroids` key directly.
+    snapshotWithExtra.asteroids = asteroids;
     snapshotWithExtra.droneFlights = droneFlights as DroneFlightState[];
 
     return snapshotWithExtra;

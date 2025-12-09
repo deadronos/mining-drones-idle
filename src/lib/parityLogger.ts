@@ -16,7 +16,8 @@ export function checkParity(
 ): ParityReport | null {
   const divergences: string[] = [];
 
-  const tsDrones = tsState.droneFlights;
+  // Use the provided tsDroneCount for parity comparisons rather than
+  // pulling the entire flight list (avoids extra allocations).
   const rustDronePositions = rustBridge.getDronePositions();
 
   // Check count
