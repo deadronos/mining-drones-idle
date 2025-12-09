@@ -1,66 +1,81 @@
-import { z } from 'zod';
+// JSON Schema for snapshots (used by Ajv validator)
 
-export const ResourcesSchema = z.object({
-  ore: z.number(),
-  ice: z.number(),
-  metals: z.number(),
-  crystals: z.number(),
-  organics: z.number(),
-  bars: z.number(),
-  energy: z.number(),
-  credits: z.number(),
-});
+// JSON Schema describing the minimal shape required by the WASM engine.
+// This schema is intentionally permissive (additionalProperties allowed)
+// so callers can include platform-specific keys (like `asteroids`) without
+// failing validation; however required fields are enforced.
+export const StoreSnapshotSchema = {
+  $schema: 'http://json-schema.org/draft-07/schema#',
+  type: 'object',
+  properties: {
+    resources: {
+      type: 'object',
+      properties: {
+        ore: { type: 'number' },
+        ice: { type: 'number' },
+        metals: { type: 'number' },
+        crystals: { type: 'number' },
+        organics: { type: 'number' },
+        bars: { type: 'number' },
+        energy: { type: 'number' },
+        credits: { type: 'number' },
+      },
+      required: ['ore', 'ice', 'metals', 'crystals', 'organics', 'bars', 'energy', 'credits'],
+      additionalProperties: false,
+    },
+    modules: {
+      type: 'object',
+      properties: {
+        droneBay: { type: 'integer', minimum: 0 },
+        refinery: { type: 'integer', minimum: 0 },
+        storage: { type: 'integer', minimum: 0 },
+        solar: { type: 'integer', minimum: 0 },
+        scanner: { type: 'integer', minimum: 0 },
+        haulerDepot: { type: 'integer', minimum: 0 },
+        logisticsHub: { type: 'integer', minimum: 0 },
+        routingProtocol: { type: 'integer', minimum: 0 },
+      },
+      required: ['droneBay', 'refinery', 'storage', 'solar', 'scanner', 'haulerDepot', 'logisticsHub', 'routingProtocol'],
+      additionalProperties: true,
+    },
+    save: {
+      type: 'object',
+      properties: {
+        lastSave: { type: 'number' },
+        version: { type: 'string', minLength: 1 },
+      },
+      required: ['lastSave', 'version'],
+      additionalProperties: true,
+    },
+    settings: {
+      type: 'object',
+      properties: {
+        autosaveEnabled: { type: 'boolean' },
+        autosaveInterval: { type: 'number' },
+        offlineCapHours: { type: 'number' },
+        notation: { type: 'string' },
+        throttleFloor: { type: 'number' },
+        showTrails: { type: 'boolean' },
+        showHaulerShips: { type: 'boolean' },
+        showDebugPanel: { type: 'boolean' },
+        performanceProfile: { type: 'string' },
+        inspectorCollapsed: { type: 'boolean' },
+        metrics: {
+          type: 'object',
+          properties: {
+            enabled: { type: 'boolean' },
+            intervalSeconds: { type: 'number', minimum: 1 },
+            retentionSeconds: { type: 'number', minimum: 1 },
+          },
+          required: ['enabled', 'intervalSeconds', 'retentionSeconds'],
+          additionalProperties: true,
+        },
+      },
+      required: ['autosaveEnabled', 'autosaveInterval', 'offlineCapHours', 'notation', 'throttleFloor', 'showTrails', 'showHaulerShips', 'showDebugPanel', 'performanceProfile', 'inspectorCollapsed', 'metrics'],
+      additionalProperties: true,
+    },
+  },
+  required: ['resources', 'modules', 'save', 'settings'],
+  additionalProperties: true,
+};
 
-export const ModulesSchema = z.object({
-  droneBay: z.number(),
-  refinery: z.number(),
-  storage: z.number(),
-  solar: z.number(),
-  scanner: z.number(),
-  haulerDepot: z.number(),
-  logisticsHub: z.number(),
-  routingProtocol: z.number(),
-});
-
-export const SaveSchema = z.object({
-  lastSave: z.number(),
-  version: z.string().min(1),
-});
-
-export const MetricsSchema = z.object({
-  enabled: z.boolean(),
-  intervalSeconds: z.number().min(1),
-  retentionSeconds: z.number().min(1),
-});
-
-export const SettingsSchema = z
-  .object({
-    autosaveEnabled: z.boolean(),
-    autosaveInterval: z.number().min(1),
-    offlineCapHours: z.number().min(0),
-    notation: z.string(),
-    throttleFloor: z.number(),
-    showTrails: z.boolean(),
-    showHaulerShips: z.boolean(),
-    showDebugPanel: z.boolean(),
-    performanceProfile: z.string(),
-    inspectorCollapsed: z.boolean(),
-    metrics: MetricsSchema,
-    useRustSim: z.boolean().optional(),
-    shadowMode: z.boolean().optional(),
-  })
-  .passthrough();
-
-// Top-level snapshot schema used for runtime validation before handing
-// snapshots to the Rust/WASM engine. We keep .passthrough() so callers
-// may include engine-specific extra keys (like asteroids) without failing.
-export const StoreSnapshotSchema = z
-  .object({
-    resources: ResourcesSchema,
-    modules: ModulesSchema,
-    save: SaveSchema,
-    settings: SettingsSchema,
-  })
-  .passthrough();
-
-export type StoreSnapshotSchemaType = z.infer<typeof StoreSnapshotSchema>;

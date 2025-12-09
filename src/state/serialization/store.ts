@@ -27,7 +27,20 @@ import {
   specTechDefinitions,
 } from '../constants';
 import { coerceNumber } from './types';
+import Ajv from 'ajv';
 import { StoreSnapshotSchema } from './snapshotSchema';
+
+// Compile and cache the snapshot validator once at module initialization.
+// This avoids re-compiling the JSON Schema on every validation call and
+// provides a small runtime perf win when initRustBridge/loadWasmBridge are
+// invoked frequently.
+const _ajvInstance = new Ajv({ allErrors: true });
+const snapshotValidator = _ajvInstance.compile(StoreSnapshotSchema as object);
+
+// Exported accessor used by tests to verify the validator is compiled and cached.
+export function getSnapshotValidator() {
+  return snapshotValidator;
+}
 import { normalizeFactorySnapshot } from './factory';
 import { normalizeDroneFlights, cloneDroneFlight } from './drones';
 import { factoryToSnapshot } from './factory';
@@ -297,28 +310,35 @@ export const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapsh
 export const validateSnapshotForWasm = (snapshot?: Partial<StoreSnapshot>): string[] => {
   if (!snapshot || typeof snapshot !== 'object') return ['snapshot is not an object'];
 
-  const result = StoreSnapshotSchema.safeParse(snapshot);
-  if (!result.success) {
-    return result.error.issues.map((issue) => {
-      const path = issue.path.length ? issue.path.join('.') : 'root';
-      return `${path}: ${issue.message}`;
+  // Compile the AJV validator once lazily (per-module cache).
+    const payload = snapshot as Record<string, unknown>;
+    const ok = snapshotValidator(payload);
+    if (!ok) {
+      const raw = (snapshotValidator.errors ?? []) as Array<{ instancePath?: string; message?: string }>;
+    const issues = raw.map((err) => {
+      const instancePath = typeof err.instancePath === 'string' ? err.instancePath : '';
+      const path = instancePath.length > 0 ? instancePath.slice(1) : 'root';
+      const message = typeof err.message === 'string' ? err.message : 'validation error';
+      return `${path}: ${message}`;
     });
+    return issues;
   }
 
   // Additional business rule: modules shouldn't be all zeros.
-  const modules = result.data.modules;
-  const allZero = [
-    modules.droneBay,
-    modules.refinery,
-    modules.storage,
-    modules.solar,
-    modules.scanner,
-    modules.haulerDepot,
-    modules.logisticsHub,
-    modules.routingProtocol,
-  ].every((v) => v === 0);
-
-  if (allZero) return ['modules: all zero (at least one module should be > 0)'];
+  const modules = snapshot.modules as Partial<Modules> | undefined;
+  if (modules) {
+    const allZero = [
+      modules.droneBay ?? 0,
+      modules.refinery ?? 0,
+      modules.storage ?? 0,
+      modules.solar ?? 0,
+      modules.scanner ?? 0,
+      modules.haulerDepot ?? 0,
+      modules.logisticsHub ?? 0,
+      modules.routingProtocol ?? 0,
+    ].every((v) => v === 0);
+    if (allZero) return ['modules: all zero (at least one module should be > 0)'];
+  }
 
   return [];
 };
