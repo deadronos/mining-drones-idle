@@ -1,4 +1,3 @@
-```markdown
 # DES037 – Full Parity Validation
 
 ## Summary
@@ -65,27 +64,27 @@ Phase A — Parity Tests (low risk, high visibility)
 
 Phase B — Missing systems in Rust
 
-4. Port / implement the following in `rust-engine/src/systems` (or ensure equivalent behaviour):
+1. Port / implement the following in `rust-engine/src/systems` (or ensure equivalent behaviour):
    - `biomes` / region behavior (fractures, region assignment)
    - `asteroids` lifecycle (rotation, depletion, recycle/respawn)
    - `fleet` / drone lifecycle & flight persistence (spawn, recycle, ownership)
 
-5. Address TODOs in Rust `droneai.rs` and related modules — speed modifiers, mining rate modifiers, selection heuristics.
+2. Address TODOs in Rust `droneai.rs` and related modules — speed modifiers, mining rate modifiers, selection heuristics.
 
 Phase C — Commands and Snapshot parity
 
-6. Implement missing command handlers in Rust (`rust-engine/src/api.rs` / `commands.rs`): `SpawnDrone`, `RecycleAsteroid`, `AssignHauler` and ensure `BuyModule`, `DoPrestige`, `PurchaseFactoryUpgrade` are exact equivalents.
+1. Implement missing command handlers in Rust (`rust-engine/src/api.rs` / `commands.rs`): `SpawnDrone`, `RecycleAsteroid`, `AssignHauler` and ensure `BuyModule`, `DoPrestige`, `PurchaseFactoryUpgrade` are exact equivalents.
 
-7. Ensure `exportSnapshot()` and `loadSnapshot()` maintain stable JSON schema; add `schemaVersion` to allow migrations.
+2. Ensure `exportSnapshot()` and `loadSnapshot()` maintain stable JSON schema; add `schemaVersion` to allow migrations.
 
 Phase D — Persistence & Offline wiring
 
-8. Modify `src/state/persistence.ts` to call the Rust bridge `simulateOffline()` when `useRustSim` is enabled.
+1. Modify `src/state/persistence.ts` to call the Rust bridge `simulateOffline()` when `useRustSim` is enabled.
 
 Phase E — CI & testing
 
-9. Add a CI job that builds the Rust WASM package and makes it available to the test runner.
-10. Enable the WASM-dependent parity tests in CI and conditionally in local developer environments.
+1. Add a CI job that builds the Rust WASM package and makes it available to the test runner.
+2. Enable the WASM-dependent parity tests in CI and conditionally in local developer environments.
 
 ## Acceptance Criteria
 
@@ -115,10 +114,4 @@ Phase E — CI & testing
 
 1. Approve design and reserve TASK IDs for implementation: TASK050 (HUD sync or hook), TASK051 (Offline wiring), TASK052 (Port missing systems), TASK053 (Parity tests expansion), TASK054 (SpawnDrone/Rust commands), TASK055 (CI WASM pipeline).
 
-```diff
-+DES037 created: Full Parity Validation
-```
-
-```
-
-``` 
+DES037 created: Full Parity Validation
