@@ -17,6 +17,7 @@ import type { StoreSnapshot } from '@/state/types';
 import type { RustSimBridge, OfflineResult } from '@/lib/wasmSimBridge';
 import { createStoreInstance, serializeStore } from '@/state/store';
 import { simulateOfflineProgress } from '@/lib/offline';
+import { logDivergences, parityDebugEnabled } from '../shared/parityLogger';
 
 // Test fixture: minimal snapshot for deterministic testing
 function createTestSnapshot(seed: number): StoreSnapshot {
@@ -108,6 +109,11 @@ function createTestSnapshot(seed: number): StoreSnapshot {
     },
   };
 }
+
+const cloneSnapshot = <T>(value: T): T =>
+  typeof structuredClone === 'function'
+    ? structuredClone(value)
+    : (JSON.parse(JSON.stringify(value)) as T);
 
 // Helper to compare offline results
 function compareOfflineResults(
@@ -339,35 +345,76 @@ describe('Offline Parity', () => {
 
   describe('Cross-engine offline comparison', () => {
     const OFFLINE_REL_EPSILON = 0.01;
+    const OFFLINE_SEEDS = [101, 202, 303, 404, 505];
+    const OFFLINE_STEP_COUNTS = [1, 10, 60, 300, 3600];
+    const STEP_SIZE = 0.1;
 
-    const runTsOffline = (snapshot: StoreSnapshot, seconds: number, step = 0.1) => {
+    const runTsOffline = (snapshot: StoreSnapshot, seconds: number, step = STEP_SIZE) => {
       const store = createStoreInstance();
       store.getState().applySnapshot(snapshot);
       simulateOfflineProgress(store, seconds, { step });
       return serializeStore(store.getState());
     };
 
-    it.skipIf(!wasmAvailable)('matches TS offline within tolerance', async () => {
-      const snapshot = createTestSnapshot(90909);
-
-      // Rust offline simulation
+    const runRustOffline = async (snapshot: StoreSnapshot, seconds: number, step = STEP_SIZE) => {
       await bridge!.init(snapshot);
-      const rustResult = bridge!.simulateOffline(60, 0.1);
+      const rustResult = bridge!.simulateOffline(seconds, step);
       const rustSnapshot = JSON.parse(rustResult.snapshotJson) as StoreSnapshot;
+      return { rustSnapshot, rustResult };
+    };
 
-      // TS offline simulation
-      const tsSnapshot = runTsOffline(structuredClone(snapshot), 60, 0.1);
+    it.skipIf(!wasmAvailable)(
+      'matches TS offline across seeds and step sizes within tolerance',
+      async () => {
+        const divergences: string[] = [];
+        const series: Array<{
+          seed: number;
+          steps: number;
+          metrics: Array<{ key: string; ts: number; rust: number; diff: number }>;
+        }> = [];
 
-      const metrics = [
-        ['ore', tsSnapshot.resources.ore, rustSnapshot.resources.ore],
-        ['bars', tsSnapshot.resources.bars, rustSnapshot.resources.bars],
-        ['energy', tsSnapshot.resources.energy, rustSnapshot.resources.energy],
-      ] as const;
+        for (const seed of OFFLINE_SEEDS) {
+          for (const steps of OFFLINE_STEP_COUNTS) {
+            const seconds = steps * STEP_SIZE;
+            const baseSnapshot = createTestSnapshot(seed);
+            const { rustSnapshot, rustResult } = await runRustOffline(
+              baseSnapshot,
+              seconds,
+              STEP_SIZE
+            );
+            const tsSnapshot = runTsOffline(cloneSnapshot(baseSnapshot), seconds, STEP_SIZE);
 
-      for (const [, tsVal, rustVal] of metrics) {
-        const diff = relDiff(tsVal, rustVal);
-        expect(diff).toBeLessThanOrEqual(OFFLINE_REL_EPSILON);
+            const metrics: Array<[string, number, number]> = [
+              ['ore', tsSnapshot.resources.ore, rustSnapshot.resources.ore],
+              ['bars', tsSnapshot.resources.bars, rustSnapshot.resources.bars],
+              ['energy', tsSnapshot.resources.energy, rustSnapshot.resources.energy],
+            ];
+
+            const metricSeries: Array<{ key: string; ts: number; rust: number; diff: number }> = [];
+            for (const [key, tsVal, rustVal] of metrics) {
+              const diff = relDiff(tsVal, rustVal);
+              metricSeries.push({ key, ts: tsVal, rust: rustVal, diff });
+              if (diff > OFFLINE_REL_EPSILON) {
+                divergences.push(
+                  `Seed=${seed} steps=${steps} metric=${key} diff=${diff.toFixed(4)} TS=${tsVal.toFixed(
+                    4
+                  )} Rust=${rustVal.toFixed(4)}`
+                );
+              }
+            }
+
+            series.push({ seed, steps: rustResult.steps, metrics: metricSeries });
+            expect(rustResult.steps).toBe(steps);
+          }
+        }
+
+        logDivergences(
+          'offline-parity-matrix',
+          divergences,
+          parityDebugEnabled ? { series, epsilon: OFFLINE_REL_EPSILON } : undefined
+        );
+        expect(divergences).toEqual([]);
       }
-    });
+    );
   });
 });

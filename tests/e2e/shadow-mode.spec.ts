@@ -12,6 +12,10 @@
  */
 
 import { expect, test } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
+import process from 'node:process';
+import { logDivergences, parityDebugEnabled, recordRollingMetrics } from '../shared/parityLogger';
 
 test.describe('Shadow Mode Parity', () => {
   test.beforeEach(async ({ page }) => {
@@ -177,8 +181,28 @@ test.describe('Shadow Mode Parity', () => {
     const hud = page.locator('.hud');
     await expect(hud).toBeVisible({ timeout: 15000 });
 
-    // Let both engines run briefly (shadow mode may be gated)
-    await page.waitForTimeout(5000);
+    const samples: Array<{ t: number; value: number }> = [];
+    const start = Date.now();
+    for (let i = 0; i < 5; i += 1) {
+      await page.waitForTimeout(1000);
+      samples.push({ t: (Date.now() - start) / 1000, value: parityLogs.length });
+    }
+
+    if (parityLogs.length > 0 && parityDebugEnabled) {
+      const dir = path.resolve(process.cwd(), 'test-results', 'parity');
+      fs.mkdirSync(dir, { recursive: true });
+      await page.screenshot({
+        path: path.join(dir, 'shadow-mode-drift.png'),
+        fullPage: true,
+      });
+    }
+
+    logDivergences(
+      'shadow-mode-console-parity',
+      parityLogs,
+      parityDebugEnabled ? { samples } : undefined
+    );
+    recordRollingMetrics('shadow-mode-parity-log-series', samples);
 
     expect(parityLogs.length).toBe(0);
   });

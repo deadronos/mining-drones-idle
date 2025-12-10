@@ -67,6 +67,10 @@
 
 ## Recent Completions
 
+✅ **Completed: TASK052 – Parity Test Expansion & Measurement**
+
+- Added shared parity logger (`PARITY_DEBUG`/`--debug-parity`) and optional enforcement flag (`PARITY_ENFORCE`), expanded step/offline/command parity suites, and enhanced shadow-mode E2E with rolling metrics and screenshot capture on drift.
+
 ✅ **Completed: TASK045 – TypeScript WASM Bridge Implementation**
 
 - Extended `RustSimBridge` interface with full lifecycle and snapshot methods.
