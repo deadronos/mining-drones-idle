@@ -41,10 +41,15 @@ export interface FactoryBuffers {
   haulers_assigned: BufferSection;
 }
 
+export interface GlobalBuffers {
+  resources: BufferSection;
+}
+
 export interface RustSimLayout {
   drones: DroneBuffers;
   asteroids: AsteroidBuffers;
   factories: FactoryBuffers;
+  globals: GlobalBuffers;
   total_size_bytes: number;
 }
 
@@ -135,16 +140,19 @@ export interface RustSimBridge {
   getAsteroidMaxOre(): Float32Array;
   getAsteroidResourceProfile(): Float32Array;
 
+  // Global buffer accessors
+  getGlobalResources(): Float32Array;
+
   // Factory buffer accessors
   getFactoryPositions(): Float32Array;
   getFactoryOrientations(): Float32Array;
   getFactoryActivity(): Uint32Array;
-  getFactoryResources(): Float32Array;
-  getFactoryEnergy(): Float32Array;
+  getFactoryResources(index?: number): Float32Array;
+  getFactoryEnergy(index?: number): Float32Array;
   getFactoryMaxEnergy(): Float32Array;
   getFactoryUpgrades(): Float32Array;
   getFactoryRefineryState(): Float32Array;
-  getFactoryHaulersAssigned(): Float32Array;
+  getFactoryHaulersAssigned(index?: number): Float32Array;
 }
 
 export function buildRustSimBridge(
@@ -324,6 +332,11 @@ export function buildRustSimBridge(
       return getViewF32(layout.asteroids.resource_profile);
     },
 
+    // Global buffer accessors
+    getGlobalResources() {
+      return getViewF32(layout.globals.resources);
+    },
+
     // Factory buffer accessors
     getFactoryPositions() {
       return getViewF32(layout.factories.positions);
@@ -337,12 +350,20 @@ export function buildRustSimBridge(
       return getViewU32(layout.factories.activity);
     },
 
-    getFactoryResources() {
-      return getViewF32(layout.factories.resources);
+    getFactoryResources(index?: number) {
+      const view = getViewF32(layout.factories.resources);
+      if (index !== undefined) {
+        return view.subarray(index * 7, (index + 1) * 7);
+      }
+      return view;
     },
 
-    getFactoryEnergy() {
-      return getViewF32(layout.factories.energy);
+    getFactoryEnergy(index?: number) {
+      const view = getViewF32(layout.factories.energy);
+      if (index !== undefined) {
+        return view.subarray(index, index + 1);
+      }
+      return view;
     },
 
     getFactoryMaxEnergy() {
@@ -357,8 +378,12 @@ export function buildRustSimBridge(
       return getViewF32(layout.factories.refinery_state);
     },
 
-    getFactoryHaulersAssigned() {
-      return getViewF32(layout.factories.haulers_assigned);
+    getFactoryHaulersAssigned(index?: number) {
+      const view = getViewF32(layout.factories.haulers_assigned);
+      if (index !== undefined) {
+        return view.subarray(index, index + 1);
+      }
+      return view;
     },
   };
 }
