@@ -91,16 +91,16 @@ Phase 5 — CI & Validation
 
 | ID | Description | Status | Updated | Notes |
 |---:|------------|:------:|--------:|------|
-| 1.1 | Extend `step-parity.test.ts` (positions, energy, factories) | Not Started | | Add epsilon thresholds and stable seeds |
-| 1.4 | Add cross-engine *comparison* tests (TS vs Rust) for `simulateOffline()` | Not Started | | Validates identical snapshot outputs modulo epsilon |
-| 1.2 | Add offline parity tests for `simulateOffline()` | Not Started | | Compare snapshots across engines |
+| 1.1 | Extend `step-parity.test.ts` (positions, energy, factories) | Done | 2025-12-09 | Add epsilon thresholds and stable seeds |
+| 1.4 | Add cross-engine *comparison* tests (TS vs Rust) for `simulateOffline()` | Done | 2025-12-09 | Validates identical snapshot outputs modulo epsilon |
+| 1.2 | Add offline parity tests for `simulateOffline()` | Done | 2025-12-09 | Compare snapshots across engines |
 | 1.3 | Harden shadow-mode E2E tests | Not Started | | Log divergences & assert thresholds |
 | 2.1 | Port Fleet/Drone AI to Rust | Not Started | | Includes flight persistence and ownership |
 | 2.2 | Port Asteroid lifecycle to Rust | Not Started | | Depletion, recycling, spawn rules |
 | 2.3 | Decide / implement Biomes parity (port vs doc exception) | Not Started | | If too complex, document behavior differences |
 | 3.1 | Implement `SpawnDrone` command in Rust | Not Started | | Must match TS snapshot outputs |
-| 3.2 | Implement `RecycleAsteroid`, `AssignHauler` in Rust | Not Started | | Add tests for each command |
-| 3.3 | Command parity tests | Not Started | | Cross-apply commands and compare snapshots |
+| 3.2 | Implement `RecycleAsteroid`, `AssignHauler` in Rust | Partial | 2025-12-09 | AssignHauler/RecycleAsteroid implemented, tests pass |
+| 3.3 | Command parity tests | Done | 2025-12-09 | Cross-apply commands and compare snapshots |
 | 4.1 | Wire offline simulation to Rust bridge | Not Started | | Update persistence and integration tests |
 | 4.2 | Snapshot schema versioning & migrations | Not Started | | Keep `load_snapshot` backward compatible |
 | 5.1 | CI: add WASM build + test job | Not Started | | Gate long parity suite to own job/nightly |
@@ -174,6 +174,14 @@ Notes on scope and trade-offs:
 ## Progress Log
 
 ### 2025-12-09
+
+- Completed Phase 1 (Parity Tests) and parts of Phase 2/3.
+- Implemented `step-parity.test.ts`, `offline-parity.test.ts`, `command-parity.test.ts`.
+- Implemented `sync_data_to_snapshot` in `rust-engine` to fix `exportSnapshot`.
+- Fixed `sys_refinery` in `rust-engine` (resource index mismatch).
+- Implemented `sys_global_refinery` in `rust-engine` to match TS global refinery logic.
+- Verified parity for Steps, Offline Simulation, and Commands (BuyModule, PurchaseFactoryUpgrade, AssignHauler, DoPrestige).
+- Fixed TS types and lint errors in test suite.
 
 - Added acceptance criteria and numeric thresholds mapped to DES037.
 - Started expanding tests & validation details; identified missing cross-engine comparisons and command parity test files.

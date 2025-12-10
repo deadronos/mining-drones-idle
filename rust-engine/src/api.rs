@@ -485,6 +485,15 @@ impl GameState {
                 std::slice::from_raw_parts_mut(ptr, section.length)
             };
 
+            // Global Refinery (Legacy/Module based)
+            crate::systems::global_refinery::sys_global_refinery(
+                &mut self.snapshot.resources,
+                &self.snapshot.modules,
+                self.snapshot.prestige.cores,
+                dt,
+                modifiers.refinery_yield_multiplier,
+            );
+
             // Refinery System
             let resources = get_slice_mut(&self.layout.factories.resources);
             let upgrades = get_slice_mut(&self.layout.factories.upgrades);

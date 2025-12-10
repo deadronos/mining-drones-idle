@@ -22,6 +22,7 @@ pub const SOLAR_ARRAY_LOCAL_REGEN_PER_LEVEL: f32 = 0.25;
 pub const SOLAR_BASE_GEN: f32 = 7.0;
 pub const BASE_ENERGY_CAP: f32 = 100.0;
 pub const ENERGY_PER_SOLAR: f32 = 25.0;
+pub const BASE_REFINERY_RATE: f32 = 1.0;
 pub const ORE_PER_BAR: f32 = 10.0;
 pub const ORE_CONVERSION_PER_SECOND: f32 = 10.0;
 pub const BASE_STORAGE: f32 = 400.0;
