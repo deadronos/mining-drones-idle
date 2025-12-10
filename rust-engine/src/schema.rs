@@ -69,6 +69,7 @@ pub struct FactoryUpgradeSnapshot {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct FactorySnapshot {
     pub id: String,
     pub position: Vector3,

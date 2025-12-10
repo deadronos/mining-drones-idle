@@ -159,4 +159,29 @@ describe('Command Parity', () => {
     expect(rustSnapshot.factories[0].upgrades.storage).toBe(initialLevel + 1);
     expect(rustSnapshot.factories[0].resources.bars).toBeLessThan(snapshot.factories[0].resources.bars || 0);
   });
+
+  it('ApplyCommand: SpawnDrone adds drone', async () => {
+    const snapshot = createTestSnapshot(104);
+    await bridge!.init(snapshot);
+
+    const initialDroneBay = snapshot.modules.droneBay;
+
+    bridge!.applyCommand({
+        type: 'SpawnDrone',
+        payload: { factoryId: 'factory-1' }
+    });
+
+    const rustSnapshot = bridge!.exportSnapshot();
+    // Check if drone bay increased (capacity)
+    expect(rustSnapshot.modules.droneBay).toBe(initialDroneBay + 1);
+
+    // Check if drone owners has a new entry
+    const owners = rustSnapshot.droneOwners || {};
+    const ownerKeys = Object.keys(owners);
+    expect(ownerKeys.length).toBeGreaterThan(0);
+
+    // Verify the owner is factory-1
+    const newDroneId = ownerKeys.find(k => owners[k] === 'factory-1');
+    expect(newDroneId).toBeDefined();
+  });
 });

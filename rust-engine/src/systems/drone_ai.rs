@@ -70,56 +70,72 @@ pub fn sys_drone_ai(
             // TODO: Spatial query or smarter selection
             let asteroid_count = asteroid_positions.len() / 3;
             if asteroid_count > 0 {
-                // Try 5 times to find valid asteroid
-                for _ in 0..5 {
-                    let idx = (rng.next_u32() as usize) % asteroid_count;
+                // Find nearest asteroid with ore
+                let mut best_idx = None;
+                let mut min_dist_sq = f32::MAX;
+
+                for idx in 0..asteroid_count {
                     if asteroid_ore[idx] > 0.0 {
-                        // Found one
-                        // Find ID
-                        let target_id = asteroid_id_to_index
-                            .iter()
-                            .find(|&(_, &v)| v == idx)
-                            .map(|(k, _)| k.clone());
+                        let ax = asteroid_positions[idx * 3];
+                        let ay = asteroid_positions[idx * 3 + 1];
+                        let az = asteroid_positions[idx * 3 + 2];
 
-                        if let Some(target_id) = target_id {
-                            let target_pos = [
-                                asteroid_positions[idx * 3],
-                                asteroid_positions[idx * 3 + 1],
-                                asteroid_positions[idx * 3 + 2],
-                            ];
+                        let dx = ax - position[0];
+                        let dy = ay - position[1];
+                        let dz = az - position[2];
+                        let dist_sq = dx * dx + dy * dy + dz * dz;
 
-                            // Create flight
-                            let dist = distance(position, target_pos);
-                            let duration = dist / speed;
-
-                            new_flights.push(DroneFlight {
-                                drone_id: drone_id.clone(),
-                                state: "toAsteroid".to_string(),
-                                target_asteroid_id: Some(target_id),
-                                target_region_id: None,
-                                target_factory_id: None,
-                                owner_factory_id: None, // TODO: Get from SoA
-                                path_seed: rng.next_u32(),
-                                travel: TravelSnapshot {
-                                    from: position,
-                                    to: target_pos,
-                                    elapsed: 0.0,
-                                    duration,
-                                    control: None, // TODO: Bezier
-                                },
-                                cargo: 0.0,
-                                battery: drone_battery[drone_idx],
-                                max_battery,
-                                capacity,
-                                mining_rate,
-                                cargo_profile: None,
-                                charging: false,
-                            });
-
-                            // Update state immediately to prevent double assignment
-                            drone_states[drone_idx] = DRONE_STATE_TO_ASTEROID;
-                            break;
+                        if dist_sq < min_dist_sq {
+                            min_dist_sq = dist_sq;
+                            best_idx = Some(idx);
                         }
+                    }
+                }
+
+                if let Some(idx) = best_idx {
+                    // Find ID (expensive reverse lookup, but needed for snapshot)
+                    let target_id = asteroid_id_to_index
+                        .iter()
+                        .find(|&(_, &v)| v == idx)
+                        .map(|(k, _)| k.clone());
+
+                    if let Some(target_id) = target_id {
+                        let target_pos = [
+                            asteroid_positions[idx * 3],
+                            asteroid_positions[idx * 3 + 1],
+                            asteroid_positions[idx * 3 + 2],
+                        ];
+
+                        // Create flight
+                        let dist = min_dist_sq.sqrt();
+                        let duration = dist / speed;
+
+                        new_flights.push(DroneFlight {
+                            drone_id: drone_id.clone(),
+                            state: "toAsteroid".to_string(),
+                            target_asteroid_id: Some(target_id),
+                            target_region_id: None,
+                            target_factory_id: None,
+                            owner_factory_id: None, // TODO: Get from SoA
+                            path_seed: rng.next_u32(),
+                            travel: TravelSnapshot {
+                                from: position,
+                                to: target_pos,
+                                elapsed: 0.0,
+                                duration,
+                                control: None, // TODO: Bezier
+                            },
+                            cargo: 0.0,
+                            battery: drone_battery[drone_idx],
+                            max_battery,
+                            capacity,
+                            mining_rate,
+                            cargo_profile: None,
+                            charging: false,
+                        });
+
+                        // Update state immediately to prevent double assignment
+                        drone_states[drone_idx] = DRONE_STATE_TO_ASTEROID;
                     }
                 }
             }

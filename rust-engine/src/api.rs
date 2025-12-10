@@ -455,8 +455,103 @@ impl GameState {
     }
 
     /// Serializes the current internal state back to a JSON snapshot string.
-    pub fn export_snapshot_str(&self) -> Result<String, SimulationError> {
+    pub fn export_snapshot_str(&mut self) -> Result<String, SimulationError> {
+        self.sync_data_to_snapshot();
         serde_json::to_string(&self.snapshot).map_err(SimulationError::parse)
+    }
+
+    /// Syncs buffer data back to the snapshot.
+    pub fn sync_data_to_snapshot(&mut self) {
+        // Sync factories
+        for (i, factory) in self.snapshot.factories.iter_mut().enumerate() {
+            if i >= self.layout.factories.resources.length { break; }
+
+            // Resources
+            let offset = self.layout.factories.resources.offset_bytes / 4 + i * 7;
+            factory.resources.ore = f32::from_bits(self.data[offset]);
+            factory.resources.ice = f32::from_bits(self.data[offset + 1]);
+            factory.resources.metals = f32::from_bits(self.data[offset + 2]);
+            factory.resources.crystals = f32::from_bits(self.data[offset + 3]);
+            factory.resources.organics = f32::from_bits(self.data[offset + 4]);
+            factory.resources.bars = f32::from_bits(self.data[offset + 5]);
+            factory.resources.credits = f32::from_bits(self.data[offset + 6]);
+
+            // Energy
+            let offset = self.layout.factories.energy.offset_bytes / 4 + i;
+            factory.energy = f32::from_bits(self.data[offset]);
+
+            let offset = self.layout.factories.max_energy.offset_bytes / 4 + i;
+            factory.energy_capacity = f32::from_bits(self.data[offset]);
+
+            // Upgrades
+            let offset = self.layout.factories.upgrades.offset_bytes / 4 + i * 5;
+            factory.upgrades.docking = f32::from_bits(self.data[offset]) as i32;
+            factory.upgrades.refine = f32::from_bits(self.data[offset + 1]) as i32;
+            factory.upgrades.storage = f32::from_bits(self.data[offset + 2]) as i32;
+            factory.upgrades.energy = f32::from_bits(self.data[offset + 3]) as i32;
+            factory.upgrades.solar = f32::from_bits(self.data[offset + 4]) as i32;
+
+            // Haulers
+            let offset = self.layout.factories.haulers_assigned.offset_bytes / 4 + i;
+            factory.haulers_assigned = Some(f32::from_bits(self.data[offset]) as i32);
+        }
+
+        // Sync drone flights
+        for flight in self.snapshot.drone_flights.iter_mut() {
+            if let Some(&idx) = self.drone_id_to_index.get(&flight.drone_id) {
+                // Battery
+                let offset = self.layout.drones.battery.offset_bytes / 4 + idx;
+                flight.battery = f32::from_bits(self.data[offset]);
+
+                // Cargo
+                let offset = self.layout.drones.cargo.offset_bytes / 4 + idx;
+                flight.cargo = f32::from_bits(self.data[offset]);
+
+                // Max Battery, Capacity, Mining Rate
+                let offset = self.layout.drones.max_battery.offset_bytes / 4 + idx;
+                flight.max_battery = f32::from_bits(self.data[offset]);
+
+                let offset = self.layout.drones.capacity.offset_bytes / 4 + idx;
+                flight.capacity = f32::from_bits(self.data[offset]);
+
+                let offset = self.layout.drones.mining_rate.offset_bytes / 4 + idx;
+                flight.mining_rate = f32::from_bits(self.data[offset]);
+
+                // Cargo Profile
+                if let Some(profile) = &mut flight.cargo_profile {
+                    let base_offset = self.layout.drones.cargo_profile.offset_bytes / 4 + idx * 5;
+                    profile.ore = f32::from_bits(self.data[base_offset]);
+                    profile.ice = f32::from_bits(self.data[base_offset + 1]);
+                    profile.metals = f32::from_bits(self.data[base_offset + 2]);
+                    profile.crystals = f32::from_bits(self.data[base_offset + 3]);
+                    profile.organics = f32::from_bits(self.data[base_offset + 4]);
+                }
+            }
+        }
+
+        // Sync asteroid ore remaining
+        if let Some(asteroids) = self.snapshot.extra.get_mut("asteroids").and_then(|v| v.as_array_mut()) {
+             for asteroid in asteroids {
+                 if let Some(id) = asteroid.get("id").and_then(|v| v.as_str()) {
+                     if let Some(&idx) = self.asteroid_id_to_index.get(id) {
+                         let offset = self.layout.asteroids.ore_remaining.offset_bytes / 4 + idx;
+                         let ore = f32::from_bits(self.data[offset]);
+                         if let Some(obj) = asteroid.as_object_mut() {
+                             obj.insert("oreRemaining".to_string(), serde_json::Value::from(ore));
+                         }
+                     }
+                 }
+             }
+        }
+    }
+
+    /// Rebuilds the internal state (layout and buffers) from the current snapshot.
+    /// This is used when the number of entities changes (e.g. buying modules).
+    fn rebuild_state(&mut self) -> Result<(), SimulationError> {
+        self.sync_data_to_snapshot();
+        let new_state = GameState::from_snapshot(self.snapshot.clone())?;
+        *self = new_state;
+        Ok(())
     }
 
     /// Advances the simulation by dt seconds.
@@ -698,8 +793,8 @@ impl GameState {
             SimulationCommand::ImportPayload { snapshot_json } => {
                 self.load_snapshot_str(&snapshot_json)?;
             }
-            SimulationCommand::SpawnDrone { factory_id: _ } => {
-                // Drone spawning is handled by TypeScript ECS for now
+            SimulationCommand::SpawnDrone { factory_id } => {
+                self.handle_spawn_drone(&factory_id)?;
             }
             SimulationCommand::RecycleAsteroid { asteroid_id } => {
                 self.handle_recycle_asteroid(&asteroid_id)?;
@@ -819,7 +914,10 @@ impl GameState {
 
         self.snapshot.resources.bars -= cost;
         match module_type {
-            "droneBay" => self.snapshot.modules.drone_bay += 1,
+            "droneBay" => {
+                self.snapshot.modules.drone_bay += 1;
+                self.rebuild_state()?;
+            }
             "refinery" => self.snapshot.modules.refinery += 1,
             "storage" => self.snapshot.modules.storage += 1,
             "solar" => self.snapshot.modules.solar += 1,
@@ -829,6 +927,20 @@ impl GameState {
             "routingProtocol" => self.snapshot.modules.routing_protocol += 1,
             _ => {}
         }
+        Ok(())
+    }
+
+    fn handle_spawn_drone(&mut self, factory_id: &str) -> Result<(), SimulationError> {
+        // 1. Increase capacity if needed (or assume command implies capacity increase/force)
+        // To be safe, we increment drone_bay.
+        self.snapshot.modules.drone_bay += 1;
+
+        // 2. Assign owner in snapshot
+        let drone_id = format!("drone-spawned-{}", self.rng.next_u32());
+        self.snapshot.drone_owners.insert(drone_id, Some(factory_id.to_string()));
+
+        // 3. Rebuild state
+        self.rebuild_state()?;
         Ok(())
     }
 
