@@ -10,12 +10,6 @@
 - Added dedicated `wasm-parity` CI job running parity/perf suites; shadow-mode E2E now includes a 5s divergence-log guard.
 - Remaining: asteroid/depletion + per-drone parity coverage, longer shadow-mode parity runs/nightly gating, WASM artifact caching, biome parity decision.
 
-### 🔄 **TASK053 – Drone AI & Travel Parity (In Progress)**
-
-- Rust AI now mirrors TS weighted nearby targeting with biome/region offsets, sink-aware travel speed, seeded Bézier control points, and queue-aware factory returns (queuedDrones persisted/cleared on unload). Target region/factory indices now populated for buffers.
-- Added asteroid metadata parsing (gravity/regions/hazards) from snapshot extras and cached drone index→id mapping for queue cleanup.
-- Added nested `extra.asteroids` handling plus RNG burn to mirror TS asteroid generation so Rust emits flights for parity snapshots; path seeds now mirror TS scaling and seed parity passes 1-step check. Longer-run divergences remain logged.
-
 ## Active Tasks
 
 ### ✅ **TASK045 – TypeScript WASM Bridge Implementation** (Just Completed)
@@ -100,6 +94,14 @@
 
 - Scaffolding `/rust-engine` crate completed with RNG parity tests, snapshot import/export, layout planner, and data buffer.
 - Implemented TS bridge (`wasmSimBridge`) matching `wasm-bindgen` class structure.
+
+✅ **Completed: TASK053 – Drone AI & Travel Parity**
+
+- Weighted asteroid targeting/region offsets, queue-aware returns, and travel seed/control parity matched to TS. RNG burn/path seed fixes keep flight seeds aligned in parity suites; rebuilt WASM and validated with `npm run typecheck`, `npm run lint`, `npm run test`.
+
+✅ **Completed: TASK054 – Asteroids & Biomes Parity**
+
+- Biome-driven respawn replaces uniform weights; scanner/sink richness multipliers applied, RNG draw count (11) mirrored, gravity metadata refreshed, and respawn parity test added. Validated with `npm run build:wasm`, `npm run typecheck`, `npm run lint`, `npm run test`.
 
 ## Next Steps
 

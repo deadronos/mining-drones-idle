@@ -841,6 +841,7 @@ impl GameState {
                 asteroid_ore,
                 asteroid_max_ore,
                 asteroid_resource_profile,
+                &mut self.asteroid_metadata,
                 &mut self.rng,
                 &sink_bonuses,
                 self.snapshot.modules.scanner,

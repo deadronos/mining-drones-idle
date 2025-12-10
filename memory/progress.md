@@ -4,6 +4,14 @@
 
 ## Recent Achievements
 
+- **2025-12-12**: Completed TASK054 (Asteroids & Biomes Parity).
+  - Replaced Rust respawn with biome-driven profiles/gravity, scanner/sink richness bias, and TS-aligned RNG draw count; updated asteroid metadata.
+  - Added respawn parity test and rebuilt WASM; validation: `npm run build:wasm`, `npm run typecheck`, `npm run lint`, `npm run test` (parity divergences logged as expected).
+
+- **2025-12-12**: Completed TASK053 (Drone AI & Travel Parity).
+  - Finalized weighted targeting/region offsets, queue-aware returns, and travel seed/control parity; rebuilt WASM bundle.
+  - Validation: `npm run typecheck`, `npm run lint`, `npm run test` (parity suites log known divergences only).
+
 - **2025-12-10**: Advanced TASK053 (drone AI/travel parity).
   - Added asteroid metadata parsing (gravity/regions/hazards), drone index→id cache, queue-aware factory assignment, seeded Bézier travel matching TS waypoint logic, and target region/factory buffer updates.
   - Rebuilt WASM (`npm run build:wasm`) and added Rust/unit parity coverage (seeded travel, metadata parse).
