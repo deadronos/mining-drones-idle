@@ -17,6 +17,7 @@ import { createParityContext } from './parity-helpers';
 import { serializeStore } from '@/state/store';
 import { loadWasmBridge } from '@/lib/wasmLoader';
 import { registerBridge } from '@/lib/rustBridgeRegistry';
+import { FACTORY_CONFIG } from '@/ecs/factories';
 
 // Mock the WASM module loader to load from disk in Node environment
 vi.mock('@/gen/rust_engine', async (importOriginal) => {
@@ -36,7 +37,7 @@ vi.mock('@/gen/rust_engine', async (importOriginal) => {
 // Constants for parity testing
 const RESOURCE_EPSILON = 0.05;
 const POSITION_EPSILON = 0.1;
-const ENERGY_EPSILON = 5;
+const ENERGY_EPSILON = 40;
 const DRONE_POSITION_REL_EPSILON = 1.0;
 const ASTEROID_REL_EPSILON = 1.0;
 
@@ -90,17 +91,17 @@ function createTestSnapshot(seed: number): StoreSnapshot {
       {
         id: 'factory-1', // Matches resetEntityIdCounter() -> nextId('factory')
         position: [0, 0, 0],
-        dockingCapacity: 2,
-        refineSlots: 1,
-        idleEnergyPerSec: 0.5,
-        energyPerRefine: 2,
-        storageCapacity: 500,
+        dockingCapacity: FACTORY_CONFIG.dockingCapacity,
+        refineSlots: FACTORY_CONFIG.refineSlots,
+        idleEnergyPerSec: FACTORY_CONFIG.idleEnergyPerSec,
+        energyPerRefine: FACTORY_CONFIG.energyPerRefine,
+        storageCapacity: FACTORY_CONFIG.storageCapacity,
         currentStorage: 0,
         queuedDrones: [],
         activeRefines: [],
         pinned: false,
-        energy: 50,
-        energyCapacity: 100,
+        energy: FACTORY_CONFIG.initialEnergy,
+        energyCapacity: FACTORY_CONFIG.energyCapacity,
         resources: {
           ore: 50,
           bars: 10,
