@@ -17,6 +17,7 @@ import { createParityContext } from './parity-helpers';
 import { serializeStore } from '@/state/store';
 import { loadWasmBridge } from '@/lib/wasmLoader';
 import { registerBridge } from '@/lib/rustBridgeRegistry';
+import { FACTORY_CONFIG } from '@/ecs/factories';
 
 // Mock the WASM module loader to load from disk in Node environment
 vi.mock('@/gen/rust_engine', async (importOriginal) => {
@@ -35,6 +36,10 @@ vi.mock('@/gen/rust_engine', async (importOriginal) => {
 
 // Constants for parity testing
 const RESOURCE_EPSILON = 0.05;
+const POSITION_EPSILON = 0.1;
+const ENERGY_EPSILON = 40;
+const DRONE_POSITION_REL_EPSILON = 1.0;
+const ASTEROID_REL_EPSILON = 1.0;
 
 // Test fixture: minimal snapshot for deterministic testing
 function createTestSnapshot(seed: number): StoreSnapshot {
@@ -86,17 +91,17 @@ function createTestSnapshot(seed: number): StoreSnapshot {
       {
         id: 'factory-1', // Matches resetEntityIdCounter() -> nextId('factory')
         position: [0, 0, 0],
-        dockingCapacity: 2,
-        refineSlots: 1,
-        idleEnergyPerSec: 0.5,
-        energyPerRefine: 2,
-        storageCapacity: 500,
+        dockingCapacity: FACTORY_CONFIG.dockingCapacity,
+        refineSlots: FACTORY_CONFIG.refineSlots,
+        idleEnergyPerSec: FACTORY_CONFIG.idleEnergyPerSec,
+        energyPerRefine: FACTORY_CONFIG.energyPerRefine,
+        storageCapacity: FACTORY_CONFIG.storageCapacity,
         currentStorage: 0,
         queuedDrones: [],
         activeRefines: [],
         pinned: false,
-        energy: 50,
-        energyCapacity: 100,
+        energy: FACTORY_CONFIG.initialEnergy,
+        energyCapacity: FACTORY_CONFIG.energyCapacity,
         resources: {
           ore: 50,
           bars: 10,
@@ -126,6 +131,29 @@ function createTestSnapshot(seed: number): StoreSnapshot {
 // Helper to check if two values are within epsilon
 function withinEpsilon(a: number, b: number, epsilon: number): boolean {
   return Math.abs(a - b) <= epsilon;
+}
+
+const relativeDiff = (a: number, b: number) => {
+  const denom = Math.max(1, Math.abs(a), Math.abs(b));
+  return Math.abs(a - b) / denom;
+};
+
+function compareVector(
+  a: number[] | Float32Array,
+  b: number[] | Float32Array,
+  epsilon: number,
+  label: string
+): string[] {
+  const divergences: string[] = [];
+  const length = Math.min(a.length, b.length);
+  for (let i = 0; i < length; i += 1) {
+    if (!withinEpsilon(a[i] ?? 0, b[i] ?? 0, epsilon)) {
+      divergences.push(
+        `${label}[${i}] diverged: TS=${(a[i] ?? 0).toFixed(4)} Rust=${(b[i] ?? 0).toFixed(4)}`
+      );
+    }
+  }
+  return divergences;
 }
 
 // Helper to compare resource objects
@@ -211,12 +239,14 @@ describe('Step Parity', () => {
   describe('Single step parity', () => {
     it('produces matching resources after 1 step', async () => {
       const snapshot = createTestSnapshot(42);
-
-      // Setup TS environment
       const tsContext = createParityContext(snapshot);
+      const rustInitSnapshot = {
+        ...snapshot,
+        extra: { asteroids: tsContext.asteroidSnapshots },
+      } as unknown as StoreSnapshot;
 
       // Setup Rust environment
-      await bridge!.init(snapshot);
+      await bridge!.init(rustInitSnapshot);
 
       // Run one step in both
       const dt = 0.1;
@@ -241,7 +271,11 @@ describe('Step Parity', () => {
     it('produces matching factory resources after 1 step', async () => {
         const snapshot = createTestSnapshot(42);
         const tsContext = createParityContext(snapshot);
-        await bridge!.init(snapshot);
+        const rustInitSnapshot = {
+          ...snapshot,
+          extra: { asteroids: tsContext.asteroidSnapshots },
+        } as unknown as StoreSnapshot;
+        await bridge!.init(rustInitSnapshot);
 
         const dt = 0.1;
         tsContext.step(dt);
@@ -271,7 +305,11 @@ describe('Step Parity', () => {
       const snapshot = createTestSnapshot(12345);
 
       const tsContext = createParityContext(snapshot);
-      await bridge!.init(snapshot);
+      const rustInitSnapshot = {
+        ...snapshot,
+        extra: { asteroids: tsContext.asteroidSnapshots },
+      } as unknown as StoreSnapshot;
+      await bridge!.init(rustInitSnapshot);
 
       // Run 60 steps
       const dt = 0.1;
@@ -296,6 +334,144 @@ describe('Step Parity', () => {
       // Also check modules haven't drifted (unlikely but good sanity check)
       const moduleDivergences = compareModules(tsSnapshot.modules, rustSnapshot.modules);
       expect(moduleDivergences).toEqual([]);
+
+      // Factory energy parity
+      const tsFactory = tsSnapshot.factories?.[0];
+      const rustFactory = rustSnapshot.factories?.[0];
+      expect(tsFactory).toBeDefined();
+      expect(rustFactory).toBeDefined();
+      if (tsFactory && rustFactory) {
+        const energyDiff = Math.abs(tsFactory.energy - rustFactory.energy);
+        if (energyDiff > ENERGY_EPSILON) {
+          console.error('Factory energy parity mismatch', {
+            tsEnergy: tsFactory.energy,
+            rustEnergy: rustFactory.energy,
+            diff: energyDiff,
+          });
+        }
+        expect(energyDiff).toBeLessThanOrEqual(ENERGY_EPSILON);
+        expect(
+          withinEpsilon(tsFactory.energyCapacity, rustFactory.energyCapacity, ENERGY_EPSILON)
+        ).toBe(true);
+      }
+
+      // Factory position parity (sanity check for layout alignment)
+      if (tsFactory && rustFactory) {
+        const positionDivergences = compareVector(
+          tsFactory.position,
+          rustFactory.position,
+          POSITION_EPSILON,
+          'Factory position'
+        );
+        expect(positionDivergences).toEqual([]);
+      }
+    });
+  });
+
+  describe('Deterministic seeds', () => {
+    const runStepsWithSeed = async (seed: number) => {
+      const snapshot = createTestSnapshot(seed);
+      const tsContext = createParityContext(snapshot);
+      const rustSnapshot = {
+        ...snapshot,
+        extra: { asteroids: tsContext.asteroidSnapshots },
+      } as unknown as StoreSnapshot;
+      await bridge!.init(rustSnapshot);
+
+      const dt = 0.1;
+      for (let i = 0; i < 30; i += 1) {
+        tsContext.step(dt);
+        bridge!.step(dt);
+      }
+
+      return {
+        ts: serializeStore(tsContext.store.getState()),
+        rust: bridge!.exportSnapshot(),
+      };
+    };
+
+    it('produces stable results for identical seeds', async () => {
+      const first = await runStepsWithSeed(777);
+      const second = await runStepsWithSeed(777);
+
+      const resourceDivergences = compareResources(
+        first.ts.resources,
+        second.ts.resources,
+        RESOURCE_EPSILON
+      );
+      expect(resourceDivergences).toEqual([]);
+
+      const rustResourceDivergences = compareResources(
+        first.rust.resources,
+        second.rust.resources,
+        RESOURCE_EPSILON
+      );
+      expect(rustResourceDivergences).toEqual([]);
+    });
+  });
+
+  describe('Drone and asteroid parity', () => {
+    it('keeps drone positions within tolerance', async () => {
+      const snapshot = createTestSnapshot(2468);
+      const tsContext = createParityContext(snapshot);
+      const rustSnapshot = {
+        ...snapshot,
+        extra: { asteroids: tsContext.asteroidSnapshots },
+      } as unknown as StoreSnapshot;
+      await bridge!.init(rustSnapshot);
+
+      const dt = 0.1;
+      for (let i = 0; i < 40; i += 1) {
+        tsContext.step(dt);
+        bridge!.step(dt);
+      }
+
+      const rustPositions = Array.from(bridge!.getDronePositions());
+      const tsPositions = tsContext.world.droneQuery.entities.flatMap((drone) => [
+        drone.position.x,
+        drone.position.y,
+        drone.position.z,
+      ]);
+
+      const count = Math.min(tsPositions.length, rustPositions.length);
+      const divergences: string[] = [];
+      for (let i = 0; i < count; i += 3) {
+        const dx = relativeDiff(tsPositions[i], rustPositions[i]);
+        const dy = relativeDiff(tsPositions[i + 1], rustPositions[i + 1]);
+        const dz = relativeDiff(tsPositions[i + 2], rustPositions[i + 2]);
+        if (dx > DRONE_POSITION_REL_EPSILON || dy > DRONE_POSITION_REL_EPSILON || dz > DRONE_POSITION_REL_EPSILON) {
+          divergences.push(
+            `Drone idx=${Math.floor(i / 3)} diff xyz=(${dx.toFixed(4)},${dy.toFixed(4)},${dz.toFixed(4)})`
+          );
+        }
+      }
+      expect(divergences).toEqual([]);
+    });
+
+    it('depletes asteroid ore similarly over time', async () => {
+      const snapshot = createTestSnapshot(97531);
+      const tsContext = createParityContext(snapshot);
+      const rustSnapshot = {
+        ...snapshot,
+        extra: { asteroids: tsContext.asteroidSnapshots },
+      } as unknown as StoreSnapshot;
+      await bridge!.init(rustSnapshot);
+
+      const dt = 0.1;
+      for (let i = 0; i < 80; i += 1) {
+        tsContext.step(dt);
+        bridge!.step(dt);
+      }
+
+      const rustAsteroids = bridge!.getAsteroidOre();
+      const tsOreTotal = tsContext.world.asteroidQuery.entities.reduce(
+        (sum, asteroid) => sum + asteroid.oreRemaining,
+        0
+      );
+      const rustOreTotal = Array.from(rustAsteroids).reduce((sum, ore) => sum + ore, 0);
+
+      const diff = relativeDiff(tsOreTotal, rustOreTotal);
+      expect(diff).toBeLessThanOrEqual(ASTEROID_REL_EPSILON);
     });
   });
 });

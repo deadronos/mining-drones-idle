@@ -28,9 +28,13 @@ export async function loadWasmBridge(
     // Dynamic import to allow tree-shaking when WASM is not used
     const wasmModule = await import('../gen/rust_engine');
     const initOutput = await wasmModule.default();
+    const memory = (initOutput as { memory?: WebAssembly.Memory }).memory;
+    if (!memory) {
+      throw new Error('WASM init missing memory');
+    }
 
     const exports: WasmSimExports = {
-      memory: initOutput.memory,
+      memory,
       WasmGameState: wasmModule.WasmGameState,
     };
 
@@ -51,10 +55,13 @@ export async function loadWasmBridge(
 
     // Preserve known extras used by the Rust engine if the caller provided them
     // (useRustEngine adds asteroids and droneFlights at the top-level).
-    const asAny = snapshot as unknown as Record<string, unknown> | undefined;
-    if (asAny) {
-      if (Array.isArray(asAny.asteroids)) safeSnapshot.asteroids = asAny.asteroids;
-      if (Array.isArray(asAny.droneFlights)) safeSnapshot.droneFlights = asAny.droneFlights as any;
+    type SnapshotExtras = { asteroids?: unknown; droneFlights?: unknown };
+    const extras = snapshot as SnapshotExtras;
+    if (Array.isArray(extras.asteroids)) {
+      (safeSnapshot as SnapshotExtras).asteroids = extras.asteroids;
+    }
+    if (Array.isArray(extras.droneFlights)) {
+      (safeSnapshot as SnapshotExtras).droneFlights = extras.droneFlights;
     }
 
     const bridge = buildRustSimBridge(exports, safeSnapshot as StoreSnapshot);

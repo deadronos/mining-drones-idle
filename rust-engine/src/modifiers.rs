@@ -1,4 +1,5 @@
 use crate::schema::Resources;
+use serde_json::Value;
 
 pub struct ResourceModifierSnapshot {
     pub metals_bonus: f32,
@@ -13,6 +14,8 @@ pub struct ResourceModifierSnapshot {
     pub energy_generation_multiplier: f32,
     pub energy_storage_multiplier: f32,
     pub energy_drain_multiplier: f32,
+    pub drone_speed_multiplier: f32,
+    pub drone_mining_speed_multiplier: f32,
 }
 
 struct ResourceBalanceEntry {
@@ -58,7 +61,12 @@ fn compute_bonus(amount: f32, balance: &ResourceBalanceEntry) -> f32 {
     }
 }
 
-pub fn get_resource_modifiers(resources: &Resources, prestige_cores: i32) -> ResourceModifierSnapshot {
+pub fn get_resource_modifiers(
+    resources: &Resources,
+    prestige_cores: i32,
+    prestige_investments: Option<&Value>,
+    spec_techs: Option<&Value>,
+) -> ResourceModifierSnapshot {
     let metals_balance = get_balance_with_prestige(&RESOURCE_BALANCE_METALS, prestige_cores);
     let crystals_balance = get_balance_with_prestige(&RESOURCE_BALANCE_CRYSTALS, prestige_cores);
     let organics_balance = get_balance_with_prestige(&RESOURCE_BALANCE_ORGANICS, prestige_cores);
@@ -78,6 +86,19 @@ pub fn get_resource_modifiers(resources: &Resources, prestige_cores: i32) -> Res
     let energy_storage_multiplier = (1.0 + ice_bonus).max(1.0);
     let energy_drain_multiplier = (1.0 - ICE_DRAIN_REDUCTION_FACTOR * ice_bonus).max(1.0).clamp(0.5, 1.0);
 
+    let drone_velocity_tier = prestige_investments
+        .and_then(|v| v.get("droneVelocity"))
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.0) as f32;
+
+    let ore_magnet_level = spec_techs
+        .and_then(|v| v.get("oreMagnet"))
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.0) as f32;
+
+    let drone_speed_multiplier = 1.0 + drone_velocity_tier * crate::constants::PRESTIGE_DRONE_VELOCITY_BONUS_PER_TIER;
+    let drone_mining_speed_multiplier = 1.0 + ore_magnet_level * crate::constants::SPEC_TECH_ORE_MAGNET_BONUS_PER_LEVEL;
+
     ResourceModifierSnapshot {
         metals_bonus,
         crystals_bonus,
@@ -91,5 +112,7 @@ pub fn get_resource_modifiers(resources: &Resources, prestige_cores: i32) -> Res
         energy_generation_multiplier,
         energy_storage_multiplier,
         energy_drain_multiplier,
+        drone_speed_multiplier,
+        drone_mining_speed_multiplier,
     }
 }

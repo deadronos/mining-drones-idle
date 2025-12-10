@@ -16,8 +16,9 @@ pub fn sys_drone_ai(
     drone_max_battery: &mut [f32],
     drone_capacity: &mut [f32],
     drone_mining_rate: &mut [f32],
-    _drone_target_asteroid_index: &mut [f32], // New
-    _drone_target_factory_index: &mut [f32],  // New
+    _drone_target_asteroid_index: &mut [f32],
+    _drone_target_factory_index: &mut [f32],
+    drone_owner_factory_index: &[f32],
     drone_id_to_index: &BTreeMap<String, usize>,
     factory_id_to_index: &BTreeMap<String, usize>,
     asteroid_id_to_index: &BTreeMap<String, usize>,
@@ -54,10 +55,10 @@ pub fn sys_drone_ai(
         ];
 
         // Calculate stats based on modifiers
-        let speed = DRONE_SPEED; // TODO: Add speed modifier
+        let speed = DRONE_SPEED * modifiers.drone_speed_multiplier;
         let capacity = DRONE_MAX_CARGO * modifiers.drone_capacity_multiplier;
         let max_battery = DRONE_MAX_BATTERY * modifiers.drone_battery_multiplier;
-        let mining_rate = DRONE_MINING_RATE; // TODO: Add mining rate modifier
+        let mining_rate = DRONE_MINING_RATE * modifiers.drone_mining_speed_multiplier;
 
         // Update SoA with current stats
         drone_capacity[drone_idx] = capacity;
@@ -66,103 +67,71 @@ pub fn sys_drone_ai(
 
         if state == DRONE_STATE_IDLE {
             // Find target asteroid
-            // Simple logic: pick random asteroid with ore > 0
-            // TODO: Spatial query or smarter selection
+            // Simple logic: pick nearest asteroid with ore > 0 (parity-first strategy)
             let asteroid_count = asteroid_positions.len() / 3;
             if asteroid_count > 0 {
-                // Try 5 times to find valid asteroid
-                for _ in 0..5 {
-                    let idx = (rng.next_u32() as usize) % asteroid_count;
+                // Find nearest asteroid with ore
+                let mut best_idx = None;
+                let mut min_dist_sq = f32::MAX;
+
+                for idx in 0..asteroid_count {
                     if asteroid_ore[idx] > 0.0 {
-                        // Found one
-                        // Find ID
-                        let target_id = asteroid_id_to_index
-                            .iter()
-                            .find(|&(_, &v)| v == idx)
-                            .map(|(k, _)| k.clone());
+                        let ax = asteroid_positions[idx * 3];
+                        let ay = asteroid_positions[idx * 3 + 1];
+                        let az = asteroid_positions[idx * 3 + 2];
 
-                        if let Some(target_id) = target_id {
-                            let target_pos = [
-                                asteroid_positions[idx * 3],
-                                asteroid_positions[idx * 3 + 1],
-                                asteroid_positions[idx * 3 + 2],
-                            ];
+                        let dx = ax - position[0];
+                        let dy = ay - position[1];
+                        let dz = az - position[2];
+                        let dist_sq = dx * dx + dy * dy + dz * dz;
 
-                            // Create flight
-                            let dist = distance(position, target_pos);
-                            let duration = dist / speed;
-
-                            new_flights.push(DroneFlight {
-                                drone_id: drone_id.clone(),
-                                state: "toAsteroid".to_string(),
-                                target_asteroid_id: Some(target_id),
-                                target_region_id: None,
-                                target_factory_id: None,
-                                owner_factory_id: None, // TODO: Get from SoA
-                                path_seed: rng.next_u32(),
-                                travel: TravelSnapshot {
-                                    from: position,
-                                    to: target_pos,
-                                    elapsed: 0.0,
-                                    duration,
-                                    control: None, // TODO: Bezier
-                                },
-                                cargo: 0.0,
-                                battery: drone_battery[drone_idx],
-                                max_battery,
-                                capacity,
-                                mining_rate,
-                                cargo_profile: None,
-                                charging: false,
-                            });
-
-                            // Update state immediately to prevent double assignment
-                            drone_states[drone_idx] = DRONE_STATE_TO_ASTEROID;
-                            break;
+                        if dist_sq < min_dist_sq {
+                            min_dist_sq = dist_sq;
+                            best_idx = Some(idx);
                         }
                     }
                 }
-            }
-        } else if state == DRONE_STATE_MINING || state == DRONE_STATE_RETURNING {
-            let cargo = drone_cargo[drone_idx];
-            if state == DRONE_STATE_RETURNING || cargo >= capacity {
-                // Full, return to factory
-                // Find nearest factory
-                // For now, just pick first factory
-                if !factory_positions.is_empty() {
-                    let factory_idx = 0; // TODO: Find nearest
-                    let target_pos = [
-                        factory_positions[factory_idx * 3],
-                        factory_positions[factory_idx * 3 + 1],
-                        factory_positions[factory_idx * 3 + 2],
-                    ];
 
-                    // Find ID
-                    let target_id = factory_id_to_index
+                if let Some(idx) = best_idx {
+                    // Find ID (expensive reverse lookup, but needed for snapshot)
+                    let target_id = asteroid_id_to_index
                         .iter()
-                        .find(|&(_, &v)| v == factory_idx)
+                        .find(|&(_, &v)| v == idx)
                         .map(|(k, _)| k.clone());
 
                     if let Some(target_id) = target_id {
-                        let dist = distance(position, target_pos);
+                        let target_pos = [
+                            asteroid_positions[idx * 3],
+                            asteroid_positions[idx * 3 + 1],
+                            asteroid_positions[idx * 3 + 2],
+                        ];
+
+                        // Create flight
+                        let dist = min_dist_sq.sqrt();
                         let duration = dist / speed;
 
                         new_flights.push(DroneFlight {
                             drone_id: drone_id.clone(),
-                            state: "returning".to_string(),
-                            target_asteroid_id: None,
+                            state: "toAsteroid".to_string(),
+                            target_asteroid_id: Some(target_id),
                             target_region_id: None,
-                            target_factory_id: Some(target_id),
-                            owner_factory_id: None,
+                            target_factory_id: None,
+                            owner_factory_id: {
+                                let owner_idx = drone_owner_factory_index[drone_idx] as usize;
+                                factory_id_to_index
+                                    .iter()
+                                    .find(|&(_, &v)| v == owner_idx)
+                                    .map(|(k, _)| k.clone())
+                            },
                             path_seed: rng.next_u32(),
                             travel: TravelSnapshot {
                                 from: position,
                                 to: target_pos,
                                 elapsed: 0.0,
                                 duration,
-                                control: None,
+                                control: Some(generate_bezier_control(position, target_pos, rng)),
                             },
-                            cargo,
+                            cargo: 0.0,
                             battery: drone_battery[drone_idx],
                             max_battery,
                             capacity,
@@ -171,7 +140,80 @@ pub fn sys_drone_ai(
                             charging: false,
                         });
 
-                        drone_states[drone_idx] = DRONE_STATE_RETURNING;
+                        // Update state immediately to prevent double assignment
+                        drone_states[drone_idx] = DRONE_STATE_TO_ASTEROID;
+                    }
+                }
+            }
+        } else if state == DRONE_STATE_MINING || state == DRONE_STATE_RETURNING {
+            let cargo = drone_cargo[drone_idx];
+            if state == DRONE_STATE_RETURNING || cargo >= capacity {
+                // Full, return to factory
+                // Find nearest factory
+                // Find nearest factory
+                if !factory_positions.is_empty() {
+                    let factory_count = factory_positions.len() / 3;
+                    let mut best_idx = None;
+                    let mut min_dist_sq = f32::MAX;
+
+                    for idx in 0..factory_count {
+                        let fx = factory_positions[idx * 3];
+                        let fy = factory_positions[idx * 3 + 1];
+                        let fz = factory_positions[idx * 3 + 2];
+                        let dx = fx - position[0];
+                        let dy = fy - position[1];
+                        let dz = fz - position[2];
+                        let dist_sq = dx * dx + dy * dy + dz * dz;
+
+                        if dist_sq < min_dist_sq {
+                            min_dist_sq = dist_sq;
+                            best_idx = Some(idx);
+                        }
+                    }
+
+                    if let Some(factory_idx) = best_idx {
+                        let target_pos = [
+                            factory_positions[factory_idx * 3],
+                            factory_positions[factory_idx * 3 + 1],
+                            factory_positions[factory_idx * 3 + 2],
+                        ];
+
+                        // Find ID
+                        let target_id = factory_id_to_index
+                            .iter()
+                            .find(|&(_, &v)| v == factory_idx)
+                        .map(|(k, _)| k.clone());
+
+                        if let Some(target_id) = target_id {
+                            let dist = distance(position, target_pos);
+                            let duration = dist / speed;
+
+                            new_flights.push(DroneFlight {
+                                drone_id: drone_id.clone(),
+                                state: "returning".to_string(),
+                                target_asteroid_id: None,
+                                target_region_id: None,
+                                target_factory_id: Some(target_id),
+                                owner_factory_id: None,
+                                path_seed: rng.next_u32(),
+                                travel: TravelSnapshot {
+                                    from: position,
+                                    to: target_pos,
+                                    elapsed: 0.0,
+                                    duration,
+                                    control: None,
+                                },
+                                cargo,
+                                battery: drone_battery[drone_idx],
+                                max_battery,
+                                capacity,
+                                mining_rate,
+                                cargo_profile: None,
+                                charging: false,
+                            });
+
+                            drone_states[drone_idx] = DRONE_STATE_RETURNING;
+                        }
                     }
                 }
             }
@@ -186,6 +228,20 @@ fn distance(a: [f32; 3], b: [f32; 3]) -> f32 {
     let dy = a[1] - b[1];
     let dz = a[2] - b[2];
     (dx * dx + dy * dy + dz * dz).sqrt()
+}
+
+fn generate_bezier_control(from: [f32; 3], to: [f32; 3], rng: &mut Mulberry32) -> [f32; 3] {
+    let mid = [
+        (from[0] + to[0]) * 0.5,
+        (from[1] + to[1]) * 0.5,
+        (from[2] + to[2]) * 0.5,
+    ];
+    let offset_scale = 10.0; // Arbitrary curve scale
+    [
+        mid[0] + (rng.next_f32() - 0.5) * offset_scale,
+        mid[1] + (rng.next_f32() - 0.5) * offset_scale,
+        mid[2] + (rng.next_f32() - 0.5) * offset_scale,
+    ]
 }
 
 #[cfg(test)]
@@ -205,6 +261,7 @@ mod tests {
         let mut drone_mining_rate = vec![1.0];
         let mut drone_target_asteroid_index = vec![-1.0];
         let mut drone_target_factory_index = vec![-1.0];
+        let drone_owner_factory_index = vec![0.0];
 
         let mut drone_id_to_index = BTreeMap::new();
         drone_id_to_index.insert("d1".to_string(), 0);
@@ -219,16 +276,21 @@ mod tests {
         let asteroid_ore = vec![];
 
         let mut rng = Mulberry32::new(1);
-        let modifiers = crate::modifiers::get_resource_modifiers(&Resources {
-            ore: 0.0,
-            ice: 0.0,
-            metals: 0.0,
-            crystals: 0.0,
-            organics: 0.0,
-            bars: 0.0,
-            energy: 0.0,
-            credits: 0.0,
-        }, 0);
+        let modifiers = crate::modifiers::get_resource_modifiers(
+            &Resources {
+                ore: 0.0,
+                ice: 0.0,
+                metals: 0.0,
+                crystals: 0.0,
+                organics: 0.0,
+                bars: 0.0,
+                energy: 0.0,
+                credits: 0.0,
+            },
+            0,
+            None,
+            None,
+        );
 
         sys_drone_ai(
             &mut drone_flights,
@@ -241,6 +303,7 @@ mod tests {
             &mut drone_mining_rate,
             &mut drone_target_asteroid_index,
             &mut drone_target_factory_index,
+            &drone_owner_factory_index,
             &drone_id_to_index,
             &factory_id_to_index,
             &asteroid_id_to_index,

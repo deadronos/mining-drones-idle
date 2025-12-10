@@ -1,4 +1,4 @@
-import type { StoreSnapshot } from '../state/types';
+import type { StoreSnapshot, LogisticsQueues } from '../state/types';
 
 export interface BufferSection {
   offset_bytes: number;
@@ -90,6 +90,7 @@ export interface WasmGameState {
   free(): void;
   load_snapshot(snapshot_json: string): void;
   export_snapshot(): string;
+  get_logistics_queues(): string;
   step(dt: number): number;
   apply_command(command_json: string): void;
   layout_json(): string;
@@ -114,6 +115,7 @@ export interface RustSimBridge {
   // Snapshots
   exportSnapshot(): StoreSnapshot;
   loadSnapshot(snapshot: StoreSnapshot): void;
+  getLogisticsQueues(): LogisticsQueues;
 
   // Layout
   getLayout(): RustSimLayout;
@@ -162,7 +164,7 @@ export function buildRustSimBridge(
   const json = JSON.stringify(snapshot);
   let gameState: WasmGameState | null = new wasmExports.WasmGameState(json);
   let layout: RustSimLayout = JSON.parse(gameState.layout_json()) as RustSimLayout;
-  let gameTime = 0;
+  let gameTime = snapshot.gameTime ?? 0;
 
   const getViewF32 = (section: BufferSection) => {
     if (!gameState) throw new Error('Game state not initialized');
@@ -193,7 +195,7 @@ export function buildRustSimBridge(
       const snapshotJson = JSON.stringify(newSnapshot);
       gameState = new wasmExports.WasmGameState(snapshotJson);
       layout = JSON.parse(gameState.layout_json()) as RustSimLayout;
-      gameTime = 0;
+      gameTime = newSnapshot.gameTime ?? 0;
     },
 
     dispose() {
@@ -210,9 +212,9 @@ export function buildRustSimBridge(
     // Simulation
     step(dt: number): TickResult {
       if (!gameState) throw new Error('Game state not initialized');
-      const rngSample = gameState.step(dt);
-      gameTime += dt;
-      return { dt, gameTime, rngSample };
+      const returnedGameTime = gameState.step(dt);
+      gameTime = returnedGameTime;
+      return { dt, gameTime, rngSample: returnedGameTime };
     },
 
     applyCommand(cmd: SimulationCommand): void {
@@ -245,12 +247,18 @@ export function buildRustSimBridge(
       return JSON.parse(snapshotJson) as StoreSnapshot;
     },
 
+    getLogisticsQueues() {
+      if (!gameState) throw new Error('Game state not initialized');
+      const json = gameState.get_logistics_queues();
+      return JSON.parse(json) as LogisticsQueues;
+    },
+
     loadSnapshot(newSnapshot: StoreSnapshot): void {
       if (!gameState) throw new Error('Game state not initialized');
       const snapshotJson = JSON.stringify(newSnapshot);
       gameState.load_snapshot(snapshotJson);
       layout = JSON.parse(gameState.layout_json()) as RustSimLayout;
-      gameTime = 0;
+      gameTime = newSnapshot.gameTime ?? 0;
     },
 
     // Layout

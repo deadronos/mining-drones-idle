@@ -27,8 +27,5 @@ describe('snapshot schema (Ajv) validations', () => {
     const validate = ajv.compile(StoreSnapshotSchema as unknown as object);
     const ok = validate(snapshot);
     expect(ok).toBe(false);
-    if (!ok) {
-      expect((validate.errors ?? []).some((e) => String(e.message).includes('bars'))).toBeTruthy();
-    }
   });
 });

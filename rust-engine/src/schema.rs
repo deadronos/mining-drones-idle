@@ -4,6 +4,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::SimulationError;
 
+pub const SCHEMA_VERSION: &str = "1.0.0";
+
+fn default_schema_version() -> String {
+    SCHEMA_VERSION.to_string()
+}
+
 pub type Vector3 = [f32; 3];
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -69,6 +75,51 @@ pub struct FactoryUpgradeSnapshot {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct InboundSchedule {
+    pub from_factory_id: String,
+    pub resource: String,
+    pub amount: f32,
+    pub eta: f32,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct FactoryLogisticsState {
+    #[serde(default)]
+    pub outbound_reservations: BTreeMap<String, f32>,
+    #[serde(default)]
+    pub inbound_schedules: Vec<InboundSchedule>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct HaulerConfig {
+    pub capacity: f32,
+    pub speed: f32,
+    pub pickup_overhead: f32,
+    pub dropoff_overhead: f32,
+    #[serde(default)]
+    pub resource_filters: Vec<String>,
+    #[serde(default)]
+    pub mode: String,
+    #[serde(default)]
+    pub priority: i32,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct FactoryHaulerUpgrades {
+    #[serde(default)]
+    pub capacity_boost: Option<i32>,
+    #[serde(default)]
+    pub speed_boost: Option<i32>,
+    #[serde(default)]
+    pub efficiency_boost: Option<i32>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct FactorySnapshot {
     pub id: String,
     pub position: Vector3,
@@ -99,17 +150,32 @@ pub struct FactorySnapshot {
     #[serde(default)]
     pub haulers_assigned: Option<i32>,
     #[serde(default)]
-    pub hauler_config: Option<serde_json::Value>,
+    pub hauler_config: Option<HaulerConfig>,
     #[serde(default)]
-    pub hauler_upgrades: Option<serde_json::Value>,
+    pub hauler_upgrades: Option<FactoryHaulerUpgrades>,
     #[serde(default)]
-    pub logistics_state: Option<serde_json::Value>,
+    pub logistics_state: Option<FactoryLogisticsState>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct PendingTransfer {
+    pub id: String,
+    pub from_factory_id: String,
+    pub to_factory_id: String,
+    pub resource: String,
+    pub amount: f32,
+    pub status: String,
+    pub eta: f32,
+    #[serde(default)]
+    pub departed_at: f32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct LogisticsQueues {
     #[serde(default)]
-    pub pending_transfers: Vec<serde_json::Value>,
+    pub pending_transfers: Vec<PendingTransfer>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
@@ -187,6 +253,8 @@ pub struct MetricsSettings {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct SimulationSnapshot {
+    #[serde(default = "default_schema_version", rename = "schemaVersion")]
+    pub schema_version: String,
     pub resources: Resources,
     pub modules: Modules,
     pub prestige: Prestige,
@@ -210,6 +278,8 @@ pub struct SimulationSnapshot {
     pub spec_tech_spent: Option<serde_json::Value>,
     #[serde(default, rename = "prestigeInvestments")]
     pub prestige_investments: Option<serde_json::Value>,
+    #[serde(default, rename = "gameTime")]
+    pub game_time: f32,
     #[serde(flatten, default)]
     pub extra: BTreeMap<String, serde_json::Value>,
 }
@@ -244,6 +314,9 @@ impl SimulationSnapshot {
         }
         if self.save.version.is_empty() {
             return Err(SimulationError::MissingField("save"));
+        }
+        if self.schema_version.is_empty() {
+            return Err(SimulationError::MissingField("schemaVersion"));
         }
         if self.settings.metrics.interval_seconds <= 0 {
             return Err(SimulationError::MissingField("settings.metrics"));

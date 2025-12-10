@@ -103,6 +103,7 @@ export {
   SOLAR_ARRAY_LOCAL_REGEN_PER_LEVEL,
   SOLAR_ARRAY_LOCAL_MAX_ENERGY_PER_LEVEL,
   saveVersion,
+  SCHEMA_VERSION,
   moduleDefinitions,
   factoryUpgradeDefinitions,
   specTechDefinitions,
@@ -303,6 +304,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
           droneFlights: (normalized.droneFlights ?? []).map(cloneDroneFlight),
           factories: restoredFactories,
           logisticsQueues: normalized.logisticsQueues ?? { pendingTransfers: [] },
+          gameTime: normalized.gameTime ?? 0,
           factoryProcessSequence: deriveProcessSequence(restoredFactories),
           factoryRoundRobin: 0,
           factoryAutofitSequence: 0,
@@ -376,6 +378,10 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
           },
         };
       });
+    },
+
+    syncLogisticsQueues: (queues) => {
+      set({ logisticsQueues: queues });
     },
   };
 };

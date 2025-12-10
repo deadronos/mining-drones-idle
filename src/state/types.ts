@@ -401,6 +401,8 @@ export interface RefineryStats {
  * Full serializable snapshot of the application store.
  */
 export interface StoreSnapshot {
+  /** Version tag for snapshot schema used across Rust/TS. */
+  schemaVersion?: string;
   resources: Resources;
   modules: Modules;
   prestige: Prestige;
@@ -415,6 +417,7 @@ export interface StoreSnapshot {
   specTechs?: SpecTechState;
   specTechSpent?: SpecTechSpentState;
   prestigeInvestments?: PrestigeInvestmentState;
+  gameTime?: number;
 }
 
 /**
@@ -559,6 +562,8 @@ export interface StoreState {
   resetGame(this: void): void;
   /** Sets the highlighted factories for UI interaction. */
   setHighlightedFactories(this: void, highlight: HighlightedFactories): void;
+  /** Syncs logistics queues from an external source (e.g. Rust). */
+  syncLogisticsQueues(this: void, queues: LogisticsQueues): void;
 }
 
 /** Type alias for the StoreApi. */

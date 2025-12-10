@@ -157,6 +157,75 @@ describe('Command Parity', () => {
     const rustSnapshot = bridge!.exportSnapshot();
     if (!rustSnapshot.factories) throw new Error('Factories missing');
     expect(rustSnapshot.factories[0].upgrades.storage).toBe(initialLevel + 1);
-    expect(rustSnapshot.factories[0].resources.bars).toBeLessThan(snapshot.factories[0].resources.bars || 0);
+    expect(rustSnapshot.factories[0].resources.bars).toBeLessThan(snapshot.factories[0].resources.bars ?? 0);
+  });
+
+  it('ApplyCommand: SpawnDrone adds drone', async () => {
+    const snapshot = createTestSnapshot(104);
+    await bridge!.init(snapshot);
+
+    const initialDroneBay = snapshot.modules.droneBay;
+
+    bridge!.applyCommand({
+        type: 'SpawnDrone',
+        payload: { factoryId: 'factory-1' }
+    });
+
+    const rustSnapshot = bridge!.exportSnapshot();
+    // Check if drone bay increased (capacity)
+    expect(rustSnapshot.modules.droneBay).toBe(initialDroneBay + 1);
+
+    // Check if drone owners has a new entry
+    const owners: Record<string, string | null> = rustSnapshot.droneOwners ?? {};
+    const ownerKeys = Object.keys(owners);
+    expect(ownerKeys.length).toBeGreaterThan(0);
+
+    // Verify the owner is factory-1
+    const newDroneId = ownerKeys.find(k => owners[k] === 'factory-1');
+    expect(newDroneId).toBeDefined();
+  });
+
+  it('ApplyCommand: RecycleAsteroid updates state', async () => {
+    type AsteroidSnapshot = {
+      id: string;
+      position: [number, number, number];
+      oreRemaining: number;
+      maxOre: number;
+      resourceProfile?: {
+        ore: number;
+        ice: number;
+        metals: number;
+        crystals: number;
+        organics: number;
+      };
+    };
+
+    const snapshot = createTestSnapshot(105) as StoreSnapshot & { asteroids: AsteroidSnapshot[] };
+    snapshot.asteroids = [
+        { id: 'asteroid-1', position: [10, 0, 0], oreRemaining: 100, maxOre: 100 }
+    ];
+    await bridge!.init(snapshot);
+
+    bridge!.applyCommand({
+        type: 'RecycleAsteroid',
+        payload: { asteroidId: 'asteroid-1' }
+    });
+
+    const rustSnapshot = bridge!.exportSnapshot() as StoreSnapshot & { asteroids: AsteroidSnapshot[] };
+    // asteroid should have 0 ore
+    // Note: Rust export might put it in 'extra' or flatten it?
+    // SimulationSnapshot flatten extra.
+    // serde_json to_string of SimulationSnapshot will put extra fields at top level.
+    // So rustSnapshot should have asteroids property.
+
+    // However, Bridge `exportSnapshot` parses JSON.
+    const asteroids = rustSnapshot.asteroids;
+    expect(asteroids).toBeDefined();
+    const asteroid = asteroids.find((a) => a.id === 'asteroid-1');
+    expect(asteroid).toBeDefined();
+    if (!asteroid) {
+      throw new Error('Asteroid not found');
+    }
+    expect(asteroid.oreRemaining).toBe(0);
   });
 });

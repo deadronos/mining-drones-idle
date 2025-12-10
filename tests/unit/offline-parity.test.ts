@@ -15,6 +15,8 @@
 import { describe, expect, it, beforeAll, afterAll } from 'vitest';
 import type { StoreSnapshot } from '@/state/types';
 import type { RustSimBridge, OfflineResult } from '@/lib/wasmSimBridge';
+import { createStoreInstance, serializeStore } from '@/state/store';
+import { simulateOfflineProgress } from '@/lib/offline';
 
 // Test fixture: minimal snapshot for deterministic testing
 function createTestSnapshot(seed: number): StoreSnapshot {
@@ -132,6 +134,11 @@ function compareOfflineResults(
 
   return divergences;
 }
+
+const relDiff = (a: number, b: number) => {
+  const denom = Math.max(1, Math.abs(a), Math.abs(b));
+  return Math.abs(a - b) / denom;
+};
 
 describe('Offline Parity', () => {
   let bridge: RustSimBridge | null = null;
@@ -327,6 +334,40 @@ describe('Offline Parity', () => {
     it('reports WASM availability status for offline tests', () => {
       console.log(`WASM available for offline tests: ${wasmAvailable}`);
       expect(typeof wasmAvailable).toBe('boolean');
+    });
+  });
+
+  describe('Cross-engine offline comparison', () => {
+    const OFFLINE_REL_EPSILON = 0.01;
+
+    const runTsOffline = (snapshot: StoreSnapshot, seconds: number, step = 0.1) => {
+      const store = createStoreInstance();
+      store.getState().applySnapshot(snapshot);
+      simulateOfflineProgress(store, seconds, { step });
+      return serializeStore(store.getState());
+    };
+
+    it.skipIf(!wasmAvailable)('matches TS offline within tolerance', async () => {
+      const snapshot = createTestSnapshot(90909);
+
+      // Rust offline simulation
+      await bridge!.init(snapshot);
+      const rustResult = bridge!.simulateOffline(60, 0.1);
+      const rustSnapshot = JSON.parse(rustResult.snapshotJson) as StoreSnapshot;
+
+      // TS offline simulation
+      const tsSnapshot = runTsOffline(structuredClone(snapshot), 60, 0.1);
+
+      const metrics = [
+        ['ore', tsSnapshot.resources.ore, rustSnapshot.resources.ore],
+        ['bars', tsSnapshot.resources.bars, rustSnapshot.resources.bars],
+        ['energy', tsSnapshot.resources.energy, rustSnapshot.resources.energy],
+      ] as const;
+
+      for (const [, tsVal, rustVal] of metrics) {
+        const diff = relDiff(tsVal, rustVal);
+        expect(diff).toBeLessThanOrEqual(OFFLINE_REL_EPSILON);
+      }
     });
   });
 });

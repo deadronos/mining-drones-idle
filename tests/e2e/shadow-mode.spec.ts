@@ -162,6 +162,26 @@ test.describe('Shadow Mode Parity', () => {
       await expect(droneButton).toBeVisible();
     }
   });
+
+  test('runs for 5s without parity divergence logs', async ({ page }) => {
+    const parityLogs: string[] = [];
+    page.on('console', (message) => {
+      const text = message.text();
+      if (text.toLowerCase().includes('diverge')) {
+        parityLogs.push(text);
+      }
+    });
+
+    await page.goto('/');
+
+    const hud = page.locator('.hud');
+    await expect(hud).toBeVisible({ timeout: 15000 });
+
+    // Let both engines run briefly (shadow mode may be gated)
+    await page.waitForTimeout(5000);
+
+    expect(parityLogs.length).toBe(0);
+  });
 });
 
 test.describe('Shadow Mode with Rust Enabled', () => {

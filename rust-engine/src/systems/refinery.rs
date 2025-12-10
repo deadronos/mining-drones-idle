@@ -137,7 +137,7 @@ pub fn sys_refinery(
         }
 
         energy[i] = current_energy;
-        resources[res_idx + 1] += bars_produced; // Bars are at index 1
+        resources[res_idx + 5] += bars_produced; // Bars are at index 5
     }
 }
 

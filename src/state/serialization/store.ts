@@ -16,6 +16,7 @@ import type {
 } from '../types';
 import {
   SAVE_VERSION,
+  SCHEMA_VERSION,
   initialResources,
   initialModules,
   initialPrestige,
@@ -267,6 +268,7 @@ export const normalizeSettings = (snapshot?: Partial<StoreSettings>): StoreSetti
 });
 
 export const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapshot => ({
+  schemaVersion: snapshot.schemaVersion ?? SCHEMA_VERSION,
   resources: normalizeResources(snapshot.resources),
   modules: normalizeModules(snapshot.modules),
   prestige: normalizePrestige(snapshot.prestige),
@@ -300,6 +302,7 @@ export const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapsh
         )
       : undefined,
   logisticsQueues: normalizeLogisticsQueues(snapshot.logisticsQueues),
+  gameTime: coerceNumber(snapshot.gameTime, 0),
 });
 
 /**
@@ -344,6 +347,7 @@ export const validateSnapshotForWasm = (snapshot?: Partial<StoreSnapshot>): stri
 };
 
 export const serializeStore = (state: StoreState): StoreSnapshot => ({
+  schemaVersion: SCHEMA_VERSION,
   resources: { ...state.resources },
   modules: { ...state.modules },
   prestige: { ...state.prestige },
@@ -358,6 +362,7 @@ export const serializeStore = (state: StoreState): StoreSnapshot => ({
   selectedFactoryId: state.selectedFactoryId,
   droneOwners: { ...state.droneOwners },
   logisticsQueues: { pendingTransfers: [...state.logisticsQueues.pendingTransfers] },
+  gameTime: state.gameTime,
 });
 
 export const stringifySnapshot = (snapshot: StoreSnapshot) => JSON.stringify(snapshot);
