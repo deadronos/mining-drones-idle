@@ -157,7 +157,7 @@ describe('Command Parity', () => {
     const rustSnapshot = bridge!.exportSnapshot();
     if (!rustSnapshot.factories) throw new Error('Factories missing');
     expect(rustSnapshot.factories[0].upgrades.storage).toBe(initialLevel + 1);
-    expect(rustSnapshot.factories[0].resources.bars).toBeLessThan(snapshot.factories[0].resources.bars || 0);
+    expect(rustSnapshot.factories[0].resources.bars).toBeLessThan(snapshot.factories[0].resources.bars ?? 0);
   });
 
   it('ApplyCommand: SpawnDrone adds drone', async () => {
@@ -176,7 +176,7 @@ describe('Command Parity', () => {
     expect(rustSnapshot.modules.droneBay).toBe(initialDroneBay + 1);
 
     // Check if drone owners has a new entry
-    const owners = rustSnapshot.droneOwners || {};
+    const owners: Record<string, string | null> = rustSnapshot.droneOwners ?? {};
     const ownerKeys = Object.keys(owners);
     expect(ownerKeys.length).toBeGreaterThan(0);
 
@@ -186,7 +186,21 @@ describe('Command Parity', () => {
   });
 
   it('ApplyCommand: RecycleAsteroid updates state', async () => {
-    const snapshot = createTestSnapshot(105) as StoreSnapshot & { asteroids: any[] };
+    type AsteroidSnapshot = {
+      id: string;
+      position: [number, number, number];
+      oreRemaining: number;
+      maxOre: number;
+      resourceProfile?: {
+        ore: number;
+        ice: number;
+        metals: number;
+        crystals: number;
+        organics: number;
+      };
+    };
+
+    const snapshot = createTestSnapshot(105) as StoreSnapshot & { asteroids: AsteroidSnapshot[] };
     snapshot.asteroids = [
         { id: 'asteroid-1', position: [10, 0, 0], oreRemaining: 100, maxOre: 100 }
     ];
@@ -197,7 +211,7 @@ describe('Command Parity', () => {
         payload: { asteroidId: 'asteroid-1' }
     });
 
-    const rustSnapshot = bridge!.exportSnapshot() as StoreSnapshot & { asteroids: any[] };
+    const rustSnapshot = bridge!.exportSnapshot() as StoreSnapshot & { asteroids: AsteroidSnapshot[] };
     // asteroid should have 0 ore
     // Note: Rust export might put it in 'extra' or flatten it?
     // SimulationSnapshot flatten extra.
@@ -207,7 +221,7 @@ describe('Command Parity', () => {
     // However, Bridge `exportSnapshot` parses JSON.
     const asteroids = rustSnapshot.asteroids;
     expect(asteroids).toBeDefined();
-    const asteroid = asteroids.find((a: any) => a.id === 'asteroid-1');
+    const asteroid = asteroids.find((a) => a.id === 'asteroid-1');
     expect(asteroid).toBeDefined();
     expect(asteroid.oreRemaining).toBe(0);
   });

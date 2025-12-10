@@ -16,6 +16,7 @@ import type {
 
 export const SAVE_VERSION = '0.3.5';
 export const saveVersion = SAVE_VERSION;
+export const SCHEMA_VERSION = '1.0.0';
 
 export const GROWTH = 1.15;
 export const PRESTIGE_THRESHOLD = 5_000;

@@ -109,7 +109,7 @@ export function useRustEngine(shouldInitialize: boolean): UseRustEngineResult {
         const simResult = result.bridge.simulateOffline(offlineSeconds, 0.1);
 
         // Update store from result
-        const newSnapshot = JSON.parse(simResult.snapshotJson);
+        const newSnapshot = JSON.parse(simResult.snapshotJson) as StoreSnapshot;
         useStore.getState().applySnapshot(newSnapshot);
         useStore.getState().setLastSave(now);
       }

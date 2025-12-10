@@ -3,7 +3,7 @@ use crate::buffers::plan_layout;
 use crate::error::SimulationError;
 use crate::modifiers::get_resource_modifiers;
 use crate::rng::Mulberry32;
-use crate::schema::{Modules, Resources, SimulationSnapshot, StoreSettings};
+use crate::schema::{Modules, Resources, SimulationSnapshot, StoreSettings, SCHEMA_VERSION};
 use serde::{Deserialize, Serialize};
 use std::cmp;
 use std::collections::BTreeMap;
@@ -1295,6 +1295,7 @@ mod tests {
 
     fn sample_snapshot() -> SimulationSnapshot {
         SimulationSnapshot {
+            schema_version: SCHEMA_VERSION.to_string(),
             resources: Resources {
                 ore: 10.0,
                 ice: 0.0,

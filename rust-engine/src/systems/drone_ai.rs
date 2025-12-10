@@ -67,8 +67,7 @@ pub fn sys_drone_ai(
 
         if state == DRONE_STATE_IDLE {
             // Find target asteroid
-            // Simple logic: pick random asteroid with ore > 0
-            // TODO: Spatial query or smarter selection
+            // Simple logic: pick nearest asteroid with ore > 0 (parity-first strategy)
             let asteroid_count = asteroid_positions.len() / 3;
             if asteroid_count > 0 {
                 // Find nearest asteroid with ore

@@ -8,6 +8,7 @@ export const StoreSnapshotSchema = {
   $schema: 'http://json-schema.org/draft-07/schema#',
   type: 'object',
   properties: {
+    schemaVersion: { type: 'string', minLength: 1 },
     resources: {
       type: 'object',
       properties: {

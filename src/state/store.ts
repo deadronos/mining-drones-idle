@@ -103,6 +103,7 @@ export {
   SOLAR_ARRAY_LOCAL_REGEN_PER_LEVEL,
   SOLAR_ARRAY_LOCAL_MAX_ENERGY_PER_LEVEL,
   saveVersion,
+  SCHEMA_VERSION,
   moduleDefinitions,
   factoryUpgradeDefinitions,
   specTechDefinitions,

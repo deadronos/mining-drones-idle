@@ -4,6 +4,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::SimulationError;
 
+pub const SCHEMA_VERSION: &str = "1.0.0";
+
+fn default_schema_version() -> String {
+    SCHEMA_VERSION.to_string()
+}
+
 pub type Vector3 = [f32; 3];
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -247,6 +253,8 @@ pub struct MetricsSettings {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct SimulationSnapshot {
+    #[serde(default = "default_schema_version", rename = "schemaVersion")]
+    pub schema_version: String,
     pub resources: Resources,
     pub modules: Modules,
     pub prestige: Prestige,
@@ -306,6 +314,9 @@ impl SimulationSnapshot {
         }
         if self.save.version.is_empty() {
             return Err(SimulationError::MissingField("save"));
+        }
+        if self.schema_version.is_empty() {
+            return Err(SimulationError::MissingField("schemaVersion"));
         }
         if self.settings.metrics.interval_seconds <= 0 {
             return Err(SimulationError::MissingField("settings.metrics"));

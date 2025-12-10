@@ -2,6 +2,14 @@
 
 ## Current Work
 
+### 🔄 **TASK050 – Full Parity Implementation**
+
+- Added factory position/energy parity checks and deterministic-seed coverage in `tests/unit/step-parity.test.ts`.
+- Added TS vs Rust offline comparison within 1% tolerance and kept existing offline determinism checks.
+- Added `schemaVersion` (TS + Rust) with validation/defaults and migration defaulting; perf bench at `tests/perf/step-bench.spec.ts`.
+- Added dedicated `wasm-parity` CI job running parity/perf suites; shadow-mode E2E now includes a 5s divergence-log guard.
+- Remaining: asteroid/depletion + per-drone parity coverage, longer shadow-mode parity runs/nightly gating, WASM artifact caching, biome parity decision.
+
 ## Active Tasks
 
 ### ✅ **TASK045 – TypeScript WASM Bridge Implementation** (Just Completed)

@@ -401,6 +401,8 @@ export interface RefineryStats {
  * Full serializable snapshot of the application store.
  */
 export interface StoreSnapshot {
+  /** Version tag for snapshot schema used across Rust/TS. */
+  schemaVersion?: string;
   resources: Resources;
   modules: Modules;
   prestige: Prestige;

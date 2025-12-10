@@ -27,6 +27,19 @@ export interface ParityContext {
     power: (dt: number) => void;
     refinery: (dt: number) => void;
   };
+  asteroidSnapshots: Array<{
+    id: string;
+    position: [number, number, number];
+    oreRemaining: number;
+    maxOre: number;
+    resourceProfile: {
+      ore: number;
+      ice: number;
+      metals: number;
+      crystals: number;
+      organics: number;
+    };
+  }>;
   step: (dt: number) => void;
 }
 
@@ -55,6 +68,20 @@ export function createParityContext(snapshot: StoreSnapshot): ParityContext {
   systems.asteroids(0);
   systems.fleet(0);
 
+  const asteroidSnapshots = world.asteroidQuery.entities.map((asteroid) => ({
+    id: asteroid.id,
+    position: [asteroid.position.x, asteroid.position.y, asteroid.position.z] as [number, number, number],
+    oreRemaining: asteroid.oreRemaining,
+    maxOre: asteroid.oreRemaining / asteroid.richness,
+    resourceProfile: {
+      ore: asteroid.resourceProfile.ore,
+      ice: asteroid.resourceProfile.ice,
+      metals: asteroid.resourceProfile.metals,
+      crystals: asteroid.resourceProfile.crystals,
+      organics: asteroid.resourceProfile.organics,
+    },
+  }));
+
   const step = (dt: number) => {
     systems.fleet(dt);
     systems.biomes(dt);
@@ -72,5 +99,5 @@ export function createParityContext(snapshot: StoreSnapshot): ParityContext {
     store.setState((state) => ({ gameTime: state.gameTime + dt }));
   };
 
-  return { store, world, systems, step };
+  return { store, world, systems, asteroidSnapshots, step };
 }

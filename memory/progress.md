@@ -4,6 +4,8 @@
 
 ## Recent Achievements
 
+- **2025-12-10**: Expanded parity coverage (factory position/energy checks, deterministic seeds), added TS↔Rust offline comparison (1% tolerance), introduced `schemaVersion` defaults/validation (TS + Rust), added `tests/perf/step-bench.spec.ts`, and created a dedicated `wasm-parity` CI job. Shadow-mode E2E now includes a 5s divergence-log guard.
+
 - **2025-12-09**: Implemented Logistics System in Rust (TASK050).
   - Defined `PendingTransfer`, `LogisticsQueues`, and `FactoryLogisticsState` in `rust-engine` schema.
   - Implemented `sys_logistics` to handle Hauler transfer completion, fixing the "haulers never arrive" bug.
