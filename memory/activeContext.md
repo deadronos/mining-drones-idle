@@ -14,7 +14,7 @@
 
 - Rust AI now mirrors TS weighted nearby targeting with biome/region offsets, sink-aware travel speed, seeded Bézier control points, and queue-aware factory returns (queuedDrones persisted/cleared on unload). Target region/factory indices now populated for buffers.
 - Added asteroid metadata parsing (gravity/regions/hazards) from snapshot extras and cached drone index→id mapping for queue cleanup.
-- Added nested `extra.asteroids` handling plus RNG burn to mirror TS asteroid generation so Rust emits flights for parity snapshots; path seeds now follow TS-style generation. Seed parity still mismatched in 1-step check; longer-run divergences remain logged.
+- Added nested `extra.asteroids` handling plus RNG burn to mirror TS asteroid generation so Rust emits flights for parity snapshots; path seeds now mirror TS scaling and seed parity passes 1-step check. Longer-run divergences remain logged.
 
 ## Active Tasks
 

@@ -764,8 +764,10 @@ fn resolve_factory_id(
 }
 
 fn next_path_seed(rng: &mut Mulberry32) -> u32 {
-    let sample = (rng.next_u32().wrapping_sub(1)) & 0x7fff_ffff;
-    if sample == 0 { 1 } else { sample }
+    // Mirrors TS: Math.max(1, Math.floor(rng.next() * 0x7fffffff))
+    let scaled = ((rng.next_u32() as u64) * 0x7fff_ffffu64) >> 32;
+    let seed = scaled as u32;
+    if seed == 0 { 1 } else { seed }
 }
 
 #[cfg(test)]

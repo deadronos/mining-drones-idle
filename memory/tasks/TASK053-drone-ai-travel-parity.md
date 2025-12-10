@@ -32,7 +32,7 @@ Drone AI is the most visible system and current mismatches cause significant vis
 
 ## Progress Tracking
 
-**Overall Status:** In Progress - 70%
+**Overall Status:** In Progress - 80%
 
 ### Subtasks
 
@@ -44,7 +44,7 @@ Drone AI is the most visible system and current mismatches cause significant vis
 | 53.4  | Synchronize RNG seeding for flight paths       | Completed   | 2025-12-10 | Seeds clamped to 0x7fffffff, TS-matched waypoint mixing. |
 | 53.5  | Match travel curve generation (Bezier/lerp)    | Completed   | 2025-12-10 | TS `computeWaypointWithOffset` parity + perpendicular clamp for control points. |
 | 53.6  | Update drone AI rendering buffers              | Completed   | 2025-12-10 | Fills target region/factory indexes; owner mapping preserved. |
-| 53.7  | Add drone flight parity tests                  | In Progress | 2025-12-10 | New Rust + parity tests added; Rust flights still missing in snapshot (logged). |
+| 53.7  | Add drone flight parity tests                  | Completed   | 2025-12-12 | Parity seed test now aligned after RNG burn + path seed fixes. |
 
 ## Progress Log
 
@@ -66,3 +66,9 @@ Drone AI is the most visible system and current mismatches cause significant vis
 - Fixed missing drone flights by reading `extra.asteroids` nested payloads, initializing asteroid buffers, and burning RNG to mirror TS asteroid generation.
 - Aligned path seed generation with TS serialization (positive 31-bit seeds) so flights emit with expected metadata; Rust now produces flights for parity snapshots.
 - Rebuilt WASM and reran npm run typecheck / npm run lint / npm run test (flight seed parity still failing: seeds differ; other suites pass with existing known divergences).
+
+### 2025-12-12
+
+- Matched TS asteroid spawn RNG consumption (11 draws per spawn) so snapshot load leaves RNG in sync before drone seeding.
+- Reworked path seed scaling to mirror `Math.floor(rng.next() * 0x7fffffff)`; step-parity seed/control test now passes.
+- Rebuilt WASM and reran npm run typecheck / npm run lint / npm run test (all passing; parity suites still log known multi-step divergences).
