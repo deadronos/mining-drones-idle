@@ -9,6 +9,10 @@
   - Rebuilt WASM (`npm run build:wasm`) and added Rust/unit parity coverage (seeded travel, metadata parse).
   - Test suite: `npm run typecheck`, `npm run lint`, `npm run test` (pass; parity suites still log divergences and Rust snapshots lack drone flights in short runs—logged for follow-up).
 
+- **2025-12-11**: Unblocked Rust drone flight emission for parity snapshots.
+  - Parsed nested `extra.asteroids` payloads into buffers, burned RNG to mirror TS asteroid generation, and aligned path seed generation with TS-style positive seeds.
+  - WASM rebuilt; typecheck/lint pass. Step-parity seed/control still mismatched (seeds differ) though flights now present; longer-run divergences remain logged.
+
 - **2025-12-10**: Expanded parity coverage (factory position/energy checks, deterministic seeds), added TS↔Rust offline comparison (1% tolerance), introduced `schemaVersion` defaults/validation (TS + Rust), added `tests/perf/step-bench.spec.ts`, and created a dedicated `wasm-parity` CI job. Shadow-mode E2E now includes a 5s divergence-log guard.
 
 - **2025-12-09**: Implemented Logistics System in Rust (TASK050).

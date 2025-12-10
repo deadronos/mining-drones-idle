@@ -6,6 +6,7 @@ use crate::rng::Mulberry32;
 use crate::schema::{Modules, Resources, SimulationSnapshot, StoreSettings};
 use crate::systems::drone_ai::{self, AsteroidMetadata};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::cmp;
 use std::collections::BTreeMap;
 
@@ -163,7 +164,7 @@ impl GameState {
         }
 
         let mut asteroid_id_to_index = BTreeMap::new();
-        if let Some(asteroids) = snapshot.extra.get("asteroids").and_then(|v| v.as_array()) {
+        if let Some(asteroids) = asteroid_array(&snapshot.extra) {
             for (i, asteroid) in asteroids.iter().enumerate() {
                 if let Some(id) = asteroid.get("id").and_then(|v| v.as_str()) {
                     asteroid_id_to_index.insert(id.to_string(), i);
@@ -188,6 +189,7 @@ impl GameState {
             asteroid_metadata,
         };
 
+        burn_rng_for_asteroids(&mut state.rng, asteroid_count);
         state.initialize_data_from_snapshot();
         Ok(state)
     }
@@ -244,7 +246,7 @@ impl GameState {
         }
 
         self.asteroid_id_to_index.clear();
-        if let Some(asteroids) = snapshot.extra.get("asteroids").and_then(|v| v.as_array()) {
+        if let Some(asteroids) = asteroid_array(&snapshot.extra) {
             for (i, asteroid) in asteroids.iter().enumerate() {
                 if let Some(id) = asteroid.get("id").and_then(|v| v.as_str()) {
                     self.asteroid_id_to_index.insert(id.to_string(), i);
@@ -257,6 +259,7 @@ impl GameState {
         self.drone_index_to_id = build_drone_index_to_id(&self.drone_id_to_index, total_drone_count);
         self.asteroid_metadata =
             drone_ai::extract_asteroid_metadata(&self.snapshot, &self.asteroid_id_to_index);
+        burn_rng_for_asteroids(&mut self.rng, asteroid_count);
         self.initialize_data_from_snapshot();
         Ok(())
     }
@@ -427,7 +430,7 @@ impl GameState {
         }
 
         // Initialize asteroids
-        if let Some(asteroids) = self.snapshot.extra.get("asteroids").and_then(|v| v.as_array()) {
+        if let Some(asteroids) = asteroid_array(&self.snapshot.extra) {
             for asteroid in asteroids {
                 if let Some(id) = asteroid.get("id").and_then(|v| v.as_str()) {
                     if let Some(&index) = asteroid_map.get(id) {
@@ -561,45 +564,45 @@ impl GameState {
         }
 
         // Sync asteroid data (ore, position, maxOre, profile)
-        if let Some(asteroids) = self.snapshot.extra.get_mut("asteroids").and_then(|v| v.as_array_mut()) {
-             for asteroid in asteroids {
-                 if let Some(id) = asteroid.get("id").and_then(|v| v.as_str()) {
-                     if let Some(&idx) = self.asteroid_id_to_index.get(id) {
-                         let ore_offset = self.layout.asteroids.ore_remaining.offset_bytes / 4 + idx;
-                         let ore = f32::from_bits(self.data[ore_offset]);
+        if let Some(asteroids) = asteroid_array_mut(&mut self.snapshot.extra) {
+            for asteroid in asteroids {
+                if let Some(id) = asteroid.get("id").and_then(|v| v.as_str()) {
+                    if let Some(&idx) = self.asteroid_id_to_index.get(id) {
+                        let ore_offset = self.layout.asteroids.ore_remaining.offset_bytes / 4 + idx;
+                        let ore = f32::from_bits(self.data[ore_offset]);
 
-                         let pos_offset = self.layout.asteroids.positions.offset_bytes / 4 + idx * 3;
-                         let px = f32::from_bits(self.data[pos_offset]);
-                         let py = f32::from_bits(self.data[pos_offset + 1]);
-                         let pz = f32::from_bits(self.data[pos_offset + 2]);
+                        let pos_offset = self.layout.asteroids.positions.offset_bytes / 4 + idx * 3;
+                        let px = f32::from_bits(self.data[pos_offset]);
+                        let py = f32::from_bits(self.data[pos_offset + 1]);
+                        let pz = f32::from_bits(self.data[pos_offset + 2]);
 
-                         let max_ore_offset = self.layout.asteroids.max_ore.offset_bytes / 4 + idx;
-                         let max_ore = f32::from_bits(self.data[max_ore_offset]);
+                        let max_ore_offset = self.layout.asteroids.max_ore.offset_bytes / 4 + idx;
+                        let max_ore = f32::from_bits(self.data[max_ore_offset]);
 
-                         let prof_offset = self.layout.asteroids.resource_profile.offset_bytes / 4 + idx * 5;
+                        let prof_offset = self.layout.asteroids.resource_profile.offset_bytes / 4 + idx * 5;
 
-                         if let Some(obj) = asteroid.as_object_mut() {
-                             obj.insert("oreRemaining".to_string(), serde_json::Value::from(ore));
-                             obj.insert("maxOre".to_string(), serde_json::Value::from(max_ore));
-                             obj.insert("position".to_string(), serde_json::json!([px, py, pz]));
+                        if let Some(obj) = asteroid.as_object_mut() {
+                            obj.insert("oreRemaining".to_string(), serde_json::Value::from(ore));
+                            obj.insert("maxOre".to_string(), serde_json::Value::from(max_ore));
+                            obj.insert("position".to_string(), serde_json::json!([px, py, pz]));
 
-                             let p0 = f32::from_bits(self.data[prof_offset]);
-                             let p1 = f32::from_bits(self.data[prof_offset + 1]);
-                             let p2 = f32::from_bits(self.data[prof_offset + 2]);
-                             let p3 = f32::from_bits(self.data[prof_offset + 3]);
-                             let p4 = f32::from_bits(self.data[prof_offset + 4]);
+                            let p0 = f32::from_bits(self.data[prof_offset]);
+                            let p1 = f32::from_bits(self.data[prof_offset + 1]);
+                            let p2 = f32::from_bits(self.data[prof_offset + 2]);
+                            let p3 = f32::from_bits(self.data[prof_offset + 3]);
+                            let p4 = f32::from_bits(self.data[prof_offset + 4]);
 
-                             obj.insert("resourceProfile".to_string(), serde_json::json!({
-                                 "ore": p0,
-                                 "ice": p1,
-                                 "metals": p2,
-                                 "crystals": p3,
-                                 "organics": p4
-                             }));
-                         }
-                     }
-                 }
-             }
+                            obj.insert("resourceProfile".to_string(), serde_json::json!({
+                                "ore": p0,
+                                "ice": p1,
+                                "metals": p2,
+                                "crystals": p3,
+                                "organics": p4
+                            }));
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -1310,13 +1313,49 @@ impl GameState {
     }
 }
 
-fn asteroid_count(snapshot: &SimulationSnapshot) -> usize {
-    snapshot
-        .extra
+fn asteroid_array(extra: &BTreeMap<String, Value>) -> Option<&Vec<Value>> {
+    extra
         .get("asteroids")
         .and_then(|value| value.as_array())
+        .or_else(|| {
+            extra
+                .get("extra")
+                .and_then(|value| value.as_object())
+                .and_then(|obj| obj.get("asteroids"))
+                .and_then(|value| value.as_array())
+        })
+}
+
+fn asteroid_array_mut(extra: &mut BTreeMap<String, Value>) -> Option<&mut Vec<Value>> {
+    if extra.contains_key("asteroids") {
+        if let Some(Value::Array(arr)) = extra.get_mut("asteroids") {
+            return Some(arr);
+        }
+        return None;
+    }
+
+    if let Some(Value::Object(map)) = extra.get_mut("extra") {
+        if let Some(Value::Array(arr)) = map.get_mut("asteroids") {
+            return Some(arr);
+        }
+    }
+
+    None
+}
+
+fn asteroid_count(snapshot: &SimulationSnapshot) -> usize {
+    asteroid_array(&snapshot.extra)
         .map(|arr| arr.len())
         .unwrap_or(0)
+}
+
+const ASTEROID_RNG_CALLS_PER_SPAWN: usize = 11;
+
+fn burn_rng_for_asteroids(rng: &mut Mulberry32, asteroid_count: usize) {
+    let burns = asteroid_count.saturating_mul(ASTEROID_RNG_CALLS_PER_SPAWN);
+    for _ in 0..burns {
+        rng.next_f32();
+    }
 }
 
 fn build_drone_index_to_id(

@@ -63,7 +63,7 @@ pub fn extract_asteroid_metadata(
 ) -> Vec<AsteroidMetadata> {
     let mut metadata = vec![AsteroidMetadata::default(); asteroid_id_to_index.len()];
 
-    if let Some(serde_json::Value::Array(asteroids)) = snapshot.extra.get("asteroids") {
+    if let Some(asteroids) = asteroid_array(snapshot) {
         for asteroid in asteroids {
             if let Some(id) = asteroid.get("id").and_then(|v| v.as_str()) {
                 if let Some(&idx) = asteroid_id_to_index.get(id) {
@@ -131,6 +131,21 @@ pub fn extract_asteroid_metadata(
     }
 
     metadata
+}
+
+fn asteroid_array(snapshot: &SimulationSnapshot) -> Option<&Vec<serde_json::Value>> {
+    snapshot
+        .extra
+        .get("asteroids")
+        .and_then(|value| value.as_array())
+        .or_else(|| {
+            snapshot
+                .extra
+                .get("extra")
+                .and_then(|value| value.as_object())
+                .and_then(|obj| obj.get("asteroids"))
+                .and_then(|value| value.as_array())
+        })
 }
 
 pub fn sys_drone_ai(
@@ -749,7 +764,7 @@ fn resolve_factory_id(
 }
 
 fn next_path_seed(rng: &mut Mulberry32) -> u32 {
-    let sample = (rng.next_f32() * 0x7fff_ffff as f32).floor() as u32;
+    let sample = (rng.next_u32().wrapping_sub(1)) & 0x7fff_ffff;
     if sample == 0 { 1 } else { sample }
 }
 

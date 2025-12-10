@@ -60,3 +60,9 @@ Drone AI is the most visible system and current mismatches cause significant vis
   - Queue-aware factory assignment, queuedDrones persistence, and unload-time queue cleanup.
   - Rebuilt WASM bundle with updated AI/travel logic.
 - Tests: npm run typecheck, npm run lint, npm run test (pass). Step-parity seed test now logs missing Rust flights (ts=3, rust=0); long-run parity divergences still reported by existing suites.
+
+### 2025-12-11
+
+- Fixed missing drone flights by reading `extra.asteroids` nested payloads, initializing asteroid buffers, and burning RNG to mirror TS asteroid generation.
+- Aligned path seed generation with TS serialization (positive 31-bit seeds) so flights emit with expected metadata; Rust now produces flights for parity snapshots.
+- Rebuilt WASM and reran npm run typecheck / npm run lint / npm run test (flight seed parity still failing: seeds differ; other suites pass with existing known divergences).
