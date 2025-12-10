@@ -1,9 +1,9 @@
 # [TASK050] - Full Parity: Rust ↔ TypeScript Parity Implementation
 
-**Status:** Pending
+**Status:** In Progress
 
 **Added:** 2025-12-09  
-**Updated:** 2025-12-09  
+**Updated:** 2025-12-10
 **Design:** DES037 - Full Parity Validation (memory/designs/DES037-full-parity-validation.md)
 
 ## Original Request
@@ -91,22 +91,22 @@ Phase 5 — CI & Validation
 
 | ID | Description | Status | Updated | Notes |
 |---:|------------|:------:|--------:|------|
-| 1.1 | Extend `step-parity.test.ts` (positions, energy, factories) | Done | 2025-12-09 | Add epsilon thresholds and stable seeds |
-| 1.4 | Add cross-engine *comparison* tests (TS vs Rust) for `simulateOffline()` | Done | 2025-12-09 | Validates identical snapshot outputs modulo epsilon |
-| 1.2 | Add offline parity tests for `simulateOffline()` | Done | 2025-12-09 | Compare snapshots across engines |
-| 1.3 | Harden shadow-mode E2E tests | Not Started | | Log divergences & assert thresholds |
-| 2.1 | Port Fleet/Drone AI to Rust | Not Started | | Includes flight persistence and ownership |
-| 2.2 | Port Asteroid lifecycle to Rust | Not Started | | Depletion, recycling, spawn rules |
-| 2.3 | Decide / implement Biomes parity (port vs doc exception) | Not Started | | If too complex, document behavior differences |
-| 2.4 | Port Logistics System to Rust | Partial | 2025-12-09 | Movement/Completion implemented; Scheduler pending |
-| 3.1 | Implement `SpawnDrone` command in Rust | Not Started | | Must match TS snapshot outputs |
-| 3.2 | Implement `RecycleAsteroid`, `AssignHauler` in Rust | Partial | 2025-12-09 | AssignHauler/RecycleAsteroid implemented, tests pass |
-| 3.3 | Command parity tests | Done | 2025-12-09 | Cross-apply commands and compare snapshots |
-| 4.1 | Wire offline simulation to Rust bridge | Not Started | | Update persistence and integration tests |
-| 4.2 | Snapshot schema versioning & migrations | Not Started | | Keep `load_snapshot` backward compatible |
-| 5.1 | CI: add WASM build + test job | Not Started | | Gate long parity suite to own job/nightly |
-| 5.3 | Add CI artifact step: publish WASM build to runner cache for test jobs | Not Started | | Make wasm available to test runners in CI |
-| 5.2 | Add perf benchmarks & monitoring | Not Started | | Track `step()` timings across engines |
+| 1.1 | Extend `step-parity.test.ts` (positions, energy, factories) | Partial | 2025-12-10 | Resource & module checks implemented; positions/energy/asteroid parity checks and frozen-seed scenario still required |
+| 1.4 | Add cross-engine *comparison* tests (TS vs Rust) for `simulateOffline()` | Partial | 2025-12-10 | `offline-parity.test.ts` validates Rust `simulateOffline()`; full TS vs Rust compare is not yet implemented |
+| 1.2 | Add offline parity tests for `simulateOffline()` | Partial | 2025-12-10 | Tests validate Rust offline behavior (steps/determinism); cross-engine snapshot comparisons missing |
+| 1.3 | Harden shadow-mode E2E tests | Not Started | 2025-12-10 | `tests/e2e/shadow-mode.spec.ts` exists, but long-run divergence assertions are not implemented |
+| 2.1 | Port Fleet/Drone AI to Rust | Done | 2025-12-10 | Implemented in `rust-engine/src/systems/drone_ai.rs` with unit tests |
+| 2.2 | Port Asteroid lifecycle to Rust | Done | 2025-12-10 | Implemented in `rust-engine/src/systems/asteroids.rs` with respawn logic and unit tests |
+| 2.3 | Decide / implement Biomes parity (port vs doc exception) | Partial | 2025-12-10 | Region index exists in buffers (`target_region_index`), but full biome mechanics are not ported to Rust; TS UI still uses `getBiomeDefinition` |
+| 2.4 | Port Logistics System to Rust | Done | 2025-12-10 | Implemented in `rust-engine/src/systems/logistics.rs` including scheduling and transfer processing |
+| 3.1 | Implement `SpawnDrone` command in Rust | Done | 2025-12-10 | Implemented in `rust-engine/src/api.rs` as `handle_spawn_drone` and wired through `apply_command` |
+| 3.2 | Implement `RecycleAsteroid`, `AssignHauler` in Rust | Done | 2025-12-10 | Implemented in `rust-engine/src/api.rs` as `handle_recycle_asteroid` and `handle_assign_hauler`; unit tests in `tests/unit/command-parity.test.ts` verify behavior |
+| 3.3 | Command parity tests | Done | 2025-12-09 | `tests/unit/command-parity.test.ts` implements cross-engine command checks for BuyModule, AssignHauler, PurchaseFactoryUpgrade, SpawnDrone, RecycleAsteroid |
+| 4.1 | Wire offline simulation to Rust bridge | Done | 2025-12-10 | `useRustEngine.ts` triggers `bridge.simulateOffline()` on load; `persistence.ts` defers offline work to bridge when `useRustSim` is enabled |
+| 4.2 | Snapshot schema versioning & migrations | Not Started | 2025-12-10 | `SimulationSnapshot` in `rust-engine/src/schema.rs` does not include a `schemaVersion` field; migrations not implemented in Rust yet |
+| 5.1 | CI: add WASM build + test job | Partial | 2025-12-10 | `ci.yml` builds WASM and runs unit tests in the `test` job, but a dedicated `wasm-parity` job and gating (or nightly) is not present |
+| 5.3 | Add CI artifact step: publish WASM build to runner cache for test jobs | Not Started | 2025-12-10 | CI caches `~/.npm`, but does not publish WASM artifacts or persist them for downstream jobs |
+| 5.2 | Add perf benchmarks & monitoring | Not Started | 2025-12-10 | No `tests/perf` benchmarks found; add microbenchmarks for `step()` latencies required |
 
 
 ## Tests & Validation
@@ -187,12 +187,27 @@ Notes on scope and trade-offs:
 - Added acceptance criteria and numeric thresholds mapped to DES037.
 - Started expanding tests & validation details; identified missing cross-engine comparisons and command parity test files.
 
+### 2025-12-10
+
+- Verified Rust command handlers exist and are wired: `handle_spawn_drone`, `handle_recycle_asteroid`, `handle_assign_hauler`, `handle_buy_module`, `handle_prestige`, and `handle_factory_upgrade` are present in `rust-engine/src/api.rs`.
+- Verified systems implemented in Rust: `sys_refinery`, `sys_global_refinery`, `sys_movement`, `sys_fleet`, `sys_drone_ai`, `sys_asteroids`, and `sys_logistics` with tests in `rust-engine/src/systems`.
+- Confirmed bridge exports and typed array accessors in `src/lib/wasmSimBridge.ts`, and wasm loader in `src/lib/wasmLoader.ts`.
+- Command parity tests are implemented: `tests/unit/command-parity.test.ts` covers `AssignHauler`, `BuyModule`, `PurchaseFactoryUpgrade`, `SpawnDrone`, and `RecycleAsteroid`.
+- Step parity and offline parity tests exist (`tests/unit/step-parity.test.ts`, `tests/unit/offline-parity.test.ts`) but require expansion for position & energy comparisons and for cross-engine offline comparators.
+- E2E shadow-mode tests exist in `tests/e2e/shadow-mode.spec.ts` but are not hardened; some assertions are gated/disabled.
+- Snapshot export/import (`exportSnapshot` / `load_snapshot`) are implemented; `schemaVersion` is not present in Rust snapshots yet (needs migration support).
+- `persistence.ts` defers offline simulation to the bridge when `useRustSim` is enabled; `useRustEngine.ts` runs `bridge.simulateOffline()` during initialization.
+
 ## Next Actions
 
 1. Confirm and lock acceptance thresholds with maintainers (position, energy, aggregate tolerance, HUD latency).  
-2. Extend `tests/unit/step-parity.test.ts` and `tests/unit/offline-parity.test.ts` to include cross-engine compares and frozen-seed scenarios.  
-3. Add `tests/unit/command-parity.test.ts` and create CI `wasm-parity` job that builds/publishes WASM artifacts to test jobs.  
-4. Implement typed-array exports / `exportSnapshot` versioning in the WASM bridge and add snapshot migration helpers.  
-5. After Phase 1 parity tests pass, begin Phase 2 porting for missing systems with targeted unit tests.
+2. Expand `tests/unit/step-parity.test.ts` to include positions & states, drone energy/battery checks, per-factory energy checks, and asteroid ore depletion assertions. Add frozen-seed deterministic scenarios and integrate epsilon checks for positions across frames.
+3. Extend `tests/unit/offline-parity.test.ts` to run TS `simulateOfflineProgress` and compare snapshot results to `bridge.simulateOffline()` (cross-engine offline comparison). Ensure tests compare aggregate results and per-field tolerances.
+4. Harden E2E tests in `tests/e2e/shadow-mode.spec.ts` by enabling gated parity runs (or separate nightly job), logging divergences per frame, and asserting rolling-average divergence thresholds.
+5. Add `schemaVersion` to Rust `SimulationSnapshot` and implement migration helpers in `rust-engine/src/api.rs`/`schema.rs`, then update `export_snapshot_str()` / `load_snapshot_str()` to respect versioning. Add TS migrations for the new schema version if needed.
+6. Add `tests/perf/step-bench.spec.ts` microbenchmarks (100/500/1000 entities) and CI artifact collection for performance regression tracking.
+7. Add a `wasm-parity` CI job (or nightly) to `ci.yml` to build WASM artifacts, cache/publish them for test runners, and run parity tests (unit + long-running E2E shadow mode). Ensure artifacts like divergence logs are uploaded on failures.
+8. Decide on Biome parity strategy: either implement biome mechanics in Rust or document behavioral differences and add integration tests for visible behavior parity.
+9. Remove or resolve `TODO` in `rust-engine/src/systems/drone_ai.rs` (i.e., spatial query selection or smarter selection heuristics) if parity requires it.
 
  
