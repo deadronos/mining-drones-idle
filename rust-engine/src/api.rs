@@ -462,6 +462,12 @@ impl GameState {
         serde_json::to_string(&self.snapshot).map_err(SimulationError::parse)
     }
 
+    /// Serializes the logistics queues to a JSON string.
+    pub fn get_logistics_queues_str(&self) -> Result<String, SimulationError> {
+        let queues = self.snapshot.logistics_queues.as_ref().cloned().unwrap_or_default();
+        serde_json::to_string(&queues).map_err(SimulationError::parse)
+    }
+
     /// Syncs buffer data back to the snapshot.
     pub fn sync_data_to_snapshot(&mut self) {
         // Sync factories

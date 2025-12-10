@@ -31,6 +31,10 @@ impl WasmGameState {
         self.inner.export_snapshot_str().map_err(to_js_error)
     }
 
+    pub fn get_logistics_queues(&self) -> Result<String, JsValue> {
+        self.inner.get_logistics_queues_str().map_err(to_js_error)
+    }
+
     pub fn step(&mut self, dt: f32) -> f32 {
         self.inner.step(dt).game_time
     }

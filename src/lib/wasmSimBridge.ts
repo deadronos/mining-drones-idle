@@ -1,4 +1,4 @@
-import type { StoreSnapshot } from '../state/types';
+import type { StoreSnapshot, LogisticsQueues } from '../state/types';
 
 export interface BufferSection {
   offset_bytes: number;
@@ -90,6 +90,7 @@ export interface WasmGameState {
   free(): void;
   load_snapshot(snapshot_json: string): void;
   export_snapshot(): string;
+  get_logistics_queues(): string;
   step(dt: number): number;
   apply_command(command_json: string): void;
   layout_json(): string;
@@ -114,6 +115,7 @@ export interface RustSimBridge {
   // Snapshots
   exportSnapshot(): StoreSnapshot;
   loadSnapshot(snapshot: StoreSnapshot): void;
+  getLogisticsQueues(): LogisticsQueues;
 
   // Layout
   getLayout(): RustSimLayout;
@@ -243,6 +245,12 @@ export function buildRustSimBridge(
       if (!gameState) throw new Error('Game state not initialized');
       const snapshotJson = gameState.export_snapshot();
       return JSON.parse(snapshotJson) as StoreSnapshot;
+    },
+
+    getLogisticsQueues() {
+      if (!gameState) throw new Error('Game state not initialized');
+      const json = gameState.get_logistics_queues();
+      return JSON.parse(json) as LogisticsQueues;
     },
 
     loadSnapshot(newSnapshot: StoreSnapshot): void {

@@ -133,11 +133,23 @@ export const Scene = () => {
       const useRustSim = settings.useRustSim;
       const shadowMode = settings.shadowMode;
 
+      frameCount.current++;
+
       // 1. Rust Simulation (Authoritative or Shadow)
       if ((useRustSim || shadowMode) && isLoaded && bridge) {
         bridge.step(step);
         if (useRustSim) {
           storeApi.setState((state) => ({ gameTime: state.gameTime + step }));
+
+          // Sync logistics queues every 6 ticks (approx 100ms at 60Hz)
+          if (frameCount.current % 6 === 0) {
+            try {
+              const queues = bridge.getLogisticsQueues();
+              storeApi.getState().syncLogisticsQueues(queues);
+            } catch (e) {
+              console.error('Failed to sync logistics queues from Rust', e);
+            }
+          }
         }
       }
 
@@ -164,7 +176,6 @@ export const Scene = () => {
 
       // 3. Parity Check (if Shadow Mode active)
       if (shadowMode && isLoaded && bridge) {
-        frameCount.current++;
         if (frameCount.current % PARITY_CHECK_INTERVAL === 0) {
           const report = checkParity(
             storeApi.getState(),
