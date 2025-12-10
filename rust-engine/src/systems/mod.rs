@@ -1,3 +1,4 @@
+pub mod asteroids;
 pub mod drone_ai;
 pub mod energy;
 pub mod fleet;

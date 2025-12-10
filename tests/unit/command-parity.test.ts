@@ -184,4 +184,31 @@ describe('Command Parity', () => {
     const newDroneId = ownerKeys.find(k => owners[k] === 'factory-1');
     expect(newDroneId).toBeDefined();
   });
+
+  it('ApplyCommand: RecycleAsteroid updates state', async () => {
+    const snapshot = createTestSnapshot(105) as StoreSnapshot & { asteroids: any[] };
+    snapshot.asteroids = [
+        { id: 'asteroid-1', position: [10, 0, 0], oreRemaining: 100, maxOre: 100 }
+    ];
+    await bridge!.init(snapshot);
+
+    bridge!.applyCommand({
+        type: 'RecycleAsteroid',
+        payload: { asteroidId: 'asteroid-1' }
+    });
+
+    const rustSnapshot = bridge!.exportSnapshot() as StoreSnapshot & { asteroids: any[] };
+    // asteroid should have 0 ore
+    // Note: Rust export might put it in 'extra' or flatten it?
+    // SimulationSnapshot flatten extra.
+    // serde_json to_string of SimulationSnapshot will put extra fields at top level.
+    // So rustSnapshot should have asteroids property.
+
+    // However, Bridge `exportSnapshot` parses JSON.
+    const asteroids = rustSnapshot.asteroids;
+    expect(asteroids).toBeDefined();
+    const asteroid = asteroids.find((a: any) => a.id === 'asteroid-1');
+    expect(asteroid).toBeDefined();
+    expect(asteroid.oreRemaining).toBe(0);
+  });
 });

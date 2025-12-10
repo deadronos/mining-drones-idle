@@ -6,6 +6,7 @@ import { useStore } from '../state/store';
 import { serializeStore, normalizeSnapshot } from '../state/serialization/store';
 import { gameWorld } from '@/ecs/world';
 import type { StoreSnapshot, DroneFlightState } from '../state/types';
+import { computeOfflineSeconds } from '../lib/offline';
 
 export interface UseRustEngineResult {
   bridge: RustSimBridge | null;
@@ -97,6 +98,21 @@ export function useRustEngine(shouldInitialize: boolean): UseRustEngineResult {
 
     if (result.bridge) {
       console.log('[WASM] Rust engine loaded successfully');
+
+      // Check for offline catchup
+      const state = useStore.getState();
+      const now = Date.now();
+      const offlineSeconds = computeOfflineSeconds(state.save.lastSave, now, state.settings.offlineCapHours);
+      if (offlineSeconds > 0) {
+        console.log(`Running Rust offline sim for ${offlineSeconds}s`);
+        // Use a default step of 0.1s for offline sim
+        const simResult = result.bridge.simulateOffline(offlineSeconds, 0.1);
+
+        // Update store from result
+        const newSnapshot = JSON.parse(simResult.snapshotJson);
+        useStore.getState().applySnapshot(newSnapshot);
+        useStore.getState().setLastSave(now);
+      }
     }
   }, [buildSnapshot]);
 

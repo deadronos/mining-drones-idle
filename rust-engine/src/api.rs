@@ -537,15 +537,42 @@ impl GameState {
             }
         }
 
-        // Sync asteroid ore remaining
+        // Sync asteroid data (ore, position, maxOre, profile)
         if let Some(asteroids) = self.snapshot.extra.get_mut("asteroids").and_then(|v| v.as_array_mut()) {
              for asteroid in asteroids {
                  if let Some(id) = asteroid.get("id").and_then(|v| v.as_str()) {
                      if let Some(&idx) = self.asteroid_id_to_index.get(id) {
-                         let offset = self.layout.asteroids.ore_remaining.offset_bytes / 4 + idx;
-                         let ore = f32::from_bits(self.data[offset]);
+                         let ore_offset = self.layout.asteroids.ore_remaining.offset_bytes / 4 + idx;
+                         let ore = f32::from_bits(self.data[ore_offset]);
+
+                         let pos_offset = self.layout.asteroids.positions.offset_bytes / 4 + idx * 3;
+                         let px = f32::from_bits(self.data[pos_offset]);
+                         let py = f32::from_bits(self.data[pos_offset + 1]);
+                         let pz = f32::from_bits(self.data[pos_offset + 2]);
+
+                         let max_ore_offset = self.layout.asteroids.max_ore.offset_bytes / 4 + idx;
+                         let max_ore = f32::from_bits(self.data[max_ore_offset]);
+
+                         let prof_offset = self.layout.asteroids.resource_profile.offset_bytes / 4 + idx * 5;
+
                          if let Some(obj) = asteroid.as_object_mut() {
                              obj.insert("oreRemaining".to_string(), serde_json::Value::from(ore));
+                             obj.insert("maxOre".to_string(), serde_json::Value::from(max_ore));
+                             obj.insert("position".to_string(), serde_json::json!([px, py, pz]));
+
+                             let p0 = f32::from_bits(self.data[prof_offset]);
+                             let p1 = f32::from_bits(self.data[prof_offset + 1]);
+                             let p2 = f32::from_bits(self.data[prof_offset + 2]);
+                             let p3 = f32::from_bits(self.data[prof_offset + 3]);
+                             let p4 = f32::from_bits(self.data[prof_offset + 4]);
+
+                             obj.insert("resourceProfile".to_string(), serde_json::json!({
+                                 "ore": p0,
+                                 "ice": p1,
+                                 "metals": p2,
+                                 "crystals": p3,
+                                 "organics": p4
+                             }));
                          }
                      }
                  }
@@ -574,7 +601,12 @@ impl GameState {
         }
         self.game_time += dt;
 
-        let modifiers = get_resource_modifiers(&self.snapshot.resources, self.snapshot.prestige.cores);
+        let modifiers = get_resource_modifiers(
+            &self.snapshot.resources,
+            self.snapshot.prestige.cores,
+            self.snapshot.prestige_investments.as_ref(),
+            self.snapshot.spec_techs.as_ref(),
+        );
         let sink_bonuses = crate::sinks::get_sink_bonuses(&self.snapshot);
 
         // SAFETY: All buffer sections are validated during layout planning.
@@ -730,6 +762,7 @@ impl GameState {
             let drone_positions = get_slice_mut(&self.layout.drones.positions);
             let drone_target_asteroid_index = get_slice_mut(&self.layout.drones.target_asteroid_index);
             let drone_target_factory_index = get_slice_mut(&self.layout.drones.target_factory_index);
+            let drone_owner_factory_index = get_slice_mut(&self.layout.drones.owner_factory_index);
             let factory_positions = get_slice_mut(&self.layout.factories.positions);
             let asteroid_positions = get_slice_mut(&self.layout.asteroids.positions);
             let asteroid_ore = get_slice_mut(&self.layout.asteroids.ore_remaining);
@@ -749,6 +782,7 @@ impl GameState {
                 drone_mining_rate,
                 drone_target_asteroid_index,
                 drone_target_factory_index,
+                drone_owner_factory_index,
                 &self.drone_id_to_index,
                 &self.factory_id_to_index,
                 &self.asteroid_id_to_index,
@@ -757,6 +791,23 @@ impl GameState {
                 asteroid_ore,
                 &mut self.rng,
                 &modifiers,
+            );
+
+            // Asteroid Lifecycle System
+            let asteroid_positions = get_slice_mut(&self.layout.asteroids.positions);
+            let asteroid_ore = get_slice_mut(&self.layout.asteroids.ore_remaining);
+            let asteroid_max_ore = get_slice_mut(&self.layout.asteroids.max_ore);
+            let asteroid_resource_profile = get_slice_mut(&self.layout.asteroids.resource_profile);
+
+            crate::systems::asteroids::sys_asteroids(
+                asteroid_positions,
+                asteroid_ore,
+                asteroid_max_ore,
+                asteroid_resource_profile,
+                &mut self.rng,
+                &sink_bonuses,
+                self.snapshot.modules.scanner,
+                dt,
             );
         }
 
