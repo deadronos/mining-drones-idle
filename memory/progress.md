@@ -4,6 +4,9 @@
 
 ## Recent Achievements
 
+- **2025-12-09**: Implemented Logistics System in Rust (TASK050).
+  - Defined `PendingTransfer`, `LogisticsQueues`, and `FactoryLogisticsState` in `rust-engine` schema.
+  - Implemented `sys_logistics` to handle Hauler transfer completion, fixing the "haulers never arrive" bug.
 - **2025-11-21**: Fixed Parity Mismatch in Rust Simulation (TASK042).
   - Identified and fixed a bug in `sys_drone_ai` where drones in `RETURNING` state were ignored, causing them to get stuck and not unload ore.
   - Fixed a potential crash in `api.rs` when factory count is 0.

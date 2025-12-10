@@ -750,6 +750,17 @@ impl GameState {
                 &mut self.rng,
                 &modifiers,
             );
+
+            // Logistics System
+            if let Some(logistics_queues) = &mut self.snapshot.logistics_queues {
+                crate::systems::logistics::sys_logistics(
+                    logistics_queues,
+                    &mut self.snapshot.factories,
+                    &mut self.snapshot.resources,
+                    &self.snapshot.modules,
+                    self.game_time,
+                );
+            }
         }
 
         self.sync_globals_to_buffer();

@@ -70,6 +70,24 @@ pub struct FactoryUpgradeSnapshot {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
+pub struct InboundSchedule {
+    pub from_factory_id: String,
+    pub resource: String,
+    pub amount: f32,
+    pub eta: f32,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct FactoryLogisticsState {
+    #[serde(default)]
+    pub outbound_reservations: BTreeMap<String, f32>,
+    #[serde(default)]
+    pub inbound_schedules: Vec<InboundSchedule>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct FactorySnapshot {
     pub id: String,
     pub position: Vector3,
@@ -104,13 +122,28 @@ pub struct FactorySnapshot {
     #[serde(default)]
     pub hauler_upgrades: Option<serde_json::Value>,
     #[serde(default)]
-    pub logistics_state: Option<serde_json::Value>,
+    pub logistics_state: Option<FactoryLogisticsState>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct PendingTransfer {
+    pub id: String,
+    pub from_factory_id: String,
+    pub to_factory_id: String,
+    pub resource: String,
+    pub amount: f32,
+    pub status: String,
+    pub eta: f32,
+    #[serde(default)]
+    pub departed_at: f32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct LogisticsQueues {
     #[serde(default)]
-    pub pending_transfers: Vec<serde_json::Value>,
+    pub pending_transfers: Vec<PendingTransfer>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]

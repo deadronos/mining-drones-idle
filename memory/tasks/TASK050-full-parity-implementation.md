@@ -98,6 +98,7 @@ Phase 5 — CI & Validation
 | 2.1 | Port Fleet/Drone AI to Rust | Not Started | | Includes flight persistence and ownership |
 | 2.2 | Port Asteroid lifecycle to Rust | Not Started | | Depletion, recycling, spawn rules |
 | 2.3 | Decide / implement Biomes parity (port vs doc exception) | Not Started | | If too complex, document behavior differences |
+| 2.4 | Port Logistics System to Rust | Partial | 2025-12-09 | Movement/Completion implemented; Scheduler pending |
 | 3.1 | Implement `SpawnDrone` command in Rust | Not Started | | Must match TS snapshot outputs |
 | 3.2 | Implement `RecycleAsteroid`, `AssignHauler` in Rust | Partial | 2025-12-09 | AssignHauler/RecycleAsteroid implemented, tests pass |
 | 3.3 | Command parity tests | Done | 2025-12-09 | Cross-apply commands and compare snapshots |
