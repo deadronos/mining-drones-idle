@@ -40,5 +40,25 @@
 | TASK036 | Fix Drone Unload Trigger - Position Arrival  | Completed   | 2025-10-25 |
 | TASK037 | Hauler Ship Visuals Implementation           | Pending     | 2025-10-26 |
 
-| TASK038 | Factory Metrics & Mini-Charts                | In Progress | 2025-10-30 |
-| TASK039 | Hotpath Instancing & Pooling                 | Completed   | 2025-11-03 |
+| TASK038 | Factory Metrics & Mini-Charts | In Progress | 2025-10-30 |
+| TASK039 | Hotpath Instancing & Pooling | Completed | 2025-11-03 |
+| TASK040 | Rust Simulation Core | In Progress | 2025-11-18 |
+| TASK041 | Rust Simulation Systems & Logic Port | Completed | 2025-11-20 |
+| TASK042 | Rust Integration & Parity Verification | Completed | 2025-11-20 |
+| TASK043 | Full Rust → TypeScript Parity Rewrite | In Progress | 2025-11-20 |
+| TASK044 | Rust Critical Fixes & WASM Build | Completed | 2025-11-26 |
+| TASK045 | TypeScript WASM Bridge Implementation | Completed | 2025-11-26 |
+| TASK046 | Rust Command Expansion | Completed | 2025-11-26 |
+| TASK047 | Store Integration & Feature Flag | Completed | 2025-11-27 |
+| TASK048 | Parity Testing Suite | Completed | 2025-11-27 |
+| TASK049 | Rendering Integration | Completed | 2025-11-27 |
+| TASK050 | Full Parity Implementation | In Progress | 2025-12-10 |
+| TASK051 | Direct-Buffer HUD Integration | Completed | 2025-12-10 |
+| TASK052 | Parity Test Expansion & Measurement | Pending | 2025-12-10 |
+| TASK053 | Drone AI & Travel Parity Implementation | Pending | 2025-12-10 |
+| TASK054 | Asteroids & Biomes Parity Implementation | Pending | 2025-12-10 |
+| TASK055 | Power & Refinery Alignment | Pending | 2025-12-10 |
+| TASK056 | Logistics Parity Implementation | Pending | 2025-12-10 |
+| TASK057 | Commands, Snapshot & Offline Parity | Pending | 2025-12-10 |
+| TASK058 | Rendering & Bridge Integration | Pending | 2025-12-10 |
+| TASK059 | CI & Continuous Validation | Pending | 2025-12-10 |

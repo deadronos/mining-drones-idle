@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unnecessary-type-assertion */
 import type { StoreSnapshot } from '@/state/store';
-import { saveVersion } from '@/state/store';
+import { saveVersion, SCHEMA_VERSION } from '@/state/store';
 import {
   initialSpecTechs,
   initialSpecTechSpent,
@@ -385,6 +385,7 @@ export const migrateSnapshot = (
     version: saveVersion,
     lastSave: working.save?.lastSave ?? Date.now(),
   };
+  working.schemaVersion = working.schemaVersion ?? SCHEMA_VERSION;
   report.toVersion = saveVersion;
   return { snapshot: working, report };
 };

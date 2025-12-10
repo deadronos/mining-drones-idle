@@ -1,9 +1,9 @@
 import { useFrame, useThree } from '@react-three/fiber';
-import { Suspense, useMemo } from 'react';
+import { Suspense, useMemo, useState, useEffect } from 'react';
 import { Stars } from '@react-three/drei';
 import { Vector3 } from 'three';
 import type { PerspectiveCamera } from 'three';
-import { gameWorld } from '@/ecs/world';
+import { gameWorld, resetWorld } from '@/ecs/world';
 import { storeApi, useStore } from '@/state/store';
 import { createTimeSystem } from '@/ecs/systems/time';
 import { createFleetSystem } from '@/ecs/systems/fleet';
@@ -25,20 +25,42 @@ import { Warehouse } from '@/r3f/Warehouse';
 import { useFactoryAutofit } from '@/hooks/useFactoryAutofit';
 import { useCameraReset } from '@/hooks/useCameraReset';
 import { computeAutofitCamera, computeBoundingBox, DEFAULT_AUTOFIT_CONFIG } from '@/lib/camera';
+import { useRustEngine } from '@/hooks/useRustEngine';
+import { checkParity } from '@/lib/parityLogger';
+
+import { RustDrones } from '@/r3f/RustDrones';
+import { RustAsteroids } from '@/r3f/RustAsteroids';
 
 const FOG_COLOR = '#040713';
 const DEFAULT_FOG_RANGE = { near: 20, far: 90 } as const;
+const PARITY_CHECK_INTERVAL = 60; // Check every 60 frames
 
 type SystemRunner = (dt: number) => void;
 
+/**
+ * Main 3D Scene component.
+ * Sets up lighting, fog, and renders the game world entities.
+ * Orchestrates the game loop (ECS systems, store updates) via `useFrame`.
+ * Handles both TypeScript-based and Rust/WASM-based simulation modes.
+ *
+ * @returns The rendered 3D scene.
+ */
 export const Scene = () => {
+  const rngSeed = useStore((state) => state.rngSeed);
+  const [ready, setReady] = useState(false);
+  const { bridge, isLoaded } = useRustEngine(ready);
   const time = useMemo(() => createTimeSystem(0.1), []);
   const showTrails = useStore((state) => state.settings.showTrails);
   const showHaulerShips = useStore((state) => state.settings.showHaulerShips);
+  const useRustSim = useStore((state) => state.settings.useRustSim);
   const factories = useStore((state) => state.factories);
   const { camera, size } = useThree();
   useFactoryAutofit();
   useCameraReset();
+
+  // Frame counter for parity checks
+  const frameCount = useMemo(() => ({ current: 0 }), []);
+
   const fogRange = useMemo(() => {
     if (!factories.length) {
       return DEFAULT_FOG_RANGE;
@@ -82,28 +104,144 @@ export const Scene = () => {
     } satisfies Record<string, SystemRunner>;
   }, []);
 
+  // Handle reset and initial population
+  useEffect(() => {
+    let mounted = true;
+
+    // Reset world with new seed
+    resetWorld(rngSeed);
+
+    // Force populate systems
+    systems.asteroids(0);
+    systems.fleet(0);
+
+    // Defer setting ready to avoid synchronous setState within effect
+    // which can trigger cascading renders.
+    void Promise.resolve().then(() => {
+      if (mounted) setReady(true);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [rngSeed, systems]);
+
   useFrame((_state, delta) => {
     const clamped = Math.min(delta, 0.25);
     time.update(clamped, (step) => {
-      // ECS-specific systems
-      systems.fleet(step);
-      systems.biomes(step);
-      systems.asteroids(step);
-      systems.droneAI(step);
-      systems.travel(step);
-      systems.mining(step);
-      systems.unload(step);
-      systems.power(step);
-      systems.refinery(step); // Calls processRefinery + updates visual activity
-      // Store orchestrator for gameTime, logistics, and factories
-      // Note: processRefinery is called by systems.refinery above
-      // tick() will call it again, but that's OK - it's idempotent for this frame
-      storeApi.getState().processLogistics(step);
-      storeApi.getState().processFactories(step);
-      // Update gameTime
-      storeApi.setState((state) => ({ gameTime: state.gameTime + step }));
+      const settings = storeApi.getState().settings;
+      const useRustSim = settings.useRustSim;
+      const shadowMode = settings.shadowMode;
+
+      frameCount.current++;
+
+      // 1. Rust Simulation (Authoritative or Shadow)
+      if ((useRustSim || shadowMode) && isLoaded && bridge) {
+        bridge.step(step);
+        if (useRustSim) {
+          storeApi.setState((state) => ({ gameTime: state.gameTime + step }));
+
+          // Sync logistics queues every 6 ticks (approx 100ms at 60Hz)
+          if (frameCount.current % 6 === 0) {
+            try {
+              const queues = bridge.getLogisticsQueues();
+              storeApi.getState().syncLogisticsQueues(queues);
+            } catch (e) {
+              console.error('Failed to sync logistics queues from Rust', e);
+            }
+          }
+        }
+      }
+
+      // 2. TS Simulation (Authoritative or Shadow)
+      if (!useRustSim || shadowMode) {
+        // ECS-specific systems
+        systems.fleet(step);
+        systems.biomes(step);
+        systems.asteroids(step);
+        systems.droneAI(step);
+        systems.travel(step);
+        systems.mining(step);
+        systems.unload(step);
+        systems.power(step);
+        systems.refinery(step); // Calls processRefinery + updates visual activity
+        // Store orchestrator for gameTime, logistics, and factories
+        storeApi.getState().processLogistics(step);
+        storeApi.getState().processFactories(step);
+        // Update gameTime if TS is authoritative
+        if (!useRustSim) {
+          storeApi.setState((state) => ({ gameTime: state.gameTime + step }));
+        }
+      }
+
+      // 3. Parity Check (if Shadow Mode active)
+      if (shadowMode && isLoaded && bridge) {
+        if (frameCount.current % PARITY_CHECK_INTERVAL === 0) {
+          const report = checkParity(
+            storeApi.getState(),
+            bridge,
+            frameCount.current,
+            gameWorld.droneQuery.size,
+          );
+          if (report) {
+            console.warn(`[Parity Check] Frame ${report.frame} Divergences:`, report.divergences);
+          }
+        }
+      }
     });
   });
+
+  const canUseRust = useRustSim && bridge?.isReady?.();
+
+  const rustAsteroidsReady = (() => {
+    if (!canUseRust || !bridge) return false;
+    try {
+      const positions = bridge.getAsteroidPositions();
+      const ore = bridge.getAsteroidOre();
+      const asteroidCountFromBuffers = Math.floor(positions.length / 3);
+      if (!ore || ore.length === 0 || asteroidCountFromBuffers === 0) {
+        return false;
+      }
+
+      for (let i = 0; i < positions.length; i += 3) {
+        const px = positions[i] ?? 0;
+        const py = positions[i + 1] ?? 0;
+        const pz = positions[i + 2] ?? 0;
+        if (Math.abs(px) + Math.abs(py) + Math.abs(pz) > 1e-6) {
+          return true;
+        }
+      }
+
+      return false;
+    } catch {
+      return false;
+    }
+  })();
+
+  const rustDronesReady = (() => {
+    if (!canUseRust || !bridge) return false;
+    try {
+      const dpos = bridge.getDronePositions();
+      const states = bridge.getDroneStates();
+      const droneCount = Math.floor(dpos.length / 3);
+      if (!states || states.length === 0 || droneCount === 0) {
+        return false;
+      }
+
+      for (let i = 0; i < dpos.length; i += 3) {
+        const px = dpos[i] ?? 0;
+        const py = dpos[i + 1] ?? 0;
+        const pz = dpos[i + 2] ?? 0;
+        if (Math.abs(px) + Math.abs(py) + Math.abs(pz) > 1e-6) {
+          return true;
+        }
+      }
+
+      return false;
+    } catch {
+      return false;
+    }
+  })();
 
   return (
     <>
@@ -121,8 +259,9 @@ export const Scene = () => {
         <Stars radius={120} depth={60} count={4000} factor={4} fade speed={0.2} />
         <Warehouse />
         <Factory />
-        <Asteroids />
-        <Drones />
+        {rustAsteroidsReady ? <RustAsteroids bridge={bridge} /> : <Asteroids />}
+
+        {rustDronesReady ? <RustDrones bridge={bridge} /> : <Drones />}
         {showTrails ? <DroneTrails /> : null}
         {showHaulerShips ? <HaulerShips /> : <TransferLines />}
       </Suspense>

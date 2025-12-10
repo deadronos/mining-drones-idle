@@ -8,6 +8,14 @@ const MAX_TRANSFER_FX = 48;
 /**
  * Create and emit a factory transfer visual effect.
  * Best-effort: failures are silently ignored to avoid crashing the scheduler.
+ * Adds the event to the global gameWorld events list.
+ *
+ * @param transferId - Unique ID of the transfer.
+ * @param amount - Amount being transferred (visual scale).
+ * @param fromPosition - Start position.
+ * @param toPosition - End position.
+ * @param eta - Estimated arrival time.
+ * @param currentGameTime - Current game time.
  */
 export function emitTransferFX(
   transferId: string,

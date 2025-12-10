@@ -263,3 +263,19 @@ WHEN the player sets the performance profile to "low" or toggles metrics off, TH
 ## RQ-066 Metrics Lifecycle Cleanup
 
 WHEN a factory is removed or the game resets, THE SYSTEM SHALL clear the associated metrics buffers to prevent stale data and memory leaks. [Acceptance: Store integration test removes a factory and asserts its metrics entry is removed immediately; resetGame test verifies all metrics maps are empty afterward.]
+
+## RQ-067 Rust Snapshot Intake Validation
+
+WHEN the Rust simulation core initializes from a JS snapshot, THE SYSTEM SHALL validate required world sections (resources, modules, prestige, save, settings) and reject payloads missing these blocks with descriptive errors. [Acceptance: Rust unit test loads valid snapshots successfully and returns structured errors when required sections are absent.]
+
+## RQ-068 Rust Snapshot Export Compatibility
+
+WHEN the Rust simulation core exports a snapshot, THE SYSTEM SHALL emit JSON compatible with the current `StoreSnapshot` schema, preserving module/resource/settings data and passthrough fields such as factories and logistics queues. [Acceptance: Rust unit test round-trips a snapshot through import/export and asserts the JSON retains untouched factory/logistics payloads.]
+
+## RQ-069 Cross-Language RNG Parity
+
+WHEN the Rust simulation core seeds its RNG with the same value used by the TypeScript `createRng`, THE SYSTEM SHALL produce identical float and integer sequences for at least the first 10 samples. [Acceptance: Rust unit test compares sequences from the Rust RNG against precomputed TypeScript outputs for two seeds.]
+
+## RQ-070 Typed-Array Layout Calculation
+
+WHEN the Rust simulation core plans typed-array exports for drones, asteroids, and factories, THE SYSTEM SHALL compute contiguous Float32/Uint32 sections with byte offsets and lengths that reflect the requested entity counts. [Acceptance: Rust unit test requests a layout for specific counts and verifies offsets increase monotonically and lengths match per-entity component sizes.]

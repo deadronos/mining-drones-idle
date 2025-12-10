@@ -1,12 +1,16 @@
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import wasm from 'vite-plugin-wasm';
+import topLevelAwait from 'vite-plugin-top-level-await';
 
 // Export an async config so we can conditionally add optional plugins
 export default defineConfig(async ({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   const plugins: Plugin[] = [
+    wasm(),
+    topLevelAwait(),
     react({
       // keep the user's react-compiler babel plugin
       babel: {
