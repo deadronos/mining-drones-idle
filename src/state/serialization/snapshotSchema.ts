@@ -47,6 +47,7 @@ export const StoreSnapshotSchema = {
       required: ['lastSave', 'version'],
       additionalProperties: true,
     },
+    gameTime: { type: 'number', minimum: 0 },
     settings: {
       type: 'object',
       properties: {

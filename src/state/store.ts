@@ -303,6 +303,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
           droneFlights: (normalized.droneFlights ?? []).map(cloneDroneFlight),
           factories: restoredFactories,
           logisticsQueues: normalized.logisticsQueues ?? { pendingTransfers: [] },
+          gameTime: normalized.gameTime ?? 0,
           factoryProcessSequence: deriveProcessSequence(restoredFactories),
           factoryRoundRobin: 0,
           factoryAutofitSequence: 0,

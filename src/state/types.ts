@@ -415,6 +415,7 @@ export interface StoreSnapshot {
   specTechs?: SpecTechState;
   specTechSpent?: SpecTechSpentState;
   prestigeInvestments?: PrestigeInvestmentState;
+  gameTime?: number;
 }
 
 /**

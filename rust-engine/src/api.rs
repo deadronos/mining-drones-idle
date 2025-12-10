@@ -96,6 +96,7 @@ pub struct GameState {
     /// Layout describing how entity data is mapped in the linear memory buffer.
     pub layout: EntityBufferLayout,
     game_time: f32,
+    logistics_tick: f32,
     /// The linear memory buffer containing entity data (SoA layout).
     pub data: Vec<u32>,
     drone_id_to_index: BTreeMap<String, usize>,
@@ -168,10 +169,11 @@ impl GameState {
         }
 
         let mut state = Self {
+            game_time: snapshot.game_time,
             snapshot,
             rng: Mulberry32::new(rng_seed),
             layout,
-            game_time: 0.0,
+            logistics_tick: 0.0,
             data,
             drone_id_to_index,
             factory_id_to_index,
@@ -242,8 +244,8 @@ impl GameState {
             }
         }
 
+        self.game_time = snapshot.game_time;
         self.snapshot = snapshot;
-        self.game_time = 0.0;
         self.initialize_data_from_snapshot();
         Ok(())
     }
@@ -750,17 +752,30 @@ impl GameState {
                 &mut self.rng,
                 &modifiers,
             );
+        }
 
-            // Logistics System
-            if let Some(logistics_queues) = &mut self.snapshot.logistics_queues {
-                crate::systems::logistics::sys_logistics(
-                    logistics_queues,
-                    &mut self.snapshot.factories,
-                    &mut self.snapshot.resources,
-                    &self.snapshot.modules,
-                    self.game_time,
-                );
+        self.sync_data_to_snapshot();
+
+        // Logistics System
+        if let Some(logistics_queues) = &mut self.snapshot.logistics_queues {
+            self.logistics_tick += dt;
+            let run_scheduler = self.logistics_tick >= 2.0;
+            if run_scheduler {
+                self.logistics_tick -= 2.0;
             }
+
+            crate::systems::logistics::sys_logistics(
+                logistics_queues,
+                &mut self.snapshot.factories,
+                &mut self.snapshot.resources,
+                &self.snapshot.modules,
+                self.game_time,
+                run_scheduler,
+            );
+        }
+
+        for i in 0..self.snapshot.factories.len() {
+            self.sync_factory_to_buffer(i);
         }
 
         self.sync_globals_to_buffer();
@@ -1274,6 +1289,7 @@ mod tests {
             spec_techs: None,
             spec_tech_spent: None,
             prestige_investments: None,
+            game_time: 0.0,
             extra: BTreeMap::new(),
         }
     }

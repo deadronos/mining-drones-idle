@@ -86,6 +86,32 @@ pub struct FactoryLogisticsState {
     pub inbound_schedules: Vec<InboundSchedule>,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct HaulerConfig {
+    pub capacity: f32,
+    pub speed: f32,
+    pub pickup_overhead: f32,
+    pub dropoff_overhead: f32,
+    #[serde(default)]
+    pub resource_filters: Vec<String>,
+    #[serde(default)]
+    pub mode: String,
+    #[serde(default)]
+    pub priority: i32,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct FactoryHaulerUpgrades {
+    #[serde(default)]
+    pub capacity_boost: Option<i32>,
+    #[serde(default)]
+    pub speed_boost: Option<i32>,
+    #[serde(default)]
+    pub efficiency_boost: Option<i32>,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct FactorySnapshot {
@@ -118,9 +144,9 @@ pub struct FactorySnapshot {
     #[serde(default)]
     pub haulers_assigned: Option<i32>,
     #[serde(default)]
-    pub hauler_config: Option<serde_json::Value>,
+    pub hauler_config: Option<HaulerConfig>,
     #[serde(default)]
-    pub hauler_upgrades: Option<serde_json::Value>,
+    pub hauler_upgrades: Option<FactoryHaulerUpgrades>,
     #[serde(default)]
     pub logistics_state: Option<FactoryLogisticsState>,
 }
@@ -244,6 +270,8 @@ pub struct SimulationSnapshot {
     pub spec_tech_spent: Option<serde_json::Value>,
     #[serde(default, rename = "prestigeInvestments")]
     pub prestige_investments: Option<serde_json::Value>,
+    #[serde(default, rename = "gameTime")]
+    pub game_time: f32,
     #[serde(flatten, default)]
     pub extra: BTreeMap<String, serde_json::Value>,
 }

@@ -49,3 +49,8 @@ pub const FACTORY_PLACEMENT_ATTEMPTS: usize = 100;
 
 // Upgrade Growth
 pub const UPGRADE_GROWTH: f32 = 1.15;
+
+// Hauler Constants
+pub const FACTORY_HAULER_CAPACITY_PER_LEVEL: f32 = 5.0;
+pub const FACTORY_HAULER_SPEED_PER_LEVEL: f32 = 0.1;
+pub const FACTORY_HAULER_EFFICIENCY_PER_LEVEL: f32 = 0.05;

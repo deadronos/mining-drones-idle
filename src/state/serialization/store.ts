@@ -300,6 +300,7 @@ export const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapsh
         )
       : undefined,
   logisticsQueues: normalizeLogisticsQueues(snapshot.logisticsQueues),
+  gameTime: coerceNumber(snapshot.gameTime, 0),
 });
 
 /**
@@ -358,6 +359,7 @@ export const serializeStore = (state: StoreState): StoreSnapshot => ({
   selectedFactoryId: state.selectedFactoryId,
   droneOwners: { ...state.droneOwners },
   logisticsQueues: { pendingTransfers: [...state.logisticsQueues.pendingTransfers] },
+  gameTime: state.gameTime,
 });
 
 export const stringifySnapshot = (snapshot: StoreSnapshot) => JSON.stringify(snapshot);
