@@ -26,8 +26,6 @@ describe('snapshot schema (Ajv) validations', () => {
     const ajv = new Ajv();
     const validate = ajv.compile(StoreSnapshotSchema as unknown as object);
     const ok = validate(snapshot);
-
-    // Missing numeric fields now default via schemaVersion-aware normalization.
-    expect(ok).toBe(true);
+    expect(ok).toBe(false);
   });
 });

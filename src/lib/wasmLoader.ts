@@ -26,7 +26,7 @@ export async function loadWasmBridge(
 
   try {
     // Dynamic import to allow tree-shaking when WASM is not used
-    const wasmModule = (await import('../gen/rust_engine')) as typeof import('../gen/rust_engine');
+    const wasmModule = await import('../gen/rust_engine');
     const initOutput = await wasmModule.default();
     const memory = (initOutput as { memory?: WebAssembly.Memory }).memory;
     if (!memory) {

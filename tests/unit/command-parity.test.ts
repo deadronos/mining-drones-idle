@@ -223,6 +223,9 @@ describe('Command Parity', () => {
     expect(asteroids).toBeDefined();
     const asteroid = asteroids.find((a) => a.id === 'asteroid-1');
     expect(asteroid).toBeDefined();
+    if (!asteroid) {
+      throw new Error('Asteroid not found');
+    }
     expect(asteroid.oreRemaining).toBe(0);
   });
 });

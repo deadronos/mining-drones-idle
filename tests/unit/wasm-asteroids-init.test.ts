@@ -7,13 +7,22 @@ import { loadWasmBridge } from '@/lib/wasmLoader';
 
 // Load the real WASM module from disk for integration tests
 vi.mock('@/gen/rust_engine', async (importOriginal) => {
-  const actual = (await importOriginal()) as typeof import('@/gen/rust_engine');
+  const actual = await importOriginal();
+  if (!actual || typeof actual !== 'object') {
+    throw new Error('Invalid WASM module import');
+  }
+
+  const actualRecord = actual as Record<string, unknown>;
+  const moduleWithDefault = actual as {
+    default: (input?: ArrayBuffer | WebAssembly.Module) => Promise<{ memory: WebAssembly.Memory }>;
+  };
+
   return {
-    ...actual,
+    ...actualRecord,
     default: async () => {
       const wasmPath = path.resolve(process.cwd(), 'src/gen/rust_engine_bg.wasm');
       const buffer = fs.readFileSync(wasmPath);
-      return actual.default(buffer);
+      return moduleWithDefault.default(buffer);
     },
   };
 });
@@ -41,7 +50,7 @@ describe('WASM asteroid initialization', () => {
       factories: [],
       selectedFactoryId: null,
       droneOwners: {},
-      logisticsQueues: null,
+      logisticsQueues: undefined,
       asteroids: [
           { id: 'a1', position: [10, 20, -5], oreRemaining: 100, maxOre: 100, resourceProfile: { ore: 1, ice: 0, metals: 0, crystals: 0, organics: 0 } },
           { id: 'a2', position: [-12.5, 4.2, 2.0], oreRemaining: 75, maxOre: 75, resourceProfile: { ore: 1, ice: 0, metals: 0, crystals: 0, organics: 0 } },

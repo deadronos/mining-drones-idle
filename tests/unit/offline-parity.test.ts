@@ -364,7 +364,7 @@ describe('Offline Parity', () => {
         ['energy', tsSnapshot.resources.energy, rustSnapshot.resources.energy],
       ] as const;
 
-      for (const [label, tsVal, rustVal] of metrics) {
+      for (const [, tsVal, rustVal] of metrics) {
         const diff = relDiff(tsVal, rustVal);
         expect(diff).toBeLessThanOrEqual(OFFLINE_REL_EPSILON);
       }
