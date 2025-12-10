@@ -107,10 +107,16 @@ pub struct FactoryBuffers {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct GlobalBuffers {
+    pub resources: BufferSection,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EntityBufferLayout {
     pub drones: DroneBuffers,
     pub asteroids: AsteroidBuffers,
     pub factories: FactoryBuffers,
+    pub globals: GlobalBuffers,
     pub total_size_bytes: usize,
 }
 
@@ -259,6 +265,12 @@ pub fn plan_layout(
     };
     offset = factory_haulers_assigned.advance(4)?;
 
+    let global_resources = BufferSection {
+        offset_bytes: offset,
+        length: 8,
+    };
+    offset = global_resources.advance(4)?;
+
     Ok(EntityBufferLayout {
         drones: DroneBuffers {
             positions: drone_positions,
@@ -292,6 +304,9 @@ pub fn plan_layout(
             upgrades: factory_upgrades,
             refinery_state: factory_refinery_state,
             haulers_assigned: factory_haulers_assigned,
+        },
+        globals: GlobalBuffers {
+            resources: global_resources,
         },
         total_size_bytes: offset,
     })

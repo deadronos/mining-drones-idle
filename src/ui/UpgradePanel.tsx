@@ -3,10 +3,12 @@ import {
   moduleDefinitions,
   costForLevel,
   computePrestigeBonus,
+  computePrestigeGain,
   PRESTIGE_THRESHOLD,
   type ModuleId,
   useStore,
 } from '@/state/store';
+import { useRustHUD } from '@/hooks/useRustHUD';
 import { formatInteger } from '@/lib/formatters';
 
 const moduleRows = Object.entries(moduleDefinitions) as [
@@ -22,18 +24,16 @@ const moduleRows = Object.entries(moduleDefinitions) as [
  * @returns The rendered UpgradePanel component.
  */
 export const UpgradePanel = () => {
+  const { resources } = useRustHUD();
   const modules = useStore((state) => state.modules);
-  const resources = useStore((state) => state.resources);
   const prestige = useStore((state) => state.prestige);
   const buy = useStore((state) => state.buy);
-  const bars = useStore((state) => state.resources.bars);
-  const preview = useStore((state) => state.preview);
   const doPrestige = useStore((state) => state.doPrestige);
 
   const rows = useMemo(() => moduleRows, []);
-  const nextCores = Math.floor(preview());
+  const nextCores = Math.floor(computePrestigeGain(resources.bars));
   // derive readiness directly from bars so the button updates reactively
-  const prestigeDisabled = !(bars >= PRESTIGE_THRESHOLD);
+  const prestigeDisabled = !(resources.bars >= PRESTIGE_THRESHOLD);
   const bonusPercent = Math.round((computePrestigeBonus(prestige.cores) - 1) * 100);
 
   return (

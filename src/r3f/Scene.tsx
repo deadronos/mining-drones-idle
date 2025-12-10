@@ -196,8 +196,66 @@ export const Scene = () => {
         <Stars radius={120} depth={60} count={4000} factor={4} fade speed={0.2} />
         <Warehouse />
         <Factory />
-        {useRustSim ? <RustAsteroids bridge={bridge} /> : <Asteroids />}
-        {useRustSim ? <RustDrones bridge={bridge} /> : <Drones />}
+        {(() => {
+          const canUseRust = useRustSim && bridge && bridge.isReady?.();
+          if (!canUseRust) return <Asteroids />;
+
+          try {
+            // Validate buffers appear populated before switching renderers.
+            const positions = bridge.getAsteroidPositions();
+            const ore = bridge.getAsteroidOre();
+            const asteroidCountFromBuffers = Math.floor(positions.length / 3);
+            if (!ore || ore.length === 0 || asteroidCountFromBuffers === 0) {
+              return <Asteroids />; // fallback to JS until buffers are populated
+            }
+            // Ensure buffer contains at least one non-zero position to avoid
+            // switching to a rust renderer with zero-initialized memory.
+            let hasNonZero = false;
+            for (let i = 0; i < positions.length; i += 3) {
+              const px = positions[i] ?? 0;
+              const py = positions[i + 1] ?? 0;
+              const pz = positions[i + 2] ?? 0;
+              if (Math.abs(px) + Math.abs(py) + Math.abs(pz) > 1e-6) {
+                hasNonZero = true;
+                break;
+              }
+            }
+            if (!hasNonZero) return <Asteroids />;
+          } catch {
+            return <Asteroids />;
+          }
+
+          return <RustAsteroids bridge={bridge} />;
+        })()}
+
+        {(() => {
+          const canUseRust = useRustSim && bridge && bridge.isReady?.();
+          if (!canUseRust) return <Drones />;
+
+          try {
+            const dpos = bridge.getDronePositions();
+            const states = bridge.getDroneStates();
+            const droneCount = Math.floor(dpos.length / 3);
+            if (!states || states.length === 0 || droneCount === 0) {
+              return <Drones />;
+            }
+            let droneNonZero = false;
+            for (let i = 0; i < dpos.length; i += 3) {
+              const px = dpos[i] ?? 0;
+              const py = dpos[i + 1] ?? 0;
+              const pz = dpos[i + 2] ?? 0;
+              if (Math.abs(px) + Math.abs(py) + Math.abs(pz) > 1e-6) {
+                droneNonZero = true;
+                break;
+              }
+            }
+            if (!droneNonZero) return <Drones />;
+          } catch {
+            return <Drones />;
+          }
+
+          return <RustDrones bridge={bridge} />;
+        })()}
         {showTrails ? <DroneTrails /> : null}
         {showHaulerShips ? <HaulerShips /> : <TransferLines />}
       </Suspense>

@@ -249,6 +249,9 @@ impl GameState {
     }
 
     fn initialize_data_from_snapshot(&mut self) {
+        // Initialize globals
+        self.sync_globals_to_buffer();
+
         // Initialize factories
         let factories = &self.snapshot.factories;
         let factory_map = &self.factory_id_to_index;
@@ -654,6 +657,8 @@ impl GameState {
             );
         }
 
+        self.sync_globals_to_buffer();
+
         TickResult {
             dt,
             game_time: self.game_time,
@@ -700,6 +705,7 @@ impl GameState {
                 self.handle_recycle_asteroid(&asteroid_id)?;
             }
         }
+        self.sync_globals_to_buffer();
         Ok(())
     }
 
@@ -1022,6 +1028,19 @@ impl GameState {
             self.data[offset] = 0.0f32.to_bits();
         }
         Ok(())
+    }
+
+    fn sync_globals_to_buffer(&mut self) {
+        let offset = self.layout.globals.resources.offset_bytes / 4;
+        let r = &self.snapshot.resources;
+        self.data[offset] = r.ore.to_bits();
+        self.data[offset + 1] = r.ice.to_bits();
+        self.data[offset + 2] = r.metals.to_bits();
+        self.data[offset + 3] = r.crystals.to_bits();
+        self.data[offset + 4] = r.organics.to_bits();
+        self.data[offset + 5] = r.bars.to_bits();
+        self.data[offset + 6] = r.energy.to_bits();
+        self.data[offset + 7] = r.credits.to_bits();
     }
 
     fn sync_factory_to_buffer(&mut self, factory_idx: usize) {
