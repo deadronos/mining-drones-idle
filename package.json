@@ -82,7 +82,7 @@
     "vite-plugin-top-level-await": "^1.6.0",
     "vite-plugin-wasm": "^3.5.0",
     "vitest": "^4.0.15",
-    "wasm-pack": "^0.13.1"
+    "wasm-pack": "^0.0.0"
   },
   "overrides": {
     "vite": "npm:rolldown-vite@7.2.7"
