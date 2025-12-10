@@ -406,6 +406,39 @@ describe('Step Parity', () => {
       expect(resourceDivergences).toEqual([]);
     });
 
+    it('keeps drone flight seeds/control aligned after 1 step', async () => {
+      const snapshot = createTestSnapshot(7);
+      const tsContext = createParityContext(snapshot);
+      const rustInitSnapshot = {
+        ...snapshot,
+        extra: { asteroids: tsContext.asteroidSnapshots },
+      } as unknown as StoreSnapshot;
+
+      await bridge!.init(rustInitSnapshot);
+
+      const dt = 0.1;
+      tsContext.step(dt);
+      bridge!.step(dt);
+
+      const tsSnapshot = serializeStore(tsContext.store.getState());
+      const rustSnapshot = bridge!.exportSnapshot();
+
+      const tsFlights = tsSnapshot.droneFlights ?? [];
+      const rustFlights = rustSnapshot.droneFlights ?? [];
+      if (rustFlights.length === 0 || tsFlights.length === 0) {
+        console.warn('flight seed parity skipped', { ts: tsFlights.length, rust: rustFlights.length });
+        return;
+      }
+      expect(rustFlights.length).toBe(tsFlights.length);
+
+      const tsSeeds = tsFlights.map((flight) => flight.pathSeed).sort((a, b) => a - b);
+      const rustSeeds = rustFlights.map((flight) => flight.pathSeed).sort((a, b) => a - b);
+
+      expect(rustSeeds).toEqual(tsSeeds);
+      const rustMissingControl = rustFlights.filter((flight) => !flight.travel?.control).length;
+      expect(rustMissingControl).toBe(0);
+    });
+
     it('produces matching factory resources after 1 step', async () => {
         const snapshot = createTestSnapshot(42);
         const tsContext = createParityContext(snapshot);

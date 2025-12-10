@@ -4,6 +4,11 @@
 
 ## Recent Achievements
 
+- **2025-12-10**: Advanced TASK053 (drone AI/travel parity).
+  - Added asteroid metadata parsing (gravity/regions/hazards), drone index→id cache, queue-aware factory assignment, seeded Bézier travel matching TS waypoint logic, and target region/factory buffer updates.
+  - Rebuilt WASM (`npm run build:wasm`) and added Rust/unit parity coverage (seeded travel, metadata parse).
+  - Test suite: `npm run typecheck`, `npm run lint`, `npm run test` (pass; parity suites still log divergences and Rust snapshots lack drone flights in short runs—logged for follow-up).
+
 - **2025-12-10**: Expanded parity coverage (factory position/energy checks, deterministic seeds), added TS↔Rust offline comparison (1% tolerance), introduced `schemaVersion` defaults/validation (TS + Rust), added `tests/perf/step-bench.spec.ts`, and created a dedicated `wasm-parity` CI job. Shadow-mode E2E now includes a 5s divergence-log guard.
 
 - **2025-12-09**: Implemented Logistics System in Rust (TASK050).

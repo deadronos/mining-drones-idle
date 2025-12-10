@@ -3,7 +3,8 @@ use crate::buffers::plan_layout;
 use crate::error::SimulationError;
 use crate::modifiers::get_resource_modifiers;
 use crate::rng::Mulberry32;
-use crate::schema::{Modules, Resources, SimulationSnapshot, StoreSettings, SCHEMA_VERSION};
+use crate::schema::{Modules, Resources, SimulationSnapshot, StoreSettings};
+use crate::systems::drone_ai::{self, AsteroidMetadata};
 use serde::{Deserialize, Serialize};
 use std::cmp;
 use std::collections::BTreeMap;
@@ -100,8 +101,10 @@ pub struct GameState {
     /// The linear memory buffer containing entity data (SoA layout).
     pub data: Vec<u32>,
     drone_id_to_index: BTreeMap<String, usize>,
+    drone_index_to_id: Vec<String>,
     factory_id_to_index: BTreeMap<String, usize>,
     asteroid_id_to_index: BTreeMap<String, usize>,
+    asteroid_metadata: Vec<AsteroidMetadata>,
 }
 
 impl GameState {
@@ -168,6 +171,9 @@ impl GameState {
             }
         }
 
+        let drone_index_to_id = build_drone_index_to_id(&drone_id_to_index, total_drone_count);
+        let asteroid_metadata = drone_ai::extract_asteroid_metadata(&snapshot, &asteroid_id_to_index);
+
         let mut state = Self {
             game_time: snapshot.game_time,
             snapshot,
@@ -176,8 +182,10 @@ impl GameState {
             logistics_tick: 0.0,
             data,
             drone_id_to_index,
+            drone_index_to_id,
             factory_id_to_index,
             asteroid_id_to_index,
+            asteroid_metadata,
         };
 
         state.initialize_data_from_snapshot();
@@ -246,6 +254,9 @@ impl GameState {
 
         self.game_time = snapshot.game_time;
         self.snapshot = snapshot;
+        self.drone_index_to_id = build_drone_index_to_id(&self.drone_id_to_index, total_drone_count);
+        self.asteroid_metadata =
+            drone_ai::extract_asteroid_metadata(&self.snapshot, &self.asteroid_id_to_index);
         self.initialize_data_from_snapshot();
         Ok(())
     }
@@ -323,6 +334,15 @@ impl GameState {
 
              let offset = layout.drones.owner_factory_index.offset_bytes / 4 + index;
              data[offset] = (owner_idx as f32).to_bits();
+
+             let offset = layout.drones.target_region_index.offset_bytes / 4 + index;
+             data[offset] = (-1.0f32).to_bits();
+
+             let offset = layout.drones.target_factory_index.offset_bytes / 4 + index;
+             data[offset] = (-1.0f32).to_bits();
+
+             let offset = layout.drones.target_asteroid_index.offset_bytes / 4 + index;
+             data[offset] = (-1.0f32).to_bits();
         }
 
         // Initialize drones (flights)
@@ -391,6 +411,9 @@ impl GameState {
                     }
                 }
                 data[offset] = owner_idx.to_bits();
+
+                let offset = layout.drones.target_region_index.offset_bytes / 4 + index;
+                data[offset] = (-1.0f32).to_bits();
 
                 if let Some(profile) = &flight.cargo_profile {
                     let base_offset = layout.drones.cargo_profile.offset_bytes / 4 + index * 5;
@@ -739,6 +762,7 @@ impl GameState {
             let drone_cargo_profile = get_slice_mut(&self.layout.drones.cargo_profile);
             let drone_target_factory_index = get_slice_mut(&self.layout.drones.target_factory_index);
             let drone_owner_factory_index = get_slice_mut(&self.layout.drones.owner_factory_index);
+            let drone_target_region_index = get_slice_mut(&self.layout.drones.target_region_index);
             let drone_positions = get_slice_mut(&self.layout.drones.positions);
             let factory_positions = get_slice_mut(&self.layout.factories.positions);
             let factory_resources = get_slice_mut(&self.layout.factories.resources);
@@ -749,10 +773,13 @@ impl GameState {
                 drone_cargo_profile,
                 drone_target_factory_index,
                 drone_owner_factory_index,
+                drone_target_region_index,
                 drone_positions,
                 factory_positions,
                 factory_resources,
                 &mut self.snapshot.resources,
+                &mut self.snapshot.factories,
+                &self.drone_index_to_id,
                 dt,
             );
 
@@ -762,6 +789,7 @@ impl GameState {
             let drone_positions = get_slice_mut(&self.layout.drones.positions);
             let drone_target_asteroid_index = get_slice_mut(&self.layout.drones.target_asteroid_index);
             let drone_target_factory_index = get_slice_mut(&self.layout.drones.target_factory_index);
+            let drone_target_region_index = get_slice_mut(&self.layout.drones.target_region_index);
             let drone_owner_factory_index = get_slice_mut(&self.layout.drones.owner_factory_index);
             let factory_positions = get_slice_mut(&self.layout.factories.positions);
             let asteroid_positions = get_slice_mut(&self.layout.asteroids.positions);
@@ -782,15 +810,21 @@ impl GameState {
                 drone_mining_rate,
                 drone_target_asteroid_index,
                 drone_target_factory_index,
+                drone_target_region_index,
                 drone_owner_factory_index,
+                &self.drone_index_to_id,
                 &self.drone_id_to_index,
                 &self.factory_id_to_index,
                 &self.asteroid_id_to_index,
+                &mut self.snapshot.factories,
                 factory_positions,
                 asteroid_positions,
+                &self.asteroid_metadata,
                 asteroid_ore,
                 &mut self.rng,
                 &modifiers,
+                &self.snapshot.modules,
+                &sink_bonuses,
             );
 
             // Asteroid Lifecycle System
@@ -1283,6 +1317,19 @@ fn asteroid_count(snapshot: &SimulationSnapshot) -> usize {
         .and_then(|value| value.as_array())
         .map(|arr| arr.len())
         .unwrap_or(0)
+}
+
+fn build_drone_index_to_id(
+    drone_id_to_index: &BTreeMap<String, usize>,
+    total_drone_count: usize,
+) -> Vec<String> {
+    let mut drone_index_to_id = vec![String::new(); total_drone_count];
+    for (id, &idx) in drone_id_to_index.iter() {
+        if idx < drone_index_to_id.len() {
+            drone_index_to_id[idx] = id.clone();
+        }
+    }
+    drone_index_to_id
 }
 
 #[cfg(test)]
