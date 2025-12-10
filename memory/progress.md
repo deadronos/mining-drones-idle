@@ -24,6 +24,9 @@
   - Verified compilation of the full Rust codebase.
 
 - 2025-11-19: **TASK041 – Rust simulation systems** – Implemented core ECS systems in Rust: `sys_movement` (Bezier curves, energy drain, arrival logic), `sys_mining` (resource gathering, target tracking), and `sys_power` (global generation, factory regen, drone charging). Updated `GameState` SoA layout to include `target_index` for drones. Verified all systems with unit tests.
+- **2025-12-10**: Fixed display regression when enabling Rust simulation.
+  - Scene now falls back to the JS `Asteroids` / `Drones` renderers until the WASM bridge is fully loaded so the asteroid field no longer disappears while the engine initializes.
+  - Added unit tests to prevent regressions and ensure Rust renderers are used only when the bridge is ready.
 - 2025-11-19: **TASK041 – Rust simulation systems** – Expanded `GameState` with factory components (resources, energy, upgrades, refinery state). Implemented `sys_refinery` in Rust with unit tests and verified parity. Fixed memory alignment issues by switching `GameState.data` to `Vec<u32>`.
 - 2025-11-19: **TASK040 – Rust simulation scaffolding** – Completed `/rust-engine` crate scaffolding with data buffer, RNG parity, and layout planning. Implemented `wasmSimBridge.ts` to expose WASM exports and typed-array views to TypeScript. Verified `wasm-pack` build pipeline and added `useRustSim` feature flag.
 - 2025-11-18: **TASK040 – Rust simulation bootstrap** – Captured RQ-067–RQ-070, drafted DES033 architecture, and began scaffolding `/rust-engine` crate plus TS bridge contracts for snapshot, RNG, and typed-array layout parity.

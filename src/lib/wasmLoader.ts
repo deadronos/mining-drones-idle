@@ -43,12 +43,21 @@ export async function loadWasmBridge(
       console.warn('[WASM Loader] Provided snapshot had validation issues:', validationIssues.join('; '));
     }
 
-    // Normalize incoming snapshot to ensure all required fields are present
-    // before handing off to the Rust deserializer. This prevents serde
-    // errors like "missing field `bars`" when the caller provided a
-    // partially populated snapshot object.
-    const safeSnapshot = normalizeSnapshot(snapshot as Partial<StoreSnapshot>);
-    const bridge = buildRustSimBridge(exports, safeSnapshot);
+    // Normalize incoming snapshot to ensure required core fields are present
+    // while preserving any top-level extras (like `asteroids` and
+    // `droneFlights`) that callers may have attached for WASM.
+    const baseSnapshot = normalizeSnapshot(snapshot as Partial<StoreSnapshot>);
+    const safeSnapshot = { ...baseSnapshot } as StoreSnapshot & Record<string, unknown>;
+
+    // Preserve known extras used by the Rust engine if the caller provided them
+    // (useRustEngine adds asteroids and droneFlights at the top-level).
+    const asAny = snapshot as unknown as Record<string, unknown> | undefined;
+    if (asAny) {
+      if (Array.isArray(asAny.asteroids)) safeSnapshot.asteroids = asAny.asteroids;
+      if (Array.isArray(asAny.droneFlights)) safeSnapshot.droneFlights = asAny.droneFlights as any;
+    }
+
+    const bridge = buildRustSimBridge(exports, safeSnapshot as StoreSnapshot);
 
     return {
       bridge,
