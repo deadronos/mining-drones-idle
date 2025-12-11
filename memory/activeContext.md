@@ -56,6 +56,11 @@
   - Fix any divergences found.
   - Implement `RustFactories` and `RustAsteroids` for full visual parity.
 
+### 🔄 **TASK058 – Rendering & Bridge Integration**
+
+- Goal: Render drones/asteroids/HUD from Rust buffers when `useRustSim` is enabled to eliminate visual drift; maintain graceful TS fallback.
+- Status: In Progress (EARS requirements captured; working on buffer-driven asteroids/HUD sync).
+
 - 🚧 **TASK038 – Factory Metrics & Mini-Charts** remains in progress.
   - Factory Metrics tab now renders four sparklines with summary stats, sampling banner, and pause control.
   - Inline sparkline component ships on factory cards and hides when sampling disabled or empty.

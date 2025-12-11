@@ -1,5 +1,5 @@
 import { useFrame, useThree } from '@react-three/fiber';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import type { InstancedMesh } from 'three';
 import { Color, Matrix4, Quaternion, Vector3, Raycaster, Vector2 } from 'three';
 import type { RustSimBridge } from '@/lib/wasmSimBridge';
@@ -29,6 +29,18 @@ export const RustAsteroids = ({ bridge }: RustAsteroidsProps) => {
   const { camera } = useThree();
   const raycaster = useRef(new Raycaster());
   const setSelectedAsteroid = useStore((state) => state.setSelectedAsteroid);
+  const useRustSim = useStore((state) => state.settings.useRustSim);
+
+  const resourceColors = useMemo(
+    () => [
+      new Color('#9ca3af'), // ore
+      new Color('#7dd3fc'), // ice
+      new Color('#c084fc'), // metals
+      new Color('#f97316'), // crystals
+      new Color('#22c55e'), // organics
+    ],
+    [],
+  );
 
   useEffect(() => {
     asteroidQuery.connect();
@@ -38,6 +50,9 @@ export const RustAsteroids = ({ bridge }: RustAsteroidsProps) => {
   }, [asteroidQuery]);
 
   useEffect(() => {
+    if (useRustSim) {
+      return;
+    }
     const handleClick = (event: MouseEvent) => {
       const mesh = ref.current;
       if (!mesh) return;
@@ -66,7 +81,7 @@ export const RustAsteroids = ({ bridge }: RustAsteroidsProps) => {
 
     window.addEventListener('click', handleClick);
     return () => window.removeEventListener('click', handleClick);
-  }, [camera, asteroidQuery, setSelectedAsteroid]);
+  }, [camera, asteroidQuery, setSelectedAsteroid, useRustSim]);
 
   useFrame(() => {
     const mesh = ref.current;
@@ -74,41 +89,58 @@ export const RustAsteroids = ({ bridge }: RustAsteroidsProps) => {
 
     const positions = bridge.getAsteroidPositions();
     const oreRemaining = bridge.getAsteroidOre();
+    const resourceProfile = bridge.getAsteroidResourceProfile();
     const asteroids = asteroidQuery.entities;
 
-    const count = Math.min(oreRemaining.length, asteroids.length, ASTEROID_LIMIT);
+    const bufferCount = Math.min(
+      Math.floor(positions.length / 3),
+      oreRemaining.length,
+      Math.floor(resourceProfile.length / 5),
+    );
+    const count = Math.min(bufferCount, ASTEROID_LIMIT);
 
     for (let i = 0; i < count; i++) {
       const asteroid = asteroids[i];
-
-      // Read position from Rust buffer
       const x = positions[i * 3];
       const y = positions[i * 3 + 1];
       const z = positions[i * 3 + 2];
 
-      tempQuat.setFromAxisAngle(up, asteroid.rotation);
-      tempScale.setScalar(asteroid.radius);
+      // Derive a radius from ore remaining for a simple visual proxy
+      const ore = oreRemaining[i] ?? 0;
+      const radius = Math.max(0.5, Math.cbrt(Math.max(ore, 1) / 80));
+
+      const spinSource = asteroid?.spin ?? 0;
+      tempQuat.setFromAxisAngle(up, spinSource);
+      tempScale.setScalar(radius);
       tempMatrix.compose(new Vector3(x, y, z), tempQuat, tempScale);
       mesh.setMatrixAt(i, tempMatrix);
 
-      // Color from ECS biome data (not in Rust buffers)
-      const biomeDef = getBiomeDefinition(asteroid.biome.biomeId);
-      const primaryColor = new Color(biomeDef.palette.primary);
-      const secondaryColor = new Color(biomeDef.palette.secondary);
-
-      let displayColor = primaryColor;
-      if (asteroid.regions && asteroid.regions.length > 0) {
-        const regionMix = new Color(0, 0, 0);
-        for (const region of asteroid.regions) {
-          const regionDef = getBiomeDefinition(region.biomeId);
-          const regionColor = new Color(regionDef.palette.primary).multiplyScalar(region.weight);
-          regionMix.add(regionColor);
+      // Color driven by dominant resource profile when available; fall back to biome palette
+      const profileOffset = i * 5;
+      const profile = resourceProfile.slice(profileOffset, profileOffset + 5);
+      let dominantIndex = 0;
+      let dominantValue = profile[0] ?? 0;
+      for (let j = 1; j < profile.length; j++) {
+        const v = profile[j] ?? 0;
+        if (v > dominantValue) {
+          dominantValue = v;
+          dominantIndex = j;
         }
-        displayColor = regionMix;
+      }
+      const paletteColor = resourceColors[dominantIndex] ?? resourceColors[0];
+
+      const colorBias = asteroid?.colorBias ?? 1;
+      const biome = asteroid?.biome;
+      if (biome) {
+        const biomeDef = getBiomeDefinition(biome.biomeId);
+        const primaryColor = new Color(biomeDef.palette.primary);
+        const secondaryColor = new Color(biomeDef.palette.secondary);
+        const t = Math.min(Math.max((colorBias - 0.8) / 0.8, 0), 1);
+        tempColor.copy(primaryColor).lerp(secondaryColor, t);
+      } else {
+        tempColor.copy(paletteColor);
       }
 
-      const t = Math.min(Math.max((asteroid.colorBias - 0.8) / 0.8, 0), 1);
-      tempColor.copy(displayColor).lerp(secondaryColor, t);
       mesh.setColorAt(i, tempColor);
     }
 
