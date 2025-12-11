@@ -73,6 +73,7 @@ export function createParityContext(snapshot: StoreSnapshot): ParityContext {
     position: [asteroid.position.x, asteroid.position.y, asteroid.position.z] as [number, number, number],
     oreRemaining: asteroid.oreRemaining,
     maxOre: asteroid.oreRemaining / asteroid.richness,
+    gravityMultiplier: asteroid.gravityMultiplier,
     resourceProfile: {
       ore: asteroid.resourceProfile.ore,
       ice: asteroid.resourceProfile.ice,
@@ -80,6 +81,13 @@ export function createParityContext(snapshot: StoreSnapshot): ParityContext {
       crystals: asteroid.resourceProfile.crystals,
       organics: asteroid.resourceProfile.organics,
     },
+    regions: asteroid.regions?.map((r) => ({
+      id: r.id,
+      weight: r.weight,
+      gravityMultiplier: r.gravityMultiplier,
+      offset: [r.offset.x, r.offset.y, r.offset.z],
+      hazard: r.hazard,
+    })) ?? null,
   }));
 
   const step = (dt: number) => {
