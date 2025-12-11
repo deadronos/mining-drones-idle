@@ -60,8 +60,6 @@ export const assignDroneTarget = (
       break;
     }
   }
-  // Ensure seed fits in i32 for Rust compatibility (max 2,147,483,647)
-  const seed = Math.max(1, Math.floor(rng.next() * 0x7fffffff));
   const target = chosen.asteroid;
   let regionId: string | null = null;
   let destination = target.position.clone();
@@ -74,5 +72,8 @@ export const assignDroneTarget = (
       gravityMultiplier = region.gravityMultiplier;
     }
   }
+  // Draw path seed after region selection so RNG consumption order matches Rust
+  // Ensure seed fits in i32 for Rust compatibility (max 2,147,483,647)
+  const seed = Math.max(1, Math.floor(rng.next() * 0x7fffffff));
   return { target, pathSeed: seed, destination, regionId, gravityMultiplier };
 };
