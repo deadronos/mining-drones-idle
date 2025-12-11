@@ -1,0 +1,29 @@
+{
+  "label": "step-parity-resources-60-steps",
+  "timestamp": "2025-12-11T16:21:53.932Z",
+  "payload": {
+    "divergences": [],
+    "context": {
+      "ts": {
+        "ore": 40,
+        "ice": 10,
+        "metals": 5,
+        "crystals": 2,
+        "organics": 1,
+        "bars": 56.60065986801769,
+        "energy": 125.07285593652142,
+        "credits": 0
+      },
+      "rust": {
+        "ore": 40,
+        "ice": 10,
+        "metals": 5,
+        "crystals": 2,
+        "organics": 1,
+        "bars": 56.600723,
+        "energy": 125.07285,
+        "credits": 0
+      }
+    }
+  }
+}

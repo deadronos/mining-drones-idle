@@ -1,0 +1,225 @@
+{
+  "label": "command-parity-buy-module",
+  "timestamp": "2025-12-11T16:21:53.375Z",
+  "payload": {
+    "divergences": [],
+    "context": {
+      "tsSnapshot": {
+        "schemaVersion": "1.0.0",
+        "resources": {
+          "ore": 1000,
+          "ice": 200,
+          "metals": 150,
+          "crystals": 120,
+          "organics": 50,
+          "bars": 7996,
+          "energy": 200,
+          "credits": 0
+        },
+        "modules": {
+          "droneBay": 1,
+          "refinery": 1,
+          "storage": 2,
+          "solar": 1,
+          "scanner": 0,
+          "haulerDepot": 1,
+          "logisticsHub": 0,
+          "routingProtocol": 0
+        },
+        "prestige": {
+          "cores": 0
+        },
+        "save": {
+          "lastSave": 1765470113359,
+          "version": "0.3.5"
+        },
+        "settings": {
+          "autosaveEnabled": false,
+          "autosaveInterval": 30,
+          "offlineCapHours": 8,
+          "notation": "standard",
+          "throttleFloor": 0.2,
+          "showTrails": true,
+          "showHaulerShips": true,
+          "showDebugPanel": false,
+          "useRustSim": false,
+          "shadowMode": false,
+          "performanceProfile": "high",
+          "inspectorCollapsed": false,
+          "metrics": {
+            "enabled": false,
+            "intervalSeconds": 5,
+            "retentionSeconds": 300
+          }
+        },
+        "specTechs": {
+          "oreMagnet": 0,
+          "crystalResonance": 0,
+          "biotechFarming": 0,
+          "cryoPreservation": 0
+        },
+        "specTechSpent": {
+          "metals": 0,
+          "crystals": 0,
+          "organics": 0,
+          "ice": 0
+        },
+        "prestigeInvestments": {
+          "droneVelocity": 0,
+          "asteroidAbundance": 0,
+          "refineryMastery": 0,
+          "offlineEfficiency": 0
+        },
+        "rngSeed": 102,
+        "droneFlights": [],
+        "factories": [
+          {
+            "id": "factory-1",
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "dockingCapacity": 2,
+            "refineSlots": 1,
+            "idleEnergyPerSec": 0.5,
+            "energyPerRefine": 2,
+            "storageCapacity": 500,
+            "currentStorage": 0,
+            "queuedDrones": [],
+            "activeRefines": [],
+            "pinned": false,
+            "energy": 150,
+            "energyCapacity": 200,
+            "resources": {
+              "ore": 200,
+              "bars": 2000,
+              "metals": 0,
+              "crystals": 0,
+              "organics": 0,
+              "ice": 0,
+              "credits": 0
+            },
+            "upgrades": {
+              "docking": 0,
+              "refine": 0,
+              "storage": 0,
+              "energy": 0,
+              "solar": 0
+            },
+            "upgradeRequests": [],
+            "haulersAssigned": 0
+          }
+        ],
+        "selectedFactoryId": "factory-1",
+        "droneOwners": {},
+        "logisticsQueues": {
+          "pendingTransfers": []
+        },
+        "gameTime": 0
+      },
+      "rustSnapshot": {
+        "schemaVersion": "1.0.0",
+        "resources": {
+          "ore": 1000,
+          "ice": 200,
+          "metals": 150,
+          "crystals": 120,
+          "organics": 50,
+          "bars": 7996,
+          "energy": 200,
+          "credits": 0
+        },
+        "modules": {
+          "droneBay": 1,
+          "refinery": 1,
+          "storage": 2,
+          "solar": 1,
+          "scanner": 0,
+          "haulerDepot": 1,
+          "logisticsHub": 0,
+          "routingProtocol": 0
+        },
+        "prestige": {
+          "cores": 0
+        },
+        "save": {
+          "lastSave": 1765470113359,
+          "version": "0.1.0"
+        },
+        "settings": {
+          "autosaveEnabled": false,
+          "autosaveInterval": 30,
+          "offlineCapHours": 8,
+          "notation": "standard",
+          "throttleFloor": 0.2,
+          "showTrails": true,
+          "showHaulerShips": true,
+          "showDebugPanel": false,
+          "performanceProfile": "high",
+          "inspectorCollapsed": false,
+          "metrics": {
+            "enabled": false,
+            "intervalSeconds": 5,
+            "retentionSeconds": 300
+          },
+          "useRustSim": false,
+          "shadowMode": false
+        },
+        "rngSeed": 102,
+        "droneFlights": [],
+        "factories": [
+          {
+            "id": "factory-1",
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "dockingCapacity": 2,
+            "refineSlots": 1,
+            "idleEnergyPerSec": 0.5,
+            "energyPerRefine": 2,
+            "storageCapacity": 500,
+            "currentStorage": 0,
+            "queuedDrones": [],
+            "pinned": false,
+            "energy": 150,
+            "energyCapacity": 200,
+            "resources": {
+              "ore": 200,
+              "bars": 2000,
+              "metals": 0,
+              "crystals": 0,
+              "organics": 0,
+              "ice": 0,
+              "credits": 0
+            },
+            "upgrades": {
+              "docking": 0,
+              "refine": 0,
+              "storage": 0,
+              "energy": 0,
+              "solar": 0
+            },
+            "upgradeRequests": [],
+            "haulersAssigned": 0,
+            "haulerConfig": null,
+            "haulerUpgrades": null,
+            "logisticsState": null,
+            "activeRefines": []
+          }
+        ],
+        "selectedFactoryId": "factory-1",
+        "droneOwners": {},
+        "logisticsQueues": {
+          "pendingTransfers": []
+        },
+        "specTechs": null,
+        "specTechSpent": null,
+        "prestigeInvestments": null,
+        "gameTime": 0
+      }
+    }
+  }
+}

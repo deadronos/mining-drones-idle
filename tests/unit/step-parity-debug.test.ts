@@ -5,9 +5,10 @@ import * as path from 'path';
 import process from 'node:process';
 import { loadWasmBridge } from '@/lib/wasmLoader';
 import { FACTORY_CONFIG } from '@/ecs/factories';
+import type { StoreSnapshot } from '@/state/types';
 
 vi.mock('@/gen/rust_engine', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/gen/rust_engine')>();
+  const actual = await importOriginal();
   return {
     ...actual,
     default: async () => {
@@ -20,7 +21,7 @@ vi.mock('@/gen/rust_engine', async (importOriginal) => {
 
 
 // Inline createTestSnapshot (copy from step-parity.test.ts createTestSnapshot helper)
-function createTestSnapshot(seed: number) {
+function createTestSnapshot(seed: number): StoreSnapshot {
   return {
     resources: {
       ore: 100,
@@ -101,7 +102,7 @@ function createTestSnapshot(seed: number) {
     selectedFactoryId: 'factory-1',
     droneOwners: {},
     logisticsQueues: { pendingTransfers: [] },
-  } as any;
+  };
 }
 
 import { registerBridge } from '@/lib/rustBridgeRegistry';
@@ -114,7 +115,9 @@ describe('Step Parity Debug', () => {
     const seed = 12345;
     const snapshot = createTestSnapshot(seed);
     const tsContext = createParityContext(snapshot);
-    const rustInitSnapshot = { ...snapshot, extra: { asteroids: tsContext.asteroidSnapshots } } as any;
+    const rustInitSnapshot: StoreSnapshot & {
+      extra: { asteroids: typeof tsContext.asteroidSnapshots };
+    } = { ...snapshot, extra: { asteroids: tsContext.asteroidSnapshots } };
     const res = await loadWasmBridge(rustInitSnapshot);
     expect(res.bridge).toBeDefined();
     const bridge = res.bridge!;
@@ -140,9 +143,9 @@ describe('Step Parity Debug', () => {
       // Compare top-level global resources
       const globalDiffs: string[] = [];
       ['ore', 'ice', 'metals', 'crystals', 'organics', 'bars'].forEach((k) => {
-        // @ts-ignore
+        // @ts-expect-error: snapshot is a structural match for resources but not strongly typed here
         const tsVal = tsSnapshot.resources?.[k];
-        // @ts-ignore
+        // @ts-expect-error: snapshot is a structural match for resources but not strongly typed here
         const rustVal = rustSnapshot.resources?.[k];
         if (typeof tsVal === 'number' && typeof rustVal === 'number') {
           const diff = Math.abs(tsVal - rustVal);
@@ -167,7 +170,6 @@ describe('Step Parity Debug', () => {
 
       const rustStates = Array.from(bridge.getDroneStates());
       const rustTargets = Array.from(bridge.getDroneTargetAsteroidIndex());
-      const rustTargetFactory = Array.from(bridge.getDroneTargetFactoryIndex());
 
       const droneCargoDiffs = tsDrones.map((d, i) => {
         const tsFlight = tsSnapshot.droneFlights?.find((f) => f.droneId === d.id) ?? null;
@@ -183,14 +185,15 @@ describe('Step Parity Debug', () => {
           tsTargetId: d.targetId ?? null,
           rustTargetIdx: rustTargets[i] ?? -1,
           rustTargetId: (() => {
-            const arr = (rustSnapshot as any).extra?.asteroids as unknown[] | undefined;
+            const arr = (rustSnapshot as { extra?: { asteroids?: { id?: string }[] } }).extra
+              ?.asteroids;
             if (!arr || arr.length === 0) return null;
             const idx = Math.floor(rustTargets[i] ?? -1);
-            return arr[idx]?.id ?? null;
+            const asteroid = arr[idx];
+            return asteroid?.id ?? null;
           })(),
           tsTravel: (() => {
-            const f = tsSnapshot.droneFlights?.find((f) => f.droneId === d.idx);
-            return f?.travel ?? null;
+            return tsFlight?.travel ?? null;
           })(),
           tsBeforeTravel: tsBeforeFlight?.travel ?? null,
           rustTravel: rustFlight?.travel ?? null,
@@ -210,13 +213,35 @@ describe('Step Parity Debug', () => {
         // Compute candidate lists for diverged drones for more context
         try {
           const asteroidPositions = Array.from(bridge.getAsteroidPositions());
-          const astArray = (rustSnapshot as any).extra?.asteroids ?? [];
+          const astArray = (rustSnapshot as { extra?: { asteroids?: { id: string }[] } }).extra
+            ?.asteroids ?? [];
 
           divergenceDetails = {
             ...divergenceDetails,
             candidates: droneCargoDiffs.map((d) => {
-              const tsCandidates = tsContext.world.asteroidQuery.entities.map((a) => ({ id: a.id, dist: Math.hypot(a.position.x - tsContext.world.droneQuery.entities[d.idx].position.x, a.position.y - tsContext.world.droneQuery.entities[d.idx].position.y, a.position.z - tsContext.world.droneQuery.entities[d.idx].position.z) })).sort((a, b) => a.dist - b.dist).slice(0, 4);
-              const rustCandidates = astArray.map((a: any, idx: number) => ({ id: a.id, dist: Math.hypot(asteroidPositions[idx*3] - tsContext.world.droneQuery.entities[d.idx].position.x, asteroidPositions[idx*3 + 1] - tsContext.world.droneQuery.entities[d.idx].position.y, asteroidPositions[idx*3 + 2] - tsContext.world.droneQuery.entities[d.idx].position.z) })).sort((a: any, b: any) => a.dist - b.dist).slice(0, 4);
+              const tsCandidates = tsContext.world.asteroidQuery.entities
+                .map((a) => ({
+                  id: a.id,
+                  dist: Math.hypot(
+                    a.position.x - tsContext.world.droneQuery.entities[d.idx].position.x,
+                    a.position.y - tsContext.world.droneQuery.entities[d.idx].position.y,
+                    a.position.z - tsContext.world.droneQuery.entities[d.idx].position.z,
+                  ),
+                }))
+                .sort((a, b) => a.dist - b.dist)
+                .slice(0, 4);
+
+              const rustCandidates = astArray
+                .map((a, idx: number) => ({
+                  id: a.id,
+                  dist: Math.hypot(
+                    asteroidPositions[idx * 3] - tsContext.world.droneQuery.entities[d.idx].position.x,
+                    asteroidPositions[idx * 3 + 1] - tsContext.world.droneQuery.entities[d.idx].position.y,
+                    asteroidPositions[idx * 3 + 2] - tsContext.world.droneQuery.entities[d.idx].position.z,
+                  ),
+                }))
+                .sort((a, b) => a.dist - b.dist)
+                .slice(0, 4);
               return { idx: d.idx, tsCandidates, rustCandidates };
             }),
           };

@@ -1,9 +1,9 @@
 {
   "label": "step-parity-debug",
-  "timestamp": "2025-12-11T16:06:26.159Z",
+  "timestamp": "2025-12-11T16:21:53.821Z",
   "payload": {
     "divergences": [
-      "{\"globalDiffs\":[],\"droneCargoDiffs\":[{\"idx\":1,\"tsCargo\":0,\"rustCargo\":0.6331911087036133,\"tsState\":\"toAsteroid\",\"rustState\":2,\"tsTargetId\":\"asteroid-c4\",\"rustTargetIdx\":88,\"rustTargetId\":\"asteroid-5a\",\"tsTravel\":null,\"tsBeforeTravel\":{\"from\":[0,0,0],\"to\":[-7.195545039486584,3.5419894326478243,9.970059211764301],\"elapsed\":0.595,\"duration\":0.748,\"control\":[-3.5653215149019375,1.8028988947290783,4.9971156328138635]},\"rustTravel\":null,\"rustBeforeTravel\":{\"from\":[0,0,0],\"to\":[5.069617,-4.5200524,11.039398],\"elapsed\":0.595,\"duration\":0.69,\"control\":[2.7015972,-2.3031914,5.425431]},\"tsDroneSpeed\":15.400923942252406,\"diff\":0.6331911087036133},{\"idx\":2,\"tsCargo\":0,\"rustCargo\":0.6331911087036133,\"tsState\":\"toAsteroid\",\"rustState\":2,\"tsTargetId\":\"asteroid-c4\",\"rustTargetIdx\":88,\"rustTargetId\":\"asteroid-5a\",\"tsTravel\":null,\"tsBeforeTravel\":{\"from\":[0,0,0],\"to\":[-7.195545039486584,3.5419894326478243,9.970059211764301],\"elapsed\":0.595,\"duration\":0.748,\"control\":[-3.2956631983968006,1.1548238958278265,5.421969013259009]},\"rustTravel\":null,\"rustBeforeTravel\":{\"from\":[0,0,0],\"to\":[5.069617,-4.5200524,11.039398],\"elapsed\":0.595,\"duration\":0.69,\"control\":[2.3513846,-2.373416,5.5575056]},\"tsDroneSpeed\":15.400923942252406,\"diff\":0.6331911087036133}],\"astDiffs\":[{\"i\":88,\"ts\":73.98,\"rust\":72.72000122070312,\"diff\":1.259998779296879}],\"candidates\":[{\"idx\":1,\"tsCandidates\":[{\"id\":\"asteroid-c4\",\"dist\":0.9408640627140824},{\"id\":\"asteroid-95\",\"dist\":6.370421328185489},{\"id\":\"asteroid-49\",\"dist\":6.733145365690896},{\"id\":\"asteroid-2d\",\"dist\":6.992536956711283}],\"rustCandidates\":[{\"id\":\"asteroid-c4\",\"dist\":0.9408642651906793},{\"id\":\"asteroid-95\",\"dist\":6.370421342082343},{\"id\":\"asteroid-49\",\"dist\":6.733145372219592},{\"id\":\"asteroid-2d\",\"dist\":6.992536905827391}]},{\"idx\":2,\"tsCandidates\":[{\"id\":\"asteroid-c4\",\"dist\":0.9473488917261823},{\"id\":\"asteroid-95\",\"dist\":6.264126369824183},{\"id\":\"asteroid-49\",\"dist\":6.740282061098139},{\"id\":\"asteroid-2d\",\"dist\":7.06279179446576}],\"rustCandidates\":[{\"id\":\"asteroid-c4\",\"dist\":0.9473490778257122},{\"id\":\"asteroid-95\",\"dist\":6.264126382587068},{\"id\":\"asteroid-49\",\"dist\":6.740282071324767},{\"id\":\"asteroid-2d\",\"dist\":7.062791744670998}]}]}"
+      "{\"globalDiffs\":[],\"droneCargoDiffs\":[{\"idx\":1,\"tsCargo\":0,\"rustCargo\":0.6331911087036133,\"tsState\":\"toAsteroid\",\"rustState\":2,\"tsTargetId\":\"asteroid-c4\",\"rustTargetIdx\":88,\"rustTargetId\":\"asteroid-5a\",\"tsTravel\":{\"from\":[0,0,0],\"to\":[-7.195545039486584,3.5419894326478243,9.970059211764301],\"elapsed\":0.693,\"duration\":0.748,\"control\":[-3.5653215149019375,1.8028988947290783,4.9971156328138635]},\"tsBeforeTravel\":{\"from\":[0,0,0],\"to\":[-7.195545039486584,3.5419894326478243,9.970059211764301],\"elapsed\":0.595,\"duration\":0.748,\"control\":[-3.5653215149019375,1.8028988947290783,4.9971156328138635]},\"rustTravel\":null,\"rustBeforeTravel\":{\"from\":[0,0,0],\"to\":[5.069617,-4.5200524,11.039398],\"elapsed\":0.595,\"duration\":0.69,\"control\":[2.7015972,-2.3031914,5.425431]},\"tsDroneSpeed\":15.400923942252406,\"diff\":0.6331911087036133},{\"idx\":2,\"tsCargo\":0,\"rustCargo\":0.6331911087036133,\"tsState\":\"toAsteroid\",\"rustState\":2,\"tsTargetId\":\"asteroid-c4\",\"rustTargetIdx\":88,\"rustTargetId\":\"asteroid-5a\",\"tsTravel\":{\"from\":[0,0,0],\"to\":[-7.195545039486584,3.5419894326478243,9.970059211764301],\"elapsed\":0.693,\"duration\":0.748,\"control\":[-3.2956631983968006,1.1548238958278265,5.421969013259009]},\"tsBeforeTravel\":{\"from\":[0,0,0],\"to\":[-7.195545039486584,3.5419894326478243,9.970059211764301],\"elapsed\":0.595,\"duration\":0.748,\"control\":[-3.2956631983968006,1.1548238958278265,5.421969013259009]},\"rustTravel\":null,\"rustBeforeTravel\":{\"from\":[0,0,0],\"to\":[5.069617,-4.5200524,11.039398],\"elapsed\":0.595,\"duration\":0.69,\"control\":[2.3513846,-2.373416,5.5575056]},\"tsDroneSpeed\":15.400923942252406,\"diff\":0.6331911087036133}],\"astDiffs\":[{\"i\":88,\"ts\":73.98,\"rust\":72.72000122070312,\"diff\":1.259998779296879}],\"candidates\":[{\"idx\":1,\"tsCandidates\":[{\"id\":\"asteroid-c4\",\"dist\":0.9408640627140824},{\"id\":\"asteroid-95\",\"dist\":6.370421328185489},{\"id\":\"asteroid-49\",\"dist\":6.733145365690896},{\"id\":\"asteroid-2d\",\"dist\":6.992536956711283}],\"rustCandidates\":[{\"id\":\"asteroid-c4\",\"dist\":0.9408642651906793},{\"id\":\"asteroid-95\",\"dist\":6.370421342082343},{\"id\":\"asteroid-49\",\"dist\":6.733145372219592},{\"id\":\"asteroid-2d\",\"dist\":6.992536905827391}]},{\"idx\":2,\"tsCandidates\":[{\"id\":\"asteroid-c4\",\"dist\":0.9473488917261823},{\"id\":\"asteroid-95\",\"dist\":6.264126369824183},{\"id\":\"asteroid-49\",\"dist\":6.740282061098139},{\"id\":\"asteroid-2d\",\"dist\":7.06279179446576}],\"rustCandidates\":[{\"id\":\"asteroid-c4\",\"dist\":0.9473490778257122},{\"id\":\"asteroid-95\",\"dist\":6.264126382587068},{\"id\":\"asteroid-49\",\"dist\":6.740282071324767},{\"id\":\"asteroid-2d\",\"dist\":7.062791744670998}]}]}"
     ],
     "context": {
       "step": 6,
@@ -18,7 +18,25 @@
           "tsTargetId": "asteroid-c4",
           "rustTargetIdx": 88,
           "rustTargetId": "asteroid-5a",
-          "tsTravel": null,
+          "tsTravel": {
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              -7.195545039486584,
+              3.5419894326478243,
+              9.970059211764301
+            ],
+            "elapsed": 0.693,
+            "duration": 0.748,
+            "control": [
+              -3.5653215149019375,
+              1.8028988947290783,
+              4.9971156328138635
+            ]
+          },
           "tsBeforeTravel": {
             "from": [
               0,
@@ -70,7 +88,25 @@
           "tsTargetId": "asteroid-c4",
           "rustTargetIdx": 88,
           "rustTargetId": "asteroid-5a",
-          "tsTravel": null,
+          "tsTravel": {
+            "from": [
+              0,
+              0,
+              0
+            ],
+            "to": [
+              -7.195545039486584,
+              3.5419894326478243,
+              9.970059211764301
+            ],
+            "elapsed": 0.693,
+            "duration": 0.748,
+            "control": [
+              -3.2956631983968006,
+              1.1548238958278265,
+              5.421969013259009
+            ]
+          },
           "tsBeforeTravel": {
             "from": [
               0,

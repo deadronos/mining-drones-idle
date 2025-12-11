@@ -2,6 +2,7 @@ import { Vector3 } from 'three';
 import type { AsteroidEntity, DroneEntity } from '@/ecs/world';
 import type { RandomSource } from '@/lib/rng';
 import { pickRegionForDrone } from '@/ecs/biomes';
+import { parityDebugLog } from '@/lib/parityDebug';
 
 const nearestTemp = new Vector3();
 const NEARBY_LIMIT = 4;
@@ -50,7 +51,14 @@ export const assignDroneTarget = (
     candidate.weight = toWeight(candidate.distance);
     totalWeight += candidate.weight;
   }
-  const roll = rng.next() * (totalWeight || 1);
+  const rawRoll = rng.next();
+  parityDebugLog('[parity][ts][assignDroneTarget]', {
+    droneId: drone.id,
+    rawRoll,
+    totalWeight,
+    candidates: candidates.map((c) => ({ id: c.asteroid.id, distance: c.distance })),
+  });
+  const roll = rawRoll * (totalWeight || 1);
   let accumulated = 0;
   let chosen = candidates[candidates.length - 1];
   for (const candidate of candidates) {

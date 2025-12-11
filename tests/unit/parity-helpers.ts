@@ -89,8 +89,12 @@ export function createParityContext(snapshot: StoreSnapshot): ParityContext {
       hazard: r.hazard,
     })) ?? null,
   }));
+  let parityStep = 0;
 
   const step = (dt: number) => {
+    (globalThis as { __PARITY_TS_STEP?: number }).__PARITY_TS_STEP = parityStep;
+    parityStep += 1;
+
     systems.fleet(dt);
     systems.biomes(dt);
     systems.asteroids(dt);
