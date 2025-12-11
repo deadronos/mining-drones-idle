@@ -8,11 +8,15 @@ import { DRONE_ENERGY_COST, type StoreApiType } from '@/state/store';
 import { getResourceModifiers } from '@/lib/resourceModifiers';
 
 const offsetVector = new Vector3();
+const TRAVEL_TIME_QUANTIZATION = 1000;
 
 // Distance threshold for drone to trigger unload when returning to factory.
 // When drone.position is within this distance of factory.position, unload begins immediately.
 // This bypasses battery throttling that delays travel.elapsed completion.
 const UNLOAD_ARRIVAL_DISTANCE = 1.0;
+
+export const quantizeTravelTime = (value: number) =>
+  Math.round(Math.max(0, value) * TRAVEL_TIME_QUANTIZATION) / TRAVEL_TIME_QUANTIZATION;
 
 export const computeWaypointWithOffset = (baseWaypoint: Vector3, seed: number, index: number) => {
   const mixedSeed = (seed ^ ((index + 1) * 0x9e3779b9)) >>> 0;
@@ -56,7 +60,8 @@ export const createTravelSystem = (world: GameWorld, store: StoreApiType) => {
         continue;
       }
       const { fraction } = consumeDroneEnergy(drone, dt, throttleFloor, drainRate);
-      travel.elapsed = Math.min(travel.elapsed + dt * fraction, travel.duration);
+      const newElapsed = Math.min(travel.elapsed + dt * fraction, travel.duration);
+      travel.elapsed = quantizeTravelTime(newElapsed);
       computeTravelPosition(travel, drone.position);
 
       if (

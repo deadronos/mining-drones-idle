@@ -16,6 +16,7 @@ const EPSILON: f32 = 1e-4;
 const MAX_OFFSET_DISTANCE: f32 = 3.0;
 const SEED_MIX: u32 = 0x9e37_79b9;
 const FRAC_PI_5: f32 = PI / 5.0;
+const TRAVEL_TIME_QUANTIZATION: f32 = 1000.0;
 
 #[derive(Clone, Debug, Default)]
 pub struct AsteroidRegionMeta {
@@ -668,7 +669,7 @@ fn build_travel_snapshot(
     let distance = (dx * dx + dy * dy + dz * dz).sqrt();
     let gravity = gravity_multiplier.max(0.5);
     let effective_speed = ((base_speed * sink_speed_multiplier) / gravity).max(1.0);
-    let duration = (distance / effective_speed).max(0.1);
+    let duration = quantize_time((distance / effective_speed).max(0.1));
 
     TravelSnapshot {
         from,
@@ -677,6 +678,10 @@ fn build_travel_snapshot(
         duration,
         control: compute_control_point(from, to, path_seed),
     }
+}
+
+fn quantize_time(value: f32) -> f32 {
+    ((value.max(0.0)) * TRAVEL_TIME_QUANTIZATION).round() / TRAVEL_TIME_QUANTIZATION
 }
 
 fn compute_control_point(from: [f32; 3], to: [f32; 3], path_seed: u32) -> Option<[f32; 3]> {
