@@ -215,6 +215,8 @@ describe('Asteroid respawn parity', () => {
     expect(rustAsteroid.maxOre).toBeCloseTo(expected.oreRemaining, 4);
 
     const rustProfile = rustAsteroid.resourceProfile;
+    expect(rustProfile).toBeDefined();
+    if (!rustProfile) return;
     expect(rustProfile.ore).toBeCloseTo(expected.resourceProfile.ore, 4);
     expect(rustProfile.ice).toBeCloseTo(expected.resourceProfile.ice, 4);
     expect(rustProfile.metals).toBeCloseTo(expected.resourceProfile.metals, 4);

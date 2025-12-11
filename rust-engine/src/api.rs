@@ -1,5 +1,6 @@
 use crate::buffers::EntityBufferLayout;
 use crate::buffers::plan_layout;
+use crate::constants::SOLAR_ARRAY_LOCAL_MAX_ENERGY_PER_LEVEL;
 use crate::error::SimulationError;
 use crate::modifiers::get_resource_modifiers;
 use crate::rng::Mulberry32;
@@ -660,17 +661,54 @@ impl GameState {
 
             // Refinery System
             let resources = get_slice_mut(&self.layout.factories.resources);
-            let upgrades = get_slice_mut(&self.layout.factories.upgrades);
             let refinery_state = get_slice_mut(&self.layout.factories.refinery_state);
             let haulers_assigned = get_slice_mut(&self.layout.factories.haulers_assigned);
             let energy = get_slice_mut(&self.layout.factories.energy);
 
+            let idle_energy_per_sec: Vec<f32> = self
+                .snapshot
+                .factories
+                .iter()
+                .map(|f| f.idle_energy_per_sec)
+                .collect();
+            let energy_per_refine: Vec<f32> = self
+                .snapshot
+                .factories
+                .iter()
+                .map(|f| f.energy_per_refine)
+                .collect();
+            let refine_slots: Vec<i32> = self
+                .snapshot
+                .factories
+                .iter()
+                .map(|f| f.refine_slots)
+                .collect();
+            let storage_capacity: Vec<f32> = self
+                .snapshot
+                .factories
+                .iter()
+                .map(|f| f.storage_capacity)
+                .collect();
+            let effective_energy_capacity: Vec<f32> = self
+                .snapshot
+                .factories
+                .iter()
+                .map(|f| {
+                    let bonus = SOLAR_ARRAY_LOCAL_MAX_ENERGY_PER_LEVEL * self.snapshot.modules.solar as f32;
+                    (f.energy_capacity + bonus) * modifiers.energy_storage_multiplier
+                })
+                .collect();
+
             crate::systems::refinery::sys_refinery(
                 resources,
-                upgrades,
                 refinery_state,
                 haulers_assigned,
                 energy,
+                &idle_energy_per_sec,
+                &energy_per_refine,
+                &refine_slots,
+                &storage_capacity,
+                &effective_energy_capacity,
                 dt,
                 modifiers.energy_drain_multiplier,
                 modifiers.storage_capacity_multiplier,
@@ -722,6 +760,7 @@ impl GameState {
                 drone_max_battery,
                 drone_states,
                 drone_owner_factory_index,
+                drone_target_factory_index,
                 drone_charging,
                 &self.drone_id_to_index,
                 &self.factory_id_to_index,

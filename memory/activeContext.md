@@ -103,6 +103,10 @@
 
 - Biome-driven respawn replaces uniform weights; scanner/sink richness multipliers applied, RNG draw count (11) mirrored, gravity metadata refreshed, and respawn parity test added. Validated with `npm run build:wasm`, `npm run typecheck`, `npm run lint`, `npm run test`.
 
+✅ **Completed: TASK055 – Power & Refinery Alignment**
+
+- Rust power/refinery now uses factory-specific idle/hauler drains, solar regen with effective caps, local-first drone charging (owner/target factory), and refinery slot start/tick parity. Added wasm parity test; `npm run build:wasm`, `npm run typecheck`, `npm run lint`, `npm run test` passing (parity divergence logs expected).
+
 ## Next Steps
 
 1. **TASK046** – Expand `SimulationCommand` enum to support `BuyModule`, `DoPrestige`, etc.

@@ -12,6 +12,13 @@
   - Finalized weighted targeting/region offsets, queue-aware returns, and travel seed/control parity; rebuilt WASM bundle.
   - Validation: `npm run typecheck`, `npm run lint`, `npm run test` (parity suites log known divergences only).
 
+- **2025-12-12**: Started TASK055 (Power & Refinery Alignment).
+  - Captured EARS requirements and began mapping TS power/refinery semantics (idle/hauler drains, solar regen/capacity, local-first charging, refinery slot handling) to Rust.
+
+- **2025-12-12**: Completed TASK055 (Power & Refinery Alignment).
+  - Rust power now charges via owner/target factories with effective caps; refinery uses factory-specific idle/hauler drains, storage/slot limits, energy-per-refine, and low-energy throttling matching TS `processFactories`.
+  - Added `tests/unit/power-refinery-parity.test.ts`. Validation: `npm run build:wasm`, `npm run typecheck`, `npm run lint`, `npm run test` (parity divergence logs expected).
+
 - **2025-12-10**: Advanced TASK053 (drone AI/travel parity).
   - Added asteroid metadata parsing (gravity/regions/hazards), drone index→id cache, queue-aware factory assignment, seeded Bézier travel matching TS waypoint logic, and target region/factory buffer updates.
   - Rebuilt WASM (`npm run build:wasm`) and added Rust/unit parity coverage (seeded travel, metadata parse).
