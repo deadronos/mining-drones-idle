@@ -6,6 +6,11 @@ import { getRegionById } from '@/ecs/biomes';
 import { RESOURCE_KEYS } from '@/lib/biomes';
 import { getResourceModifiers } from '@/lib/resourceModifiers';
 
+const ORE_QUANTIZATION = 100; // 0.01-unit steps
+
+const quantizeOre = (value: number) =>
+  Math.max(0, Math.round(value * ORE_QUANTIZATION) / ORE_QUANTIZATION);
+
 export const createMiningSystem = (world: GameWorld, store: StoreApiType) => {
   const { droneQuery, asteroidQuery } = world;
   return (dt: number) => {
@@ -59,7 +64,7 @@ export const createMiningSystem = (world: GameWorld, store: StoreApiType) => {
         }
       }
       drone.cargo += mined;
-      asteroid.oreRemaining -= mined;
+      asteroid.oreRemaining = quantizeOre(asteroid.oreRemaining - mined);
       if (drone.cargo >= drone.capacity - 0.01 || asteroid.oreRemaining <= 0.01) {
         drone.state = 'returning';
         drone.targetId = null;
