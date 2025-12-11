@@ -4,7 +4,9 @@ use crate::constants::SOLAR_ARRAY_LOCAL_MAX_ENERGY_PER_LEVEL;
 use crate::error::SimulationError;
 use crate::modifiers::get_resource_modifiers;
 use crate::rng::Mulberry32;
-use crate::schema::{Modules, Resources, SimulationSnapshot, StoreSettings};
+use crate::schema::{Modules, Resources, SimulationSnapshot, StoreSettings, RefineProcessSnapshot};
+use crate::buffers::MAX_REFINE_SLOTS;
+use crate::constants::{FACTORY_REFINE_TIME, FACTORY_ENERGY_PER_REFINE};
 use crate::systems::drone_ai::{self, AsteroidMetadata};
 use crate::systems::fleet;
 use serde::{Deserialize, Serialize};
@@ -278,7 +280,7 @@ impl GameState {
         let layout = &self.layout;
         let data = &mut self.data;
 
-        for factory in factories {
+        for factory in factories.iter() {
             if let Some(&index) = factory_map.get(&factory.id) {
                 let offset = layout.factories.positions.offset_bytes / 4 + index * 3;
                 data[offset] = factory.position[0].to_bits();
@@ -307,8 +309,19 @@ impl GameState {
                 data[offset + 3] = (factory.upgrades.energy as f32).to_bits();
                 data[offset + 4] = (factory.upgrades.solar as f32).to_bits();
 
-                let offset = layout.factories.haulers_assigned.offset_bytes / 4 + index;
-                data[offset] = (factory.haulers_assigned.unwrap_or(0) as f32).to_bits();
+                let haulers_offset = layout.factories.haulers_assigned.offset_bytes / 4 + index;
+                data[haulers_offset] = (factory.haulers_assigned.unwrap_or(0) as f32).to_bits();
+
+                // Initialize refinery state slots from factory.active_refines if provided
+                let ref_idx_base = layout.factories.refinery_state.offset_bytes / 4 + index * (MAX_REFINE_SLOTS * 4);
+                let slots_limit = factory.refine_slots as usize;
+                for (s, proc) in factory.active_refines.iter().enumerate().take(slots_limit.min(MAX_REFINE_SLOTS)) {
+                    let slot_offset = ref_idx_base + s * 4;
+                    data[slot_offset] = (1.0f32).to_bits(); // active
+                    data[slot_offset + 1] = proc.amount.to_bits();
+                    data[slot_offset + 2] = proc.progress.to_bits();
+                    data[slot_offset + 3] = proc.speed_multiplier.to_bits();
+                }
             }
         }
 
@@ -539,7 +552,7 @@ impl GameState {
 
     /// Syncs buffer data back to the snapshot.
     pub fn sync_data_to_snapshot(&mut self) {
-        // Sync factories
+            // Sync factories
         for (i, factory) in self.snapshot.factories.iter_mut().enumerate() {
             if i >= self.layout.factories.resources.length { break; }
 
@@ -571,6 +584,36 @@ impl GameState {
             // Haulers
             let offset = self.layout.factories.haulers_assigned.offset_bytes / 4 + i;
             factory.haulers_assigned = Some(f32::from_bits(self.data[offset]) as i32);
+
+            // Sync active refines from refinery_state buffer into snapshot.active_refines
+            let ref_base = self.layout.factories.refinery_state.offset_bytes / 4 + i * (MAX_REFINE_SLOTS * 4);
+            let mut new_refines: Vec<RefineProcessSnapshot> = Vec::new();
+            let slots_limit = factory.refine_slots as usize;
+            for s in 0..slots_limit.min(MAX_REFINE_SLOTS) {
+                let slot_offset = ref_base + s * 4;
+                let active = f32::from_bits(self.data[slot_offset]);
+                if active > 0.5 {
+                    let amount = f32::from_bits(self.data[slot_offset + 1]);
+                    let progress = f32::from_bits(self.data[slot_offset + 2]);
+                    let speed_multiplier = f32::from_bits(self.data[slot_offset + 3]);
+                    // Preserve ID / oreType / timeTotal / energyRequired if provided in original snapshot
+                    let existing = factory.active_refines.get(s).cloned();
+                    let id = existing.as_ref().map(|e| e.id.clone()).unwrap_or_else(|| format!("refine-{}-{}", factory.id, s));
+                    let ore_type = existing.as_ref().map(|e| e.ore_type.clone()).unwrap_or_else(|| "ore".to_string());
+                    let time_total = existing.as_ref().map(|e| e.time_total).unwrap_or(FACTORY_REFINE_TIME);
+                    let energy_required = existing.as_ref().map(|e| e.energy_required).unwrap_or(FACTORY_ENERGY_PER_REFINE);
+                    new_refines.push(RefineProcessSnapshot {
+                        id,
+                        ore_type,
+                        amount,
+                        progress,
+                        time_total,
+                        energy_required,
+                        speed_multiplier,
+                    });
+                }
+            }
+            factory.active_refines = new_refines;
         }
 
         // Sync drone flights
@@ -1634,6 +1677,8 @@ mod tests {
                     interval_seconds: 5,
                     retention_seconds: 300,
                 },
+                use_rust_sim: false,
+                shadow_mode: false,
             },
             rng_seed: Some(7),
             drone_flights: vec![],
@@ -1705,5 +1750,40 @@ mod tests {
         }"#;
         let snapshot: SimulationSnapshot = serde_json::from_str(json).expect("should parse snapshot without bars");
         let _state = GameState::from_snapshot(snapshot).expect("should create state without bars");
+    }
+
+    #[test]
+    fn active_refines_round_trip() {
+        use crate::schema::{FactorySnapshot, RefineProcessSnapshot};
+        let mut snapshot = sample_snapshot();
+        let mut factory: FactorySnapshot = Default::default();
+        factory.id = "f1".to_string();
+        factory.position = [0.0, 0.0, 0.0];
+        factory.refine_slots = 2;
+        factory.resources.ore = 100.0;
+        factory.active_refines = vec![RefineProcessSnapshot {
+            id: "r1".to_string(),
+            ore_type: "ore".to_string(),
+            amount: 20.0,
+            progress: 0.0,
+            time_total: crate::constants::FACTORY_REFINE_TIME,
+            energy_required: crate::constants::FACTORY_ENERGY_PER_REFINE,
+            speed_multiplier: 1.0,
+        }];
+        snapshot.factories = vec![factory];
+        let mut state = GameState::from_snapshot(snapshot).expect("should build state");
+        // Ensure factory refine slots and active_refines are present in state
+        assert_eq!(state.snapshot.factories[0].refine_slots, 2);
+        assert_eq!(state.snapshot.factories[0].active_refines.len(), 1);
+        // Verify that refinery buffer was initialized from snapshot
+        let ref_state = state.get_factory_refinery_state_mut();
+        assert!(ref_state[0] > 0.5);
+        assert_eq!(ref_state[1], 20.0);
+
+        // Export snapshot and validate activeRefines present
+        let json = state.export_snapshot_str().expect("should export snapshot");
+        let exported: SimulationSnapshot = serde_json::from_str(&json).expect("should parse exported snapshot");
+        assert_eq!(exported.factories[0].active_refines.len(), 1);
+        assert_eq!(exported.factories[0].active_refines[0].amount, 20.0);
     }
 }

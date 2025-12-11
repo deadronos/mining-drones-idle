@@ -2,6 +2,25 @@ use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct RefineProcessSnapshot {
+    pub id: String,
+    pub ore_type: String,
+    #[serde(default)]
+    pub amount: f32,
+    #[serde(default)]
+    pub progress: f32,
+    #[serde(rename = "timeTotal")]
+    #[serde(default)]
+    pub time_total: f32,
+    #[serde(rename = "energyRequired")]
+    #[serde(default)]
+    pub energy_required: f32,
+    #[serde(rename = "speedMultiplier")]
+    #[serde(default)]
+    pub speed_multiplier: f32,
+}
 use crate::error::SimulationError;
 
 pub const SCHEMA_VERSION: &str = "1.0.0";
@@ -189,6 +208,8 @@ pub struct FactorySnapshot {
     pub hauler_upgrades: Option<FactoryHaulerUpgrades>,
     #[serde(default)]
     pub logistics_state: Option<FactoryLogisticsState>,
+    #[serde(default, rename = "activeRefines")]
+    pub active_refines: Vec<RefineProcessSnapshot>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -290,6 +311,12 @@ pub struct StoreSettings {
     #[serde(rename = "inspectorCollapsed")]
     pub inspector_collapsed: bool,
     pub metrics: MetricsSettings,
+    #[serde(rename = "useRustSim")]
+    #[serde(default)]
+    pub use_rust_sim: bool,
+    #[serde(rename = "shadowMode")]
+    #[serde(default)]
+    pub shadow_mode: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]

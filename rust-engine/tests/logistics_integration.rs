@@ -29,6 +29,8 @@ fn create_base_snapshot() -> SimulationSnapshot {
                 interval_seconds: 5,
                 retention_seconds: 300,
             },
+            use_rust_sim: false,
+            shadow_mode: false,
         },
         rng_seed: Some(123),
         drone_flights: vec![],
