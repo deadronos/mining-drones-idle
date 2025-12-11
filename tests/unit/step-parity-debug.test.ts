@@ -207,6 +207,23 @@ describe('Step Parity Debug', () => {
       if (globalDiffs.length || droneCargoDiffs.length || astDiffs.length) {
         divergenceStep = step;
         divergenceDetails = { globalDiffs, droneCargoDiffs, astDiffs };
+        // Compute candidate lists for diverged drones for more context
+        try {
+          const asteroidPositions = Array.from(bridge.getAsteroidPositions());
+          const astArray = (rustSnapshot as any).extra?.asteroids ?? [];
+
+          divergenceDetails = {
+            ...divergenceDetails,
+            candidates: droneCargoDiffs.map((d) => {
+              const tsCandidates = tsContext.world.asteroidQuery.entities.map((a) => ({ id: a.id, dist: Math.hypot(a.position.x - tsContext.world.droneQuery.entities[d.idx].position.x, a.position.y - tsContext.world.droneQuery.entities[d.idx].position.y, a.position.z - tsContext.world.droneQuery.entities[d.idx].position.z) })).sort((a, b) => a.dist - b.dist).slice(0, 4);
+              const rustCandidates = astArray.map((a: any, idx: number) => ({ id: a.id, dist: Math.hypot(asteroidPositions[idx*3] - tsContext.world.droneQuery.entities[d.idx].position.x, asteroidPositions[idx*3 + 1] - tsContext.world.droneQuery.entities[d.idx].position.y, asteroidPositions[idx*3 + 2] - tsContext.world.droneQuery.entities[d.idx].position.z) })).sort((a: any, b: any) => a.dist - b.dist).slice(0, 4);
+              return { idx: d.idx, tsCandidates, rustCandidates };
+            }),
+          };
+        } catch (candidateErr) {
+          console.warn('Failed to collect candidate info', candidateErr);
+        }
+
         console.warn('Divergence found', divergenceStep, divergenceDetails);
         logDivergences('step-parity-debug', [JSON.stringify(divergenceDetails)], { step, globalDiffs, droneCargoDiffs, astDiffs });
         break;

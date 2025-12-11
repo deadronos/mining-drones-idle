@@ -194,7 +194,13 @@ impl GameState {
             asteroid_metadata,
         };
 
-        burn_rng_for_asteroids(&mut state.rng, asteroid_count);
+        // Only burn RNG if the snapshot doesn't contain explicit asteroid metadata.
+        // When callers provide fully specified asteroids in the snapshot (positions, regions,
+        // gravity, etc.), the Rust side should not attempt to re-generate random data
+        // and therefore must not advance the RNG to match the JS creation process.
+        if asteroid_array(&state.snapshot.extra).is_none() {
+            burn_rng_for_asteroids(&mut state.rng, asteroid_count);
+        }
         state.initialize_data_from_snapshot();
         Ok(state)
     }
