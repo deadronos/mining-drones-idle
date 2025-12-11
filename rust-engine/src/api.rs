@@ -6,6 +6,7 @@ use crate::modifiers::get_resource_modifiers;
 use crate::rng::Mulberry32;
 use crate::schema::{Modules, Resources, SimulationSnapshot, StoreSettings};
 use crate::systems::drone_ai::{self, AsteroidMetadata};
+use crate::systems::fleet;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::cmp;
@@ -314,32 +315,36 @@ impl GameState {
         // Initialize drones (defaults)
         let drone_map = &self.drone_id_to_index;
 
-        for (drone_id, &index) in drone_map {
-             let mut owner_idx = 0;
-             if let Some(Some(factory_id)) = self.snapshot.drone_owners.get(drone_id) {
-                 if let Some(&idx) = factory_map.get(factory_id) {
-                     owner_idx = idx;
-                 }
-             }
+         for (drone_id, &index) in drone_map {
+              let owner_idx_opt = self
+                  .snapshot
+                  .drone_owners
+                  .get(drone_id)
+                  .and_then(|owner| owner.as_ref())
+                  .and_then(|factory_id| factory_map.get(factory_id).copied());
 
-             let mut fx = 0.0;
-             let mut fy = 0.0;
-             let mut fz = 0.0;
+              let mut fx = 0.0;
+              let mut fy = 0.0;
+              let mut fz = 0.0;
 
-             if layout.factories.positions.length > 0 {
-                 let f_offset = layout.factories.positions.offset_bytes / 4 + owner_idx * 3;
-                 fx = f32::from_bits(data[f_offset]);
-                 fy = f32::from_bits(data[f_offset + 1]);
-                 fz = f32::from_bits(data[f_offset + 2]);
-             }
+              if layout.factories.positions.length > 0 {
+                  let pos_idx = owner_idx_opt.unwrap_or(0);
+                  let f_offset = layout.factories.positions.offset_bytes / 4 + pos_idx * 3;
+                  fx = f32::from_bits(data[f_offset]);
+                  fy = f32::from_bits(data[f_offset + 1]);
+                  fz = f32::from_bits(data[f_offset + 2]);
+              }
 
              let offset = layout.drones.positions.offset_bytes / 4 + index * 3;
              data[offset] = fx.to_bits();
              data[offset + 1] = fy.to_bits();
              data[offset + 2] = fz.to_bits();
 
-             let offset = layout.drones.owner_factory_index.offset_bytes / 4 + index;
-             data[offset] = (owner_idx as f32).to_bits();
+              let offset = layout.drones.owner_factory_index.offset_bytes / 4 + index;
+              let owner_encoded = owner_idx_opt
+                  .map(|idx| idx as f32)
+                  .unwrap_or(-1.0);
+              data[offset] = owner_encoded.to_bits();
 
              let offset = layout.drones.target_region_index.offset_bytes / 4 + index;
              data[offset] = (-1.0f32).to_bits();
@@ -482,6 +487,41 @@ impl GameState {
                     }
                 }
             }
+        }
+
+        // Seed drone stats (capacity, battery, mining) to match TS fleet system defaults
+        let modifiers = get_resource_modifiers(
+            &self.snapshot.resources,
+            self.snapshot.prestige.cores,
+            self.snapshot.prestige_investments.as_ref(),
+            self.snapshot.spec_techs.as_ref(),
+        );
+
+        unsafe {
+            let data_ptr = self.data.as_mut_ptr();
+            let get_slice_mut = |section: &crate::buffers::BufferSection| -> &mut [f32] {
+                let offset_u32 = section.offset_bytes / 4;
+                let ptr = data_ptr.add(offset_u32) as *mut f32;
+                std::slice::from_raw_parts_mut(ptr, section.length)
+            };
+
+            let drone_battery = get_slice_mut(&self.layout.drones.battery);
+            let drone_max_battery = get_slice_mut(&self.layout.drones.max_battery);
+            let drone_capacity = get_slice_mut(&self.layout.drones.capacity);
+            let drone_mining_rate = get_slice_mut(&self.layout.drones.mining_rate);
+            let drone_cargo = get_slice_mut(&self.layout.drones.cargo);
+            let drone_cargo_profile = get_slice_mut(&self.layout.drones.cargo_profile);
+
+            fleet::sys_fleet(
+                drone_battery,
+                drone_max_battery,
+                drone_capacity,
+                drone_mining_rate,
+                drone_cargo,
+                drone_cargo_profile,
+                &self.snapshot.modules,
+                &modifiers,
+            );
         }
     }
 
@@ -652,6 +692,27 @@ impl GameState {
                 std::slice::from_raw_parts_mut(ptr, section.length)
             };
 
+            // Fleet System (updates base drone stats / fills defaults)
+            {
+                let drone_battery = get_slice_mut(&self.layout.drones.battery);
+                let drone_max_battery = get_slice_mut(&self.layout.drones.max_battery);
+                let drone_capacity = get_slice_mut(&self.layout.drones.capacity);
+                let drone_mining_rate = get_slice_mut(&self.layout.drones.mining_rate);
+                let drone_cargo = get_slice_mut(&self.layout.drones.cargo);
+                let drone_cargo_profile = get_slice_mut(&self.layout.drones.cargo_profile);
+
+                fleet::sys_fleet(
+                    drone_battery,
+                    drone_max_battery,
+                    drone_capacity,
+                    drone_mining_rate,
+                    drone_cargo,
+                    drone_cargo_profile,
+                    &self.snapshot.modules,
+                    &modifiers,
+                );
+            }
+
             // Global Refinery (Legacy/Module based)
             crate::systems::global_refinery::sys_global_refinery(
                 &mut self.snapshot.resources,
@@ -661,233 +722,248 @@ impl GameState {
                 modifiers.refinery_yield_multiplier,
             );
 
-            // Refinery System
-            let resources = get_slice_mut(&self.layout.factories.resources);
-            let refinery_state = get_slice_mut(&self.layout.factories.refinery_state);
-            let haulers_assigned = get_slice_mut(&self.layout.factories.haulers_assigned);
-            let energy = get_slice_mut(&self.layout.factories.energy);
+            // Asteroid Lifecycle System (before AI selection to keep ore/positions current)
+            {
+                let asteroid_positions = get_slice_mut(&self.layout.asteroids.positions);
+                let asteroid_ore = get_slice_mut(&self.layout.asteroids.ore_remaining);
+                let asteroid_max_ore = get_slice_mut(&self.layout.asteroids.max_ore);
+                let asteroid_resource_profile = get_slice_mut(&self.layout.asteroids.resource_profile);
 
-            let idle_energy_per_sec: Vec<f32> = self
-                .snapshot
-                .factories
-                .iter()
-                .map(|f| f.idle_energy_per_sec)
-                .collect();
-            let energy_per_refine: Vec<f32> = self
-                .snapshot
-                .factories
-                .iter()
-                .map(|f| f.energy_per_refine)
-                .collect();
-            let refine_slots: Vec<i32> = self
-                .snapshot
-                .factories
-                .iter()
-                .map(|f| f.refine_slots)
-                .collect();
-            let storage_capacity: Vec<f32> = self
-                .snapshot
-                .factories
-                .iter()
-                .map(|f| f.storage_capacity)
-                .collect();
-            let effective_energy_capacity: Vec<f32> = self
-                .snapshot
-                .factories
-                .iter()
-                .map(|f| {
-                    let bonus = SOLAR_ARRAY_LOCAL_MAX_ENERGY_PER_LEVEL * self.snapshot.modules.solar as f32;
-                    (f.energy_capacity + bonus) * modifiers.energy_storage_multiplier
-                })
-                .collect();
+                crate::systems::asteroids::sys_asteroids(
+                    asteroid_positions,
+                    asteroid_ore,
+                    asteroid_max_ore,
+                    asteroid_resource_profile,
+                    &mut self.asteroid_metadata,
+                    &mut self.rng,
+                    &sink_bonuses,
+                    self.snapshot.modules.scanner,
+                    dt,
+                );
+            }
 
-            crate::systems::refinery::sys_refinery(
-                resources,
-                refinery_state,
-                haulers_assigned,
-                energy,
-                &idle_energy_per_sec,
-                &energy_per_refine,
-                &refine_slots,
-                &storage_capacity,
-                &effective_energy_capacity,
-                dt,
-                modifiers.energy_drain_multiplier,
-                modifiers.storage_capacity_multiplier,
-                modifiers.drone_production_speed_multiplier,
-                modifiers.refinery_yield_multiplier,
-            );
+            // Drone AI System (assign new flights/targets before movement)
+            {
+                let drone_states = get_slice_mut(&self.layout.drones.states);
+                let drone_cargo = get_slice_mut(&self.layout.drones.cargo);
+                let drone_positions = get_slice_mut(&self.layout.drones.positions);
+                let drone_target_asteroid_index = get_slice_mut(&self.layout.drones.target_asteroid_index);
+                let drone_target_factory_index = get_slice_mut(&self.layout.drones.target_factory_index);
+                let drone_target_region_index = get_slice_mut(&self.layout.drones.target_region_index);
+                let drone_owner_factory_index = get_slice_mut(&self.layout.drones.owner_factory_index);
+                let factory_positions = get_slice_mut(&self.layout.factories.positions);
+                let asteroid_positions = get_slice_mut(&self.layout.asteroids.positions);
+                let asteroid_ore = get_slice_mut(&self.layout.asteroids.ore_remaining);
+                let drone_battery = get_slice_mut(&self.layout.drones.battery);
+                let drone_max_battery = get_slice_mut(&self.layout.drones.max_battery);
+                let drone_capacity = get_slice_mut(&self.layout.drones.capacity);
+                let drone_mining_rate = get_slice_mut(&self.layout.drones.mining_rate);
 
-            // Movement System
-            let drone_positions = get_slice_mut(&self.layout.drones.positions);
-            let drone_battery = get_slice_mut(&self.layout.drones.battery);
-            let drone_states = get_slice_mut(&self.layout.drones.states);
-            let drone_target_asteroid_index = get_slice_mut(&self.layout.drones.target_asteroid_index);
-            let drone_target_factory_index = get_slice_mut(&self.layout.drones.target_factory_index);
-            let factory_positions = get_slice_mut(&self.layout.factories.positions);
+                crate::systems::drone_ai::sys_drone_ai(
+                    &mut self.snapshot.drone_flights,
+                    drone_states,
+                    drone_cargo,
+                    drone_positions,
+                    drone_battery,
+                    drone_max_battery,
+                    drone_capacity,
+                    drone_mining_rate,
+                    drone_target_asteroid_index,
+                    drone_target_factory_index,
+                    drone_target_region_index,
+                    drone_owner_factory_index,
+                    &self.drone_index_to_id,
+                    &self.drone_id_to_index,
+                    &self.factory_id_to_index,
+                    &self.asteroid_id_to_index,
+                    &mut self.snapshot.factories,
+                    factory_positions,
+                    asteroid_positions,
+                    &self.asteroid_metadata,
+                    asteroid_ore,
+                    &mut self.rng,
+                    &modifiers,
+                    &self.snapshot.modules,
+                    &sink_bonuses,
+                );
+            }
 
-            crate::systems::movement::sys_movement(
-                &mut self.snapshot.drone_flights,
-                &self.drone_id_to_index,
-                &self.factory_id_to_index,
-                &self.asteroid_id_to_index,
-                drone_positions,
-                drone_states,
-                drone_battery,
-                drone_target_asteroid_index,
-                drone_target_factory_index,
-                factory_positions,
-                dt,
-                self.snapshot.settings.throttle_floor,
-                modifiers.energy_drain_multiplier,
-            );
+            // Movement System (process flights started by AI)
+            {
+                let drone_positions = get_slice_mut(&self.layout.drones.positions);
+                let drone_battery = get_slice_mut(&self.layout.drones.battery);
+                let drone_states = get_slice_mut(&self.layout.drones.states);
+                let drone_target_asteroid_index = get_slice_mut(&self.layout.drones.target_asteroid_index);
+                let drone_target_factory_index = get_slice_mut(&self.layout.drones.target_factory_index);
+                let factory_positions = get_slice_mut(&self.layout.factories.positions);
 
-            // Power System
-            let factory_energy = get_slice_mut(&self.layout.factories.energy);
-            let factory_max_energy = get_slice_mut(&self.layout.factories.max_energy);
-            let factory_upgrades = get_slice_mut(&self.layout.factories.upgrades);
-            let drone_battery = get_slice_mut(&self.layout.drones.battery);
-            let drone_max_battery = get_slice_mut(&self.layout.drones.max_battery);
-            let drone_states = get_slice_mut(&self.layout.drones.states);
-            let drone_owner_factory_index = get_slice_mut(&self.layout.drones.owner_factory_index);
-            let drone_charging = get_slice_mut(&self.layout.drones.charging);
-
-            crate::systems::power::sys_power(
-                &mut self.snapshot.resources,
-                &self.snapshot.modules,
-                factory_energy,
-                factory_max_energy,
-                factory_upgrades,
-                drone_battery,
-                drone_max_battery,
-                drone_states,
-                drone_owner_factory_index,
-                drone_target_factory_index,
-                drone_charging,
-                &self.drone_id_to_index,
-                &self.factory_id_to_index,
-                dt,
-                modifiers.energy_generation_multiplier,
-                modifiers.energy_storage_multiplier,
-            );
+                crate::systems::movement::sys_movement(
+                    &mut self.snapshot.drone_flights,
+                    &self.drone_id_to_index,
+                    &self.factory_id_to_index,
+                    &self.asteroid_id_to_index,
+                    drone_positions,
+                    drone_states,
+                    drone_battery,
+                    drone_target_asteroid_index,
+                    drone_target_factory_index,
+                    factory_positions,
+                    dt,
+                    self.snapshot.settings.throttle_floor,
+                    modifiers.energy_drain_multiplier,
+                );
+            }
 
             // Mining System
-            let drone_cargo = get_slice_mut(&self.layout.drones.cargo);
-            let drone_cargo_profile = get_slice_mut(&self.layout.drones.cargo_profile);
-            let drone_states = get_slice_mut(&self.layout.drones.states);
-            let drone_target_asteroid_index = get_slice_mut(&self.layout.drones.target_asteroid_index);
-            let drone_capacity = get_slice_mut(&self.layout.drones.capacity);
-            let drone_mining_rate = get_slice_mut(&self.layout.drones.mining_rate);
-            let drone_battery = get_slice_mut(&self.layout.drones.battery);
-            let drone_max_battery = get_slice_mut(&self.layout.drones.max_battery);
-            let asteroid_ore_remaining = get_slice_mut(&self.layout.asteroids.ore_remaining);
-            let asteroid_resource_profile = get_slice_mut(&self.layout.asteroids.resource_profile);
+            {
+                let drone_cargo = get_slice_mut(&self.layout.drones.cargo);
+                let drone_cargo_profile = get_slice_mut(&self.layout.drones.cargo_profile);
+                let drone_states = get_slice_mut(&self.layout.drones.states);
+                let drone_target_asteroid_index = get_slice_mut(&self.layout.drones.target_asteroid_index);
+                let drone_capacity = get_slice_mut(&self.layout.drones.capacity);
+                let drone_mining_rate = get_slice_mut(&self.layout.drones.mining_rate);
+                let drone_battery = get_slice_mut(&self.layout.drones.battery);
+                let drone_max_battery = get_slice_mut(&self.layout.drones.max_battery);
+                let asteroid_ore_remaining = get_slice_mut(&self.layout.asteroids.ore_remaining);
+                let asteroid_resource_profile = get_slice_mut(&self.layout.asteroids.resource_profile);
 
-            crate::systems::mining::sys_mining(
-                drone_states,
-                drone_cargo,
-                drone_cargo_profile,
-                drone_target_asteroid_index,
-                drone_capacity,
-                drone_mining_rate,
-                drone_battery,
-                drone_max_battery,
-                asteroid_ore_remaining,
-                asteroid_resource_profile,
-                dt,
-                self.snapshot.settings.throttle_floor,
-                modifiers.energy_drain_multiplier,
-                sink_bonuses.ore_yield_multiplier,
-            );
+                crate::systems::mining::sys_mining(
+                    drone_states,
+                    drone_cargo,
+                    drone_cargo_profile,
+                    drone_target_asteroid_index,
+                    drone_capacity,
+                    drone_mining_rate,
+                    drone_battery,
+                    drone_max_battery,
+                    asteroid_ore_remaining,
+                    asteroid_resource_profile,
+                    dt,
+                    self.snapshot.settings.throttle_floor,
+                    modifiers.energy_drain_multiplier,
+                    sink_bonuses.ore_yield_multiplier,
+                );
+            }
 
             // Unload System
-            let drone_states = get_slice_mut(&self.layout.drones.states);
-            let drone_cargo = get_slice_mut(&self.layout.drones.cargo);
-            let drone_cargo_profile = get_slice_mut(&self.layout.drones.cargo_profile);
-            let drone_target_factory_index = get_slice_mut(&self.layout.drones.target_factory_index);
-            let drone_owner_factory_index = get_slice_mut(&self.layout.drones.owner_factory_index);
-            let drone_target_region_index = get_slice_mut(&self.layout.drones.target_region_index);
-            let drone_positions = get_slice_mut(&self.layout.drones.positions);
-            let factory_positions = get_slice_mut(&self.layout.factories.positions);
-            let factory_resources = get_slice_mut(&self.layout.factories.resources);
+            {
+                let drone_states = get_slice_mut(&self.layout.drones.states);
+                let drone_cargo = get_slice_mut(&self.layout.drones.cargo);
+                let drone_cargo_profile = get_slice_mut(&self.layout.drones.cargo_profile);
+                let drone_target_factory_index = get_slice_mut(&self.layout.drones.target_factory_index);
+                let drone_owner_factory_index = get_slice_mut(&self.layout.drones.owner_factory_index);
+                let drone_target_region_index = get_slice_mut(&self.layout.drones.target_region_index);
+                let drone_positions = get_slice_mut(&self.layout.drones.positions);
+                let factory_positions = get_slice_mut(&self.layout.factories.positions);
+                let factory_resources = get_slice_mut(&self.layout.factories.resources);
 
-            crate::systems::unload::sys_unload(
-                drone_states,
-                drone_cargo,
-                drone_cargo_profile,
-                drone_target_factory_index,
-                drone_owner_factory_index,
-                drone_target_region_index,
-                drone_positions,
-                factory_positions,
-                factory_resources,
-                &mut self.snapshot.resources,
-                &mut self.snapshot.factories,
-                &self.drone_index_to_id,
-                dt,
-            );
+                crate::systems::unload::sys_unload(
+                    drone_states,
+                    drone_cargo,
+                    drone_cargo_profile,
+                    drone_target_factory_index,
+                    drone_owner_factory_index,
+                    drone_target_region_index,
+                    drone_positions,
+                    factory_positions,
+                    factory_resources,
+                    &mut self.snapshot.resources,
+                    &mut self.snapshot.factories,
+                    &self.drone_index_to_id,
+                    dt,
+                );
+            }
 
-            // Drone AI System
-            let drone_states = get_slice_mut(&self.layout.drones.states);
-            let drone_cargo = get_slice_mut(&self.layout.drones.cargo);
-            let drone_positions = get_slice_mut(&self.layout.drones.positions);
-            let drone_target_asteroid_index = get_slice_mut(&self.layout.drones.target_asteroid_index);
-            let drone_target_factory_index = get_slice_mut(&self.layout.drones.target_factory_index);
-            let drone_target_region_index = get_slice_mut(&self.layout.drones.target_region_index);
-            let drone_owner_factory_index = get_slice_mut(&self.layout.drones.owner_factory_index);
-            let factory_positions = get_slice_mut(&self.layout.factories.positions);
-            let asteroid_positions = get_slice_mut(&self.layout.asteroids.positions);
-            let asteroid_ore = get_slice_mut(&self.layout.asteroids.ore_remaining);
-            let drone_battery = get_slice_mut(&self.layout.drones.battery);
-            let drone_max_battery = get_slice_mut(&self.layout.drones.max_battery);
-            let drone_capacity = get_slice_mut(&self.layout.drones.capacity);
-            let drone_mining_rate = get_slice_mut(&self.layout.drones.mining_rate);
+            // Power System
+            {
+                let factory_energy = get_slice_mut(&self.layout.factories.energy);
+                let factory_max_energy = get_slice_mut(&self.layout.factories.max_energy);
+                let factory_upgrades = get_slice_mut(&self.layout.factories.upgrades);
+                let drone_battery = get_slice_mut(&self.layout.drones.battery);
+                let drone_max_battery = get_slice_mut(&self.layout.drones.max_battery);
+                let drone_states = get_slice_mut(&self.layout.drones.states);
+                let drone_owner_factory_index = get_slice_mut(&self.layout.drones.owner_factory_index);
+                let drone_target_factory_index = get_slice_mut(&self.layout.drones.target_factory_index);
+                let drone_charging = get_slice_mut(&self.layout.drones.charging);
 
-            crate::systems::drone_ai::sys_drone_ai(
-                &mut self.snapshot.drone_flights,
-                drone_states,
-                drone_cargo,
-                drone_positions,
-                drone_battery,
-                drone_max_battery,
-                drone_capacity,
-                drone_mining_rate,
-                drone_target_asteroid_index,
-                drone_target_factory_index,
-                drone_target_region_index,
-                drone_owner_factory_index,
-                &self.drone_index_to_id,
-                &self.drone_id_to_index,
-                &self.factory_id_to_index,
-                &self.asteroid_id_to_index,
-                &mut self.snapshot.factories,
-                factory_positions,
-                asteroid_positions,
-                &self.asteroid_metadata,
-                asteroid_ore,
-                &mut self.rng,
-                &modifiers,
-                &self.snapshot.modules,
-                &sink_bonuses,
-            );
+                crate::systems::power::sys_power(
+                    &mut self.snapshot.resources,
+                    &self.snapshot.modules,
+                    factory_energy,
+                    factory_max_energy,
+                    factory_upgrades,
+                    drone_battery,
+                    drone_max_battery,
+                    drone_states,
+                    drone_owner_factory_index,
+                    drone_target_factory_index,
+                    drone_charging,
+                    &self.drone_id_to_index,
+                    &self.factory_id_to_index,
+                    dt,
+                    modifiers.energy_generation_multiplier,
+                    modifiers.energy_storage_multiplier,
+                );
+            }
 
-            // Asteroid Lifecycle System
-            let asteroid_positions = get_slice_mut(&self.layout.asteroids.positions);
-            let asteroid_ore = get_slice_mut(&self.layout.asteroids.ore_remaining);
-            let asteroid_max_ore = get_slice_mut(&self.layout.asteroids.max_ore);
-            let asteroid_resource_profile = get_slice_mut(&self.layout.asteroids.resource_profile);
+            // Refinery System (per-factory processing after power updates)
+            {
+                let resources = get_slice_mut(&self.layout.factories.resources);
+                let refinery_state = get_slice_mut(&self.layout.factories.refinery_state);
+                let haulers_assigned = get_slice_mut(&self.layout.factories.haulers_assigned);
+                let energy = get_slice_mut(&self.layout.factories.energy);
 
-            crate::systems::asteroids::sys_asteroids(
-                asteroid_positions,
-                asteroid_ore,
-                asteroid_max_ore,
-                asteroid_resource_profile,
-                &mut self.asteroid_metadata,
-                &mut self.rng,
-                &sink_bonuses,
-                self.snapshot.modules.scanner,
-                dt,
-            );
+                let idle_energy_per_sec: Vec<f32> = self
+                    .snapshot
+                    .factories
+                    .iter()
+                    .map(|f| f.idle_energy_per_sec)
+                    .collect();
+                let energy_per_refine: Vec<f32> = self
+                    .snapshot
+                    .factories
+                    .iter()
+                    .map(|f| f.energy_per_refine)
+                    .collect();
+                let refine_slots: Vec<i32> = self
+                    .snapshot
+                    .factories
+                    .iter()
+                    .map(|f| f.refine_slots)
+                    .collect();
+                let storage_capacity: Vec<f32> = self
+                    .snapshot
+                    .factories
+                    .iter()
+                    .map(|f| f.storage_capacity)
+                    .collect();
+                let effective_energy_capacity: Vec<f32> = self
+                    .snapshot
+                    .factories
+                    .iter()
+                    .map(|f| {
+                        let bonus = SOLAR_ARRAY_LOCAL_MAX_ENERGY_PER_LEVEL * self.snapshot.modules.solar as f32;
+                        (f.energy_capacity + bonus) * modifiers.energy_storage_multiplier
+                    })
+                    .collect();
+
+                crate::systems::refinery::sys_refinery(
+                    resources,
+                    refinery_state,
+                    haulers_assigned,
+                    energy,
+                    &idle_energy_per_sec,
+                    &energy_per_refine,
+                    &refine_slots,
+                    &storage_capacity,
+                    &effective_energy_capacity,
+                    dt,
+                    modifiers.energy_drain_multiplier,
+                    modifiers.storage_capacity_multiplier,
+                    modifiers.drone_production_speed_multiplier,
+                    modifiers.refinery_yield_multiplier,
+                );
+            }
         }
 
         self.sync_data_to_snapshot();
