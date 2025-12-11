@@ -8,7 +8,10 @@ import { FACTORY_CONFIG } from '@/ecs/factories';
 import type { StoreSnapshot } from '@/state/types';
 
 vi.mock('@/gen/rust_engine', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = (await importOriginal()) as {
+    default: (input?: unknown) => unknown | Promise<unknown>;
+  } & Record<string, unknown>;
+
   return {
     ...actual,
     default: async () => {

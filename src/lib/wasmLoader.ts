@@ -1,6 +1,7 @@
 import type { StoreSnapshot } from '../state/types';
 import { buildRustSimBridge, type RustSimBridge, type WasmSimExports } from './wasmSimBridge';
 import { normalizeSnapshot, validateSnapshotForWasm } from '../state/serialization/store';
+import { parityDebugEnabled } from './parityDebug';
 
 export interface WasmLoadResult {
   bridge: RustSimBridge | null;
@@ -31,6 +32,14 @@ export async function loadWasmBridge(
     const memory = (initOutput as { memory?: WebAssembly.Memory }).memory;
     if (!memory) {
       throw new Error('WASM init missing memory');
+    }
+
+    if (
+      parityDebugEnabled &&
+      typeof (wasmModule as { set_parity_debug?: (enabled: boolean) => void }).set_parity_debug ===
+        'function'
+    ) {
+      (wasmModule as { set_parity_debug?: (enabled: boolean) => void }).set_parity_debug?.(true);
     }
 
     const exports: WasmSimExports = {

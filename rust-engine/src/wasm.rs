@@ -61,3 +61,8 @@ impl WasmGameState {
         self.inner.data.as_ptr() as *const u8
     }
 }
+
+#[wasm_bindgen]
+pub fn set_parity_debug(enabled: bool) {
+    crate::parity_debug::set_enabled(enabled);
+}
