@@ -49,8 +49,8 @@
   - Created `RustDrones` for direct WASM visualization.
   - Updated `Scene.tsx` to support engine switching.
   - **Fixed Parity Mismatch**: Fixed `sys_drone_ai` ignoring `RETURNING` state, causing drones to get stuck and not unload ore.
-  - Fixed `api.rs` crash when factory count is 0.
-  - Fixed `sys_power` unit test.
+- Fixed `api.rs` crash when factory count is 0.
+- Fixed `sys_power` unit test.
 - **Next Steps**:
   - Run the game and verify "Shadow Mode" logs.
   - Fix any divergences found.
@@ -71,6 +71,11 @@
 
 - Ported Rust logistics scheduler to mirror TS reservations (factory↔factory/warehouse, upgrade requests) and hauler config resolution; added upgrade request schema support.
 - Added logistics parity unit test comparing scheduled transfers/reservations and rebuilt WASM artifacts.
+
+✅ **Completed: TASK057 – Commands, Snapshot & Offline Parity**
+
+- Aligned Rust command handlers with TS costs/effects (module/factory upgrades, hauler assignment, prestige gain, recycle asteroid sync) and tightened command parity tests to require zero drift.
+- Rust offline simulation now mirrors TS refinery-only path with sink bonuses via the new WASM offline API; schemaVersion normalized/validated and covered by round-trip snapshot tests.
 
 ✅ **Completed: TASK052 – Parity Test Expansion & Measurement**
 

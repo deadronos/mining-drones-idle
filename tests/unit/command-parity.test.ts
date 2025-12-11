@@ -6,7 +6,7 @@ import type { StoreSnapshot } from '@/state/types';
 import type { RustSimBridge, SimulationCommand } from '@/lib/wasmSimBridge';
 import { loadWasmBridge } from '@/lib/wasmLoader';
 import { registerBridge } from '@/lib/rustBridgeRegistry';
-import { createStoreInstance, serializeStore } from '@/state/store';
+import { createStoreInstance, serializeStore, SCHEMA_VERSION } from '@/state/store';
 import { logDivergences, parityDebugEnabled } from '../shared/parityLogger';
 
 vi.mock('@/gen/rust_engine', async (importOriginal) => {
@@ -38,7 +38,6 @@ type AsteroidSnapshot = {
 
 const RESOURCE_EPSILON = 0.01;
 const MODULE_EPSILON = 0.0001;
-const enforceParity = process.env.PARITY_ENFORCE === '1';
 let bridge: RustSimBridge | null = null;
 
 const cloneSnapshot = <T>(value: T): T =>
@@ -213,7 +212,7 @@ async function applyRustCommand(
 ): Promise<StoreSnapshot & { asteroids?: AsteroidSnapshot[] }> {
   const rustInitSnapshot = {
     ...snapshot,
-    ...(asteroids ? { extra: { asteroids } } : {}),
+    ...(asteroids ? { asteroids } : {}),
   } as unknown as StoreSnapshot;
   await bridge!.init(rustInitSnapshot);
   bridge!.applyCommand(command);
@@ -262,11 +261,7 @@ describe('Command Parity', () => {
       divergences,
       parityDebugEnabled ? { tsSnapshot, rustSnapshot } : undefined
     );
-    if (enforceParity) {
-      expect(divergences).toEqual([]);
-    } else {
-      expect(divergences.length).toBeGreaterThanOrEqual(0);
-    }
+    expect(divergences).toEqual([]);
   });
 
   it('PurchaseFactoryUpgrade matches factory state', async () => {
@@ -306,11 +301,7 @@ describe('Command Parity', () => {
       divergences,
       parityDebugEnabled ? { tsFactory, rustFactory } : undefined
     );
-    if (enforceParity) {
-      expect(divergences).toEqual([]);
-    } else {
-      expect(divergences.length).toBeGreaterThanOrEqual(0);
-    }
+    expect(divergences).toEqual([]);
   });
 
   it('AssignHauler keeps counts and costs aligned', async () => {
@@ -350,11 +341,7 @@ describe('Command Parity', () => {
       divergences,
       parityDebugEnabled ? { tsFactory, rustFactory } : undefined
     );
-    if (enforceParity) {
-      expect(divergences).toEqual([]);
-    } else {
-      expect(divergences.length).toBeGreaterThanOrEqual(0);
-    }
+    expect(divergences).toEqual([]);
   });
 
   it('SpawnDrone adjusts capacity and ownership consistently', async () => {
@@ -396,11 +383,7 @@ describe('Command Parity', () => {
           }
         : undefined
     );
-    if (enforceParity) {
-      expect(divergences).toEqual([]);
-    } else {
-      expect(divergences.length).toBeGreaterThanOrEqual(0);
-    }
+    expect(divergences).toEqual([]);
   });
 
   it('RecycleAsteroid zeroes ore consistently', async () => {
@@ -436,11 +419,7 @@ describe('Command Parity', () => {
       divergences,
       parityDebugEnabled ? { tsAsteroids, rustAsteroids } : undefined
     );
-    if (enforceParity) {
-      expect(divergences).toEqual([]);
-    } else {
-      expect(divergences.length).toBeGreaterThanOrEqual(0);
-    }
+    expect(divergences).toEqual([]);
   });
 
   it('DoPrestige resets resources and modules in parity', async () => {
@@ -486,10 +465,39 @@ describe('Command Parity', () => {
       divergences,
       parityDebugEnabled ? { tsSnapshot, rustSnapshot } : undefined
     );
-    if (enforceParity) {
-      expect(divergences).toEqual([]);
-    } else {
-      expect(divergences.length).toBeGreaterThanOrEqual(0);
-    }
+    expect(divergences).toEqual([]);
+  });
+
+  it('round-trips snapshots through Rust without losing metadata', async () => {
+    const snapshot = createTestSnapshot(108);
+    snapshot.schemaVersion = '0.0.9';
+    snapshot.logisticsQueues = {
+      pendingTransfers: [
+        {
+          id: 'transfer-1',
+          fromFactoryId: 'factory-1',
+          toFactoryId: 'factory-1',
+          resource: 'ore',
+          amount: 5,
+          status: 'scheduled',
+          eta: 1,
+          departedAt: 0,
+        },
+      ],
+    };
+    snapshot.droneOwners = { ...snapshot.droneOwners, 'drone-x': 'factory-1' };
+
+    await bridge!.init(snapshot);
+    const rustSnapshot = bridge!.exportSnapshot();
+
+    const store = createStoreInstance();
+    store.getState().applySnapshot(rustSnapshot);
+    const roundTrip = serializeStore(store.getState());
+
+    expect(roundTrip.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(roundTrip.logisticsQueues?.pendingTransfers ?? []).toHaveLength(1);
+    expect(roundTrip.logisticsQueues?.pendingTransfers[0]?.id).toBe('transfer-1');
+    expect(roundTrip.logisticsQueues?.pendingTransfers[0]?.status).toBe('scheduled');
+    expect(roundTrip.droneOwners?.['drone-x']).toBe('factory-1');
   });
 });

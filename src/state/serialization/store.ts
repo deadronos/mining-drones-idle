@@ -268,7 +268,7 @@ export const normalizeSettings = (snapshot?: Partial<StoreSettings>): StoreSetti
 });
 
 export const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapshot => ({
-  schemaVersion: snapshot.schemaVersion ?? SCHEMA_VERSION,
+  schemaVersion: snapshot.schemaVersion === SCHEMA_VERSION ? snapshot.schemaVersion : SCHEMA_VERSION,
   resources: normalizeResources(snapshot.resources),
   modules: normalizeModules(snapshot.modules),
   prestige: normalizePrestige(snapshot.prestige),
@@ -325,6 +325,10 @@ export const validateSnapshotForWasm = (snapshot?: Partial<StoreSnapshot>): stri
       return `${path}: ${message}`;
     });
     return issues;
+  }
+  const schemaVersion = snapshot.schemaVersion;
+  if (schemaVersion && schemaVersion !== SCHEMA_VERSION) {
+    return [`schemaVersion: expected ${SCHEMA_VERSION} got ${schemaVersion}`];
   }
 
   // Additional business rule: modules shouldn't be all zeros.

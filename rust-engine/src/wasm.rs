@@ -45,6 +45,14 @@ impl WasmGameState {
         self.inner.apply_command(command).map_err(to_js_error)
     }
 
+    pub fn simulate_offline(&mut self, seconds: f32, step: f32) -> Result<String, JsValue> {
+        let result = self
+            .inner
+            .simulate_offline(seconds, step)
+            .map_err(to_js_error)?;
+        serde_json::to_string(&result).map_err(|err| JsValue::from_str(&err.to_string()))
+    }
+
     pub fn layout_json(&self) -> Result<String, JsValue> {
         serde_json::to_string(&self.inner.layout).map_err(|err| JsValue::from_str(&err.to_string()))
     }

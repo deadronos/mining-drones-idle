@@ -53,6 +53,7 @@ pub const UPGRADE_GROWTH: f32 = 1.15;
 // Prestige & Spec Tech
 pub const PRESTIGE_DRONE_VELOCITY_BONUS_PER_TIER: f32 = 0.02;
 pub const SPEC_TECH_ORE_MAGNET_BONUS_PER_LEVEL: f32 = 0.03;
+pub const PRESTIGE_THRESHOLD: f32 = 5000.0;
 
 // Hauler Constants
 pub const FACTORY_HAULER_CAPACITY_PER_LEVEL: f32 = 5.0;

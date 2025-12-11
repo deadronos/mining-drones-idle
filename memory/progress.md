@@ -4,6 +4,11 @@
 
 ## Recent Achievements
 
+- **2025-12-13**: Completed TASK057 (Commands, Snapshot & Offline Parity).
+  - Matched Rust command handlers to TS costs/effects (module/factory upgrades with ceil costs, hauler assignment cost deduction, prestige gain formula, asteroid recycle snapshot sync) and made command parity tests strict.
+  - Added schemaVersion normalization/validation across TS/Rust plus TS↔Rust snapshot round-trip coverage; Rust offline now mirrors TS refinery-only path with sink bonuses via a new WASM offline API and bridge support.
+  - Validation: `npm run build:wasm`, `npm run typecheck`, `npm run lint`, `npm run test`.
+
 - **2025-12-11**: Completed TASK056 (Logistics Parity Implementation).
   - Ported Rust logistics scheduler to mirror TS reservations (factory↔factory/warehouse, upgrade requests), hauler config resolution, warehouse capacity math, and schema support for upgrade requests.
   - Added focused logistics parity unit test (scheduled transfers/reservations) and rebuilt WASM; validation: `npm run typecheck`, `npm run lint`, `npm run build:wasm`, `npm run test` (parity divergence logs remain in existing suites).

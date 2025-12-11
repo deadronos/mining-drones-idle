@@ -23,7 +23,7 @@ pub struct TickResult {
 }
 
 /// Result of an offline simulation run.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct OfflineResult {
     /// Total simulated time in seconds.
     pub elapsed: f32,
@@ -112,7 +112,8 @@ pub struct GameState {
 impl GameState {
     /// Creates a new GameState from a simulation snapshot.
     /// Initializes the memory layout and populates buffers.
-    pub fn from_snapshot(snapshot: SimulationSnapshot) -> Result<Self, SimulationError> {
+    pub fn from_snapshot(mut snapshot: SimulationSnapshot) -> Result<Self, SimulationError> {
+        snapshot.schema_version = crate::schema::SCHEMA_VERSION.to_string();
         snapshot.ensure_required()?;
         let rng_seed = snapshot.rng_seed.unwrap_or(1);
 
@@ -198,8 +199,9 @@ impl GameState {
     /// Loads a new state from a JSON string payload.
     /// Re-initializes layout and buffers to match the new snapshot.
     pub fn load_snapshot_str(&mut self, payload: &str) -> Result<(), SimulationError> {
-        let snapshot: SimulationSnapshot =
+        let mut snapshot: SimulationSnapshot =
             serde_json::from_str(payload).map_err(SimulationError::parse)?;
+        snapshot.schema_version = crate::schema::SCHEMA_VERSION.to_string();
         snapshot.ensure_required()?;
 
         let drone_bay_level = snapshot.modules.drone_bay;
@@ -980,16 +982,48 @@ impl GameState {
                 snapshot_json,
             });
         }
-        let iterations = (seconds / step).ceil() as u32;
-        for _ in 0..iterations {
-            self.step(step);
+        let sink_bonuses = crate::sinks::get_sink_bonuses(&self.snapshot);
+        let mut elapsed = 0.0f32;
+        let mut steps = 0u32;
+
+        while elapsed < seconds {
+            let dt = (seconds - elapsed).min(step);
+            if dt <= 0.0 {
+                break;
+            }
+
+            let modifiers = get_resource_modifiers(
+                &self.snapshot.resources,
+                self.snapshot.prestige.cores,
+                self.snapshot.prestige_investments.as_ref(),
+                self.snapshot.spec_techs.as_ref(),
+            );
+            let ore_before = self.snapshot.resources.ore;
+            let bars_before = self.snapshot.resources.bars;
+
+            crate::systems::global_refinery::sys_global_refinery(
+                &mut self.snapshot.resources,
+                &self.snapshot.modules,
+                self.snapshot.prestige.cores,
+                dt,
+                modifiers.refinery_yield_multiplier * sink_bonuses.refinery_yield_multiplier,
+            );
+
+            let bars_delta = self.snapshot.resources.bars - bars_before;
+            if bars_delta > 0.0 && sink_bonuses.offline_progress_multiplier > 1.0 {
+                let bonus = bars_delta * (sink_bonuses.offline_progress_multiplier - 1.0);
+                self.snapshot.resources.bars += bonus;
+            }
+
+            let _ore_delta = ore_before - self.snapshot.resources.ore;
+            elapsed += dt;
+            steps += 1;
         }
+
+        self.game_time += elapsed;
+        self.sync_globals_to_buffer();
         let snapshot_json = self.export_snapshot_str()?;
-        Ok(OfflineResult {
-            elapsed: iterations as f32 * step,
-            steps: iterations,
-            snapshot_json,
-        })
+        Ok(OfflineResult { elapsed, steps, snapshot_json })
     }
 
     /// Returns a reference to the current snapshot.
@@ -1053,9 +1087,18 @@ impl GameState {
 
     // Command handlers
 
-    fn handle_buy_module(&mut self, module_type: &str) -> Result<(), SimulationError> {
-        use crate::constants::UPGRADE_GROWTH;
+    fn calculate_exponential_cost(base: f32, growth: f32, level: i32) -> f32 {
+        (base * growth.powi(level.max(0))).ceil()
+    }
 
+    fn compute_prestige_gain(bars: f32) -> i32 {
+        if bars <= 0.0 {
+            return 0;
+        }
+        (bars / 1000.0).powf(0.6).floor() as i32
+    }
+
+    fn handle_buy_module(&mut self, module_type: &str) -> Result<(), SimulationError> {
         let (current_level, base_cost) = match module_type {
             "droneBay" => (self.snapshot.modules.drone_bay, 4.0),
             "refinery" => (self.snapshot.modules.refinery, 8.0),
@@ -1068,7 +1111,11 @@ impl GameState {
             _ => return Ok(()), // Unknown module, ignore
         };
 
-        let cost = base_cost * UPGRADE_GROWTH.powi(current_level);
+        let cost = Self::calculate_exponential_cost(
+            base_cost,
+            crate::constants::UPGRADE_GROWTH,
+            current_level,
+        );
         if self.snapshot.resources.bars < cost {
             return Ok(()); // Not enough bars
         }
@@ -1106,15 +1153,13 @@ impl GameState {
     }
 
     fn handle_prestige(&mut self) -> Result<(), SimulationError> {
-        const PRESTIGE_THRESHOLD: f32 = 5000.0;
+        let threshold = crate::constants::PRESTIGE_THRESHOLD;
 
-        if self.snapshot.resources.bars < PRESTIGE_THRESHOLD {
+        if self.snapshot.resources.bars < threshold {
             return Ok(());
         }
 
-        // Compute prestige gain: floor(log10(bars / threshold)) + 1
-        let ratio = self.snapshot.resources.bars / PRESTIGE_THRESHOLD;
-        let gain = (ratio.log10().floor() as i32).max(0) + 1;
+        let gain = Self::compute_prestige_gain(self.snapshot.resources.bars);
 
         self.snapshot.prestige.cores += gain;
 
@@ -1149,6 +1194,7 @@ impl GameState {
         // Note: Factory reset is handled by TypeScript layer since
         // factory creation involves position randomization
 
+        self.rebuild_state()?;
         Ok(())
     }
 
@@ -1158,8 +1204,6 @@ impl GameState {
         upgrade_type: &str,
         cost_variant: Option<&str>,
     ) -> Result<(), SimulationError> {
-        use crate::constants::FACTORY_UPGRADE_GROWTH;
-
         let factory_idx = match self.factory_id_to_index.get(factory_id) {
             Some(&idx) => idx,
             None => return Ok(()), // Factory not found
@@ -1179,65 +1223,80 @@ impl GameState {
             _ => return Ok(()), // Unknown upgrade
         };
 
-        // Default to bars cost
-        let base_cost = 13.0;
-        let cost = base_cost * FACTORY_UPGRADE_GROWTH.powi(current_level);
-
-        // Check which resource to use based on cost variant
-        let can_afford = match cost_variant {
-            Some("metals") => {
-                let metal_cost = 50.0 * FACTORY_UPGRADE_GROWTH.powi(current_level);
-                factory.resources.metals >= metal_cost
-            }
-            Some("organics") => {
-                let organic_cost = match upgrade_type {
-                    "refine" => 25.0 * FACTORY_UPGRADE_GROWTH.powi(current_level),
-                    "storage" => 20.0 * FACTORY_UPGRADE_GROWTH.powi(current_level),
-                    _ => return Ok(()),
-                };
-                factory.resources.organics >= organic_cost
-            }
-            Some("ice") => {
-                let ice_cost = 30.0 * FACTORY_UPGRADE_GROWTH.powi(current_level);
-                factory.resources.ice >= ice_cost
-            }
-            Some("crystals") => {
-                let crystal_cost = 25.0 * FACTORY_UPGRADE_GROWTH.powi(current_level);
-                factory.resources.crystals >= crystal_cost
-            }
-            _ => factory.resources.bars >= cost,
-        };
-
-        if !can_afford {
-            return Ok(());
-        }
-
-        // Deduct cost and apply upgrade
-        let factory = &mut self.snapshot.factories[factory_idx];
+        let growth = crate::constants::FACTORY_UPGRADE_GROWTH;
+        let mut cost_entries: Vec<(&str, f32)> = Vec::new();
 
         match cost_variant {
-            Some("metals") => {
-                let metal_cost = 50.0 * FACTORY_UPGRADE_GROWTH.powi(current_level);
-                factory.resources.metals -= metal_cost;
+            Some("metals") if upgrade_type == "docking" => cost_entries.push((
+                "metals",
+                Self::calculate_exponential_cost(50.0, growth, current_level),
+            )),
+            Some("organics") if upgrade_type == "refine" => {
+                cost_entries.push((
+                    "organics",
+                    Self::calculate_exponential_cost(25.0, growth, current_level),
+                ));
+                cost_entries.push((
+                    "metals",
+                    Self::calculate_exponential_cost(25.0, growth, current_level),
+                ));
             }
-            Some("organics") => {
-                let organic_cost = match upgrade_type {
-                    "refine" => 25.0 * FACTORY_UPGRADE_GROWTH.powi(current_level),
-                    "storage" => 20.0 * FACTORY_UPGRADE_GROWTH.powi(current_level),
-                    _ => return Ok(()),
-                };
-                factory.resources.organics -= organic_cost;
+            Some("organics") if upgrade_type == "storage" => cost_entries.push((
+                "organics",
+                Self::calculate_exponential_cost(20.0, growth, current_level),
+            )),
+            Some("ice") if upgrade_type == "energy" => {
+                cost_entries.push((
+                    "ice",
+                    Self::calculate_exponential_cost(30.0, growth, current_level),
+                ));
+                cost_entries.push((
+                    "metals",
+                    Self::calculate_exponential_cost(15.0, growth, current_level),
+                ));
             }
-            Some("ice") => {
-                let ice_cost = 30.0 * FACTORY_UPGRADE_GROWTH.powi(current_level);
-                factory.resources.ice -= ice_cost;
+            Some("crystals") if upgrade_type == "solar" => {
+                cost_entries.push((
+                    "crystals",
+                    Self::calculate_exponential_cost(25.0, growth, current_level),
+                ));
+                cost_entries.push((
+                    "metals",
+                    Self::calculate_exponential_cost(10.0, growth, current_level),
+                ));
             }
-            Some("crystals") => {
-                let crystal_cost = 25.0 * FACTORY_UPGRADE_GROWTH.powi(current_level);
-                factory.resources.crystals -= crystal_cost;
+            Some(_) => return Ok(()), // Unknown variant for this upgrade
+            _ => cost_entries.push((
+                "bars",
+                Self::calculate_exponential_cost(13.0, growth, current_level),
+            )),
+        }
+
+        // Ensure affordability
+        for (resource, cost) in &cost_entries {
+            let available = match *resource {
+                "bars" => factory.resources.bars,
+                "metals" => factory.resources.metals,
+                "organics" => factory.resources.organics,
+                "ice" => factory.resources.ice,
+                "crystals" => factory.resources.crystals,
+                _ => 0.0,
+            };
+            if available < *cost {
+                return Ok(());
             }
-            _ => {
-                factory.resources.bars -= cost;
+        }
+
+        // Deduct costs
+        let factory = &mut self.snapshot.factories[factory_idx];
+        for (resource, cost) in &cost_entries {
+            match *resource {
+                "bars" => factory.resources.bars -= cost,
+                "metals" => factory.resources.metals -= cost,
+                "organics" => factory.resources.organics -= cost,
+                "ice" => factory.resources.ice -= cost,
+                "crystals" => factory.resources.crystals -= cost,
+                _ => {}
             }
         }
 
@@ -1258,6 +1317,7 @@ impl GameState {
             "energy" => {
                 factory.energy_capacity += 30.0;
                 factory.upgrades.energy += 1;
+                factory.energy = factory.energy.min(factory.energy_capacity);
             }
             "solar" => {
                 factory.upgrades.solar += 1;
@@ -1265,6 +1325,9 @@ impl GameState {
             }
             _ => {}
         }
+
+        // Clear fulfilled upgrade requests for this upgrade type
+        factory.upgrade_requests.retain(|req| req.upgrade != upgrade_type);
 
         // Update buffer data
         self.sync_factory_to_buffer(factory_idx);
@@ -1284,12 +1347,25 @@ impl GameState {
 
         let factory = &mut self.snapshot.factories[factory_idx];
         let current = factory.haulers_assigned.unwrap_or(0);
-        let new_count = (current + count).max(0);
-        factory.haulers_assigned = Some(new_count);
+        let target_count = (current + count).max(0);
 
-        // Update buffer
-        let offset = self.layout.factories.haulers_assigned.offset_bytes / 4 + factory_idx;
-        self.data[offset] = (new_count as f32).to_bits();
+        if target_count == current {
+            return Ok(());
+        }
+
+        if target_count > current {
+            let mut total_cost = 0.0;
+            for level in current..target_count {
+                total_cost += Self::calculate_exponential_cost(10.0, crate::constants::UPGRADE_GROWTH, level);
+            }
+            if factory.resources.bars < total_cost {
+                return Ok(());
+            }
+            factory.resources.bars -= total_cost;
+        }
+
+        factory.haulers_assigned = Some(target_count);
+        self.sync_factory_to_buffer(factory_idx);
 
         Ok(())
     }
@@ -1299,6 +1375,23 @@ impl GameState {
             // Set ore remaining to 0
             let offset = self.layout.asteroids.ore_remaining.offset_bytes / 4 + idx;
             self.data[offset] = 0.0f32.to_bits();
+            if let Some(value) = self.snapshot.extra.get_mut("asteroids") {
+                if let Some(array) = value.as_array_mut() {
+                    for asteroid in array.iter_mut() {
+                        if asteroid
+                            .get("id")
+                            .and_then(|v| v.as_str())
+                            .map(|v| v == asteroid_id)
+                            .unwrap_or(false)
+                        {
+                            if let Some(obj) = asteroid.as_object_mut() {
+                                obj.insert("oreRemaining".to_string(), serde_json::json!(0.0));
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
         }
         Ok(())
     }
