@@ -4,6 +4,10 @@
 
 ## Recent Achievements
 
+- **2025-12-11**: Completed TASK056 (Logistics Parity Implementation).
+  - Ported Rust logistics scheduler to mirror TS reservations (factory↔factory/warehouse, upgrade requests), hauler config resolution, warehouse capacity math, and schema support for upgrade requests.
+  - Added focused logistics parity unit test (scheduled transfers/reservations) and rebuilt WASM; validation: `npm run typecheck`, `npm run lint`, `npm run build:wasm`, `npm run test` (parity divergence logs remain in existing suites).
+
 - **2025-12-12**: Completed TASK054 (Asteroids & Biomes Parity).
   - Replaced Rust respawn with biome-driven profiles/gravity, scanner/sink richness bias, and TS-aligned RNG draw count; updated asteroid metadata.
   - Added respawn parity test and rebuilt WASM; validation: `npm run build:wasm`, `npm run typecheck`, `npm run lint`, `npm run test` (parity divergences logged as expected).

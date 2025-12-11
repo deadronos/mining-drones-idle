@@ -903,6 +903,7 @@ impl GameState {
                 &mut self.snapshot.factories,
                 &mut self.snapshot.resources,
                 &self.snapshot.modules,
+                &modifiers,
                 self.game_time,
                 run_scheduler,
             );

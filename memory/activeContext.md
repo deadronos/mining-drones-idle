@@ -67,6 +67,11 @@
 
 ## Recent Completions
 
+✅ **Completed: TASK056 – Logistics Parity Implementation**
+
+- Ported Rust logistics scheduler to mirror TS reservations (factory↔factory/warehouse, upgrade requests) and hauler config resolution; added upgrade request schema support.
+- Added logistics parity unit test comparing scheduled transfers/reservations and rebuilt WASM artifacts.
+
 ✅ **Completed: TASK052 – Parity Test Expansion & Measurement**
 
 - Added shared parity logger (`PARITY_DEBUG`/`--debug-parity`) and optional enforcement flag (`PARITY_ENFORCE`), expanded step/offline/command parity suites, and enhanced shadow-mode E2E with rolling metrics and screenshot capture on drift.

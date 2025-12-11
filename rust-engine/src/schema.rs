@@ -74,6 +74,26 @@ pub struct FactoryUpgradeSnapshot {
     pub solar: i32,
 }
 
+fn default_upgrade_request_status() -> String {
+    "pending".to_string()
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct FactoryUpgradeRequestSnapshot {
+    pub upgrade: String,
+    #[serde(default)]
+    pub resource_needed: FactoryResourceSnapshot,
+    #[serde(default)]
+    pub fulfilled_amount: FactoryResourceSnapshot,
+    #[serde(default = "default_upgrade_request_status")]
+    pub status: String,
+    #[serde(default)]
+    pub created_at: i64,
+    #[serde(default)]
+    pub expires_at: i64,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct InboundSchedule {
@@ -147,6 +167,8 @@ pub struct FactorySnapshot {
     pub resources: FactoryResourceSnapshot,
     #[serde(default)]
     pub upgrades: FactoryUpgradeSnapshot,
+    #[serde(default)]
+    pub upgrade_requests: Vec<FactoryUpgradeRequestSnapshot>,
     #[serde(default)]
     pub haulers_assigned: Option<i32>,
     #[serde(default)]
