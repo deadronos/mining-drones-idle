@@ -901,6 +901,7 @@ mod tests {
             energy_capacity: 0.0,
             resources: Default::default(),
             upgrades: Default::default(),
+            upgrade_requests: Default::default(),
             haulers_assigned: None,
             hauler_config: None,
             hauler_upgrades: None,

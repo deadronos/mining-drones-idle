@@ -56,21 +56,33 @@ pub struct DroneFlight {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub struct FactoryResourceSnapshot {
+    #[serde(default)]
     pub ore: f32,
+    #[serde(default)]
     pub bars: f32,
+    #[serde(default)]
     pub metals: f32,
+    #[serde(default)]
     pub crystals: f32,
+    #[serde(default)]
     pub organics: f32,
+    #[serde(default)]
     pub ice: f32,
+    #[serde(default)]
     pub credits: f32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub struct FactoryUpgradeSnapshot {
+    #[serde(default)]
     pub docking: i32,
+    #[serde(default)]
     pub refine: i32,
+    #[serde(default)]
     pub storage: i32,
+    #[serde(default)]
     pub energy: i32,
+    #[serde(default)]
     pub solar: i32,
 }
 
@@ -202,29 +214,45 @@ pub struct LogisticsQueues {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub struct Resources {
+    #[serde(default)]
     pub ore: f32,
+    #[serde(default)]
     pub ice: f32,
+    #[serde(default)]
     pub metals: f32,
+    #[serde(default)]
     pub crystals: f32,
+    #[serde(default)]
     pub organics: f32,
+    #[serde(default)]
     pub bars: f32,
+    #[serde(default)]
     pub energy: f32,
+    #[serde(default)]
     pub credits: f32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub struct Modules {
     #[serde(rename = "droneBay")]
+    #[serde(default)]
     pub drone_bay: i32,
+    #[serde(default)]
     pub refinery: i32,
+    #[serde(default)]
     pub storage: i32,
+    #[serde(default)]
     pub solar: i32,
+    #[serde(default)]
     pub scanner: i32,
     #[serde(rename = "haulerDepot")]
+    #[serde(default)]
     pub hauler_depot: i32,
     #[serde(rename = "logisticsHub")]
+    #[serde(default)]
     pub logistics_hub: i32,
     #[serde(rename = "routingProtocol")]
+    #[serde(default)]
     pub routing_protocol: i32,
 }
 
@@ -266,10 +294,13 @@ pub struct StoreSettings {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub struct MetricsSettings {
+    #[serde(default)]
     pub enabled: bool,
     #[serde(rename = "intervalSeconds")]
+    #[serde(default)]
     pub interval_seconds: i32,
     #[serde(rename = "retentionSeconds")]
+    #[serde(default)]
     pub retention_seconds: i32,
 }
 
@@ -366,5 +397,32 @@ mod tests {
         }"#;
         let flight: DroneFlight = serde_json::from_str(json).expect("should deserialize");
         assert_eq!(flight.path_seed, 3132762181);
+    }
+
+    #[test]
+    fn deserializes_resources_missing_bars() {
+        let json = r#"{
+            "ore": 1.0,
+            "ice": 2.0,
+            "metals": 3.0,
+            "crystals": 4.0,
+            "organics": 5.0,
+            "energy": 6.0,
+            "credits": 7.0
+        }"#;
+        let resources: Resources = serde_json::from_str(json).expect("should deserialize");
+        assert_eq!(resources.bars, 0.0);
+        assert_eq!(resources.ore, 1.0);
+    }
+
+    #[test]
+    fn deserializes_factory_resource_missing_bars() {
+        let json = r#"{
+            "ore": 1.0,
+            "metals": 2.0,
+            "crystals": 3.0
+        }"#;
+        let factories: FactoryResourceSnapshot = serde_json::from_str(json).expect("should deserialize");
+        assert_eq!(factories.bars, 0.0);
     }
 }

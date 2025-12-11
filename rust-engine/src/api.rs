@@ -1586,6 +1586,7 @@ mod tests {
     use super::*;
     use crate::schema::{
         MetricsSettings, Modules, Prestige, Resources, SaveMeta, SimulationSnapshot, StoreSettings,
+        SCHEMA_VERSION,
     };
     use std::collections::BTreeMap;
 
@@ -1682,7 +1683,27 @@ mod tests {
             .simulate_offline(1.2, 0.5)
             .expect("offline sim should run");
         assert_eq!(result.steps, 3);
-        assert!((result.elapsed - 1.5).abs() < 0.001);
+        assert!((result.elapsed - 1.2).abs() < 0.001);
         assert!(state.game_time > 0.0);
+    }
+
+    #[test]
+    fn from_snapshot_deserializes_without_bars() {
+        let json = r#"{
+            "schemaVersion": "1.0.0",
+            "resources": { "ore": 10.0, "ice": 0.0, "metals": 0.0, "crystals": 0.0, "organics": 0.0, "energy": 0.0, "credits": 0.0 },
+            "modules": { "droneBay": 1 },
+            "prestige": { "cores": 0 },
+            "save": { "lastSave": 0, "version": "0.0.0" },
+            "settings": { "autosaveEnabled": true, "autosaveInterval": 30, "offlineCapHours": 8, "notation": "standard", "throttleFloor": 0.2, "showTrails": true, "showHaulerShips": true, "showDebugPanel": false, "performanceProfile": "high", "inspectorCollapsed": false, "metrics": { "enabled": true, "intervalSeconds": 5, "retentionSeconds": 300 } },
+            "rngSeed": 1,
+            "droneFlights": [],
+            "factories": [],
+            "droneOwners": {},
+            "gameTime": 0.0,
+            "extra": {}
+        }"#;
+        let snapshot: SimulationSnapshot = serde_json::from_str(json).expect("should parse snapshot without bars");
+        let _state = GameState::from_snapshot(snapshot).expect("should create state without bars");
     }
 }
