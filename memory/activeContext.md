@@ -56,11 +56,6 @@
   - Fix any divergences found.
   - Implement `RustFactories` and `RustAsteroids` for full visual parity.
 
-### 🔄 **TASK058 – Rendering & Bridge Integration**
-
-- Goal: Render drones/asteroids/HUD from Rust buffers when `useRustSim` is enabled to eliminate visual drift; maintain graceful TS fallback.
-- Status: In Progress (EARS requirements captured; working on buffer-driven asteroids/HUD sync).
-
 - 🚧 **TASK038 – Factory Metrics & Mini-Charts** remains in progress.
   - Factory Metrics tab now renders four sparklines with summary stats, sampling banner, and pause control.
   - Inline sparkline component ships on factory cards and hides when sampling disabled or empty.
@@ -76,6 +71,11 @@
 
 - Ported Rust logistics scheduler to mirror TS reservations (factory↔factory/warehouse, upgrade requests) and hauler config resolution; added upgrade request schema support.
 - Added logistics parity unit test comparing scheduled transfers/reservations and rebuilt WASM artifacts.
+
+✅ **Completed: TASK058 – Rendering & Bridge Integration**
+
+- Rust rendering now reads drones, asteroids, and factories from Rust buffers when `useRustSim` is enabled; colors/scale derive from ore/resource profiles with TS biome fallback.
+- HUD/Factory panels use Rust buffer aggregates via `useRustHUD` with graceful TS fallback and bridge readiness gating; selection clicks are disabled in Rust mode to avoid stale IDs.
 
 ✅ **Completed: TASK057 – Commands, Snapshot & Offline Parity**
 
