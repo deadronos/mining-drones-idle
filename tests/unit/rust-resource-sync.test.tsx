@@ -2,12 +2,13 @@ import React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import { vi, describe, it, beforeEach, expect } from 'vitest';
 import { storeApi } from '@/state/store';
+import type { RustSimBridge } from '@/lib/wasmSimBridge';
 
 // Capture useFrame callback
-let frameCallback: ((state: any, delta: number) => void) | null = null;
+let frameCallback: ((state: unknown, delta: number) => void) | null = null;
 
 vi.mock('@react-three/fiber', () => ({
-  useFrame: (cb: any) => {
+  useFrame: (cb: (state: unknown, delta: number) => void) => {
     frameCallback = cb;
   },
   useThree: () => ({ camera: {}, size: { width: 100, height: 100 } }),
@@ -315,5 +316,54 @@ describe('Rust Resource Sync Integration', () => {
     // Verify UI updated
     // UpgradePanel displays "Warehouse Bars: {value}"
     expect(screen.getByText(/9,999/)).toBeDefined();
+  });
+
+  it('syncs per-factory buffers (resources/energy/haulers) into the store', () => {
+    const mockResources = new Float32Array([111, 222, 333, 444, 555, 666, 777]); // ore..ice..metals..crystals..organics..bars..credits
+    const mockEnergy = new Float32Array([123.5]);
+    const mockMaxEnergy = new Float32Array([250]);
+    const mockHaulers = new Float32Array([6]);
+
+    const mockBridge = {
+      isReady: () => true,
+      step: vi.fn(),
+      getGlobalResources: vi.fn().mockReturnValue(new Float64Array([0, 0, 0, 0, 0, 0, 0, 0])),
+      getLogisticsQueues: vi.fn().mockReturnValue({ pendingTransfers: [] }),
+      getAsteroidPositions: () => new Float32Array([]),
+      getAsteroidOre: () => new Float32Array([]),
+      getDronePositions: () => new Float32Array([]),
+      getDroneStates: () => new Float32Array([]),
+      getFactoryResources: vi.fn().mockReturnValue(mockResources),
+      getFactoryEnergy: vi.fn().mockReturnValue(mockEnergy),
+      getFactoryMaxEnergy: vi.fn().mockReturnValue(mockMaxEnergy),
+      getFactoryHaulersAssigned: vi.fn().mockReturnValue(mockHaulers),
+    } as unknown as RustSimBridge;
+
+    mockUseRustEngine.mockReturnValue({
+      bridge: mockBridge,
+      isLoaded: true,
+      error: null,
+      fallbackReason: null,
+      reinitialize: async () => undefined,
+    });
+
+    render(<Scene />);
+
+    // Trigger 6 frames to force a sync
+    if (frameCallback) {
+      for (let i = 0; i < 6; i++) {
+        act(() => frameCallback!(null, 0.016));
+      }
+    }
+
+    // Check store factory data matches mocked values
+    const factories = storeApi.getState().factories;
+    expect(factories.length).toBeGreaterThan(0);
+    const f0 = factories[0];
+    expect(f0.resources.ore).toBe(111);
+    expect(f0.resources.bars).toBe(666);
+    expect(f0.energy).toBeCloseTo(123.5, 3);
+    expect(f0.energyCapacity).toBe(250);
+    expect(f0.haulersAssigned).toBe(6);
   });
 });

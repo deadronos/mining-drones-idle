@@ -2,8 +2,6 @@ import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { WarehousePanel } from './WarehousePanel';
-import { registerBridge, unregisterBridge } from '@/lib/rustBridgeRegistry';
-import type { RustSimBridge } from '@/lib/wasmSimBridge';
 import {
   storeApi,
   type Resources,

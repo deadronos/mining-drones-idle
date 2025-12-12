@@ -160,6 +160,36 @@ export const Scene = () => {
                   credits: rawResources[7],
                 });
               }
+
+              // Sync per-factory buffers: resources, energy, maxEnergy, haulersAssigned
+              // Only call buffer getters if they're present on the bridge object.
+              let facResources: Float32Array | null = null;
+              let facEnergy: Float32Array | null = null;
+              let facMaxEnergy: Float32Array | null = null;
+              let facHaulers: Float32Array | null = null;
+
+              if (typeof bridge.getFactoryResources === 'function') {
+                facResources = bridge.getFactoryResources();
+              }
+              if (typeof bridge.getFactoryEnergy === 'function') {
+                facEnergy = bridge.getFactoryEnergy();
+              }
+              if (typeof bridge.getFactoryMaxEnergy === 'function') {
+                facMaxEnergy = bridge.getFactoryMaxEnergy();
+              }
+              if (typeof bridge.getFactoryHaulersAssigned === 'function') {
+                facHaulers = bridge.getFactoryHaulersAssigned();
+              }
+
+              if (facResources && facResources.length >= 7) {
+                storeApi.getState().syncFactoriesFromRust({
+                  resources: facResources,
+                  energy: facEnergy,
+                  maxEnergy: facMaxEnergy,
+                  haulers: facHaulers,
+                });
+              }
+
             } catch (e) {
               console.error('Failed to sync state from Rust bridge', e);
             }

@@ -387,6 +387,63 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
     syncResources: (resources) => {
       set({ resources });
     },
+
+    // Sync per-factory buffers coming from Rust. This updates only the
+    // fields that are represented by the bridge (resources, energy, energyCapacity, haulersAssigned)
+    syncFactoriesFromRust: (buffers) => {
+      set((current) => {
+        const factories = current.factories;
+        if (!factories || factories.length === 0) return current;
+
+        const { resources: resBuf, energy: energyBuf, maxEnergy: maxEnergyBuf, haulers: haulersBuf } = buffers || {};
+
+        const resourcesArray: Float32Array | null = Array.isArray(resBuf) ? new Float32Array(resBuf) : resBuf instanceof Float32Array ? resBuf : null;
+        const energyArray: Float32Array | null = Array.isArray(energyBuf) ? new Float32Array(energyBuf) : energyBuf instanceof Float32Array ? energyBuf : null;
+        const maxEnergyArray: Float32Array | null = Array.isArray(maxEnergyBuf) ? new Float32Array(maxEnergyBuf) : maxEnergyBuf instanceof Float32Array ? maxEnergyBuf : null;
+        const haulersArray: Float32Array | null = Array.isArray(haulersBuf) ? new Float32Array(haulersBuf) : haulersBuf instanceof Float32Array ? haulersBuf : null;
+
+        const newFactories = factories.map((factory, idx) => {
+          let changed = false;
+          const clone = { ...factory };
+
+          // Resources buffer expected as 7 floats per factory
+          if (resourcesArray && resourcesArray.length >= (idx * 7 + 7)) {
+            const base = idx * 7;
+            const newRes = {
+              ore: resourcesArray[base],
+              ice: resourcesArray[base + 1],
+              metals: resourcesArray[base + 2],
+              crystals: resourcesArray[base + 3],
+              organics: resourcesArray[base + 4],
+              bars: resourcesArray[base + 5],
+              credits: resourcesArray[base + 6],
+            };
+            clone.resources = { ...clone.resources, ...newRes };
+            changed = true;
+          }
+
+          if (energyArray && energyArray.length > idx) {
+            clone.energy = energyArray[idx];
+            changed = true;
+          }
+
+          if (maxEnergyArray && maxEnergyArray.length > idx) {
+            clone.energyCapacity = maxEnergyArray[idx];
+            changed = true;
+          }
+
+          if (haulersArray && haulersArray.length > idx) {
+            // haulersAssigned is integer count
+            clone.haulersAssigned = Math.max(0, Math.trunc(haulersArray[idx] ?? 0));
+            changed = true;
+          }
+
+          return changed ? clone : factory;
+        });
+
+        return { factories: newFactories };
+      });
+    },
   };
 };
 
