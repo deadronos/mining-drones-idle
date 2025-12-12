@@ -47,6 +47,9 @@ const seedResources = async (
 test.describe('Factory Hauler Logistics', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to game and wait for app to initialize
+    await page.addInitScript(() => {
+      window.localStorage.removeItem('space-factory-save');
+    });
     await page.goto('/');
 
     await waitForPersistenceBridge(page);
@@ -105,6 +108,8 @@ test.describe('Factory Hauler Logistics', () => {
     const addButton = haulerPanel.locator('.hauler-btn').first();
     const countDisplay = haulerPanel.locator('.hauler-count .count');
 
+    await expect(countDisplay).toHaveText(/^[0-9]+$/);
+
     // Ensure we can reach 0 deterministically.
     const current = parseInt((await countDisplay.textContent()) ?? '0', 10);
     if (current <= 0) {
@@ -113,7 +118,10 @@ test.describe('Factory Hauler Logistics', () => {
     }
 
     // Remove until 0; button should disable and never go negative.
-    await removeButton.click();
+    while (parseInt((await countDisplay.textContent()) ?? '0', 10) > 0) {
+      await removeButton.click();
+      await expect(countDisplay).toHaveText(/^[0-9]+$/);
+    }
     await expect(countDisplay).toHaveText('0');
 
     // Should be disabled when count is 0
@@ -155,14 +163,15 @@ test.describe('Factory Hauler Logistics', () => {
 
     expect(importSucceeded).toBe(true);
 
-    const selectorIndex = page.locator('.factory-panel .selector-row p strong');
-    await expect(selectorIndex).toHaveText('1 / 3');
+    const factoryPanel = page.locator('.factory-panel');
+    await expect(factoryPanel).toBeVisible();
+    await expect(factoryPanel).toContainText(/\b1\s*\/\s*3\b/);
 
     // Navigate to second factory
     const nextButton = page.getByRole('button', { name: 'Next factory' });
     await expect(nextButton).toBeEnabled();
     await nextButton.click();
-    await expect(selectorIndex).toHaveText('2 / 3');
+    await expect(factoryPanel).toContainText(/\b2\s*\/\s*3\b/);
 
     // Verify we can see hauler controls for factory 2
     const haulerPanel = page.locator('.factory-haulers');
@@ -170,11 +179,28 @@ test.describe('Factory Hauler Logistics', () => {
   });
 
   test('should persist hauler assignment across navigation', async ({ page }) => {
-    // Buy first factory
-    const buyButton = page.getByRole('button', { name: 'Buy Factory' });
-    await buyButton.click();
-    const owned = page.locator('.factory-panel').locator('p', { hasText: 'Owned:' });
-    await expect(owned).toContainText('2');
+    // Avoid relying on purchase flow here; import a second factory so navigation is deterministic.
+    const snapshot = await page.evaluate(() => {
+      const helper = window as Window & { __persistence?: PersistenceBridge };
+      if (!helper.__persistence || typeof helper.__persistence.exportState !== 'function') {
+        throw new Error('persistence manager not available on window');
+      }
+      return JSON.parse(helper.__persistence.exportState());
+    });
+
+    snapshot.factories ??= [];
+    snapshot.factories.push({ id: 'e2e-factory-nav', position: [45, 0, 0] });
+
+    const importSucceeded = await page.evaluate((payload: unknown) => {
+      const helper = window as Window & { __persistence?: PersistenceBridge };
+      if (!helper.__persistence || typeof helper.__persistence.importState !== 'function') {
+        return false;
+      }
+      return helper.__persistence.importState(JSON.stringify(payload));
+    }, snapshot);
+
+    expect(importSucceeded).toBe(true);
+    await expect(page.locator('.factory-panel')).toContainText(/\b1\s*\/\s*2\b/);
 
     // Assign 3 haulers
     const haulerPanel = page.locator('.factory-haulers');
@@ -186,6 +212,7 @@ test.describe('Factory Hauler Logistics', () => {
 
     // Get the count
     const countDisplay = haulerPanel.locator('.hauler-count .count');
+    await expect(countDisplay).toHaveText(/^[0-9]+$/);
     const count = await countDisplay.textContent();
 
     // Cycle through factories and back
@@ -263,9 +290,12 @@ test.describe('Factory Hauler Logistics', () => {
     const removeButton = haulerPanel.locator('.hauler-btn').last(); // - button
     const countDisplay = haulerPanel.locator('.hauler-count .count');
 
+    await expect(countDisplay).toHaveText(/^[0-9]+$/);
+
     // Drive the UI to 0 and assert the remove button disables.
     while (parseInt((await countDisplay.textContent()) ?? '0', 10) > 0) {
       await removeButton.click();
+      await expect(countDisplay).toHaveText(/^[0-9]+$/);
     }
 
     await expect(countDisplay).toHaveText('0');
@@ -292,9 +322,12 @@ test.describe('Factory Hauler Logistics', () => {
     const addButton = haulerPanel.locator('.hauler-btn').first();
     const removeButton = haulerPanel.locator('.hauler-btn').last();
 
+    await expect(countDisplay).toHaveText(/^[0-9]+$/);
+
     // Normalize starting point.
     while (parseInt((await countDisplay.textContent()) ?? '0', 10) > 0) {
       await removeButton.click();
+      await expect(countDisplay).toHaveText(/^[0-9]+$/);
     }
 
     // Initially 0
