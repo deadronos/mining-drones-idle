@@ -1,119 +1,141 @@
 # Active Context
 
-## Current Focus
+## Current Work
 
-✅ **CODEX P1 BADGE FIX: Specialization Tech Unlock Path** ✅
+### 🔄 **TASK050 – Full Parity Implementation**
 
-- **Issue**: Specialization techs were permanently locked due to circular dependency in `specTechSpent` tracking
-  - `specTechSpent` only incremented after successful purchase, but unlock check happened before
-  - No gameplay path to reach 50k+ spending threshold for any secondary resource
-- **Solution**: Track all secondary resource spending across all systems
-  - Modified `investPrestige()`: now tracks spending on prestige investments
-  - Modified `purchaseFactory()`: now tracks metals/crystals spending when factories purchased
-  - Modified `upgradeFactory()`: now tracks secondary resources when upgrades purchased
-  - Added `trackSecondaryResourceSpend()` helper for future use
-- **Validation**: 194/194 tests passing ✅, TypeScript clean ✅, linting clean ✅
-- **Status**: Fix ready for deployment - Tier 2 specialization techs now unlock naturally via gameplay
+- Added factory position/energy parity checks and deterministic-seed coverage in `tests/unit/step-parity.test.ts`.
+- Added TS vs Rust offline comparison within 1% tolerance and kept existing offline determinism checks.
+- Added `schemaVersion` (TS + Rust) with validation/defaults and migration defaulting; perf bench at `tests/perf/step-bench.spec.ts`.
+- Added dedicated `wasm-parity` CI job running parity/perf suites; shadow-mode E2E now includes a 5s divergence-log guard.
+- Remaining: asteroid/depletion + per-drone parity coverage, longer shadow-mode parity runs/nightly gating, WASM artifact caching, biome parity decision.
 
-✅ **TASK035 & TASK036 Completed** ✅
+- Stabilized Playwright E2E after TS↔Rust handoff work:
+  - Fixed hidden import file input interaction in `tests/e2e/import-invalid.spec.ts`.
+  - Made `tests/e2e/factory-logistics.spec.ts` deterministic (snapshot-based setup + robust hauler-count handling).
+  - Full `npm run e2e` suite now passes (shadow-mode Rust-enabled tests still skipped).
 
-- **TASK035 (Remove ownedDrones)**: Successfully removed unused historical ownership record from entire codebase
-  - Removed 150+ lines across 9 files, deleted 2 files (RosterSection UI component & tests)
-  - Simplified factory state model, improved code maintainability
-  - All type definitions, serialization, store logic, and UI references cleaned
-- **TASK036 (Position-Based Unload Trigger)**: Implemented critical fix for queue jamming
-  - Drones now unload immediately upon arriving at factory position (< 1.0 units)
-  - Bypasses battery throttling that was causing 10-100x travel delays
-  - Preserves time-based trigger as fallback for edge cases
-- **Validation**: 189/189 tests passing ✅, TypeScript clean ✅, linting clean ✅
-- **Status**: Both tasks ready for production deployment
+- Fixed late-step parity divergence caused by asteroid recycle semantics: Rust now re-keys asteroid IDs on respawn and invalidates drone targets, matching TS “remove + spawn new” behavior.
 
-✅ **FactoryManager Refactor Complete (TASK023)**: Deleted old monolithic `FactoryManager.tsx` file that was blocking refactored version. Solar Array bonus now displays correctly in UI.
+- Aligned RNG consumption between TS and Rust for drone asteroid targeting and path seeds by:
+  - Moving TS pathSeed draw in `assignDroneTarget` to occur after region selection.
+  - Restoring unconditional asteroid RNG burn in `GameState::from_snapshot` so Rust advances RNG to match TS asteroid spawning even when asteroid metadata is provided.
 
-🟡 **TASK034 – Secondary Resource Sinks**: Implementing Phase 2 specialization techs and Phase 3 prestige investments to extend resource sinks beyond Tier 1. Focused on state schema, bonus application, UI, and persistence across prestige resets.
-🟡 **TASK032 – Warehouse Space-Station & Panel**: Implementing the new warehouse landmark in the world scene and redesigning the left HUD into a dedicated Warehouse panel with themed resource cards and bonuses display.
-🟡 **TASK033 – Hauler Tech Upgrades**: Building hybrid global/per-factory hauler upgrades per DES028, starting with module registry, bonus resolution utilities, and migration scaffolding.
-🟡 **TASK025 – Warehouse Reconciliation**: Standing up the warehouse-first resource model remains in soak; continue validating transfers and polish once the Settings work lands.
+## Active Tasks
 
-✅ **TASK029 – Local-First Energy Priority**: Completed full implementation of energy system reversal. Factories now use local energy first (for drone charging and processing), with global warehouse as backup. All 165 tests pass, code is clean (lint & typecheck).
+### ✅ **TASK045 – TypeScript WASM Bridge Implementation** (Just Completed)
 
-## Recent Changes
+- **Goal**: Implement the TypeScript bridge layer with graceful fallback.
+- **Status**: Completed.
+- **Completed**:
+  - Extended `RustSimBridge` interface with full lifecycle: `init()`, `dispose()`, `isReady()`.
+  - Added simulation methods: `step()` returns `TickResult`, `applyCommand()`, `simulateOffline()`.
+  - Added snapshot methods: `exportSnapshot()`, `loadSnapshot()`.
+  - Updated buffer types to match Rust `buffers.rs` (14 drone, 4 asteroid, 9 factory sections).
+  - Created `src/lib/wasmLoader.ts` with WebAssembly feature detection and fallback.
+  - Updated `useRustEngine` hook with `reinitialize()` and proper cleanup.
+  - Created `useSimulationData` abstraction hook for TS/Rust data source switching.
+  - All 245 tests pass.
 
-- **TASK024 & TASK023 Completed – Three Major Refactors Now Properly Complete** ✅
-  - **TASK024 (Serialization)**: Redo from incomplete stub state
-    - Moved all store-level functions from monolithic file → `serialization/store.ts` (~150 lines)
-    - Functions: normalizeResources, normalizeModules, normalizePrestige, normalizeSave, normalizeNotation, normalizePerformanceProfile, normalizeSettings, normalizeSnapshot, serializeStore, stringifySnapshot, parseSnapshot
-    - Converted monolithic `serialization.ts` (587 lines) → 12-line backwards compatibility bridge
-    - Updated `serialization/index.ts` to export all store functions properly
-    - Result: Clean modular architecture, no circular dependencies, all 174 tests passing
-  - **TASK023 (FactoryManager)**: Fixed UI display issue
-    - Deleted old monolithic `src/ui/FactoryManager.tsx` that was blocking refactored version
-    - Module resolution was choosing .tsx file over folder, preventing refactored code from loading
-    - Solar Array bonus now displays correctly in UI and scales properly (L1 +0.15/s, L2 +0.30/s)
-  - **TASK022 (Store Slices)**: Verified actually completed correctly ✅
-  - Status: All three major refactor tasks now properly and fully completed
+### 🔄 **TASK043 – Full Rust → TypeScript Parity Rewrite**
 
-- **TASK029 Completed – Local-First Energy Priority Implemented** ✅
-  - Inverted drone charging logic in `src/ecs/systems/power.ts` (lines 38-80)
-    - Now: try factory-local first (including solar gain), then fallback to global
-    - Before: tried global first, then factory-local
-  - Removed upfront global energy pull from `src/state/processing/gameProcessing.ts`
-    - Factories consume local only; sit at zero when depleted
-    - No emergency global pull on demand
-  - Updated power system tests (6 tests) to verify local-first charging behavior
-  - Created new gameProcessing tests (6 tests) to verify factory local-only consumption
-  - All 165 tests pass, lint clean, typecheck clean
-  - Design decisions locked (DES025): factories sit at zero locally, solar ignored at capacity
-  - Behavioral impact: factories now have energy autonomy, per-factory solar upgrades are more valuable, global warehouse is backup/buffer
-  - Located missing `'returning'` → `'unloading'` transition in `src/ecs/systems/travel.ts:79`
-  - Transition exists and is correct; the real issue is travel completion gating
-  - Root cause: battery fraction throttling on travel progress (`travel.elapsed += dt * fraction`)
-  - When battery critical (0-5%), throttleFloor clamps fraction to 0.1-0.3 minimum
-  - This causes return trips to take 10-100x longer than intended
-  - With low battery: 10-second trip takes 100+ seconds real-time
-  - Drones block docking slots indefinitely while waiting for travel to complete
-  - Waiting drones cannot progress → **queue jamming cascade**
-  - Created FINDING-001 with math, test evidence, and 4 solution approaches
-  - Recommended fix: trigger unload on position arrival, not travel completion
-  - Updated DES024 with root cause analysis and marked completed
+- **Goal**: Replace Rust simulation skeleton with a 1:1 mapping of TS state, systems, and modifiers.
+- **Status**: Implementation (Systems Complete).
+- **Recent**:
+  - Ported all remaining systems: Refinery, Power, Unload.
+  - Updated ECS buffer layout with `haulers_assigned`.
+  - Wired all systems into `api.rs` `step` function with correct modifiers.
+  - Verified compilation of the full Rust codebase.
+- **Next Steps**:
+  - Verify runtime behavior (WASM build & integration).
+  - Debug any logic mismatches.
+  - Complete the TS-side integration (if not already done).
 
-- Completed TASK027: Improved drone factory assignment algorithm
-  - Changed sort criteria from distance-first to occupancy-first (least-filled docking slots)
-  - Drones now distribute evenly across all available factories instead of clustering at Factory 0
-  - Added buffer reserve target display to factory storage panel showing logistics decision thresholds
-  - Updated RQ-023 and added RQ-044 to requirements
-  - All tests pass (158 tests), TypeScript clean, linting clean
+### 🔄 **TASK042 – Rust Integration & Parity Verification**
 
-- Added Logistics Modules and per-factory override help affordances clarifying how global bonuses stack (TASK033)
+- **Goal**: Integrate `rust-engine` into the main game loop and verify parity.
+- **Status**: Implementation Complete. Validation Pending.
+- **Recent**:
+  - Implemented `checkParity` and Shadow Mode.
+  - Created `RustDrones` for direct WASM visualization.
+  - Updated `Scene.tsx` to support engine switching.
+  - **Fixed Parity Mismatch**: Fixed `sys_drone_ai` ignoring `RETURNING` state, causing drones to get stuck and not unload ore.
+- Fixed `api.rs` crash when factory count is 0.
+- Fixed `sys_power` unit test.
+- **Next Steps**:
+  - Run the game and verify "Shadow Mode" logs.
+  - Fix any divergences found.
+  - Implement `RustFactories` and `RustAsteroids` for full visual parity.
 
-- Fixed hauler logistics not exporting Bars to warehouse on fresh runs:
-  - computeBufferTarget is now resource-aware (Ore uses consumption buffer; Bars keep a minimal local buffer; others conservative).
-  - Scheduler tick cadence bug fixed: we now preserve fractional time instead of resetting to 0 after each run, ensuring dispatch every 2s.
-  - Added focused unit/integration tests for Bars → Warehouse transfers; full test suite passes.
+- 🚧 **TASK038 – Factory Metrics & Mini-Charts** remains in progress.
+  - Factory Metrics tab now renders four sparklines with summary stats, sampling banner, and pause control.
+  - Inline sparkline component ships on factory cards and hides when sampling disabled or empty.
+  - Settings panel exposes metrics toggle, interval, and retention inputs; metrics helpers covered by new unit tests.
+  - Sparklines now include descriptive titles/ARIA wiring and inline component gains narrated labels with dedicated Vitest coverage.
+  - Metrics banner now surfaces the most recent sampling time so players can relate charts to gameplay moments.
 
-- Captured RQ-041–RQ-043 covering multi-column Settings behavior, panel height clamping, and narrow layout regressions.
-- Authored DES022 and TASK026 to define the responsive Settings approach and implementation steps and validated the responsive dialog manually at target sizes.
-- Reviewed DES021 and TASK025 plan, noted dual-inventory pain points and buffer/warehouse design decisions.
-- Audited store slices, logistics scheduler, unload system, and processing loops to map current duplication paths.
-- Prepared implementation plan emphasizing phased delivery (state/model changes first, logistics next, UI/tests afterward).
-- Seeded Factory 0 with onboarding hauler + starter stock, added `WAREHOUSE_CONFIG`/capacity helpers, and adjusted factory processing/tests to keep production local.
-- Implemented warehouse-aware logistics scheduling with reservations, warehouse capacity clamping, and bidirectional transfer tests.
-- Reworked `addResourcesToFactory`/unload path so non-ore stays local unless no dock, eliminating immediate warehouse duplication and adding coverage for both routes.
-- Added Settings primer copy explaining warehouse vs. factory ledgers, delivered 0.3.2 migration & regression coverage, and landed warehouse-focused integration tests (export/import, prestige, save/load).
+---
+
+## Recent Completions
+
+✅ **Completed: TASK056 – Logistics Parity Implementation**
+
+- Ported Rust logistics scheduler to mirror TS reservations (factory↔factory/warehouse, upgrade requests) and hauler config resolution; added upgrade request schema support.
+- Added logistics parity unit test comparing scheduled transfers/reservations and rebuilt WASM artifacts.
+
+✅ **Completed: TASK058 – Rendering & Bridge Integration**
+
+- Rust rendering now reads drones, asteroids, and factories from Rust buffers when `useRustSim` is enabled; colors/scale derive from ore/resource profiles with TS biome fallback.
+- HUD/Factory panels use Rust buffer aggregates via `useRustHUD` with graceful TS fallback and bridge readiness gating; selection clicks are disabled in Rust mode to avoid stale IDs.
+
+✅ **Completed: TASK057 – Commands, Snapshot & Offline Parity**
+
+- Aligned Rust command handlers with TS costs/effects (module/factory upgrades, hauler assignment, prestige gain, recycle asteroid sync) and tightened command parity tests to require zero drift.
+- Rust offline simulation now mirrors TS refinery-only path with sink bonuses via the new WASM offline API; schemaVersion normalized/validated and covered by round-trip snapshot tests.
+
+✅ **Completed: TASK052 – Parity Test Expansion & Measurement**
+
+- Added shared parity logger (`PARITY_DEBUG`/`--debug-parity`) and optional enforcement flag (`PARITY_ENFORCE`), expanded step/offline/command parity suites, and enhanced shadow-mode E2E with rolling metrics and screenshot capture on drift.
+
+✅ **Completed: TASK045 – TypeScript WASM Bridge Implementation**
+
+- Extended `RustSimBridge` interface with full lifecycle and snapshot methods.
+- Created `wasmLoader.ts` with WebAssembly feature detection and graceful fallback.
+- Created `useSimulationData` abstraction hook.
+- Updated `useRustEngine` with proper cleanup and reinitialize support.
+
+✅ **Completed: TASK044 – Rust Critical Fixes & WASM Build**
+
+- Fixed let-chain syntax errors (Rust 2024 feature in 2021 edition).
+- Added safe slice helper methods to BufferSection.
+- WASM build successful with wasm-pack.
+
+✅ **Completed: TASK041 – Rust Simulation Systems & Logic Port**
+
+- Implemented core ECS systems in Rust: Movement, Mining, Power, Refinery.
+- Updated `wasmSimBridge.ts` to expose all SoA buffers.
+- Verified parity with unit tests.
+
+✅ **Completed: TASK040 – Rust Simulation Core**
+
+- Scaffolding `/rust-engine` crate completed with RNG parity tests, snapshot import/export, layout planner, and data buffer.
+- Implemented TS bridge (`wasmSimBridge`) matching `wasm-bindgen` class structure.
+
+✅ **Completed: TASK053 – Drone AI & Travel Parity**
+
+- Weighted asteroid targeting/region offsets, queue-aware returns, and travel seed/control parity matched to TS. RNG burn/path seed fixes keep flight seeds aligned in parity suites; rebuilt WASM and validated with `npm run typecheck`, `npm run lint`, `npm run test`.
+
+✅ **Completed: TASK054 – Asteroids & Biomes Parity**
+
+- Biome-driven respawn replaces uniform weights; scanner/sink richness multipliers applied, RNG draw count (11) mirrored, gravity metadata refreshed, and respawn parity test added. Validated with `npm run build:wasm`, `npm run typecheck`, `npm run lint`, `npm run test`.
+
+✅ **Completed: TASK055 – Power & Refinery Alignment**
+
+- Rust power/refinery now uses factory-specific idle/hauler drains, solar regen with effective caps, local-first drone charging (owner/target factory), and refinery slot start/tick parity. Added wasm parity test; `npm run build:wasm`, `npm run typecheck`, `npm run lint`, `npm run test` passing (parity divergence logs expected).
 
 ## Next Steps
 
-1. Land TASK034 Phase 2 specialization techs (state, selectors, bonuses, UI, tests).
-2. Follow through with TASK034 Phase 3 prestige investments (persistent state, exponential costs, UI, tests).
-3. Validate multiplicative stacking across tiers and add tooltips per DES029 Phase 4.
-4. Execute TASK032 implementation (world warehouse entity, Warehouse panel styling, supporting tests) following DES027 once current work stabilizes.
-5. **TASK028 Follow-up**: Design decision on solution approach (current recommendation: position-based unload trigger).
-6. Continue monitoring warehouse reconciliation metrics and log any regressions surfaced during Settings QA.
-7. Observe drone distribution in live play to ensure load balancing is working as expected (no single factory dominating queue).
-8. Gather player feedback on buffer target display clarity and adjust labels/formatting if needed.
-9. Capture tutorial/tooling follow-up (tutorial overlay or HUD tooltip) once UI teams provide direction.
-10. Prepare final TASK025 wrap-up notes and identify residual polish items for warehouse UX.
-
-## Memory Bank Audit
-
-- 2025-10-22: Performed Memory Bank audit and added `TASK999` to record the update. Core memory files validated and a short progress note appended. One persistence test timed out during a local test run; no code changes were made as part of this audit.
+1. **TASK046** – Expand `SimulationCommand` enum to support `BuyModule`, `DoPrestige`, etc.
+2. **TASK047** – Store integration with feature flag routing commands through bridge.
+3. **TASK048** – Parity testing suite for RNG, step, and offline simulation.
+4. **TASK049** – Rendering integration to read positions from bridge when enabled.

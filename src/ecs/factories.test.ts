@@ -148,13 +148,14 @@ describe('Factory Entity', () => {
       transferOreToFactory(factory, 100);
       const process = startRefineProcess(factory, 'ore', 50, 'refine-1');
       expect(process).not.toBeNull();
-
       const output1 = tickRefineProcess(factory, process!, 5);
-      expect(output1).toBe(0);
-      expect(process?.progress).toBeCloseTo(0.5, 1);
+      // 5s of 10s total -> 0.5 progress -> 50 * 0.5 = 25 refined
+      expect(output1).toBeCloseTo(25, 6);
+      expect(process?.progress).toBeCloseTo(0.5, 6);
 
       const output2 = tickRefineProcess(factory, process!, 5);
-      expect(output2).toBe(50); // Completed
+      // remaining 0.5 progress -> another ~25 refined completing the process
+      expect(output2).toBeCloseTo(25, 6);
       expect(factory.activeRefines).toHaveLength(0);
     });
 
@@ -272,7 +273,8 @@ describe('Factory Entity', () => {
       const dockingCost = computeUpgradeCost('docking', factory.upgrades.docking ?? 0);
       factory.upgrades.refine = 2; // Increase refine cost via level scaling
       const refineCost = computeUpgradeCost('refine', factory.upgrades.refine);
-      factory.resources.bars = (dockingCost.bars ?? 0) + 50; // enough for docking but below refine level 2
+      // Set resources to be enough for docking but below refine cost
+      factory.resources.bars = (dockingCost.bars ?? 0) + 1;
 
       const request = detectUpgradeShortfall(factory, ['docking', 'refine']);
 
@@ -312,11 +314,14 @@ describe('Factory Entity', () => {
     });
 
     it('creates request with 60s expiration', () => {
-      factory.resources.bars = 100;
+      const cost = computeUpgradeCost('docking', factory.upgrades.docking ?? 0);
+      // Make sure we are short by 1 bar so a request is created
+      factory.resources.bars = (cost.bars ?? 0) - 1;
       const before = Date.now();
       const request = detectUpgradeShortfall(factory, ['docking']);
       const after = Date.now();
 
+      expect(request).not.toBeNull();
       expect(request?.expiresAt).toBeGreaterThanOrEqual(before + 60000);
       expect(request?.expiresAt).toBeLessThanOrEqual(after + 60000);
     });

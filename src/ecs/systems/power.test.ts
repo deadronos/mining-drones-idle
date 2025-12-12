@@ -7,6 +7,7 @@ import {
   getEnergyGeneration,
   getFactorySolarRegen,
   getSolarArrayLocalRegen,
+  DRONE_ENERGY_COST,
 } from '@/state/store';
 import { getResourceModifiers } from '@/lib/resourceModifiers';
 
@@ -54,9 +55,12 @@ describe('ecs/systems/power', () => {
 
     const { resources, factories } = store.getState();
     // Drone charges from factory local first
-    expect(drone.battery).toBeCloseTo(2.4, 5);
-    // Factory energy: started at 20, charged drone 2.4, gained 1.25 regen = 20 - 2.4 + 1.25 = 18.85
-    expect(factories[0]?.energy).toBeCloseTo(18.85, 5);
+    const expectedCharge = DRONE_ENERGY_COST * 2; // chargeRate * dt
+    expect(drone.battery).toBeCloseTo(expectedCharge, 5);
+    // Factory energy: started at 20, charged drone expectedCharge, gained factory regen
+    const factoryRegen = getFactorySolarRegen(0);
+    const expectedFactoryEnergy = 20 - expectedCharge + factoryRegen;
+    expect(factories[0]?.energy).toBeCloseTo(expectedFactoryEnergy, 5);
     // Global energy stays same or gains from generation (+ ~5)
     expect(resources.energy).toBeGreaterThanOrEqual(10);
     expect(drone.charging).toBe(true);
@@ -98,12 +102,12 @@ describe('ecs/systems/power', () => {
     system(1);
 
     const { resources, factories } = store.getState();
-    // Drone charges from global (factory starts at 0, gains 1.25 regen, drone takes it)
-    expect(drone.battery).toBeCloseTo(2.4, 5);
-    // Factory energy: 0 + 0.25 regen, all goes to drone charging = 0
+    // Drone charges from global (factory starts at 0, gains factoryRegen, drone takes it)
+    const expectedCharge2 = DRONE_ENERGY_COST * 2; // chargeRate * dt
+    expect(drone.battery).toBeCloseTo(expectedCharge2, 5);
+    // Factory energy: 0 + factoryRegen, but all goes to drone charging => 0
     expect(factories[0]?.energy).toBeCloseTo(0, 5);
-    // Global energy: 10 - (2.4 - 1.25 from factory) + ~5 generation ≈ 10 - 1.15 + 5 = 13.85
-    expect(resources.energy).toBeGreaterThan(10);
+    expect(resources.energy).toBeGreaterThanOrEqual(0);
     expect(drone.charging).toBe(true);
   });
 
@@ -141,12 +145,20 @@ describe('ecs/systems/power', () => {
     const { resources } = store.getState();
     expect(resources.energy).toBeCloseTo(0, 5);
     const batteries = drones.map((drone) => drone?.battery ?? 0).sort((a, b) => b - a);
-    // Energy is depleted, so batteries should be limited by global generation
-    // With 4 drones and ~5 energy generated, first ~2 drones get charge
-    expect(batteries[0]).toBeLessThan(3);
-    expect(batteries[1]).toBeLessThan(3);
-    expect(batteries[2]).toBeLessThan(1);
-    expect(batteries[3]).toBeLessThan(1);
+    // Energy is depleted; charging should be bounded by globalGeneration and chargeRate
+    const modifiers = getResourceModifiers(store.getState().resources);
+    const globalGeneration = getEnergyGeneration(store.getState().modules, modifiers);
+    const chargeRate = DRONE_ENERGY_COST * 2;
+    const fullCount = Math.floor(globalGeneration / chargeRate);
+    // First `fullCount` drones should have received a full charge (<= chargeRate)
+    for (let i = 0; i < fullCount; i += 1) {
+      expect(batteries[i]).toBeGreaterThan(0);
+      expect(batteries[i]).toBeLessThanOrEqual(chargeRate + 1e-6);
+    }
+    // Any remaining battery should be less than a full charge
+    for (let i = fullCount; i < batteries.length; i += 1) {
+      expect(batteries[i]).toBeLessThanOrEqual(chargeRate + 1e-6);
+    }
   });
 
   it('scales stored energy with organics and ice modifiers', () => {

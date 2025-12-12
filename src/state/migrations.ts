@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unnecessary-type-assertion */
 import type { StoreSnapshot } from '@/state/store';
-import { saveVersion } from '@/state/store';
+import { saveVersion, SCHEMA_VERSION } from '@/state/store';
 import {
   initialSpecTechs,
   initialSpecTechSpent,
   initialPrestigeInvestments,
 } from '@/state/constants';
+import { coerceNumber } from './serialization/types';
 
 export interface MigrationReport {
   migrated: boolean;
@@ -201,30 +202,37 @@ const migrations: Array<{ targetVersion: string; migrate: MigrationFn }> = [
       }
 
       const pendingTransfers = migrated.logisticsQueues?.pendingTransfers;
-      migrated.logisticsQueues = {
-        pendingTransfers: Array.isArray(pendingTransfers)
-          ? pendingTransfers
-              .map((transfer: any) => ({
-                id: transfer?.id ?? `migration-${Date.now()}`,
-                fromFactoryId: transfer?.fromFactoryId,
-                toFactoryId: transfer?.toFactoryId,
-                resource: transfer?.resource,
-                amount: Number(transfer?.amount) || 0,
-                eta: Number(transfer?.eta) || 0,
-                status: (transfer?.status === 'in-transit' ? 'in-transit' : 'scheduled') as
-                  | 'in-transit'
-                  | 'scheduled',
-              }))
-              .filter(
-                (transfer: any) =>
-                  typeof transfer.fromFactoryId === 'string' &&
-                  typeof transfer.toFactoryId === 'string' &&
-                  typeof transfer.resource === 'string' &&
-                  transfer.amount > 0 &&
-                  Number.isFinite(transfer.eta),
-              )
-          : [],
-      };
+        migrated.logisticsQueues = {
+          pendingTransfers: Array.isArray(pendingTransfers)
+            ? pendingTransfers
+                .map((transfer: any) => ({
+                  id: transfer?.id ?? `migration-${Date.now()}`,
+                  fromFactoryId: transfer?.fromFactoryId,
+                  toFactoryId: transfer?.toFactoryId,
+                  resource: transfer?.resource,
+                  amount: Number(transfer?.amount) || 0,
+                  eta: Number(transfer?.eta) || 0,
+                  status: (transfer?.status === 'in-transit'
+                    ? 'in-transit'
+                    : transfer?.status === 'completed'
+                    ? 'completed'
+                    : 'scheduled') as 'scheduled' | 'in-transit' | 'completed',
+                  departedAt:
+                    typeof transfer?.departedAt === 'number' && Number.isFinite(transfer.departedAt)
+                      ? Math.min(Number(transfer.departedAt), Number(transfer?.eta) || 0)
+                      : Math.max(0, (Number(transfer?.eta) || 0) - 0.1),
+                }))
+                .filter(
+                  (transfer: any) =>
+                    typeof transfer.fromFactoryId === 'string' &&
+                    typeof transfer.toFactoryId === 'string' &&
+                    typeof transfer.resource === 'string' &&
+                    transfer.amount > 0 &&
+                    Number.isFinite(transfer.eta) &&
+                    Number.isFinite(transfer.departedAt),
+                )
+            : [],
+        };
 
       return { snapshot: migrated, description: 'normalize logistics data for warehouse routing' };
     },
@@ -298,6 +306,42 @@ const migrations: Array<{ targetVersion: string; migrate: MigrationFn }> = [
       return { snapshot: migrated, description: 'initialize specialization tech and investment fields' };
     },
   },
+  {
+    targetVersion: '0.3.5',
+    migrate: (snapshot) => {
+      const migrated = { ...snapshot } as StoreSnapshot;
+      migrated.settings = {
+        ...(migrated.settings ?? {}),
+        showHaulerShips: migrated.settings?.showHaulerShips ?? true,
+      };
+
+      const pendingTransfers = migrated.logisticsQueues?.pendingTransfers;
+      if (Array.isArray(pendingTransfers)) {
+        migrated.logisticsQueues = {
+          pendingTransfers: pendingTransfers.map((transfer) => {
+            const eta = coerceNumber((transfer as { eta?: unknown })?.eta, 0);
+            const defaultDeparted = Math.max(0, eta - 0.1);
+            const departedAt = Math.min(
+              coerceNumber((transfer as { departedAt?: unknown })?.departedAt, defaultDeparted),
+              eta,
+            );
+            return {
+              ...transfer,
+              eta,
+              departedAt,
+            };
+          }),
+        };
+      } else {
+        migrated.logisticsQueues ??= { pendingTransfers: [] };
+      }
+
+      return {
+        snapshot: migrated,
+        description: 'add hauler ship visibility toggle and departed timestamps',
+      };
+    },
+  },
 ];
 
 /**
@@ -341,6 +385,7 @@ export const migrateSnapshot = (
     version: saveVersion,
     lastSave: working.save?.lastSave ?? Date.now(),
   };
+  working.schemaVersion = working.schemaVersion ?? SCHEMA_VERSION;
   report.toVersion = saveVersion;
   return { snapshot: working, report };
 };

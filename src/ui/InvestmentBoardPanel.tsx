@@ -9,9 +9,7 @@ import {
   getPrestigeInvestmentCost,
   getSinkBonuses,
 } from '@/state/sinks';
-
-const integerFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
-const percentFormatter = (value: number) => `${(value * 100).toFixed(1)}%`;
+import { formatInteger, formatPercent } from '@/lib/formatters';
 
 interface InvestmentEntry {
   id: PrestigeInvestmentId;
@@ -67,13 +65,13 @@ export const InvestmentBoardPanel = () => {
       <p className="warehouse-panel__investments-summary">
         Global bonuses stack with specialization techs. Current multipliers:
         {' '}
-        <span title="Drone Velocity">Speed {percentFormatter(sinkBonuses.droneSpeedMultiplier - 1)}</span>,
+        <span title="Drone Velocity">Speed {formatPercent(sinkBonuses.droneSpeedMultiplier - 1)}</span>,
         {' '}
-        <span title="Asteroid Abundance">Spawn {percentFormatter(sinkBonuses.asteroidSpawnMultiplier - 1)}</span>,
+        <span title="Asteroid Abundance">Spawn {formatPercent(sinkBonuses.asteroidSpawnMultiplier - 1)}</span>,
         {' '}
-        <span title="Refinery Mastery">Refinery {percentFormatter(sinkBonuses.refineryYieldMultiplier - 1)}</span>,
+        <span title="Refinery Mastery">Refinery {formatPercent(sinkBonuses.refineryYieldMultiplier - 1)}</span>,
         {' '}
-        <span title="Offline Efficiency">Offline {percentFormatter(sinkBonuses.offlineProgressMultiplier - 1)}</span>
+        <span title="Offline Efficiency">Offline {formatPercent(sinkBonuses.offlineProgressMultiplier - 1)}</span>
       </p>
       <ul className="warehouse-panel__investment-list">
         {investments.map((investment) => (
@@ -86,7 +84,7 @@ export const InvestmentBoardPanel = () => {
                 </span>
               </div>
               <span className="warehouse-panel__investment-bonus">
-                Total Bonus: {percentFormatter(investment.totalBonus)}
+                Total Bonus: {formatPercent(investment.totalBonus)}
               </span>
             </header>
             <p className="warehouse-panel__investment-description">{investment.description}</p>
@@ -97,10 +95,10 @@ export const InvestmentBoardPanel = () => {
                 disabled={!investment.canAfford}
                 onClick={() => investPrestige(investment.id)}
               >
-                Invest {integerFormatter.format(investment.cost)} {investment.resource}
+                Invest {formatInteger(investment.cost)} {investment.resource}
               </button>
               <span className="warehouse-panel__investment-effect">
-                +{percentFormatter(investment.bonusPerTier)} per tier
+                +{formatPercent(investment.bonusPerTier)} per tier
               </span>
             </div>
           </li>

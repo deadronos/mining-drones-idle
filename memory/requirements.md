@@ -227,3 +227,55 @@ WHEN prestige investment tiers exist, THE SYSTEM SHALL apply their bonuses multi
 ## RQ-057 Sink Progress UI Visibility
 
 WHEN viewing the Warehouse prestige and specialization panels, THE SYSTEM SHALL display current spend totals, tier levels, next costs, and aggregate multipliers so players understand the effect of their investments. [Acceptance: React component tests verify renders for locked/unlocked states, tooltip text, and formatted progress values.]
+
+## RQ-058 Hauler Ship Rendering
+
+WHEN logistics schedules a transfer with status `scheduled` or `in-transit`, THE SYSTEM SHALL render an animated hauler ship along that route within the 3D scene instead of the legacy transfer line. [Acceptance: React Three Fiber test mounts the component with a sample transfer and asserts the instanced mesh count equals the transfer count.]
+
+## RQ-059 Hauler Flight Interpolation
+
+WHEN a hauler ship is in flight, THE SYSTEM SHALL interpolate its position along an arcing Bezier curve using the transfer's departure time, ETA, and the current `gameTime` so that progress is time-based and clamped to `[0, 1]`. [Acceptance: Unit tests validate the interpolation helper returns correct vectors at `t = 0`, mid-curve, and `t = 1`, including clamping for early/late gameTime values.]
+
+## RQ-060 Hauler Orientation & Trails
+
+WHEN hauler ships move, THE SYSTEM SHALL orient each ship to face its instantaneous velocity and emit a resource-colored engine glow or trail so players can perceive direction and motion. [Acceptance: Rendering test inspects instance matrices/quaternions for forward alignment, and snapshot verifies emissive trail material per resource color.]
+
+## RQ-061 Hauler Interaction Feedback
+
+WHEN a player hovers a hauler ship, THE SYSTEM SHALL display a tooltip containing source, destination, resource, amount, and ETA remaining while subtly brightening the ship. [Acceptance: Interaction test triggers pointer events and confirms tooltip content and emissive intensity update.]
+
+## RQ-062 Hauler Visual Toggle
+
+WHEN the player disables "Show Hauler Ships" in Settings, THE SYSTEM SHALL hide hauler ships and fall back to the legacy transfer lines while persisting the preference across saves. [Acceptance: Settings test toggles the option, verifies store state persists, and asserts the scene swaps between components accordingly.]
+
+## RQ-063 Factory Metrics Tab Visibility
+
+WHEN the player inspects a factory, THE SYSTEM SHALL surface a Metrics tab containing ore-in, bars-produced, and hauler throughput sparklines plus the latest numeric summaries within the panel. [Acceptance: React UI test opens the factory inspector and asserts the Metrics tab renders three labeled charts and numeric readouts for the selected factory.]
+
+## RQ-064 Factory Metrics Sampling Buffer
+
+WHEN the simulation advances while metrics are enabled, THE SYSTEM SHALL collect per-factory ore delta, bar delta, hauler throughput, and energy samples at the configured interval and maintain at least the last five minutes of data. [Acceptance: Store-level test simulates ticks over five minutes and verifies each factory buffer contains approximately 60 samples with correct timestamps and computed rates.]
+
+## RQ-065 Metrics Performance Profile Gating
+
+WHEN the player sets the performance profile to "low" or toggles metrics off, THE SYSTEM SHALL throttle sampling to no more frequently than every fifteen seconds or suspend sampling entirely to protect frame time. [Acceptance: Settings/metrics test updates the profile to "low" and confirms the effective sampling interval meets or exceeds 15 seconds and buffers stop accumulating when metrics are disabled.]
+
+## RQ-066 Metrics Lifecycle Cleanup
+
+WHEN a factory is removed or the game resets, THE SYSTEM SHALL clear the associated metrics buffers to prevent stale data and memory leaks. [Acceptance: Store integration test removes a factory and asserts its metrics entry is removed immediately; resetGame test verifies all metrics maps are empty afterward.]
+
+## RQ-067 Rust Snapshot Intake Validation
+
+WHEN the Rust simulation core initializes from a JS snapshot, THE SYSTEM SHALL validate required world sections (resources, modules, prestige, save, settings) and reject payloads missing these blocks with descriptive errors. [Acceptance: Rust unit test loads valid snapshots successfully and returns structured errors when required sections are absent.]
+
+## RQ-068 Rust Snapshot Export Compatibility
+
+WHEN the Rust simulation core exports a snapshot, THE SYSTEM SHALL emit JSON compatible with the current `StoreSnapshot` schema, preserving module/resource/settings data and passthrough fields such as factories and logistics queues. [Acceptance: Rust unit test round-trips a snapshot through import/export and asserts the JSON retains untouched factory/logistics payloads.]
+
+## RQ-069 Cross-Language RNG Parity
+
+WHEN the Rust simulation core seeds its RNG with the same value used by the TypeScript `createRng`, THE SYSTEM SHALL produce identical float and integer sequences for at least the first 10 samples. [Acceptance: Rust unit test compares sequences from the Rust RNG against precomputed TypeScript outputs for two seeds.]
+
+## RQ-070 Typed-Array Layout Calculation
+
+WHEN the Rust simulation core plans typed-array exports for drones, asteroids, and factories, THE SYSTEM SHALL compute contiguous Float32/Uint32 sections with byte offsets and lengths that reflect the requested entity counts. [Acceptance: Rust unit test requests a layout for specific counts and verifies offsets increase monotonically and lengths match per-entity component sizes.]

@@ -39,6 +39,27 @@ describe('state/store', () => {
     expect(after.resources.metals).toBeLessThan(12_000);
   });
 
+  it('tracks highlighted factories for hauler interactions', () => {
+    const store = createStoreInstance();
+    expect(store.getState().highlightedFactories).toEqual({ sourceId: null, destId: null });
+
+    store.getState().setHighlightedFactories({ sourceId: 'factory-a', destId: 'factory-b' });
+    expect(store.getState().highlightedFactories).toEqual({
+      sourceId: 'factory-a',
+      destId: 'factory-b',
+    });
+
+    // No change when setting the same highlight
+    store.getState().setHighlightedFactories({ sourceId: 'factory-a', destId: 'factory-b' });
+    expect(store.getState().highlightedFactories).toEqual({
+      sourceId: 'factory-a',
+      destId: 'factory-b',
+    });
+
+    store.getState().setHighlightedFactories({ sourceId: null, destId: null });
+    expect(store.getState().highlightedFactories).toEqual({ sourceId: null, destId: null });
+  });
+
   it('persists prestige investments across prestige resets', () => {
     const store = createStoreInstance();
     store.setState((state) => ({
@@ -142,6 +163,7 @@ describe('state/store', () => {
             amount: 25,
             status: 'scheduled',
             eta: base.gameTime + 5,
+            departedAt: base.gameTime,
           },
         ],
       },
@@ -192,6 +214,7 @@ describe('state/store', () => {
       notation: 'engineering',
       offlineCapHours: -4,
       showTrails: false,
+      showHaulerShips: false,
       performanceProfile: 'high',
     });
     const afterUpdate = store.getState();
@@ -199,12 +222,14 @@ describe('state/store', () => {
     expect(afterUpdate.settings.notation).toBe('engineering');
     expect(afterUpdate.settings.offlineCapHours).toBe(0);
     expect(afterUpdate.settings.showTrails).toBe(false);
+    expect(afterUpdate.settings.showHaulerShips).toBe(false);
     expect(afterUpdate.settings.performanceProfile).toBe('high');
 
     const snapshot = serializeStore(store.getState());
     expect(snapshot.settings.autosaveInterval).toBe(33);
     expect(snapshot.save.version).toBe(saveVersion);
     expect(snapshot.settings.showTrails).toBe(false);
+    expect(snapshot.settings.showHaulerShips).toBe(false);
 
     const payload = JSON.stringify(snapshot);
     const parsed = parseSnapshot(payload);
@@ -216,6 +241,7 @@ describe('state/store', () => {
     const imported = fresh.getState();
     expect(imported.settings.autosaveInterval).toBe(33);
     expect(imported.settings.showTrails).toBe(false);
+    expect(imported.settings.showHaulerShips).toBe(false);
     expect(imported.settings.performanceProfile).toBe('high');
     expect(imported.resources.ore).toBe(snapshot.resources.ore);
   });

@@ -3,6 +3,15 @@ import { useStore, type PerformanceProfile } from '@/state/store';
 import type { PersistenceManager } from '@/state/persistence';
 import type { MigrationReport } from '@/state/migrations';
 import { useToast } from './ToastProvider';
+import {
+  WarehousePrimerSection,
+  DebugSettingsSection,
+  PersistenceSettingsSection,
+  VisualSettingsSection,
+  MetricsSettingsSection,
+  DataToolsSection,
+  ResetConfirmationDialog,
+} from './settings/sections';
 
 interface SettingsPanelProps {
   onClose: () => void;
@@ -21,6 +30,16 @@ const formatTimestamp = (value: number) => {
   }).format(new Date(value));
 };
 
+/**
+ * Settings panel component for configuring game options.
+ * Handles persistence (save/load/reset), visual settings, metrics, and debug tools.
+ * Rendered as a modal dialog overlay.
+ *
+ * @param props - Component properties.
+ * @param props.onClose - Callback invoked when the panel is closed.
+ * @param props.persistence - The persistence manager instance for save operations.
+ * @returns The SettingsPanel component.
+ */
 export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
   const settings = useStore((state) => state.settings);
   const updateSettings = useStore((state) => state.updateSettings);
@@ -155,8 +174,40 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
     updateSettings({ showTrails: event.target.checked });
   };
 
+  const handleHaulerShips: ChangeEventHandler<HTMLInputElement> = (event) => {
+    updateSettings({ showHaulerShips: event.target.checked });
+  };
+
   const handlePerformanceProfile: ChangeEventHandler<HTMLSelectElement> = (event) => {
     updateSettings({ performanceProfile: event.target.value as PerformanceProfile });
+  };
+
+  const handleMetricsToggle: ChangeEventHandler<HTMLInputElement> = (event) => {
+    updateSettings({ metrics: { ...settings.metrics, enabled: event.target.checked } });
+  };
+
+  const handleMetricsInterval: ChangeEventHandler<HTMLInputElement> = (event) => {
+    const next = Number(event.target.value);
+    const intervalSeconds = Number.isFinite(next)
+      ? Math.max(1, Math.floor(next))
+      : settings.metrics.intervalSeconds;
+    updateSettings({ metrics: { ...settings.metrics, intervalSeconds } });
+  };
+
+  const handleMetricsRetention: ChangeEventHandler<HTMLInputElement> = (event) => {
+    const next = Number(event.target.value);
+    const retentionSeconds = Number.isFinite(next)
+      ? Math.max(settings.metrics.intervalSeconds, Math.floor(next))
+      : settings.metrics.retentionSeconds;
+    updateSettings({ metrics: { ...settings.metrics, retentionSeconds } });
+  };
+
+  const handleDebugPanelToggle: ChangeEventHandler<HTMLInputElement> = (event) => {
+    updateSettings({ showDebugPanel: event.target.checked });
+  };
+
+  const handleRustSimToggle: ChangeEventHandler<HTMLInputElement> = (event) => {
+    updateSettings({ useRustSim: event.target.checked });
   };
 
   return (
@@ -177,184 +228,44 @@ export const SettingsPanel = ({ onClose, persistence }: SettingsPanelProps) => {
           </button>
         </header>
         <div className="settings-content">
-          <section className="settings-section settings-section--wide">
-            <h3>Warehouse Primer</h3>
-            <p className="settings-note">
-              Your warehouse is the global ledger for spendable inventory. It fuels prestige, module
-              purchases, and exports when haulers find surplus at any factory.
-            </p>
-            <ul className="settings-note-list">
-              <li>
-                <strong>Warehouse totals</strong> are the numbers shown in the HUD and Upgrade
-                panel—they rise only when haulers or unloads deliver to the warehouse.
-              </li>
-              <li>
-                <strong>Factory storage</strong> is local working stock that keeps refineries
-                running; haulers export excess above the buffer and import when a factory is
-                starving.
-              </li>
-              <li>
-                When resources look “missing,” check the selected factory card—if the buffer is
-                full, haulers will route the overflow to the warehouse on their next run.
-              </li>
-            </ul>
-          </section>
-          <section className="settings-section">
-            <h3>Persistence</h3>
-            <label className="settings-row">
-              <span>
-                Autosave
-                <small>Automatically persist progress in the background.</small>
-              </span>
-              <input
-                type="checkbox"
-                checked={settings.autosaveEnabled}
-                onChange={handleAutosaveToggle}
-                aria-label="Toggle autosave"
-              />
-            </label>
-            <label className="settings-row">
-              <span>
-                Autosave interval (seconds)
-                <small>Minimum 1 second.</small>
-              </span>
-              <input
-                type="number"
-                min={1}
-                value={settings.autosaveInterval}
-                onChange={handleAutosaveInterval}
-              />
-            </label>
-            <label className="settings-row">
-              <span>
-                Offline cap (hours)
-                <small>Catch-up simulation will not exceed this duration.</small>
-              </span>
-              <input
-                type="number"
-                min={0}
-                step={1}
-                value={settings.offlineCapHours}
-                onChange={handleOfflineCap}
-              />
-            </label>
-            <label className="settings-row">
-              <span>
-                Notation
-                <small>Controls large-number formatting.</small>
-              </span>
-              <select value={settings.notation} onChange={handleNotation}>
-                <option value="standard">Standard</option>
-                <option value="engineering">Engineering</option>
-              </select>
-            </label>
-            <label className="settings-row">
-              <span>
-                Throttle floor
-                <small>Minimum efficiency when energy-constrained.</small>
-              </span>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={settings.throttleFloor}
-                onChange={handleThrottle}
-                aria-valuemin={0}
-                aria-valuemax={1}
-                aria-valuenow={Number(settings.throttleFloor.toFixed(2))}
-              />
-              <span className="settings-value">{Math.round(settings.throttleFloor * 100)}%</span>
-            </label>
-          </section>
-          <section className="settings-section">
-            <h3>Visuals</h3>
-            <label className="settings-row">
-              <span>
-                Drone trails
-                <small>Disable for performance on lower-end GPUs.</small>
-              </span>
-              <input
-                type="checkbox"
-                checked={settings.showTrails}
-                onChange={handleTrails}
-                aria-label="Toggle drone trails"
-              />
-            </label>
-            <label className="settings-row">
-              <span>
-                Factory performance profile
-                <small>Balance factory visual effects with your device capabilities.</small>
-              </span>
-              <select
-                value={settings.performanceProfile}
-                onChange={handlePerformanceProfile}
-                aria-label="Select factory performance profile"
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
-            </label>
-          </section>
-          <section className="settings-section">
-            <h3>Data tools</h3>
-            <div className="settings-actions">
-              <button type="button" onClick={handleExport} aria-label="Export save data">
-                Export JSON
-              </button>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                aria-label="Import save data"
-              >
-                Import JSON
-              </button>
-              <button type="button" onClick={handleResetRequest} aria-label="Reset game progress">
-                Reset Game
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="application/json"
-                onChange={handleImport}
-                style={{ display: 'none' }}
-              />
-            </div>
-            <p className="settings-meta">Last saved: {formattedLastSave}</p>
-            {importError ? <p className="settings-error">{importError}</p> : null}
-          </section>
+          <WarehousePrimerSection />
+          <DebugSettingsSection
+            settings={settings}
+            onToggle={handleDebugPanelToggle}
+            onRustSimToggle={handleRustSimToggle}
+          />
+          <PersistenceSettingsSection
+            settings={settings}
+            onAutosaveToggle={handleAutosaveToggle}
+            onAutosaveInterval={handleAutosaveInterval}
+            onOfflineCap={handleOfflineCap}
+            onNotation={handleNotation}
+            onThrottle={handleThrottle}
+          />
+          <VisualSettingsSection
+            settings={settings}
+            onTrails={handleTrails}
+            onHaulerShips={handleHaulerShips}
+            onPerformanceProfile={handlePerformanceProfile}
+          />
+          <MetricsSettingsSection
+            settings={settings}
+            onMetricsToggle={handleMetricsToggle}
+            onMetricsInterval={handleMetricsInterval}
+            onMetricsRetention={handleMetricsRetention}
+          />
+          <DataToolsSection
+            formattedLastSave={formattedLastSave}
+            importError={importError}
+            onExport={handleExport}
+            onImport={handleImport}
+            onResetRequest={handleResetRequest}
+            fileInputRef={fileInputRef}
+          />
         </div>
       </div>
       {confirmReset ? (
-        <div className="settings-confirm-backdrop" role="presentation">
-          <div
-            className="settings-confirm"
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="reset-confirm-title"
-            aria-describedby="reset-confirm-description"
-          >
-            <h4 id="reset-confirm-title">Reset game progress?</h4>
-            <p id="reset-confirm-description">
-              This will erase all factories, resources, and progress. Export your save first if you
-              want a backup.
-            </p>
-            <div className="settings-confirm-actions">
-              <button type="button" onClick={handleCancelReset} aria-label="Cancel reset">
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="settings-danger"
-                onClick={handleConfirmReset}
-                aria-label="Confirm reset game"
-              >
-                Reset Everything
-              </button>
-            </div>
-          </div>
-        </div>
+        <ResetConfirmationDialog onCancel={handleCancelReset} onConfirm={handleConfirmReset} />
       ) : null}
     </div>
   );

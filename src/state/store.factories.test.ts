@@ -275,4 +275,22 @@ describe('store factory integration', () => {
     // Verify: Drone owner is Factory B
     expect(afterSecond.droneOwners['drone-1']).toBe(factoryB.id);
   });
+
+  it('unsticks a drone by removing ownership and queued references', () => {
+    const state = store.getState();
+    const factoryId = state.factories[0].id;
+
+    // Dock a drone and assign an owner mapping to simulate a stuck drone
+    store.getState().dockDroneAtFactory(factoryId, 'drone-x');
+    store.setState((s) => ({ droneOwners: { ...s.droneOwners, 'drone-x': factoryId } }));
+
+    expect(store.getState().factories[0].queuedDrones).toContain('drone-x');
+    expect(store.getState().droneOwners['drone-x']).toBe(factoryId);
+
+    // Call the unstick helper
+    store.getState().unstickDrone('drone-x');
+
+    expect(store.getState().factories[0].queuedDrones).not.toContain('drone-x');
+    expect(store.getState().droneOwners['drone-x']).toBe(null);
+  });
 });

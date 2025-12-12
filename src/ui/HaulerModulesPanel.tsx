@@ -7,10 +7,10 @@ import {
   getHaulerModuleCost,
   getHaulerModuleMaxLevel,
 } from '@/lib/haulerUpgrades';
+import { formatCost } from '@/ui/FactoryManager/utils/upgradeFormatting';
+import { formatPercentInteger } from '@/lib/formatters';
 
 const moduleOrder: HaulerModuleId[] = ['haulerDepot', 'logisticsHub', 'routingProtocol'];
-
-const formatPercent = (value: number) => `${(value * 100).toFixed(0)}%`;
 
 export const HaulerModulesPanel = () => {
   const modules = useStore((state) => state.modules);
@@ -56,11 +56,11 @@ export const HaulerModulesPanel = () => {
 
           let effectDescription = '';
           if (moduleId === 'haulerDepot') {
-            effectDescription = `+${level * 10} capacity, +${formatPercent(level * 0.05)} speed`;
+            effectDescription = `+${level * 10} capacity, +${formatPercentInteger(level * 0.05)} speed`;
           } else if (moduleId === 'logisticsHub') {
-            effectDescription = `-${formatPercent(level * 0.1)} pickup/dropoff time`;
+            effectDescription = `-${formatPercentInteger(level * 0.1)} pickup/dropoff time`;
           } else {
-            effectDescription = `+${formatPercent(level * 0.02)} routing efficiency`;
+            effectDescription = `+${formatPercentInteger(level * 0.02)} routing efficiency`;
           }
 
           return (
@@ -85,11 +85,7 @@ export const HaulerModulesPanel = () => {
                     disabled={!affordable}
                     onClick={() => purchase(moduleId)}
                   >
-                    Buy ·{' '}
-                    {nextCost &&
-                      Object.entries(nextCost)
-                        .map(([resource, amount]) => `${amount} ${resource}`)
-                        .join(' + ')}
+                    Buy · {nextCost && formatCost(nextCost)}
                   </button>
                 )}
               </div>

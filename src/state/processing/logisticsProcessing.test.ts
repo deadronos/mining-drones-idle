@@ -103,5 +103,27 @@ describe('processLogistics warehouse integration', () => {
     );
     expect(factory.resources.bars).toBeLessThan(initialFactoryBars);
     expect(state.resources.bars).toBeGreaterThan(initialWarehouseBars);
+    expect(secondPass.throughputByFactory[factory.id]).toBeGreaterThan(0);
+  });
+
+  it('records throughput for warehouse imports', () => {
+    const factory = state.factories[0];
+    factory.resources.ore = 0;
+    factory.currentStorage = 0;
+    state.resources.ore = 200;
+
+    const firstPass = processLogistics(state);
+    const importTransfer = firstPass.logisticsQueues.pendingTransfers.find(
+      (transfer) => transfer.fromFactoryId === WAREHOUSE_NODE_ID,
+    );
+
+    expect(importTransfer).toBeDefined();
+
+    state.logisticsQueues = firstPass.logisticsQueues;
+    state.gameTime = importTransfer!.eta + 0.01;
+
+    const secondPass = processLogistics(state);
+
+    expect(secondPass.throughputByFactory[factory.id]).toBeGreaterThan(0);
   });
 });

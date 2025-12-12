@@ -1,25 +1,32 @@
+/* eslint-disable react-hooks/immutability */
 import { Html } from '@react-three/drei';
-import { useMemo, useState } from 'react';
-import { Color, MathUtils, Quaternion, Vector3 } from 'three';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ThreeEvent } from '@react-three/fiber';
+import { Color, MathUtils, Matrix4, Quaternion, Vector3, type InstancedMesh } from 'three';
+import type { BuildableFactory } from '@/ecs/factories';
 import type { PendingTransfer } from '@/state/store';
 import { useStore } from '@/state/store';
 import { WAREHOUSE_NODE_ID } from '@/ecs/logistics';
 import { WAREHOUSE_POSITION } from '@/ecs/world';
-
-const RESOURCE_COLORS: Record<string, string> = {
-  ore: '#b8860b', // dark goldenrod
-  bars: '#ff8c00', // dark orange
-  metals: '#c0c0c0', // silver
-  crystals: '#9370db', // medium purple
-  organics: '#228b22', // forest green
-  ice: '#00bfff', // deep sky blue
-};
+import { RESOURCE_COLORS } from '@/r3f/resourceColors';
 
 const AXIS_Y = new Vector3(0, 1, 0);
 const HEIGHT_OFFSET = 0.9;
 const MIN_RADIUS = 0.045;
 const MAX_RADIUS = 0.16;
 const AMOUNT_FOR_MAX_RADIUS = 140;
+const MAX_TRANSFERS = 256;
+
+const shaftMatrix = new Matrix4();
+const shaftScale = new Vector3();
+const headMatrix = new Matrix4();
+const headScale = new Vector3();
+const headPosition = new Vector3();
+const direction = new Vector3();
+const tooltipPosition = new Vector3();
+const baseColor = new Color();
+const hoveredColor = new Color();
+const whiteColor = new Color('#ffffff');
 
 interface TransferVisual {
   transfer: PendingTransfer;
@@ -29,7 +36,7 @@ interface TransferVisual {
   quaternion: Quaternion;
   length: number;
   radius: number;
-  color: string;
+  color: Color;
   sourceLabel: string;
   destLabel: string;
 }
@@ -39,155 +46,204 @@ const computeRadius = (amount: number): number => {
   return MIN_RADIUS + normalized * (MAX_RADIUS - MIN_RADIUS);
 };
 
-const lightenColor = (hex: string, factor: number): string => {
-  const base = new Color(hex);
-  base.lerp(new Color('#ffffff'), MathUtils.clamp(factor, 0, 1));
-  return `#${base.getHexString()}`;
-};
+const createVisualPool = () =>
+  Array.from({ length: MAX_TRANSFERS }, () => ({
+    transfer: {} as PendingTransfer,
+    start: new Vector3(),
+    end: new Vector3(),
+    midpoint: new Vector3(),
+    quaternion: new Quaternion(),
+    length: 0,
+    radius: 0,
+    color: new Color(),
+    sourceLabel: '',
+    destLabel: '',
+  } satisfies TransferVisual));
+
+const createColorPool = () => Array.from({ length: MAX_TRANSFERS }, () => new Color());
+const transferVisualPool = createVisualPool();
+const transferBaseColors = createColorPool();
+const transferFactoryMap = new Map<string, BuildableFactory>();
 
 export const TransferLines = () => {
   const logisticsQueues = useStore((state) => state.logisticsQueues);
   const factories = useStore((state) => state.factories);
   const gameTime = useStore((state) => state.gameTime ?? 0);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const shaftRef = useRef<InstancedMesh>(null);
+  const headRef = useRef<InstancedMesh>(null);
+  const visualsInfo = useMemo(() => {
+    const pool = transferVisualPool;
+    const baseColors = transferBaseColors;
+    const factoryMap = transferFactoryMap;
+    factoryMap.clear();
 
-  const visuals = useMemo<TransferVisual[]>(() => {
-    if (!logisticsQueues?.pendingTransfers?.length || factories.length === 0) {
-      return [];
+    for (const factory of factories) {
+      factoryMap.set(factory.id, factory);
     }
 
-    const factoryMap = new Map(factories.map((factory) => [factory.id, factory]));
+    let count = 0;
+    const pendingTransfers = logisticsQueues?.pendingTransfers ?? [];
+    for (const transfer of pendingTransfers) {
+      if (transfer.status !== 'scheduled' && transfer.status !== 'in-transit') continue;
+      if (count >= MAX_TRANSFERS) break;
 
-    return logisticsQueues.pendingTransfers
-      .filter((transfer) => transfer.status === 'scheduled' || transfer.status === 'in-transit')
-      .map((transfer) => {
-        // Resolve source position and label
-        let start: Vector3;
-        let sourceLabel: string;
-        if (transfer.fromFactoryId === WAREHOUSE_NODE_ID) {
-          start = WAREHOUSE_POSITION.clone().add(new Vector3(0, HEIGHT_OFFSET, 0));
-          sourceLabel = 'Whse';
-        } else {
-          const sourceFactory = factoryMap.get(transfer.fromFactoryId);
-          if (!sourceFactory) return null;
-          start = sourceFactory.position.clone().add(new Vector3(0, HEIGHT_OFFSET, 0));
-          sourceLabel = sourceFactory.id.slice(0, 6);
-        }
+      const visual = pool[count];
+      visual.transfer = transfer;
 
-        // Resolve destination position and label
-        let end: Vector3;
-        let destLabel: string;
-        if (transfer.toFactoryId === WAREHOUSE_NODE_ID) {
-          end = WAREHOUSE_POSITION.clone().add(new Vector3(0, HEIGHT_OFFSET, 0));
-          destLabel = 'Whse';
-        } else {
-          const destFactory = factoryMap.get(transfer.toFactoryId);
-          if (!destFactory) return null;
-          end = destFactory.position.clone().add(new Vector3(0, HEIGHT_OFFSET, 0));
-          destLabel = destFactory.id.slice(0, 6);
-        }
+      if (transfer.fromFactoryId === WAREHOUSE_NODE_ID) {
+        visual.start.copy(WAREHOUSE_POSITION).addScaledVector(AXIS_Y, HEIGHT_OFFSET);
+        visual.sourceLabel = 'Whse';
+      } else {
+        const sourceFactory = factoryMap.get(transfer.fromFactoryId);
+        if (!sourceFactory) continue;
+        visual.start.copy(sourceFactory.position).addScaledVector(AXIS_Y, HEIGHT_OFFSET);
+        visual.sourceLabel = sourceFactory.id.slice(0, 6);
+      }
 
-        const direction = end.clone().sub(start);
-        const length = direction.length();
+      if (transfer.toFactoryId === WAREHOUSE_NODE_ID) {
+        visual.end.copy(WAREHOUSE_POSITION).addScaledVector(AXIS_Y, HEIGHT_OFFSET);
+        visual.destLabel = 'Whse';
+      } else {
+        const destFactory = factoryMap.get(transfer.toFactoryId);
+        if (!destFactory) continue;
+        visual.end.copy(destFactory.position).addScaledVector(AXIS_Y, HEIGHT_OFFSET);
+        visual.destLabel = destFactory.id.slice(0, 6);
+      }
 
-        if (length <= 0.001) {
-          return null;
-        }
+      direction.copy(visual.end).sub(visual.start);
+      const length = direction.length();
+      if (length <= 0.001) continue;
 
-        const midpoint = start.clone().addScaledVector(direction, 0.5);
-        const quaternion = new Quaternion().setFromUnitVectors(
-          AXIS_Y,
-          direction.clone().normalize(),
-        );
+      visual.length = length;
+      visual.midpoint.copy(visual.start).addScaledVector(direction, 0.5);
+      visual.quaternion.setFromUnitVectors(AXIS_Y, direction.normalize());
+      visual.radius = computeRadius(transfer.amount);
+      visual.color.set(RESOURCE_COLORS[transfer.resource] ?? '#ffffff');
 
-        const radius = computeRadius(transfer.amount);
-        const color = RESOURCE_COLORS[transfer.resource] ?? '#ffffff';
+      baseColors[count].copy(visual.color);
+      count += 1;
+    }
 
-        return {
-          transfer,
-          start,
-          end,
-          midpoint,
-          quaternion,
-          length,
-          radius,
-          color,
-          sourceLabel,
-          destLabel,
-        };
-      })
-      .filter((item): item is TransferVisual => item !== null);
-  }, [factories, logisticsQueues]);
+    return { count, view: pool.slice(0, count) };
+  }, [factories, logisticsQueues?.pendingTransfers]);
 
-  if (visuals.length === 0) {
+  const visualCount = visualsInfo.count;
+  const visualsView = visualsInfo.view;
+
+  const hoveredVisual =
+    hoveredIndex !== null && hoveredIndex < visualCount ? visualsView[hoveredIndex] : null;
+
+  useEffect(() => {
+    const shaft = shaftRef.current;
+    const head = headRef.current;
+    if (!shaft || !head) return;
+
+    const pool = transferVisualPool;
+    for (let i = 0; i < visualCount; i += 1) {
+      const visual = pool[i];
+      shaftScale.set(visual.radius, visual.length, visual.radius);
+      shaftMatrix.compose(visual.midpoint, visual.quaternion, shaftScale);
+      shaft.setMatrixAt(i, shaftMatrix);
+
+      headScale.set(visual.radius * 1.8, visual.radius * 3.2, visual.radius * 1.8);
+      headPosition.copy(visual.end);
+      headMatrix.compose(headPosition, visual.quaternion, headScale);
+      head.setMatrixAt(i, headMatrix);
+    }
+
+    shaft.count = visualCount;
+    head.count = visualCount;
+    shaft.instanceMatrix.needsUpdate = visualCount > 0;
+    head.instanceMatrix.needsUpdate = visualCount > 0;
+  }, [visualCount]);
+
+  useEffect(() => {
+    const shaft = shaftRef.current;
+    const head = headRef.current;
+    if (!shaft || !head) return;
+
+    const baseColors = transferBaseColors;
+    for (let i = 0; i < visualCount; i += 1) {
+      const isHovered = hoveredIndex === i;
+      baseColor.copy(baseColors[i]);
+      hoveredColor.copy(baseColor).lerp(whiteColor, isHovered ? 0.4 : 0);
+      shaft.setColorAt?.(i, hoveredColor);
+      head.setColorAt?.(i, hoveredColor);
+    }
+
+    if (shaft.instanceColor) shaft.instanceColor.needsUpdate = visualCount > 0;
+    if (head.instanceColor) head.instanceColor.needsUpdate = visualCount > 0;
+  }, [hoveredIndex, visualCount]);
+
+  if (visualCount === 0) {
     return null;
   }
 
-  const hovered = hoveredId
-    ? (visuals.find((visual) => visual.transfer.id === hoveredId) ?? null)
+  const tooltipArray = hoveredVisual
+    ? tooltipPosition
+        .copy(hoveredVisual.midpoint)
+        .addScaledVector(AXIS_Y, hoveredVisual.radius * 6)
+        .toArray()
     : null;
+
+  const handlePointerMove = (event: ThreeEvent<PointerEvent>) => {
+    event.stopPropagation();
+    if (typeof event.instanceId === 'number') {
+      setHoveredIndex(event.instanceId);
+    }
+  };
+
+  const handlePointerOut = (event: ThreeEvent<PointerEvent>) => {
+    event.stopPropagation();
+    setHoveredIndex((current) => (current !== null ? null : current));
+  };
 
   return (
     <>
-      {visuals.map((visual) => {
-        const isHovered = visual.transfer.id === hoveredId;
-        const arrowColor = isHovered ? lightenColor(visual.color, 0.4) : visual.color;
-        const opacity = isHovered ? 0.95 : 0.7;
+      <instancedMesh
+        ref={shaftRef}
+        args={[undefined as never, undefined as never, MAX_TRANSFERS]}
+        onPointerMove={handlePointerMove}
+        onPointerOver={handlePointerMove}
+        onPointerOut={handlePointerOut}
+        castShadow
+        receiveShadow
+      >
+        <cylinderGeometry args={[1, 1, 1, 12, 1, true]} />
+        <meshStandardMaterial
+          vertexColors
+          emissiveIntensity={0.6}
+          transparent
+          opacity={0.8}
+          roughness={0.5}
+          metalness={0.3}
+        />
+      </instancedMesh>
 
-        return (
-          <group
-            key={visual.transfer.id}
-            position={visual.midpoint.toArray()}
-            // eslint-disable-next-line react/no-unknown-property
-            quaternion={visual.quaternion}
-            // eslint-disable-next-line react/no-unknown-property
-            renderOrder={isHovered ? 1 : 0}
-          >
-            <mesh
-              onPointerOver={(event) => {
-                event.stopPropagation();
-                setHoveredId(() => visual.transfer.id);
-              }}
-              onPointerMove={(event) => {
-                event.stopPropagation();
-                setHoveredId((current) =>
-                  current === visual.transfer.id ? current : visual.transfer.id,
-                );
-              }}
-              onPointerOut={(event) => {
-                event.stopPropagation();
-                setHoveredId((current) => (current === visual.transfer.id ? null : current));
-              }}
-            >
-              <cylinderGeometry args={[visual.radius, visual.radius, visual.length, 12, 1, true]} />
-              <meshStandardMaterial
-                color={arrowColor}
-                emissive={arrowColor}
-                emissiveIntensity={isHovered ? 0.6 : 0.25}
-                transparent
-                opacity={opacity}
-              />
-            </mesh>
-            <mesh position={[0, visual.length / 2, 0]}>
-              <coneGeometry args={[visual.radius * 1.8, visual.radius * 3.2, 12]} />
-              <meshStandardMaterial
-                color={arrowColor}
-                emissive={arrowColor}
-                emissiveIntensity={isHovered ? 0.8 : 0.35}
-                transparent
-                opacity={opacity}
-              />
-            </mesh>
-          </group>
-        );
-      })}
+      <instancedMesh
+        ref={headRef}
+        args={[undefined as never, undefined as never, MAX_TRANSFERS]}
+        onPointerMove={handlePointerMove}
+        onPointerOver={handlePointerMove}
+        onPointerOut={handlePointerOut}
+        castShadow
+        receiveShadow
+      >
+        <coneGeometry args={[1, 1, 12]} />
+        <meshStandardMaterial
+          vertexColors
+          emissiveIntensity={0.75}
+          transparent
+          opacity={0.8}
+          roughness={0.45}
+          metalness={0.35}
+        />
+      </instancedMesh>
 
-      {hovered ? (
+      {hoveredVisual && tooltipArray ? (
         <Html
-          position={hovered.midpoint
-            .clone()
-            .add(new Vector3(0, hovered.radius * 6, 0))
-            .toArray()}
+          position={tooltipArray}
           center
           style={{
             padding: 0,
@@ -212,13 +268,13 @@ export const TransferLines = () => {
             }}
           >
             <div style={{ fontWeight: 600, marginBottom: 2 }}>
-              {hovered.sourceLabel} → {hovered.destLabel}
+              {hoveredVisual.sourceLabel} → {hoveredVisual.destLabel}
             </div>
-            <div style={{ color: hovered.color, fontWeight: 600, marginBottom: 2 }}>
-              {Math.round(hovered.transfer.amount)} {hovered.transfer.resource}
+            <div style={{ color: hoveredVisual.color.getStyle(), fontWeight: 600, marginBottom: 2 }}>
+              {Math.round(hoveredVisual.transfer.amount)} {hoveredVisual.transfer.resource}
             </div>
             <div style={{ fontSize: 11, opacity: 0.85 }}>
-              ETA: {Math.max(0, hovered.transfer.eta - gameTime).toFixed(1)}s
+              ETA: {Math.max(0, hoveredVisual.transfer.eta - gameTime).toFixed(1)}s
             </div>
           </div>
         </Html>

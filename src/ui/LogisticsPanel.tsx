@@ -2,12 +2,18 @@ import { useEffect, useState } from 'react';
 import { useStore } from '@/state/store';
 import { WAREHOUSE_NODE_ID } from '@/ecs/logistics';
 import { getHaulerModuleBonuses } from '@/lib/haulerUpgrades';
+import { PaginationControls } from '@/ui/shared/PaginationControls';
+import { formatInteger } from '@/lib/formatters';
 import './LogisticsPanel.css';
 
 const TRANSFERS_PAGE_SIZE = 5;
 
 /**
- * Global Logistics Panel: overview of all factory transfers and hauler allocation
+ * Global Logistics Panel: overview of all factory transfers and hauler allocation.
+ * Displays summary statistics (total haulers, active transfers) and a paginated list of ongoing resource movements.
+ * Refreshes every 500ms to provide real-time ETA updates.
+ *
+ * @returns The rendered LogisticsPanel component.
  */
 export const LogisticsPanel = () => {
   const factories = useStore((state) => state.factories);
@@ -61,7 +67,7 @@ export const LogisticsPanel = () => {
         </div>
         <div className="summary-item">
           <span className="label">Warehouse Bars:</span>
-          <span className="value">{Math.floor(resources.bars).toLocaleString()}</span>
+          <span className="value">{formatInteger(Math.floor(resources.bars))}</span>
         </div>
         <div className="summary-item">
           <span className="label">Network Bonus:</span>
@@ -74,29 +80,14 @@ export const LogisticsPanel = () => {
       <div className="transfers-list">
         <div className="transfers-header">
           <h5>Active Transfers</h5>
-          {totalTransferPages > 1 && (
-            <div className="transfers-pagination">
-              <button
-                type="button"
-                onClick={() => setTransferPage((p) => Math.max(0, p - 1))}
-                disabled={safeTransferPage === 0}
-                aria-label="Previous page"
-              >
-                ◀
-              </button>
-              <span className="page-indicator">
-                {safeTransferPage + 1} / {totalTransferPages}
-              </span>
-              <button
-                type="button"
-                onClick={() => setTransferPage((p) => Math.min(totalTransferPages - 1, p + 1))}
-                disabled={safeTransferPage >= totalTransferPages - 1}
-                aria-label="Next page"
-              >
-                ▶
-              </button>
-            </div>
-          )}
+          <PaginationControls
+            currentPage={safeTransferPage}
+            totalPages={totalTransferPages}
+            onNextPage={() => setTransferPage((p) => Math.min(totalTransferPages - 1, p + 1))}
+            onPrevPage={() => setTransferPage((p) => Math.max(0, p - 1))}
+            className="transfers-pagination"
+            ariaLabelPrefix="page"
+          />
         </div>
         {activeTransfers.length === 0 ? (
           <p className="muted">No transfers in progress</p>

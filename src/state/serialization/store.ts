@@ -11,9 +11,12 @@ import type {
   SpecTechState,
   SpecTechSpentState,
   PrestigeInvestmentState,
+  PendingTransfer,
+  LogisticsQueues,
 } from '../types';
 import {
   SAVE_VERSION,
+  SCHEMA_VERSION,
   initialResources,
   initialModules,
   initialPrestige,
@@ -25,9 +28,28 @@ import {
   specTechDefinitions,
 } from '../constants';
 import { coerceNumber } from './types';
+import Ajv from 'ajv';
+import { StoreSnapshotSchema } from './snapshotSchema';
+
+// Compile and cache the snapshot validator once at module initialization.
+// This avoids re-compiling the JSON Schema on every validation call and
+// provides a small runtime perf win when initRustBridge/loadWasmBridge are
+// invoked frequently.
+const _ajvInstance = new Ajv({ allErrors: true });
+const snapshotValidator = _ajvInstance.compile(StoreSnapshotSchema as object);
+
+// Exported accessor used by tests to verify the validator is compiled and cached.
+export function getSnapshotValidator() {
+  return snapshotValidator;
+}
 import { normalizeFactorySnapshot } from './factory';
 import { normalizeDroneFlights, cloneDroneFlight } from './drones';
 import { factoryToSnapshot } from './factory';
+import { RESOURCE_TYPES, type TransportableResource } from '@/ecs/logistics/config';
+
+const isTransportableResource = (value: unknown): value is PendingTransfer['resource'] =>
+  typeof value === 'string' &&
+  (RESOURCE_TYPES as readonly TransportableResource[]).includes(value as TransportableResource);
 
 export const normalizeResources = (snapshot?: Partial<Resources>): Resources => ({
   ore: coerceNumber(snapshot?.ore, initialResources.ore),
@@ -89,6 +111,59 @@ export const normalizeSpecTechSpent = (snapshot?: Partial<SpecTechSpentState>): 
   ice: Math.max(0, Math.floor(coerceNumber(snapshot?.ice, initialSpecTechSpent.ice))),
 });
 
+const normalizePendingTransfer = (
+  transfer?: Partial<PendingTransfer> | null,
+): PendingTransfer | null => {
+  if (!transfer || typeof transfer !== 'object') {
+    return null;
+  }
+
+  const id = typeof transfer.id === 'string' && transfer.id.length > 0 ? transfer.id : null;
+  const fromFactoryId =
+    typeof transfer.fromFactoryId === 'string' && transfer.fromFactoryId.length > 0
+      ? transfer.fromFactoryId
+      : null;
+  const toFactoryId =
+    typeof transfer.toFactoryId === 'string' && transfer.toFactoryId.length > 0
+      ? transfer.toFactoryId
+      : null;
+
+  if (!id || !fromFactoryId || !toFactoryId) {
+    return null;
+  }
+
+  const eta = coerceNumber(transfer.eta, 0);
+  const defaultDepartedAt = Math.max(0, eta - 0.1);
+  const departedAt = Math.min(coerceNumber(transfer.departedAt, defaultDepartedAt), eta);
+  const status: PendingTransfer['status'] =
+    transfer.status === 'in-transit' || transfer.status === 'completed'
+      ? transfer.status
+      : 'scheduled';
+
+  return {
+    id,
+    fromFactoryId,
+    toFactoryId,
+  resource: isTransportableResource(transfer.resource) ? transfer.resource : 'ore',
+    amount: Math.max(0, coerceNumber(transfer.amount, 0)),
+    status,
+    eta,
+    departedAt,
+  };
+};
+
+const normalizeLogisticsQueues = (queues?: Partial<LogisticsQueues>): LogisticsQueues => {
+  if (!queues || !Array.isArray(queues.pendingTransfers)) {
+    return { pendingTransfers: [] };
+  }
+
+  const normalized = queues.pendingTransfers
+    .map((entry) => normalizePendingTransfer(entry))
+    .filter((entry): entry is PendingTransfer => entry !== null);
+
+  return { pendingTransfers: normalized };
+};
+
 export const normalizePrestigeInvestments = (
   snapshot?: Partial<PrestigeInvestmentState>,
 ): PrestigeInvestmentState => ({
@@ -145,14 +220,55 @@ export const normalizeSettings = (snapshot?: Partial<StoreSettings>): StoreSetti
   ),
   showTrails:
     typeof snapshot?.showTrails === 'boolean' ? snapshot.showTrails : initialSettings.showTrails,
+  showHaulerShips:
+    typeof snapshot?.showHaulerShips === 'boolean'
+      ? snapshot.showHaulerShips
+      : initialSettings.showHaulerShips,
+  showDebugPanel:
+    typeof snapshot?.showDebugPanel === 'boolean'
+      ? snapshot.showDebugPanel
+      : initialSettings.showDebugPanel,
+  useRustSim:
+    typeof snapshot?.useRustSim === 'boolean' ? snapshot.useRustSim : initialSettings.useRustSim,
+  shadowMode:
+    typeof snapshot?.shadowMode === 'boolean' ? snapshot.shadowMode : initialSettings.shadowMode,
   performanceProfile: normalizePerformanceProfile(snapshot?.performanceProfile),
   inspectorCollapsed:
     typeof snapshot?.inspectorCollapsed === 'boolean'
       ? snapshot.inspectorCollapsed
       : initialSettings.inspectorCollapsed,
+  metrics: {
+    enabled:
+      typeof snapshot?.metrics === 'object' && typeof snapshot.metrics.enabled === 'boolean'
+        ? snapshot.metrics.enabled
+        : initialSettings.metrics.enabled,
+    intervalSeconds: Math.max(
+      1,
+      Math.floor(
+        coerceNumber(
+          snapshot?.metrics && 'intervalSeconds' in snapshot.metrics
+            ? (snapshot.metrics as Partial<StoreSettings['metrics']>).intervalSeconds
+            : initialSettings.metrics.intervalSeconds,
+          initialSettings.metrics.intervalSeconds,
+        ),
+      ),
+    ),
+    retentionSeconds: Math.max(
+      initialSettings.metrics.intervalSeconds,
+      Math.floor(
+        coerceNumber(
+          snapshot?.metrics && 'retentionSeconds' in snapshot.metrics
+            ? (snapshot.metrics as Partial<StoreSettings['metrics']>).retentionSeconds
+            : initialSettings.metrics.retentionSeconds,
+          initialSettings.metrics.retentionSeconds,
+        ),
+      ),
+    ),
+  },
 });
 
 export const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapshot => ({
+  schemaVersion: snapshot.schemaVersion === SCHEMA_VERSION ? snapshot.schemaVersion : SCHEMA_VERSION,
   resources: normalizeResources(snapshot.resources),
   modules: normalizeModules(snapshot.modules),
   prestige: normalizePrestige(snapshot.prestige),
@@ -185,10 +301,57 @@ export const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapsh
           {},
         )
       : undefined,
-  logisticsQueues: snapshot.logisticsQueues ?? { pendingTransfers: [] },
+  logisticsQueues: normalizeLogisticsQueues(snapshot.logisticsQueues),
+  gameTime: coerceNumber(snapshot.gameTime, 0),
 });
 
+/**
+ * Validate a (partial) snapshot before it's passed to the WASM engine.
+ * Returns a list of human-friendly validation error messages. Empty array
+ * means the snapshot looks acceptable (it may still be normalized).
+ */
+export const validateSnapshotForWasm = (snapshot?: Partial<StoreSnapshot>): string[] => {
+  if (!snapshot || typeof snapshot !== 'object') return ['snapshot is not an object'];
+
+  // Compile the AJV validator once lazily (per-module cache).
+    const payload = snapshot as Record<string, unknown>;
+    const ok = snapshotValidator(payload);
+    if (!ok) {
+      const raw = (snapshotValidator.errors ?? []) as Array<{ instancePath?: string; message?: string }>;
+    const issues = raw.map((err) => {
+      const instancePath = typeof err.instancePath === 'string' ? err.instancePath : '';
+      const path = instancePath.length > 0 ? instancePath.slice(1) : 'root';
+      const message = typeof err.message === 'string' ? err.message : 'validation error';
+      return `${path}: ${message}`;
+    });
+    return issues;
+  }
+  const schemaVersion = snapshot.schemaVersion;
+  if (schemaVersion && schemaVersion !== SCHEMA_VERSION) {
+    return [`schemaVersion: expected ${SCHEMA_VERSION} got ${schemaVersion}`];
+  }
+
+  // Additional business rule: modules shouldn't be all zeros.
+  const modules = snapshot.modules as Partial<Modules> | undefined;
+  if (modules) {
+    const allZero = [
+      modules.droneBay ?? 0,
+      modules.refinery ?? 0,
+      modules.storage ?? 0,
+      modules.solar ?? 0,
+      modules.scanner ?? 0,
+      modules.haulerDepot ?? 0,
+      modules.logisticsHub ?? 0,
+      modules.routingProtocol ?? 0,
+    ].every((v) => v === 0);
+    if (allZero) return ['modules: all zero (at least one module should be > 0)'];
+  }
+
+  return [];
+};
+
 export const serializeStore = (state: StoreState): StoreSnapshot => ({
+  schemaVersion: SCHEMA_VERSION,
   resources: { ...state.resources },
   modules: { ...state.modules },
   prestige: { ...state.prestige },
@@ -203,6 +366,7 @@ export const serializeStore = (state: StoreState): StoreSnapshot => ({
   selectedFactoryId: state.selectedFactoryId,
   droneOwners: { ...state.droneOwners },
   logisticsQueues: { pendingTransfers: [...state.logisticsQueues.pendingTransfers] },
+  gameTime: state.gameTime,
 });
 
 export const stringifySnapshot = (snapshot: StoreSnapshot) => JSON.stringify(snapshot);

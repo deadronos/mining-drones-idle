@@ -1,4 +1,5 @@
 import { Vector3 } from 'three';
+import { calculateExponentialCost } from '@/lib/math';
 import { getResourceModifiers, type ResourceModifierSnapshot } from '@/lib/resourceModifiers';
 import type { BuildableFactory } from '@/ecs/factories';
 import type {
@@ -41,12 +42,27 @@ export const tupleToVector3 = (tuple: VectorTuple): Vector3 =>
   new Vector3(tuple[0], tuple[1], tuple[2]);
 
 export const generateSeed = () => {
+  // Generate seed that fits in i32 for Rust compatibility (max 2,147,483,647)
   if (typeof crypto !== 'undefined' && 'getRandomValues' in crypto) {
-    const buffer = new Uint32Array(2);
+    const buffer = new Uint32Array(1);
     crypto.getRandomValues(buffer);
-    return (buffer[0] << 16) ^ buffer[1];
+    // Mask to ensure positive i32 range
+    return buffer[0] & 0x7fffffff;
   }
-  return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+  // Fallback: random positive i32
+  return Math.floor(Math.random() * 0x7fffffff);
+};
+
+/**
+ * Generate a unique ID using timestamp and random component.
+ * Uses a 6-character random suffix for better collision resistance.
+ * @param prefix Optional prefix for the ID (e.g., 'factory-', 'toast-')
+ * @returns A unique ID string in format: prefix + timestamp-random
+ */
+export const generateUniqueId = (prefix = ''): string => {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).slice(2, 8); // 6 characters
+  return `${prefix}${timestamp}-${random}`;
 };
 
 export const computeFactoryPlacement = (factories: BuildableFactory[]): Vector3 => {
@@ -134,7 +150,7 @@ export const computeFactoryUpgradeCost = (
     keyof FactoryResources,
     number,
   ][]) {
-    result[key] = Math.ceil(value * Math.pow(FACTORY_UPGRADE_GROWTH, level));
+    result[key] = calculateExponentialCost(value, FACTORY_UPGRADE_GROWTH, level);
   }
   return result;
 };
@@ -164,10 +180,12 @@ export const getSolarArrayLocalMaxEnergy = (level: number): number => {
 export const getFactoryEffectiveEnergyCapacity = (
   factory: BuildableFactory,
   solarArrayLevel: number,
+  modifiers?: ResourceModifierSnapshot,
 ): number => {
   // Base capacity from factory upgrades (stored in factory.energyCapacity)
   // + bonus from global Solar Array module
-  return factory.energyCapacity + getSolarArrayLocalMaxEnergy(solarArrayLevel);
+  const base = factory.energyCapacity + getSolarArrayLocalMaxEnergy(solarArrayLevel);
+  return base * (modifiers?.energyStorageMultiplier ?? 1);
 };
 
 export const computeRefineryProduction = (
@@ -209,7 +227,7 @@ export const applyRefineryProduction = (state: StoreState, stats: RefineryStats)
 });
 
 export const costForLevel = (base: number, level: number) =>
-  Math.ceil(base * Math.pow(GROWTH, level));
+  calculateExponentialCost(base, GROWTH, level);
 
 export const computePrestigeGain = (bars: number) => Math.floor(Math.pow(bars / 1_000, 0.6));
 

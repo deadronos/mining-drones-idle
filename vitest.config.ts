@@ -15,14 +15,15 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: [],
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ['src/**/*.test.{ts,tsx}', 'tests/unit/**/*.{test,spec}.{ts,tsx}'],
     watch: false,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'json'],
-      all: true,
+      // 'all' was removed from the typed Coverage options in newer Vitest
+      // versions. Tests should rely on `include`/`exclude` to control files.
       include: ['src/**/*.{ts,tsx,js,jsx}'],
-      exclude: ['**/node_modules/**', 'test/**', 'src/**/*.test.{ts,tsx}'],
+      exclude: ['**/node_modules/**', 'test/**', 'tests/unit/**/*.{spec,test}.{ts,tsx}', 'src/**/*.test.{ts,tsx}'],
       // Use thresholds to enforce minimum coverage
       thresholds: {
         global: {

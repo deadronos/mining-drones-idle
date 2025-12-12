@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createTravelSystem } from '@/ecs/systems/travel';
+import { DRONE_ENERGY_COST } from '@/state/store';
 import { createGameWorld, spawnDrone } from '@/ecs/world';
 import { createStoreInstance } from '@/state/store';
 import { Vector3 } from 'three';
@@ -30,7 +31,9 @@ describe('ecs/systems/travel', () => {
     system(1);
 
     expect(drone.travel?.elapsed).toBeCloseTo(0.25, 5);
-    expect(drone.battery).toBeCloseTo(drone.maxBattery / 4 - 0.3, 5);
+    // Energy consumed = DRONE_ENERGY_COST * fraction(0.25) * dt
+    const expectedConsumed = DRONE_ENERGY_COST * 0.25;
+    expect(drone.battery).toBeCloseTo(drone.maxBattery / 4 - expectedConsumed, 5);
   });
 
   it('applies throttle floor when battery is depleted', () => {

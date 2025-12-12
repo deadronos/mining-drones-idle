@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { generateUniqueId } from '@/state/utils';
 import Toast from './Toast';
 
 type ToastEntry = { id: string; message: string };
@@ -30,7 +31,7 @@ export const ToastProvider: React.FC<{ children?: React.ReactNode }> = ({ childr
   const [toasts, setToasts] = useState<ToastEntry[]>([]);
 
   const push = useCallback((message: string) => {
-    const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    const id = generateUniqueId();
     setToasts((t) => [...t, { id, message }]);
     return id;
   }, []);

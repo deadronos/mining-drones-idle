@@ -7,6 +7,7 @@ import {
   getFactoryHaulerUpgradeMaxLevel,
   resolveFactoryHaulerConfig,
 } from '@/lib/haulerUpgrades';
+import { formatCost, hasResources } from '../utils/upgradeFormatting';
 
 const upgradeOrder: FactoryHaulerUpgradeId[] = ['capacityBoost', 'speedBoost', 'efficiencyBoost'];
 
@@ -111,12 +112,7 @@ export const HaulerSection = ({ factory, onAssignHaulers }: HaulerSectionProps) 
             const nextLevel = currentLevel + 1;
             const isMaxed = currentLevel >= maxLevel;
             const cost = isMaxed ? null : getFactoryHaulerUpgradeCost(upgradeId, nextLevel);
-            const affordable =
-              cost &&
-              Object.entries(cost).every(([resource, amount]) => {
-                const key = resource as keyof typeof factory.resources;
-                return (factory.resources[key] ?? 0) >= amount;
-              });
+            const affordable = cost && hasResources(factory, cost);
 
             let label = '';
             if (upgradeId === 'capacityBoost') {
@@ -146,10 +142,7 @@ export const HaulerSection = ({ factory, onAssignHaulers }: HaulerSectionProps) 
                       disabled={!affordable}
                       onClick={() => purchaseUpgrade(factory.id, upgradeId)}
                     >
-                      {cost &&
-                        Object.entries(cost)
-                          .map(([resource, amount]) => `${amount} ${resource}`)
-                          .join(' + ')}
+                      {cost && formatCost(cost)}
                     </button>
                   )}
                 </div>

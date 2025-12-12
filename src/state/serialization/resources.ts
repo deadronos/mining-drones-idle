@@ -89,32 +89,35 @@ export const normalizeRefineSnapshot = (value: unknown): RefineProcessSnapshot |
   };
 };
 
-export const refineProcessToSnapshot = (process: RefineProcess): RefineProcessSnapshot => ({
-  id: process.id,
-  oreType: process.oreType,
-  amount: process.amount,
-  progress: process.progress,
-  timeTotal: process.timeTotal,
-  energyRequired: process.energyRequired,
-  speedMultiplier: process.speedMultiplier,
-});
+/**
+ * Internal helper: creates a shallow copy of an object with RefineProcess shape.
+ * Used by all three public functions since RefineProcess and RefineProcessSnapshot
+ * have identical structure.
+ */
+const copyRefineProcessShape = <T extends RefineProcess | RefineProcessSnapshot>(source: T): T =>
+  ({
+    id: source.id,
+    oreType: source.oreType,
+    amount: source.amount,
+    progress: source.progress,
+    timeTotal: source.timeTotal,
+    energyRequired: source.energyRequired,
+    speedMultiplier: source.speedMultiplier,
+  }) as T;
 
-export const cloneRefineProcess = (process: RefineProcess): RefineProcess => ({
-  id: process.id,
-  oreType: process.oreType,
-  amount: process.amount,
-  progress: process.progress,
-  timeTotal: process.timeTotal,
-  energyRequired: process.energyRequired,
-  speedMultiplier: process.speedMultiplier,
-});
+export const refineProcessToSnapshot = (process: RefineProcess): RefineProcessSnapshot =>
+  copyRefineProcessShape(process);
 
-export const snapshotToRefineProcess = (snapshot: RefineProcessSnapshot): RefineProcess => ({
-  id: snapshot.id,
-  oreType: snapshot.oreType,
-  amount: snapshot.amount,
-  progress: snapshot.progress,
-  timeTotal: snapshot.timeTotal,
-  energyRequired: snapshot.energyRequired,
-  speedMultiplier: snapshot.speedMultiplier,
-});
+/**
+ * Creates a shallow copy of a refine process.
+ */
+export const cloneRefineProcess = (process: RefineProcess): RefineProcess =>
+  copyRefineProcessShape(process);
+
+/**
+ * Converts snapshot to RefineProcess.
+ * Since RefineProcess and RefineProcessSnapshot have identical structure,
+ * this is effectively a shallow copy operation.
+ */
+export const snapshotToRefineProcess = (snapshot: RefineProcessSnapshot): RefineProcess =>
+  copyRefineProcessShape(snapshot);

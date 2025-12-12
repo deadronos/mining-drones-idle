@@ -30,10 +30,26 @@ export const ResourceModifiersDebug = (props?: ResourceModifiersDebugProps) => {
   const { className, heading = 'Resource Bonuses', headingLevel = 'h4' } = props ?? {};
   const resources = useStore((state) => state.resources);
   const prestigeCores = useStore((state) => state.prestige.cores);
-  const modifiers = useMemo(
-    () => getResourceModifiers(resources, prestigeCores),
-    [resources, prestigeCores],
-  );
+  const modifiers = useMemo(() => {
+    const snapshot = getResourceModifiers(resources, prestigeCores);
+    // Guard against invalid snapshots to avoid NaN displays
+    if (!snapshot || typeof snapshot !== 'object') {
+      return getResourceModifiers(
+        {
+          ore: 0,
+          ice: 0,
+          metals: 0,
+          crystals: 0,
+          organics: 0,
+          bars: 0,
+          energy: 0,
+          credits: 0,
+        },
+        0 as never,
+      );
+    }
+    return snapshot;
+  }, [resources, prestigeCores]);
 
   const entries = [
     {

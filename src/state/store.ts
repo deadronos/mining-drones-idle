@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { createStore as createVanillaStore, type StateCreator } from 'zustand/vanilla';
-import type { StoreState, StoreApiType } from './types';
+import type { StoreState, StoreApiType, HighlightedFactories } from './types';
 import {
   createResourceSlice,
   createSettingsSlice,
@@ -13,6 +13,12 @@ import { processRefinery, processFactories } from './processing/gameProcessing';
 import { processLogistics } from './processing/logisticsProcessing';
 import { LOGISTICS_CONFIG } from '@/ecs/logistics';
 import { logLogistics } from '@/lib/debug';
+import {
+  createMetricsState,
+  collectFactoryMetrics as collectMetrics,
+  accumulateHaulerThroughput,
+  resetMetricsState,
+} from './metrics';
 import {
   normalizeSnapshot,
   snapshotToFactory,
@@ -38,7 +44,7 @@ import {
   initialPrestigeInvestments,
 } from './constants';
 
-// Type exports
+// Re-export all types and utilities
 export type {
   PerformanceProfile,
   VectorTuple,
@@ -77,9 +83,13 @@ export type {
   PrestigeInvestmentState,
   SpecTechId,
   PrestigeInvestmentId,
+  MetricsState,
+  MetricSample,
+  FactoryMetricSeries,
+  FactoryMetricSeriesId,
+  FactoryMetricSnapshot,
 } from './types';
 
-// Constants exports
 export {
   PRESTIGE_THRESHOLD,
   ORE_PER_BAR,
@@ -93,13 +103,13 @@ export {
   SOLAR_ARRAY_LOCAL_REGEN_PER_LEVEL,
   SOLAR_ARRAY_LOCAL_MAX_ENERGY_PER_LEVEL,
   saveVersion,
+  SCHEMA_VERSION,
   moduleDefinitions,
   factoryUpgradeDefinitions,
   specTechDefinitions,
   prestigeInvestmentDefinitions,
 } from './constants';
 
-// Utils exports
 export {
   vector3ToTuple,
   tupleToVector3,
@@ -125,24 +135,17 @@ export {
   computeEnergyThrottle,
 } from './utils';
 
-// Serialization exports
 export { serializeStore, stringifySnapshot, parseSnapshot } from './serialization';
 
-// Factory exports
 export { createDefaultFactories } from './factory';
 
 /**
- * Zustand store creator that composes all slices and processing functions.
- * Each slice is responsible for a specific domain:
- * - resourceSlice: resources, modules, prestige operations
- * - settingsSlice: UI state and selections
- * - factorySlice: factory CRUD and operations
- * - droneSlice: drone flights and ownership
- * - logisticsSlice: hauler configuration and status
+ * Main store creator that composes all slices and implements game loop orchestration.
+ * Refactored into modular functions in src/state/store/ for better maintainability.
  *
- * Processing functions handle game loop orchestration:
- * - gameProcessing: refinery and factory processing
- * - logisticsProcessing: hauler logistics scheduler
+ * @param set - Zustand set function.
+ * @param get - Zustand get function.
+ * @returns The complete store state definition.
  */
 const storeCreator: StateCreator<StoreState> = (set, get) => {
   const defaultFactories = createDefaultFactories();
@@ -150,23 +153,17 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
 
   // Build composed state from slices
   const sliceSet = set as unknown;
-
   const sliceGet = get as unknown;
 
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
-
   const resourceSlice = createResourceSlice(sliceSet, sliceGet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
-
-  const settingsSlice = createSettingsSlice(sliceSet);
+  const settingsSlice = createSettingsSlice(sliceSet, sliceGet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
-
   const factorySlice = createFactorySlice(sliceSet, sliceGet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
-
   const droneSlice = createDroneSlice(sliceSet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
-
   const logisticsSlice = createLogisticsSlice(sliceSet, sliceGet);
 
   return {
@@ -184,6 +181,8 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
     selectedFactoryId: initialSelectedFactory,
     factories: defaultFactories,
     logisticsQueues: { pendingTransfers: [] },
+    metrics: createMetricsState(),
+    highlightedFactories: { sourceId: null, destId: null },
 
     // Game loop tick orchestrator
     tick: (dt) => {
@@ -204,14 +203,24 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
       return refineryStats;
     },
 
-    // Process factories (called from tick, already handled in tick orchestrator)
+    // Process factories (called from tick)
     processFactories: (dt) => {
-      // This is now handled within tick() via tickGameLoop
-      // Kept for backward compatibility if called directly
       if (dt <= 0 || get().factories.length === 0) return;
       const state = get();
-      const { factories, resources, factoryProcessSequence } = processFactories(state, dt);
-      set({ factories, resources, factoryProcessSequence });
+      const result = processFactories(state, dt);
+      set((current) => ({
+        factories: result.factories,
+        resources: result.resources,
+        factoryProcessSequence: result.factoryProcessSequence,
+        metrics: collectMetrics({
+          metrics: current.metrics,
+          factories: result.factories,
+          telemetry: result.metrics,
+          settings: current.settings,
+          dt,
+          gameTime: current.gameTime,
+        }),
+      }));
 
       // Detect upgrade shortfalls and create requests, then clear expired ones
       const getState = get as () => StoreState & FactorySliceMethods;
@@ -244,11 +253,12 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
         newLogisticsTick,
         LOGISTICS_CONFIG.scheduling_interval,
       );
-      const { logisticsQueues } = processLogistics(state);
-      set({
+      const { logisticsQueues, throughputByFactory } = processLogistics(state);
+      set((current) => ({
         logisticsQueues,
         logisticsTick: newLogisticsTick - LOGISTICS_CONFIG.scheduling_interval,
-      });
+        metrics: accumulateHaulerThroughput(current.metrics, throughputByFactory),
+      }));
     },
 
     // Snapshot and import/export
@@ -294,6 +304,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
           droneFlights: (normalized.droneFlights ?? []).map(cloneDroneFlight),
           factories: restoredFactories,
           logisticsQueues: normalized.logisticsQueues ?? { pendingTransfers: [] },
+          gameTime: normalized.gameTime ?? 0,
           factoryProcessSequence: deriveProcessSequence(restoredFactories),
           factoryRoundRobin: 0,
           factoryAutofitSequence: 0,
@@ -302,6 +313,8 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
           selectedAsteroidId: null,
           selectedFactoryId,
           droneOwners: normalizeDroneOwners(normalized.droneOwners ?? {}),
+          highlightedFactories: { sourceId: null, destId: null },
+          metrics: resetMetricsState(),
         };
       }),
 
@@ -344,14 +357,113 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
           selectedAsteroidId: null,
           selectedFactoryId,
           droneOwners: {},
+          highlightedFactories: { sourceId: null, destId: null },
+          metrics: resetMetricsState(),
         };
+      });
+    },
+
+    setHighlightedFactories: (highlight: HighlightedFactories) => {
+      set((state) => {
+        if (
+          state.highlightedFactories.sourceId === highlight.sourceId &&
+          state.highlightedFactories.destId === highlight.destId
+        ) {
+          return state;
+        }
+        return {
+          highlightedFactories: {
+            sourceId: highlight.sourceId,
+            destId: highlight.destId,
+          },
+        };
+      });
+    },
+
+    syncLogisticsQueues: (queues) => {
+      set({ logisticsQueues: queues });
+    },
+
+    syncResources: (resources) => {
+      set({ resources });
+    },
+
+    // Sync per-factory buffers coming from Rust. This updates only the
+    // fields that are represented by the bridge (resources, energy, energyCapacity, haulersAssigned)
+    syncFactoriesFromRust: (buffers) => {
+      set((current) => {
+        const factories = current.factories;
+        if (!factories || factories.length === 0) return current;
+
+        const { resources: resBuf, energy: energyBuf, maxEnergy: maxEnergyBuf, haulers: haulersBuf } = buffers || {};
+
+        const resourcesArray: Float32Array | null = Array.isArray(resBuf) ? new Float32Array(resBuf) : resBuf instanceof Float32Array ? resBuf : null;
+        const energyArray: Float32Array | null = Array.isArray(energyBuf) ? new Float32Array(energyBuf) : energyBuf instanceof Float32Array ? energyBuf : null;
+        const maxEnergyArray: Float32Array | null = Array.isArray(maxEnergyBuf) ? new Float32Array(maxEnergyBuf) : maxEnergyBuf instanceof Float32Array ? maxEnergyBuf : null;
+        const haulersArray: Float32Array | null = Array.isArray(haulersBuf) ? new Float32Array(haulersBuf) : haulersBuf instanceof Float32Array ? haulersBuf : null;
+
+        const newFactories = factories.map((factory, idx) => {
+          let changed = false;
+          const clone = { ...factory };
+
+          // Resources buffer expected as 7 floats per factory
+          if (resourcesArray && resourcesArray.length >= (idx * 7 + 7)) {
+            const base = idx * 7;
+            const currentRes = clone.resources;
+            const newRes = {
+              ore: Number.isFinite(resourcesArray[base]) ? resourcesArray[base] : currentRes.ore,
+              ice: Number.isFinite(resourcesArray[base + 1]) ? resourcesArray[base + 1] : currentRes.ice,
+              metals: Number.isFinite(resourcesArray[base + 2]) ? resourcesArray[base + 2] : currentRes.metals,
+              crystals: Number.isFinite(resourcesArray[base + 3]) ? resourcesArray[base + 3] : currentRes.crystals,
+              organics: Number.isFinite(resourcesArray[base + 4]) ? resourcesArray[base + 4] : currentRes.organics,
+              bars: Number.isFinite(resourcesArray[base + 5]) ? resourcesArray[base + 5] : currentRes.bars,
+              credits: Number.isFinite(resourcesArray[base + 6]) ? resourcesArray[base + 6] : currentRes.credits,
+            };
+            clone.resources = { ...clone.resources, ...newRes };
+            changed = true;
+          }
+
+          if (energyArray && energyArray.length > idx && Number.isFinite(energyArray[idx])) {
+            clone.energy = energyArray[idx];
+            changed = true;
+          }
+
+          if (maxEnergyArray && maxEnergyArray.length > idx && Number.isFinite(maxEnergyArray[idx])) {
+            clone.energyCapacity = maxEnergyArray[idx];
+            changed = true;
+          }
+
+          if (haulersArray && haulersArray.length > idx) {
+            const rawHaulers = haulersArray[idx];
+            if (Number.isFinite(rawHaulers)) {
+              clone.haulersAssigned = Math.max(0, Math.trunc(rawHaulers));
+              changed = true;
+            }
+          }
+
+          return changed ? clone : factory;
+        });
+
+        return { factories: newFactories };
       });
     },
   };
 };
 
+/**
+ * Creates a vanilla (non-React) store instance.
+ * Useful for testing or usage outside of React components.
+ *
+ * @returns A fresh StoreState instance.
+ */
 export const createStoreInstance = () => createVanillaStore<StoreState>(storeCreator);
 
+/**
+ * The React hook for accessing the store.
+ */
 export const useStore = create<StoreState>()(storeCreator);
 
+/**
+ * Singleton API access to the store, useful for imperative updates.
+ */
 export const storeApi = useStore as unknown as StoreApiType;

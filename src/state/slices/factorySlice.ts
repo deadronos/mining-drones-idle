@@ -7,11 +7,10 @@ import {
   computeFactoryCost,
   removeDroneFromFactory,
   transferOreToFactory,
-  detectUpgradeShortfall,
 } from '@/ecs/factories';
-import { computeFactoryUpgradeCost, computeFactoryPlacement } from '../utils';
+import { computeFactoryPlacement, generateUniqueId } from '../utils';
 import { cloneFactory } from '../serialization';
-import { factoryUpgradeDefinitions } from '../constants';
+import { createFactoryUpgradeMethods } from './factory/upgradeRequests';
 
 export interface FactorySliceState {
   factories: BuildableFactory[];
@@ -35,6 +34,7 @@ export interface FactorySliceMethods {
     droneId: string,
     options?: { transferOwnership?: boolean },
   ) => void;
+  unstickDrone: (droneId: string) => void;
   transferOreToFactory: (factoryId: string, amount: number) => number;
   addResourcesToFactory: (factoryId: string, delta: Partial<FactoryResources>) => void;
   allocateFactoryEnergy: (factoryId: string, amount: number) => number;
@@ -98,7 +98,7 @@ export const createFactorySlice: StateCreator<
     if (state.resources.metals < cost.metals || state.resources.crystals < cost.crystals) {
       return false;
     }
-    const id = `factory-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+    const id = generateUniqueId('factory-');
     const position = computeFactoryPlacement(state.factories);
     const factory = createFactory(id, position);
     set((current) => {
@@ -188,6 +188,26 @@ export const createFactorySlice: StateCreator<
     set(() => ({ factories, droneOwners: nextDroneOwners }));
   },
 
+  unstickDrone: (droneId) => {
+    set((state) => {
+      // Remove droneId from any factory queuedDrones
+      const factories = state.factories.map((factory) => ({ ...cloneFactory(factory) }));
+      for (const f of factories) {
+        if (Array.isArray(f.queuedDrones) && f.queuedDrones.includes(droneId)) {
+          f.queuedDrones = f.queuedDrones.filter((d) => d !== droneId);
+        }
+      }
+
+      // Clear owner mapping for the drone
+      const droneOwners = { ...state.droneOwners };
+      if (droneOwners[droneId] !== undefined) {
+        droneOwners[droneId] = null;
+      }
+
+      return { factories, droneOwners };
+    });
+  },
+
   transferOreToFactory: (factoryId, amount) => {
     const state = get();
     const index = state.factories.findIndex((f) => f.id === factoryId);
@@ -274,199 +294,7 @@ export const createFactorySlice: StateCreator<
     return granted;
   },
 
-  upgradeFactory: (factoryId, upgrade, variant) => {
-    const state = get();
-    const index = state.factories.findIndex((f) => f.id === factoryId);
-    if (index === -1) {
-      return false;
-    }
-    const definition = factoryUpgradeDefinitions[upgrade as keyof typeof factoryUpgradeDefinitions];
-    if (!definition) {
-      return false;
-    }
-    const base = state.factories[index];
-    const level = (base.upgrades as unknown as Record<string, number>)[upgrade] ?? 0;
-    const cost = computeFactoryUpgradeCost(upgrade as never, level, variant);
-    for (const [key, value] of Object.entries(cost) as [keyof FactoryResources, number][]) {
-      if (value > 0 && (base.resources[key] ?? 0) < value) {
-        return false;
-      }
-    }
-    const updated = cloneFactory(base);
-    for (const [key, value] of Object.entries(cost) as [keyof FactoryResources, number][]) {
-      if (value <= 0) continue;
-      updated.resources[key] = Math.max(0, (updated.resources[key] ?? 0) - value);
-      if (key === 'ore') {
-        updated.currentStorage = updated.resources.ore;
-      }
-    }
-    definition.apply(updated);
-
-    // Clear any upgrade request for this upgrade (since it was just purchased)
-    updated.upgradeRequests = updated.upgradeRequests.filter((req) => req.upgrade !== upgrade);
-
-    set((current) => {
-      const factories = current.factories.map((factory, idx) =>
-        idx === index ? updated : factory,
-      );
-      // Track secondary resource spending for specialization tech unlocks
-      const specTechSpent = { ...current.specTechSpent };
-      const secondaryResourceKeys: Array<'metals' | 'crystals' | 'organics' | 'ice'> = [
-        'metals',
-        'crystals',
-        'organics',
-        'ice',
-      ];
-      for (const key of secondaryResourceKeys) {
-        if (key in cost) {
-          const value = (cost as unknown as Record<string, number>)[key];
-          if (value > 0) {
-            specTechSpent[key] = (specTechSpent[key] ?? 0) + value;
-          }
-        }
-      }
-      return { factories, specTechSpent };
-    });
-    return true;
-  },
-
-  detectAndCreateUpgradeRequest: (factoryId) => {
-    const state = get();
-    const index = state.factories.findIndex((f) => f.id === factoryId);
-    if (index === -1) {
-      return false;
-    }
-
-    const factory = state.factories[index];
-    const upgradeOrder: (keyof typeof factory.upgrades)[] = [
-      'docking',
-      'refine',
-      'storage',
-      'energy',
-      'solar',
-    ];
-
-    const request = detectUpgradeShortfall(factory, upgradeOrder as unknown as string[]);
-    if (!request) {
-      return false;
-    }
-
-    set((current) => {
-      const updated = cloneFactory(current.factories[index]);
-      updated.upgradeRequests.push(request);
-      const factories = current.factories.map((f, idx) => (idx === index ? updated : f));
-      return { factories };
-    });
-    return true;
-  },
-
-  updateUpgradeRequestFulfillment: (factoryId, resource, amount) => {
-    if (amount <= 0) {
-      return;
-    }
-    set((state) => {
-      const index = state.factories.findIndex((f) => f.id === factoryId);
-      if (index === -1) {
-        return {};
-      }
-
-      const updated = cloneFactory(state.factories[index]);
-      let changed = false;
-
-      // Update all pending/partially_fulfilled requests
-      for (const request of updated.upgradeRequests) {
-        if (request.status === 'expired') {
-          continue;
-        }
-
-        const needed = request.resourceNeeded[resource as keyof FactoryResources] ?? 0;
-        const fulfilled = request.fulfilledAmount[resource as keyof FactoryResources] ?? 0;
-        if (needed <= 0 || fulfilled >= needed) {
-          continue;
-        }
-
-        // Update fulfilled amount
-        const additionalFulfilled = Math.min(amount, needed - fulfilled);
-        request.fulfilledAmount[resource as keyof FactoryResources] =
-          fulfilled + additionalFulfilled;
-        changed = true;
-
-        // Check if all resources are now fulfilled
-        let allFulfilled = true;
-        for (const [res, need] of Object.entries(request.resourceNeeded)) {
-          if (typeof need === 'number' && need > 0) {
-            const fulfilledAmount = request.fulfilledAmount[res as keyof FactoryResources] ?? 0;
-            if (fulfilledAmount < need) {
-              allFulfilled = false;
-              break;
-            }
-          }
-        }
-
-        if (allFulfilled && request.status !== 'fulfilled') {
-          request.status = 'fulfilled';
-        } else if (fulfilled > 0 && request.status === 'pending') {
-          request.status = 'partially_fulfilled';
-        }
-      }
-
-      if (!changed) {
-        return {};
-      }
-
-      const factories = state.factories.map((f, idx) => (idx === index ? updated : f));
-      return { factories };
-    });
-  },
-
-  clearExpiredUpgradeRequests: (factoryId) => {
-    const now = Date.now();
-    set((state) => {
-      const index = state.factories.findIndex((f) => f.id === factoryId);
-      if (index === -1) {
-        return {};
-      }
-
-      const updated = cloneFactory(state.factories[index]);
-      const beforeCount = updated.upgradeRequests.length;
-
-      // Mark requests as expired if past their expiresAt time
-      for (const request of updated.upgradeRequests) {
-        if (request.status !== 'expired' && now >= request.expiresAt) {
-          request.status = 'expired';
-        }
-      }
-
-      // Remove expired requests
-      updated.upgradeRequests = updated.upgradeRequests.filter((r) => r.status !== 'expired');
-
-      if (updated.upgradeRequests.length === beforeCount) {
-        return {};
-      }
-
-      const factories = state.factories.map((f, idx) => (idx === index ? updated : f));
-      return { factories };
-    });
-  },
-
-  clearUpgradeRequests: (factoryId) => {
-    set((state) => {
-      const index = state.factories.findIndex((f) => f.id === factoryId);
-      if (index === -1) {
-        return {};
-      }
-
-      const updated = cloneFactory(state.factories[index]);
-      if (updated.upgradeRequests.length === 0) {
-        return {};
-      }
-
-      updated.upgradeRequests = [];
-      const factories = state.factories.map((f, idx) => (idx === index ? updated : f));
-      return { factories };
-    });
-  },
-
+  ...createFactoryUpgradeMethods(set, get),
   triggerFactoryAutofit: () => {
     set((state) => ({ factoryAutofitSequence: state.factoryAutofitSequence + 1 }));
   },

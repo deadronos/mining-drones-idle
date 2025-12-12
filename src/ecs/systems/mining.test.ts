@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createMiningSystem } from '@/ecs/systems/mining';
+import { DRONE_ENERGY_COST } from '@/state/store';
 import { createGameWorld, spawnAsteroid, spawnDrone } from '@/ecs/world';
 import { createStoreInstance } from '@/state/store';
 
@@ -26,7 +27,9 @@ describe('ecs/systems/mining', () => {
     system(1);
 
     expect(drone.cargo).toBeCloseTo(3, 5);
-    expect(drone.battery).toBeCloseTo(drone.maxBattery / 2 - 0.6, 5);
+    // Energy consumed = DRONE_ENERGY_COST * fraction(0.5) * dt
+    const expectedConsumed = DRONE_ENERGY_COST * 0.5;
+    expect(drone.battery).toBeCloseTo(drone.maxBattery / 2 - expectedConsumed, 5);
   });
 
   it('respects throttle floor when the battery is empty', () => {
