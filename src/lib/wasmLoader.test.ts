@@ -155,4 +155,100 @@ describe('WASM Loader normalization', () => {
     expect(res.fallbackReason).toContain('WASM deserialization failed');
     expect(res.fallbackReason).toContain('bars');
   });
+
+  it('handles missing-field errors using single quotes', async () => {
+    const partial: Partial<StoreSnapshot> = {
+      resources: { ore: 5, bars: 5, energy: 10 } as unknown as StoreSnapshot['resources'],
+      modules: {
+        droneBay: 1,
+        refinery: 0,
+        storage: 0,
+        solar: 0,
+        scanner: 0,
+        haulerDepot: 0,
+        logisticsHub: 0,
+        routingProtocol: 0,
+      },
+      save: { lastSave: 0, version: '0.0.0' },
+      settings: { autosaveEnabled: true, autosaveInterval: 30, offlineCapHours: 8, notation: 'standard', throttleFloor: 0.2, showTrails: true, showHaulerShips: true, showDebugPanel: false, performanceProfile: 'medium', inspectorCollapsed: false, useRustSim: false, shadowMode: false, metrics: { enabled: true, intervalSeconds: 5, retentionSeconds: 300 } } as unknown as StoreSnapshot['settings'],
+    };
+
+    const wasm = (await import('../gen/rust_engine')) as unknown as {
+      default: (...args: unknown[]) => unknown;
+    };
+
+    vi.spyOn(wasm, 'default').mockImplementationOnce(() => {
+      throw new Error("missing field 'bars' at line 1 column 1429");
+    });
+
+    const res = await loadWasmBridge(partial as StoreSnapshot);
+    expect(res.bridge).toBeNull();
+    expect(res.fallbackReason).toBeDefined();
+    expect(res.fallbackReason).toContain('WASM deserialization failed');
+    expect(res.fallbackReason).toContain('bars');
+  });
+
+  it('handles missing-field errors without any quotes', async () => {
+    const partial: Partial<StoreSnapshot> = {
+      resources: { ore: 5, bars: 5, energy: 10 } as unknown as StoreSnapshot['resources'],
+      modules: {
+        droneBay: 1,
+        refinery: 0,
+        storage: 0,
+        solar: 0,
+        scanner: 0,
+        haulerDepot: 0,
+        logisticsHub: 0,
+        routingProtocol: 0,
+      },
+      save: { lastSave: 0, version: '0.0.0' },
+      settings: { autosaveEnabled: true, autosaveInterval: 30, offlineCapHours: 8, notation: 'standard', throttleFloor: 0.2, showTrails: true, showHaulerShips: true, showDebugPanel: false, performanceProfile: 'medium', inspectorCollapsed: false, useRustSim: false, shadowMode: false, metrics: { enabled: true, intervalSeconds: 5, retentionSeconds: 300 } } as unknown as StoreSnapshot['settings'],
+    };
+
+    const wasm = (await import('../gen/rust_engine')) as unknown as {
+      default: (...args: unknown[]) => unknown;
+    };
+
+    vi.spyOn(wasm, 'default').mockImplementationOnce(() => {
+      throw new Error('missing field bars at line 1 column 1429');
+    });
+
+    const res = await loadWasmBridge(partial as StoreSnapshot);
+    expect(res.bridge).toBeNull();
+    expect(res.fallbackReason).toBeDefined();
+    expect(res.fallbackReason).toContain('WASM deserialization failed');
+    expect(res.fallbackReason).toContain('bars');
+  });
+
+  it('handles missing-field errors with a colon separator', async () => {
+    const partial: Partial<StoreSnapshot> = {
+      resources: { ore: 5, bars: 5, energy: 10 } as unknown as StoreSnapshot['resources'],
+      modules: {
+        droneBay: 1,
+        refinery: 0,
+        storage: 0,
+        solar: 0,
+        scanner: 0,
+        haulerDepot: 0,
+        logisticsHub: 0,
+        routingProtocol: 0,
+      },
+      save: { lastSave: 0, version: '0.0.0' },
+      settings: { autosaveEnabled: true, autosaveInterval: 30, offlineCapHours: 8, notation: 'standard', throttleFloor: 0.2, showTrails: true, showHaulerShips: true, showDebugPanel: false, performanceProfile: 'medium', inspectorCollapsed: false, useRustSim: false, shadowMode: false, metrics: { enabled: true, intervalSeconds: 5, retentionSeconds: 300 } } as unknown as StoreSnapshot['settings'],
+    };
+
+    const wasm = (await import('../gen/rust_engine')) as unknown as {
+      default: (...args: unknown[]) => unknown;
+    };
+
+    vi.spyOn(wasm, 'default').mockImplementationOnce(() => {
+      throw new Error('missing field: bars at line 1 column 1429');
+    });
+
+    const res = await loadWasmBridge(partial as StoreSnapshot);
+    expect(res.bridge).toBeNull();
+    expect(res.fallbackReason).toBeDefined();
+    expect(res.fallbackReason).toContain('WASM deserialization failed');
+    expect(res.fallbackReason).toContain('bars');
+  });
 });

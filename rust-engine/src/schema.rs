@@ -2,6 +2,25 @@ use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct RefineProcessSnapshot {
+    pub id: String,
+    pub ore_type: String,
+    #[serde(default)]
+    pub amount: f32,
+    #[serde(default)]
+    pub progress: f32,
+    #[serde(rename = "timeTotal")]
+    #[serde(default)]
+    pub time_total: f32,
+    #[serde(rename = "energyRequired")]
+    #[serde(default)]
+    pub energy_required: f32,
+    #[serde(rename = "speedMultiplier")]
+    #[serde(default)]
+    pub speed_multiplier: f32,
+}
 use crate::error::SimulationError;
 
 pub const SCHEMA_VERSION: &str = "1.0.0";
@@ -56,22 +75,54 @@ pub struct DroneFlight {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub struct FactoryResourceSnapshot {
+    #[serde(default)]
     pub ore: f32,
+    #[serde(default)]
     pub bars: f32,
+    #[serde(default)]
     pub metals: f32,
+    #[serde(default)]
     pub crystals: f32,
+    #[serde(default)]
     pub organics: f32,
+    #[serde(default)]
     pub ice: f32,
+    #[serde(default)]
     pub credits: f32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub struct FactoryUpgradeSnapshot {
+    #[serde(default)]
     pub docking: i32,
+    #[serde(default)]
     pub refine: i32,
+    #[serde(default)]
     pub storage: i32,
+    #[serde(default)]
     pub energy: i32,
+    #[serde(default)]
     pub solar: i32,
+}
+
+fn default_upgrade_request_status() -> String {
+    "pending".to_string()
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct FactoryUpgradeRequestSnapshot {
+    pub upgrade: String,
+    #[serde(default)]
+    pub resource_needed: FactoryResourceSnapshot,
+    #[serde(default)]
+    pub fulfilled_amount: FactoryResourceSnapshot,
+    #[serde(default = "default_upgrade_request_status")]
+    pub status: String,
+    #[serde(default)]
+    pub created_at: i64,
+    #[serde(default)]
+    pub expires_at: i64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
@@ -148,6 +199,8 @@ pub struct FactorySnapshot {
     #[serde(default)]
     pub upgrades: FactoryUpgradeSnapshot,
     #[serde(default)]
+    pub upgrade_requests: Vec<FactoryUpgradeRequestSnapshot>,
+    #[serde(default)]
     pub haulers_assigned: Option<i32>,
     #[serde(default)]
     pub hauler_config: Option<HaulerConfig>,
@@ -155,6 +208,8 @@ pub struct FactorySnapshot {
     pub hauler_upgrades: Option<FactoryHaulerUpgrades>,
     #[serde(default)]
     pub logistics_state: Option<FactoryLogisticsState>,
+    #[serde(default, rename = "activeRefines")]
+    pub active_refines: Vec<RefineProcessSnapshot>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -180,29 +235,45 @@ pub struct LogisticsQueues {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub struct Resources {
+    #[serde(default)]
     pub ore: f32,
+    #[serde(default)]
     pub ice: f32,
+    #[serde(default)]
     pub metals: f32,
+    #[serde(default)]
     pub crystals: f32,
+    #[serde(default)]
     pub organics: f32,
+    #[serde(default)]
     pub bars: f32,
+    #[serde(default)]
     pub energy: f32,
+    #[serde(default)]
     pub credits: f32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub struct Modules {
     #[serde(rename = "droneBay")]
+    #[serde(default)]
     pub drone_bay: i32,
+    #[serde(default)]
     pub refinery: i32,
+    #[serde(default)]
     pub storage: i32,
+    #[serde(default)]
     pub solar: i32,
+    #[serde(default)]
     pub scanner: i32,
     #[serde(rename = "haulerDepot")]
+    #[serde(default)]
     pub hauler_depot: i32,
     #[serde(rename = "logisticsHub")]
+    #[serde(default)]
     pub logistics_hub: i32,
     #[serde(rename = "routingProtocol")]
+    #[serde(default)]
     pub routing_protocol: i32,
 }
 
@@ -240,14 +311,23 @@ pub struct StoreSettings {
     #[serde(rename = "inspectorCollapsed")]
     pub inspector_collapsed: bool,
     pub metrics: MetricsSettings,
+    #[serde(rename = "useRustSim")]
+    #[serde(default)]
+    pub use_rust_sim: bool,
+    #[serde(rename = "shadowMode")]
+    #[serde(default)]
+    pub shadow_mode: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
 pub struct MetricsSettings {
+    #[serde(default)]
     pub enabled: bool,
     #[serde(rename = "intervalSeconds")]
+    #[serde(default)]
     pub interval_seconds: i32,
     #[serde(rename = "retentionSeconds")]
+    #[serde(default)]
     pub retention_seconds: i32,
 }
 
@@ -344,5 +424,32 @@ mod tests {
         }"#;
         let flight: DroneFlight = serde_json::from_str(json).expect("should deserialize");
         assert_eq!(flight.path_seed, 3132762181);
+    }
+
+    #[test]
+    fn deserializes_resources_missing_bars() {
+        let json = r#"{
+            "ore": 1.0,
+            "ice": 2.0,
+            "metals": 3.0,
+            "crystals": 4.0,
+            "organics": 5.0,
+            "energy": 6.0,
+            "credits": 7.0
+        }"#;
+        let resources: Resources = serde_json::from_str(json).expect("should deserialize");
+        assert_eq!(resources.bars, 0.0);
+        assert_eq!(resources.ore, 1.0);
+    }
+
+    #[test]
+    fn deserializes_factory_resource_missing_bars() {
+        let json = r#"{
+            "ore": 1.0,
+            "metals": 2.0,
+            "crystals": 3.0
+        }"#;
+        let factories: FactoryResourceSnapshot = serde_json::from_str(json).expect("should deserialize");
+        assert_eq!(factories.bars, 0.0);
     }
 }

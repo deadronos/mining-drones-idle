@@ -7,6 +7,7 @@ pub mod buffers;
 pub mod constants;
 pub mod error;
 pub mod modifiers;
+pub mod parity_debug;
 pub mod rng;
 pub mod schema;
 pub mod sinks;

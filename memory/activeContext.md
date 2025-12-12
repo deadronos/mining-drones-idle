@@ -10,6 +10,17 @@
 - Added dedicated `wasm-parity` CI job running parity/perf suites; shadow-mode E2E now includes a 5s divergence-log guard.
 - Remaining: asteroid/depletion + per-drone parity coverage, longer shadow-mode parity runs/nightly gating, WASM artifact caching, biome parity decision.
 
+- Stabilized Playwright E2E after TS↔Rust handoff work:
+  - Fixed hidden import file input interaction in `tests/e2e/import-invalid.spec.ts`.
+  - Made `tests/e2e/factory-logistics.spec.ts` deterministic (snapshot-based setup + robust hauler-count handling).
+  - Full `npm run e2e` suite now passes (shadow-mode Rust-enabled tests still skipped).
+
+- Fixed late-step parity divergence caused by asteroid recycle semantics: Rust now re-keys asteroid IDs on respawn and invalidates drone targets, matching TS “remove + spawn new” behavior.
+
+- Aligned RNG consumption between TS and Rust for drone asteroid targeting and path seeds by:
+  - Moving TS pathSeed draw in `assignDroneTarget` to occur after region selection.
+  - Restoring unconditional asteroid RNG burn in `GameState::from_snapshot` so Rust advances RNG to match TS asteroid spawning even when asteroid metadata is provided.
+
 ## Active Tasks
 
 ### ✅ **TASK045 – TypeScript WASM Bridge Implementation** (Just Completed)
@@ -49,8 +60,8 @@
   - Created `RustDrones` for direct WASM visualization.
   - Updated `Scene.tsx` to support engine switching.
   - **Fixed Parity Mismatch**: Fixed `sys_drone_ai` ignoring `RETURNING` state, causing drones to get stuck and not unload ore.
-  - Fixed `api.rs` crash when factory count is 0.
-  - Fixed `sys_power` unit test.
+- Fixed `api.rs` crash when factory count is 0.
+- Fixed `sys_power` unit test.
 - **Next Steps**:
   - Run the game and verify "Shadow Mode" logs.
   - Fix any divergences found.
@@ -66,6 +77,25 @@
 ---
 
 ## Recent Completions
+
+✅ **Completed: TASK056 – Logistics Parity Implementation**
+
+- Ported Rust logistics scheduler to mirror TS reservations (factory↔factory/warehouse, upgrade requests) and hauler config resolution; added upgrade request schema support.
+- Added logistics parity unit test comparing scheduled transfers/reservations and rebuilt WASM artifacts.
+
+✅ **Completed: TASK058 – Rendering & Bridge Integration**
+
+- Rust rendering now reads drones, asteroids, and factories from Rust buffers when `useRustSim` is enabled; colors/scale derive from ore/resource profiles with TS biome fallback.
+- HUD/Factory panels use Rust buffer aggregates via `useRustHUD` with graceful TS fallback and bridge readiness gating; selection clicks are disabled in Rust mode to avoid stale IDs.
+
+✅ **Completed: TASK057 – Commands, Snapshot & Offline Parity**
+
+- Aligned Rust command handlers with TS costs/effects (module/factory upgrades, hauler assignment, prestige gain, recycle asteroid sync) and tightened command parity tests to require zero drift.
+- Rust offline simulation now mirrors TS refinery-only path with sink bonuses via the new WASM offline API; schemaVersion normalized/validated and covered by round-trip snapshot tests.
+
+✅ **Completed: TASK052 – Parity Test Expansion & Measurement**
+
+- Added shared parity logger (`PARITY_DEBUG`/`--debug-parity`) and optional enforcement flag (`PARITY_ENFORCE`), expanded step/offline/command parity suites, and enhanced shadow-mode E2E with rolling metrics and screenshot capture on drift.
 
 ✅ **Completed: TASK045 – TypeScript WASM Bridge Implementation**
 
@@ -90,6 +120,18 @@
 
 - Scaffolding `/rust-engine` crate completed with RNG parity tests, snapshot import/export, layout planner, and data buffer.
 - Implemented TS bridge (`wasmSimBridge`) matching `wasm-bindgen` class structure.
+
+✅ **Completed: TASK053 – Drone AI & Travel Parity**
+
+- Weighted asteroid targeting/region offsets, queue-aware returns, and travel seed/control parity matched to TS. RNG burn/path seed fixes keep flight seeds aligned in parity suites; rebuilt WASM and validated with `npm run typecheck`, `npm run lint`, `npm run test`.
+
+✅ **Completed: TASK054 – Asteroids & Biomes Parity**
+
+- Biome-driven respawn replaces uniform weights; scanner/sink richness multipliers applied, RNG draw count (11) mirrored, gravity metadata refreshed, and respawn parity test added. Validated with `npm run build:wasm`, `npm run typecheck`, `npm run lint`, `npm run test`.
+
+✅ **Completed: TASK055 – Power & Refinery Alignment**
+
+- Rust power/refinery now uses factory-specific idle/hauler drains, solar regen with effective caps, local-first drone charging (owner/target factory), and refinery slot start/tick parity. Added wasm parity test; `npm run build:wasm`, `npm run typecheck`, `npm run lint`, `npm run test` passing (parity divergence logs expected).
 
 ## Next Steps
 

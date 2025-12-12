@@ -45,6 +45,14 @@ impl WasmGameState {
         self.inner.apply_command(command).map_err(to_js_error)
     }
 
+    pub fn simulate_offline(&mut self, seconds: f32, step: f32) -> Result<String, JsValue> {
+        let result = self
+            .inner
+            .simulate_offline(seconds, step)
+            .map_err(to_js_error)?;
+        serde_json::to_string(&result).map_err(|err| JsValue::from_str(&err.to_string()))
+    }
+
     pub fn layout_json(&self) -> Result<String, JsValue> {
         serde_json::to_string(&self.inner.layout).map_err(|err| JsValue::from_str(&err.to_string()))
     }
@@ -52,4 +60,19 @@ impl WasmGameState {
     pub fn data_ptr(&self) -> *const u8 {
         self.inner.data.as_ptr() as *const u8
     }
+
+    pub fn drone_ids_json(&self) -> Result<String, JsValue> {
+        serde_json::to_string(self.inner.drone_ids())
+            .map_err(|err| JsValue::from_str(&err.to_string()))
+    }
+
+    pub fn asteroid_ids_json(&self) -> Result<String, JsValue> {
+        serde_json::to_string(self.inner.asteroid_ids())
+            .map_err(|err| JsValue::from_str(&err.to_string()))
+    }
+}
+
+#[wasm_bindgen]
+pub fn set_parity_debug(enabled: bool) {
+    crate::parity_debug::set_enabled(enabled);
 }

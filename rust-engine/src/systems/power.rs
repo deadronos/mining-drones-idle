@@ -12,6 +12,7 @@ pub fn sys_power(
     drone_max_battery: &[f32],
     drone_states: &[f32],
     drone_owner_factory_index: &[f32],
+    drone_target_factory_index: &[f32],
     drone_charging: &mut [f32],
     _drone_id_to_index: &BTreeMap<String, usize>,
     _factory_id_to_index: &BTreeMap<String, usize>,
@@ -76,10 +77,18 @@ pub fn sys_power(
         let mut charge_applied = 0.0;
         let mut remaining_need = max_charge;
 
-        // Try factory first
+        // Try factory first (owner, then target)
         let owner_idx = drone_owner_factory_index[i];
-        if owner_idx >= 0.0 {
-            let f_idx = owner_idx as usize;
+        let target_idx = drone_target_factory_index[i];
+        let factory_idx = if owner_idx >= 0.0 {
+            Some(owner_idx as usize)
+        } else if target_idx >= 0.0 {
+            Some(target_idx as usize)
+        } else {
+            None
+        };
+
+        if let Some(f_idx) = factory_idx {
             if f_idx < factory_count {
                 let available = factory_energy[f_idx];
                 let from_factory = remaining_need.min(available);
@@ -130,6 +139,7 @@ mod tests {
         let drone_states = vec![0.0];
         let drone_owner_factory_index = vec![0.0];
         let mut drone_charging = vec![0.0];
+        let drone_target_factory_index = vec![0.0];
         let drone_id_to_index = BTreeMap::new();
         let factory_id_to_index = BTreeMap::new();
         let dt = 1.0;
@@ -144,6 +154,7 @@ mod tests {
             &drone_max_battery,
             &drone_states,
             &drone_owner_factory_index,
+            &drone_target_factory_index,
             &mut drone_charging,
             &drone_id_to_index,
             &factory_id_to_index,

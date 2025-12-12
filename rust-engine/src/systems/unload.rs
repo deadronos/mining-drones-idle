@@ -1,5 +1,5 @@
 use crate::constants::{DRONE_STATE_IDLE, DRONE_STATE_UNLOADING};
-use crate::schema::Resources;
+use crate::schema::{FactorySnapshot, Resources};
 
 pub fn sys_unload(
     drone_states: &mut [f32],
@@ -7,16 +7,19 @@ pub fn sys_unload(
     drone_cargo_profile: &mut [f32],
     drone_target_factory_index: &mut [f32],
     drone_owner_factory_index: &mut [f32],
+    drone_target_region_index: &mut [f32],
     drone_positions: &mut [f32],
     factory_positions: &[f32],
     factory_resources: &mut [f32],
     global_resources: &mut Resources,
+    factories: &mut [FactorySnapshot],
+    drone_ids: &[String],
     _dt: f32,
 ) {
     let drone_count = drone_states.len();
     let factory_count = if !factory_resources.is_empty() { factory_resources.len() / 7 } else { 0 };
 
-    for i in 0..drone_count {
+    for i in (0..drone_count).rev() {
         if drone_states[i] != DRONE_STATE_UNLOADING {
             continue;
         }
@@ -88,6 +91,15 @@ pub fn sys_unload(
 
         // Clear target
         drone_target_factory_index[i] = -1.0;
+        if let Some(slot) = drone_target_region_index.get_mut(i) {
+            *slot = -1.0;
+        }
+
+        if let Some(drone_id) = drone_ids.get(i) {
+            if let Some(factory) = factories.get_mut(factory_idx) {
+                factory.queued_drones.retain(|queued| queued != drone_id);
+            }
+        }
 
         // Snap position to factory
         if factory_count > 0 {

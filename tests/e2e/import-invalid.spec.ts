@@ -8,8 +8,8 @@ test('import rejects invalid payloads gracefully', async ({ page }) => {
   const settingsButton = page.getByRole('button', { name: 'Settings' });
   await settingsButton.click({ force: true });
 
-  const fileInput = page.locator('input[type="file"]');
-  await fileInput.waitFor({ timeout: 10000 });
+  const fileInput = page.getByLabel('Import save file input');
+  await expect(fileInput).toHaveCount(1);
 
   // Provide an intentionally invalid payload
   const invalidPayload = 'not-json';

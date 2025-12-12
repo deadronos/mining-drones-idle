@@ -17,6 +17,7 @@ import {
   type ResourceWeights,
 } from '@/lib/biomes';
 import type { AsteroidEntity, DroneEntity } from '@/ecs/world';
+import { parityDebugLog } from '@/lib/parityDebug';
 
 /**
  * Represents the state of a hazard in a biome region.
@@ -251,7 +252,14 @@ export const pickRegionForDrone = (
   if (total <= 0) {
     return pool[0] ?? null;
   }
-  const roll = rng.next() * total;
+  const rawRoll = rng.next();
+  parityDebugLog('[parity][ts][pickRegionForDrone]', {
+    asteroidId: asteroid.id,
+    rawRoll,
+    total,
+    pool: pool.map((region) => ({ id: region.id, weight: region.weight, hazard: region.hazard })),
+  });
+  const roll = rawRoll * total;
   let acc = 0;
   for (const entry of weighted) {
     acc += entry.weight;

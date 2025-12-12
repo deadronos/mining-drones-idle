@@ -93,8 +93,11 @@ export interface WasmGameState {
   get_logistics_queues(): string;
   step(dt: number): number;
   apply_command(command_json: string): void;
+  simulate_offline(seconds: number, step: number): string;
   layout_json(): string;
   data_ptr(): number;
+  drone_ids_json(): string;
+  asteroid_ids_json(): string;
 }
 
 /**
@@ -119,6 +122,10 @@ export interface RustSimBridge {
 
   // Layout
   getLayout(): RustSimLayout;
+
+  // Stable entity id ordering
+  getDroneIds(): string[];
+  getAsteroidIds(): string[];
 
   // Drone buffer accessors
   getDronePositions(): Float32Array;
@@ -225,18 +232,16 @@ export function buildRustSimBridge(
 
     simulateOffline(seconds: number, stepSize: number): OfflineResult {
       if (!gameState) throw new Error('Game state not initialized');
-      if (seconds <= 0 || stepSize <= 0) {
-        return { elapsed: 0, steps: 0, snapshotJson: gameState.export_snapshot() };
-      }
-      const iterations = Math.ceil(seconds / stepSize);
-      for (let i = 0; i < iterations; i++) {
-        gameState.step(stepSize);
-      }
-      gameTime += iterations * stepSize;
+      const raw = gameState.simulate_offline(seconds, stepSize);
+      const parsed =
+        typeof raw === 'string'
+          ? (JSON.parse(raw) as OfflineResult)
+          : (raw as OfflineResult);
+      gameTime += parsed.elapsed ?? 0;
       return {
-        elapsed: iterations * stepSize,
-        steps: iterations,
-        snapshotJson: gameState.export_snapshot(),
+        elapsed: parsed.elapsed ?? 0,
+        steps: parsed.steps ?? 0,
+        snapshotJson: parsed.snapshotJson ?? gameState.export_snapshot(),
       };
     },
 
@@ -264,6 +269,16 @@ export function buildRustSimBridge(
     // Layout
     getLayout() {
       return layout;
+    },
+
+    getDroneIds(): string[] {
+      if (!gameState) throw new Error('Game state not initialized');
+      return JSON.parse(gameState.drone_ids_json()) as string[];
+    },
+
+    getAsteroidIds(): string[] {
+      if (!gameState) throw new Error('Game state not initialized');
+      return JSON.parse(gameState.asteroid_ids_json()) as string[];
     },
 
     // Drone buffer accessors

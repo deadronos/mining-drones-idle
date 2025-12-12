@@ -2,6 +2,7 @@ import type { Vector3 } from 'three';
 import type { DroneEntity } from '@/ecs/world';
 import type { RandomSource } from '@/lib/rng';
 import type { StoreApiType } from '@/state/store';
+import { parityDebugLog } from '@/lib/parityDebug';
 
 const FACTORY_VARIETY_CHANCE = 0.25;
 const FACTORY_WEIGHT_EPSILON = 0.001;
@@ -56,11 +57,25 @@ export const assignReturnFactory = (
       return a.distance - b.distance; // Break ties by distance
     });
     selected = candidates[0];
-    if (candidates.length > 1 && rng.next() < FACTORY_VARIETY_CHANCE) {
+    const varietyRoll = rng.next();
+    parityDebugLog('[parity][ts][assignReturnFactory-variety]', {
+      droneId: drone.id,
+      varietyRoll,
+      FACTORY_VARIETY_CHANCE,
+      candidateIds: candidates.map((entry) => entry.factory.id),
+    });
+    if (candidates.length > 1 && varietyRoll < FACTORY_VARIETY_CHANCE) {
       const others = candidates.slice(1);
       const weights = others.map((entry) => 1 / Math.max(entry.distance, FACTORY_WEIGHT_EPSILON));
       const totalWeight = weights.reduce((sum, value) => sum + value, 0);
-      let roll = rng.next() * totalWeight;
+      const rawRoll = rng.next();
+      parityDebugLog('[parity][ts][assignReturnFactory-weighted]', {
+        droneId: drone.id,
+        rawRoll,
+        totalWeight,
+        others: others.map((entry) => ({ id: entry.factory.id, distance: entry.distance })),
+      });
+      let roll = rawRoll * totalWeight;
       for (let i = 0; i < others.length; i += 1) {
         roll -= weights[i];
         if (roll <= 0) {

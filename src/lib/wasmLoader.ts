@@ -1,6 +1,7 @@
 import type { StoreSnapshot } from '../state/types';
 import { buildRustSimBridge, type RustSimBridge, type WasmSimExports } from './wasmSimBridge';
 import { normalizeSnapshot, validateSnapshotForWasm } from '../state/serialization/store';
+import { parityDebugEnabled } from './parityDebug';
 
 export interface WasmLoadResult {
   bridge: RustSimBridge | null;
@@ -31,6 +32,14 @@ export async function loadWasmBridge(
     const memory = (initOutput as { memory?: WebAssembly.Memory }).memory;
     if (!memory) {
       throw new Error('WASM init missing memory');
+    }
+
+    if (
+      parityDebugEnabled &&
+      typeof (wasmModule as { set_parity_debug?: (enabled: boolean) => void }).set_parity_debug ===
+        'function'
+    ) {
+      (wasmModule as { set_parity_debug?: (enabled: boolean) => void }).set_parity_debug?.(true);
     }
 
     const exports: WasmSimExports = {
@@ -77,18 +86,27 @@ export async function loadWasmBridge(
 
     // Provide a slightly more actionable fallback reason for common
     // serde deserialization errors coming from Rust (e.g. missing field).
+    // Match several common patterns produced by serde messages: backticks,
+    // single quotes, or unquoted identifiers (e.g. `missing field `bars``,
+    // `missing field 'bars'`, `missing field bars`).
     let reason = error.message;
-    const missingFieldRegex = /missing field `([^`]+)`/i;
-    const missingFieldMatch = missingFieldRegex.exec(error.message);
-    if (missingFieldMatch) {
-      const field = missingFieldMatch[1];
+    // Match serde 'missing field' patterns with optional separators used by
+    // different error messages, e.g. `missing field `bars``,
+    // `missing field 'bars'`, `missing field bars`, and `missing field: bars`.
+    const missingFieldRegex = /missing field(?:\s*:\s*|\s+)(?:`([^`]+)`|'([^']+)'|([A-Za-z0-9_.-]+))/i;
+    const match = missingFieldRegex.exec(error.message);
+    if (match) {
+      const field = match[1] ?? match[2] ?? match[3] ?? 'unknown';
       reason = `WASM deserialization failed: missing field '${field}'. Ensure the snapshot includes this property (call normalizeSnapshot before sending) - original: ${error.message}`;
     }
 
+    const fallbackReason = `WASM load failed: ${reason}`;
+    // Also log the more actionable fallback reason to make debugging easier
+    console.error('[WASM Loader] Fallback reason:', fallbackReason);
     return {
       bridge: null,
       error,
-      fallbackReason: `WASM load failed: ${reason}`,
+      fallbackReason,
     };
   }
 }

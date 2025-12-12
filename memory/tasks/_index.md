@@ -54,11 +54,11 @@
 | TASK049 | Rendering Integration | Completed | 2025-11-27 |
 | TASK050 | Full Parity Implementation | In Progress | 2025-12-10 |
 | TASK051 | Direct-Buffer HUD Integration | Completed | 2025-12-10 |
-| TASK052 | Parity Test Expansion & Measurement | Pending | 2025-12-10 |
-| TASK053 | Drone AI & Travel Parity Implementation | Pending | 2025-12-10 |
-| TASK054 | Asteroids & Biomes Parity Implementation | Pending | 2025-12-10 |
-| TASK055 | Power & Refinery Alignment | Pending | 2025-12-10 |
-| TASK056 | Logistics Parity Implementation | Pending | 2025-12-10 |
-| TASK057 | Commands, Snapshot & Offline Parity | Pending | 2025-12-10 |
-| TASK058 | Rendering & Bridge Integration | Pending | 2025-12-10 |
+| TASK052 | Parity Test Expansion & Measurement | Completed | 2025-12-10 |
+| TASK053 | Drone AI & Travel Parity Implementation | Completed | 2025-12-12 |
+| TASK054 | Asteroids & Biomes Parity Implementation | Completed | 2025-12-12 |
+| TASK055 | Power & Refinery Alignment | Completed | 2025-12-12 |
+| TASK056 | Logistics Parity Implementation | Completed | 2025-12-11 |
+| TASK057 | Commands, Snapshot & Offline Parity | Completed | 2025-12-13 |
+| TASK058 | Rendering & Bridge Integration | Completed | 2025-12-13 |
 | TASK059 | CI & Continuous Validation | Pending | 2025-12-10 |
