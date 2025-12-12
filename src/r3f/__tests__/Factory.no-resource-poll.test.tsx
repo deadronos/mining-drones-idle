@@ -1,13 +1,14 @@
 import React from 'react';
-import { render, screen, act } from '@testing-library/react';
+import { render, act } from '@testing-library/react';
 import { vi, describe, it, beforeEach, expect } from 'vitest';
+import type { RustSimBridge } from '@/lib/wasmSimBridge';
 import { registerBridge } from '@/lib/rustBridgeRegistry';
 import { createFactory } from '@/ecs/factories';
 import { Vector3 } from 'three';
 import { storeApi } from '@/state/store';
 
 // Mock the FactoryModel and FactoryTransferFX so rendering is lightweight
-vi.mock('@/r3f/Factory/FactoryModel', () => ({ FactoryModel: ({ factory }: { factory: any }) => <div>{factory.id}</div> }));
+vi.mock('@/r3f/Factory/FactoryModel', () => ({ FactoryModel: ({ factory }: { factory: { id: string } }) => <div>{factory.id}</div> }));
 vi.mock('@/r3f/Factory/FactoryTransferFX', () => ({ FactoryTransferFX: () => null }));
 
 import { Factory } from '@/r3f/Factory';
@@ -31,14 +32,14 @@ describe('r3f/Factory direct bridge polling', () => {
     const getFactoryMaxEnergy = vi.fn().mockReturnValue(new Float32Array(3));
     const getFactoryHaulersAssigned = vi.fn().mockReturnValue(new Float32Array(3));
 
-    const bridge = {
+    const bridge: RustSimBridge = {
       isReady: () => true,
       getFactoryPositions,
       getFactoryResources,
       getFactoryEnergy,
       getFactoryMaxEnergy,
       getFactoryHaulersAssigned,
-    } as unknown as any;
+    } as unknown as RustSimBridge;
 
     registerBridge(bridge);
 
