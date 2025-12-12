@@ -109,7 +109,7 @@ function createTestSnapshot(seed: number): StoreSnapshot {
 
 import { registerBridge } from '@/lib/rustBridgeRegistry';
 import { serializeStore } from '@/state/store';
-import { logDivergences } from '../shared/parityLogger';
+import { logDivergences, writeParityReport } from '../shared/parityLogger';
 
 /** Helper - we won't assert, we print detailed differences and fail if diverged */
 describe('Step Parity Debug', () => {
@@ -389,5 +389,10 @@ describe('Step Parity Debug', () => {
       const withinEnforcedWindow = divergenceStep !== null && divergenceStep < enforceSteps;
       expect(withinEnforcedWindow ? divergenceStep : null).toBeNull();
     }
+
+    writeParityReport('step-parity-debug-latest', {
+      divergenceStep,
+      divergenceDetails,
+    });
   }, 10000);
 });
