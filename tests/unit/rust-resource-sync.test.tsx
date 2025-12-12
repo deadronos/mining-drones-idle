@@ -64,7 +64,7 @@ describe('Rust Resource Sync Integration', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     frameCallback = null;
-    
+
     // Reset store state
     act(() => {
       storeApi.setState({
@@ -202,7 +202,7 @@ describe('Rust Resource Sync Integration', () => {
     // LogisticsPanel renders "Warehouse Bars:" then the value
     // We can check for "1,234" later. Initially it should be 0.
     expect(screen.getByText(/Warehouse Bars:/i)).toBeDefined();
-    
+
     // Trigger 6 frames to force a sync
     if (frameCallback) {
       for (let i = 0; i < 6; i++) {
@@ -250,7 +250,7 @@ describe('Rust Resource Sync Integration', () => {
 
     // Initial check - should be 0
     expect(screen.getByText(/Warehouse/i)).toBeDefined();
-    
+
     // Trigger 6 frames to force a sync
     if (frameCallback) {
       for (let i = 0; i < 6; i++) {
@@ -301,7 +301,7 @@ describe('Rust Resource Sync Integration', () => {
 
     // Initial check
     expect(screen.getByText(/Upgrades/i)).toBeDefined();
-    
+
     // Trigger 6 frames to force a sync
     if (frameCallback) {
       for (let i = 0; i < 6; i++) {
