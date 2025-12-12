@@ -564,6 +564,7 @@ export interface StoreState {
   setHighlightedFactories(this: void, highlight: HighlightedFactories): void;
   /** Syncs logistics queues from an external source (e.g. Rust). */
   syncLogisticsQueues(this: void, queues: LogisticsQueues): void;
+  syncResources(this: void, resources: Resources): void;
 }
 
 /** Type alias for the StoreApi. */

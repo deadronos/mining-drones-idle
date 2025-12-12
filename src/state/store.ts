@@ -383,6 +383,10 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
     syncLogisticsQueues: (queues) => {
       set({ logisticsQueues: queues });
     },
+
+    syncResources: (resources) => {
+      set({ resources });
+    },
   };
 };
 

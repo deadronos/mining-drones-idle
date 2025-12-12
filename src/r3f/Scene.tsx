@@ -141,13 +141,27 @@ export const Scene = () => {
         if (useRustSim) {
           storeApi.setState((state) => ({ gameTime: state.gameTime + step }));
 
-          // Sync logistics queues every 6 ticks (approx 100ms at 60Hz)
+          // Sync state from Rust bridge every 6 ticks (approx 100ms at 60Hz)
           if (frameCount.current % 6 === 0) {
             try {
               const queues = bridge.getLogisticsQueues();
               storeApi.getState().syncLogisticsQueues(queues);
+
+              const rawResources = bridge.getGlobalResources();
+              if (rawResources.length === 8) {
+                storeApi.getState().syncResources({
+                  ore: rawResources[0],
+                  ice: rawResources[1],
+                  metals: rawResources[2],
+                  crystals: rawResources[3],
+                  organics: rawResources[4],
+                  bars: rawResources[5],
+                  energy: rawResources[6],
+                  credits: rawResources[7],
+                });
+              }
             } catch (e) {
-              console.error('Failed to sync logistics queues from Rust', e);
+              console.error('Failed to sync state from Rust bridge', e);
             }
           }
         }
