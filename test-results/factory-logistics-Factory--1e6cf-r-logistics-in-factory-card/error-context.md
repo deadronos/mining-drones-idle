@@ -290,24 +290,24 @@
           - generic [ref=e299]:
             - heading "Storage" [level=4] [ref=e300]
             - list [ref=e301]:
-              - 'listitem "Ore: 8 / 300 (buffer: 50)" [ref=e302]':
+              - 'listitem "Ore: 15 / 300 (buffer: 50)" [ref=e302]':
                 - generic [ref=e303]: Ore
-                - generic [ref=e304]: "8 / 300 (buf: 50)"
+                - generic [ref=e304]: "15 / 300 (buf: 50)"
               - 'listitem "Bars: 30 (buffer: 5)" [ref=e305]':
                 - generic [ref=e306]: Bars
                 - generic [ref=e307]: "30 (buf: 5)"
-              - 'listitem "Metals: 12 (buffer: 20)" [ref=e308]':
+              - 'listitem "Metals: 42 (buffer: 20)" [ref=e308]':
                 - generic [ref=e309]: Metals
-                - generic [ref=e310]: "12 (buf: 20)"
-              - 'listitem "Crystals: 43 (buffer: 20)" [ref=e311]':
+                - generic [ref=e310]: "42 (buf: 20)"
+              - 'listitem "Crystals: 25 (buffer: 20)" [ref=e311]':
                 - generic [ref=e312]: Crystals
-                - generic [ref=e313]: "43 (buf: 20)"
-              - 'listitem "Organics: 22 (buffer: 20)" [ref=e314]':
+                - generic [ref=e313]: "25 (buf: 20)"
+              - 'listitem "Organics: 2 (buffer: 20)" [ref=e314]':
                 - generic [ref=e315]: Organics
-                - generic [ref=e316]: "22 (buf: 20)"
-              - 'listitem "Ice: 10 (buffer: 20)" [ref=e317]':
+                - generic [ref=e316]: "2 (buf: 20)"
+              - 'listitem "Ice: 5 (buffer: 20)" [ref=e317]':
                 - generic [ref=e318]: Ice
-                - generic [ref=e319]: "10 (buf: 20)"
+                - generic [ref=e319]: "5 (buf: 20)"
               - 'listitem "Credits: 0 (buffer: 15)" [ref=e320]':
                 - generic [ref=e321]: Credits
                 - generic [ref=e322]: "0 (buf: 15)"
@@ -371,7 +371,7 @@
         - generic [ref=e375]:
           - heading "Active Refining" [level=4] [ref=e376]
           - list [ref=e377]:
-            - listitem [ref=e378]: ore — 76%
+            - listitem [ref=e378]: ore — 77%
             - listitem [ref=e379]: ore — 0%
         - generic [ref=e380]:
           - heading "Hauler Logistics" [level=4] [ref=e381]
@@ -409,7 +409,7 @@
                   - text: speedBoost
                   - generic [ref=e411]: Level 0/12
                   - paragraph [ref=e412]: +0.1 speed per level
-                - button "40 metals + 15 bars" [disabled] [ref=e414]
+                - button "40 metals + 15 bars" [ref=e414] [cursor=pointer]
               - listitem [ref=e415]:
                 - generic [ref=e416]:
                   - text: efficiencyBoost
@@ -419,7 +419,7 @@
   - generic [ref=e421]:
     - generic [ref=e422]:
       - generic [ref=e423]:
-        - heading "Ferric Mantle" [level=3] [ref=e424]
+        - heading "Crystal Bloom" [level=3] [ref=e424]
         - paragraph [ref=e425]: Asteroid asteroid-cb
       - generic [ref=e426]:
         - button "Previous asteroid" [ref=e427] [cursor=pointer]: ◀
@@ -430,42 +430,50 @@
       - generic [ref=e433]: Primary Biome
       - generic [ref=e435]:
         - generic [ref=e436]: Gravity
-        - generic [ref=e437]: 0.82g
+        - generic [ref=e437]: 1.03g
       - generic [ref=e438]:
         - generic [ref=e439]: Dominant Resource
-        - generic [ref=e440]: Organics
+        - generic [ref=e440]: Ore
       - generic [ref=e441]:
         - generic [ref=e442]: Hazard
-        - generic [ref=e443]: Micro Quakes
+        - generic [ref=e443]: Ion Storm
     - generic [ref=e444]:
       - generic [ref=e445]: Resource Mix
       - list [ref=e446]:
         - listitem [ref=e447]:
-          - generic [ref=e448]: Organics
-          - generic [ref=e449]: 52%
+          - generic [ref=e448]: Ore
+          - generic [ref=e449]: 33%
         - listitem [ref=e450]:
-          - generic [ref=e451]: Ore
-          - generic [ref=e452]: 22%
+          - generic [ref=e451]: Metals
+          - generic [ref=e452]: 25%
         - listitem [ref=e453]:
           - generic [ref=e454]: Ice
-          - generic [ref=e455]: 15%
+          - generic [ref=e455]: 25%
     - generic [ref=e456]:
       - generic [ref=e457]: Regions
       - list [ref=e458]:
         - listitem [ref=e459]:
           - generic [ref=e460]:
-            - generic [ref=e463]: Bio-Lattice
-            - generic [ref=e464]: 71%
+            - generic [ref=e463]: Ferric Mantle
+            - generic [ref=e464]: 41%
           - generic [ref=e465]:
-            - generic [ref=e466]: 0.82g
-            - generic [ref=e467]: Organics
-            - generic [ref=e468]: Spore Burst
+            - generic [ref=e466]: 1.25g
+            - generic [ref=e467]: Metals
+            - generic [ref=e468]: Solar Flare
         - listitem [ref=e469]:
           - generic [ref=e470]:
             - generic [ref=e473]: Bio-Lattice
-            - generic [ref=e474]: 29%
+            - generic [ref=e474]: 20%
           - generic [ref=e475]:
             - generic [ref=e476]: 0.82g
             - generic [ref=e477]: Organics
-            - generic [ref=e478]: Ion Storm
+            - generic [ref=e478]: Spore Burst
+        - listitem [ref=e479]:
+          - generic [ref=e480]:
+            - generic [ref=e483]: Ice Fracture
+            - generic [ref=e484]: 39%
+          - generic [ref=e485]:
+            - generic [ref=e486]: 0.90g
+            - generic [ref=e487]: Ice
+            - generic [ref=e488]: Micro Quakes
 ```

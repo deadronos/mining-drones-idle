@@ -210,6 +210,25 @@ let idCounter = 0;
 export const resetEntityIdCounter = () => {
   idCounter = 0;
 };
+
+const parseHexSuffix = (id: string): number | null => {
+  const idx = id.lastIndexOf('-');
+  if (idx < 0 || idx === id.length - 1) return null;
+  const suffix = id.slice(idx + 1);
+  const parsed = Number.parseInt(suffix, 16);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+export const bumpEntityIdCounterFromIds = (ids: string[]) => {
+  let maxSuffix = idCounter;
+  for (const id of ids) {
+    const suffix = parseHexSuffix(id);
+    if (suffix !== null) {
+      maxSuffix = Math.max(maxSuffix, suffix);
+    }
+  }
+  idCounter = Math.max(idCounter, maxSuffix);
+};
 const nextId = (prefix: ModuleId | 'factory' | 'asteroid' | 'drone') => {
   idCounter += 1;
   return `${prefix}-${idCounter.toString(16)}`;

@@ -158,7 +158,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
   const resourceSlice = createResourceSlice(sliceSet, sliceGet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
-  const settingsSlice = createSettingsSlice(sliceSet);
+  const settingsSlice = createSettingsSlice(sliceSet, sliceGet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
   const factorySlice = createFactorySlice(sliceSet, sliceGet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator

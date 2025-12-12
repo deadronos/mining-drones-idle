@@ -1012,7 +1012,7 @@ mod tests {
         drone_id_to_index.insert("d1".to_string(), 0);
         let mut factory_id_to_index = BTreeMap::new();
         factory_id_to_index.insert("f1".to_string(), 0);
-        let asteroid_id_to_index = BTreeMap::new();
+        let asteroid_index_to_id: Vec<String> = Vec::new();
 
         let mut factories = vec![FactorySnapshot {
             id: "f1".to_string(),
@@ -1093,7 +1093,7 @@ mod tests {
             &drone_ids,
             &drone_id_to_index,
             &factory_id_to_index,
-            &asteroid_id_to_index,
+            &asteroid_index_to_id,
             &mut factories,
             &factory_positions,
             &asteroid_positions,

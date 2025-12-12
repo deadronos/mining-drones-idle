@@ -120,6 +120,14 @@ export const createResourceSlice: StateCreator<
       if (currentState.resources.bars < cost) {
         return currentState;
       }
+
+      if (currentState.settings.shadowMode && isBridgeReady()) {
+        const bridge = getBridge();
+        bridge?.applyCommand({
+          type: 'BuyModule',
+          payload: { moduleType: id },
+        });
+      }
       const resources: Resources = { ...currentState.resources, bars: currentState.resources.bars - cost };
       const modules: Modules = { ...currentState.modules, [id as keyof Modules]: currentLevel + 1 };
       return { resources, modules };

@@ -96,6 +96,8 @@ export interface WasmGameState {
   simulate_offline(seconds: number, step: number): string;
   layout_json(): string;
   data_ptr(): number;
+  drone_ids_json(): string;
+  asteroid_ids_json(): string;
 }
 
 /**
@@ -120,6 +122,10 @@ export interface RustSimBridge {
 
   // Layout
   getLayout(): RustSimLayout;
+
+  // Stable entity id ordering
+  getDroneIds(): string[];
+  getAsteroidIds(): string[];
 
   // Drone buffer accessors
   getDronePositions(): Float32Array;
@@ -263,6 +269,16 @@ export function buildRustSimBridge(
     // Layout
     getLayout() {
       return layout;
+    },
+
+    getDroneIds(): string[] {
+      if (!gameState) throw new Error('Game state not initialized');
+      return JSON.parse(gameState.drone_ids_json()) as string[];
+    },
+
+    getAsteroidIds(): string[] {
+      if (!gameState) throw new Error('Game state not initialized');
+      return JSON.parse(gameState.asteroid_ids_json()) as string[];
     },
 
     // Drone buffer accessors

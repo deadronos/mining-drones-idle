@@ -60,6 +60,16 @@ impl WasmGameState {
     pub fn data_ptr(&self) -> *const u8 {
         self.inner.data.as_ptr() as *const u8
     }
+
+    pub fn drone_ids_json(&self) -> Result<String, JsValue> {
+        serde_json::to_string(self.inner.drone_ids())
+            .map_err(|err| JsValue::from_str(&err.to_string()))
+    }
+
+    pub fn asteroid_ids_json(&self) -> Result<String, JsValue> {
+        serde_json::to_string(self.inner.asteroid_ids())
+            .map_err(|err| JsValue::from_str(&err.to_string()))
+    }
 }
 
 #[wasm_bindgen]

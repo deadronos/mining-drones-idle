@@ -114,6 +114,16 @@ pub struct GameState {
     asteroid_metadata: Vec<AsteroidMetadata>,
 }
 
+impl GameState {
+    pub fn drone_ids(&self) -> &[String] {
+        &self.drone_index_to_id
+    }
+
+    pub fn asteroid_ids(&self) -> &[String] {
+        &self.asteroid_index_to_id
+    }
+}
+
 fn parse_hex_suffix(id: &str) -> Option<u32> {
     let (_prefix, suffix) = id.rsplit_once('-')?;
     u32::from_str_radix(suffix, 16).ok()
