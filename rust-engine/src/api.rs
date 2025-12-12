@@ -105,11 +105,101 @@ pub struct GameState {
     logistics_tick: f32,
     /// The linear memory buffer containing entity data (SoA layout).
     pub data: Vec<u32>,
+    entity_id_counter: u32,
     drone_id_to_index: BTreeMap<String, usize>,
     drone_index_to_id: Vec<String>,
     factory_id_to_index: BTreeMap<String, usize>,
     asteroid_id_to_index: BTreeMap<String, usize>,
+    asteroid_index_to_id: Vec<String>,
     asteroid_metadata: Vec<AsteroidMetadata>,
+}
+
+fn parse_hex_suffix(id: &str) -> Option<u32> {
+    let (_prefix, suffix) = id.rsplit_once('-')?;
+    u32::from_str_radix(suffix, 16).ok()
+}
+
+fn derive_entity_id_counter(snapshot: &SimulationSnapshot) -> u32 {
+    let mut max_id: u32 = 0;
+
+    for factory in snapshot.factories.iter() {
+        if let Some(value) = parse_hex_suffix(&factory.id) {
+            max_id = max_id.max(value);
+        }
+    }
+
+    for flight in snapshot.drone_flights.iter() {
+        if let Some(value) = parse_hex_suffix(&flight.drone_id) {
+            max_id = max_id.max(value);
+        }
+    }
+
+    for drone_id in snapshot.drone_owners.keys() {
+        if let Some(value) = parse_hex_suffix(drone_id) {
+            max_id = max_id.max(value);
+        }
+    }
+
+    if let Some(asteroids) = asteroid_array(&snapshot.extra) {
+        for asteroid in asteroids.iter() {
+            if let Some(id) = asteroid.get("id").and_then(|v| v.as_str()) {
+                if let Some(value) = parse_hex_suffix(id) {
+                    max_id = max_id.max(value);
+                }
+            }
+        }
+    }
+
+    max_id
+}
+
+impl GameState {
+    fn next_entity_id(&mut self, prefix: &str) -> String {
+        self.entity_id_counter = self.entity_id_counter.saturating_add(1);
+        format!("{}-{:x}", prefix, self.entity_id_counter)
+    }
+
+    fn rekey_respawned_asteroids(&mut self, respawned_indices: &[usize]) {
+        if respawned_indices.is_empty() {
+            return;
+        }
+
+        let mut updates: Vec<(usize, String, f32)> = Vec::new();
+
+        for &idx in respawned_indices {
+            if idx >= self.asteroid_index_to_id.len() {
+                continue;
+            }
+
+            let old_id = self.asteroid_index_to_id[idx].clone();
+            let new_id = self.next_entity_id("asteroid");
+            let gravity = self
+                .asteroid_metadata
+                .get(idx)
+                .map(|m| m.gravity_multiplier)
+                .unwrap_or(1.0);
+
+            self.asteroid_index_to_id[idx] = new_id.clone();
+            self.asteroid_id_to_index.remove(&old_id);
+            self.asteroid_id_to_index.insert(new_id.clone(), idx);
+            updates.push((idx, new_id, gravity));
+        }
+
+        let Some(asteroids) = asteroid_array_mut(&mut self.snapshot.extra) else {
+            return;
+        };
+
+        for (idx, new_id, gravity) in updates {
+            if let Some(Value::Object(obj)) = asteroids.get_mut(idx) {
+                obj.insert("id".to_string(), Value::String(new_id));
+                obj.insert("gravityMultiplier".to_string(), serde_json::Value::from(gravity));
+
+                // TS spawn sets regions to null; Rust keeps metadata regions separately.
+                obj.insert("regions".to_string(), Value::Null);
+            }
+        }
+    }
+
 }
 
 impl GameState {
@@ -169,10 +259,14 @@ impl GameState {
         }
 
         let mut asteroid_id_to_index = BTreeMap::new();
+        let mut asteroid_index_to_id = vec![String::new(); asteroid_count];
         if let Some(asteroids) = asteroid_array(&snapshot.extra) {
             for (i, asteroid) in asteroids.iter().enumerate() {
                 if let Some(id) = asteroid.get("id").and_then(|v| v.as_str()) {
                     asteroid_id_to_index.insert(id.to_string(), i);
+                    if i < asteroid_index_to_id.len() {
+                        asteroid_index_to_id[i] = id.to_string();
+                    }
                 }
             }
         }
@@ -187,12 +281,16 @@ impl GameState {
             layout,
             logistics_tick: 0.0,
             data,
+            entity_id_counter: 0,
             drone_id_to_index,
             drone_index_to_id,
             factory_id_to_index,
             asteroid_id_to_index,
+            asteroid_index_to_id,
             asteroid_metadata,
         };
+
+        state.entity_id_counter = derive_entity_id_counter(&state.snapshot);
 
         // Burn RNG to mirror the draws used by the TypeScript world when spawning asteroids.
         // Even when asteroids are provided explicitly in the snapshot, we must advance the RNG
@@ -255,10 +353,14 @@ impl GameState {
         }
 
         self.asteroid_id_to_index.clear();
+        let mut asteroid_index_to_id = vec![String::new(); asteroid_count];
         if let Some(asteroids) = asteroid_array(&snapshot.extra) {
             for (i, asteroid) in asteroids.iter().enumerate() {
                 if let Some(id) = asteroid.get("id").and_then(|v| v.as_str()) {
                     self.asteroid_id_to_index.insert(id.to_string(), i);
+                    if i < asteroid_index_to_id.len() {
+                        asteroid_index_to_id[i] = id.to_string();
+                    }
                 }
             }
         }
@@ -266,8 +368,12 @@ impl GameState {
         self.game_time = snapshot.game_time;
         self.snapshot = snapshot;
         self.drone_index_to_id = build_drone_index_to_id(&self.drone_id_to_index, total_drone_count);
+        self.asteroid_index_to_id = asteroid_index_to_id;
         self.asteroid_metadata =
             drone_ai::extract_asteroid_metadata(&self.snapshot, &self.asteroid_id_to_index);
+
+        self.entity_id_counter = derive_entity_id_counter(&self.snapshot);
+
         burn_rng_for_asteroids(&mut self.rng, asteroid_count);
         self.initialize_data_from_snapshot();
         Ok(())
@@ -775,17 +881,41 @@ impl GameState {
                 let asteroid_max_ore = get_slice_mut(&self.layout.asteroids.max_ore);
                 let asteroid_resource_profile = get_slice_mut(&self.layout.asteroids.resource_profile);
 
+                let mut respawned_indices: Vec<usize> = Vec::new();
+
                 crate::systems::asteroids::sys_asteroids(
                     asteroid_positions,
                     asteroid_ore,
                     asteroid_max_ore,
                     asteroid_resource_profile,
                     &mut self.asteroid_metadata,
+                    &mut respawned_indices,
                     &mut self.rng,
                     &sink_bonuses,
                     self.snapshot.modules.scanner,
                     dt,
                 );
+
+                if !respawned_indices.is_empty() {
+                    self.rekey_respawned_asteroids(&respawned_indices);
+
+                    let drone_target_asteroid_index =
+                        get_slice_mut(&self.layout.drones.target_asteroid_index);
+                    let drone_target_region_index =
+                        get_slice_mut(&self.layout.drones.target_region_index);
+
+                    for drone_idx in 0..drone_target_asteroid_index.len() {
+                        let target = drone_target_asteroid_index[drone_idx];
+                        if target < 0.0 {
+                            continue;
+                        }
+                        let target_idx = target.floor() as usize;
+                        if respawned_indices.contains(&target_idx) {
+                            drone_target_asteroid_index[drone_idx] = -1.0;
+                            drone_target_region_index[drone_idx] = -1.0;
+                        }
+                    }
+                }
             }
 
             // Drone AI System (assign new flights/targets before movement)
@@ -821,7 +951,7 @@ impl GameState {
                     &self.drone_index_to_id,
                     &self.drone_id_to_index,
                     &self.factory_id_to_index,
-                    &self.asteroid_id_to_index,
+                    &self.asteroid_index_to_id,
                     &mut self.snapshot.factories,
                     factory_positions,
                     asteroid_positions,

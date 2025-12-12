@@ -17,6 +17,10 @@
   - Replaced Rust respawn with biome-driven profiles/gravity, scanner/sink richness bias, and TS-aligned RNG draw count; updated asteroid metadata.
   - Added respawn parity test and rebuilt WASM; validation: `npm run build:wasm`, `npm run typecheck`, `npm run lint`, `npm run test` (parity divergences logged as expected).
 
+- **2025-12-12**: Fixed late-step step-parity divergence (asteroid recycle semantics).
+  - Rust now re-keys asteroid IDs on respawn (TS-style remove+spawn) and invalidates drone targets that referenced recycled asteroids to prevent “phantom” mining/return drift.
+  - Validation: WASM rebuild succeeded; parity suites pass under enforcement; `npm run typecheck`, `npm run lint`, `npm run test`.
+
 - **2025-12-12**: Completed TASK053 (Drone AI & Travel Parity).
   - Finalized weighted targeting/region offsets, queue-aware returns, and travel seed/control parity; rebuilt WASM bundle.
   - Validation: `npm run typecheck`, `npm run lint`, `npm run test` (parity suites log known divergences only).

@@ -32,14 +32,38 @@ export function useRustEngine(shouldInitialize: boolean): UseRustEngineResult {
     // required numeric fields (like `bars`) are always present.
     const currentSnapshot = normalizeSnapshot(serializeStore(useStore.getState()));
 
-    // Inject asteroid data from ECS
-    const asteroids = gameWorld.asteroidQuery.entities.map((entity) => ({
-      id: entity.id,
-      position: [entity.position.x, entity.position.y, entity.position.z],
-      oreRemaining: entity.oreRemaining,
-      maxOre: entity.oreRemaining,
-      resourceProfile: entity.resourceProfile ?? { ore: 1, ice: 0, metals: 0, crystals: 0, organics: 0 },
-    }));
+    // Inject asteroid data from ECS.
+    // Rust relies on `gravityMultiplier` + `regions` (when present) to mirror TS biome targeting.
+    const asteroids = gameWorld.asteroidQuery.entities.map((entity) => {
+      const richness = typeof entity.richness === 'number' && Number.isFinite(entity.richness)
+        ? entity.richness
+        : 1;
+      const maxOre = richness > 0 ? entity.oreRemaining / richness : entity.oreRemaining;
+
+      return {
+        id: entity.id,
+        position: [entity.position.x, entity.position.y, entity.position.z],
+        oreRemaining: entity.oreRemaining,
+        maxOre,
+        gravityMultiplier: entity.gravityMultiplier,
+        resourceProfile: entity.resourceProfile ?? {
+          ore: 1,
+          ice: 0,
+          metals: 0,
+          crystals: 0,
+          organics: 0,
+        },
+        regions: entity.regions
+          ? entity.regions.map((region) => ({
+              id: region.id,
+              weight: region.weight,
+              gravityMultiplier: region.gravityMultiplier,
+              offset: [region.offset.x, region.offset.y, region.offset.z],
+              hazard: region.hazard,
+            }))
+          : null,
+      };
+    });
 
     // Inject drone data from ECS
     const droneFlights = gameWorld.droneQuery.entities.map((entity) => ({

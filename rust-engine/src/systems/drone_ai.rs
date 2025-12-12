@@ -165,9 +165,9 @@ pub fn sys_drone_ai(
     drone_target_region_index: &mut [f32],
     drone_owner_factory_index: &[f32],
     drone_ids: &[String],
-    drone_id_to_index: &BTreeMap<String, usize>,
+    _drone_id_to_index: &BTreeMap<String, usize>,
     factory_id_to_index: &BTreeMap<String, usize>,
-    asteroid_id_to_index: &BTreeMap<String, usize>,
+    asteroid_index_to_id: &[String],
     factories: &mut [FactorySnapshot],
     factory_positions: &[f32],
     asteroid_positions: &[f32],
@@ -185,8 +185,17 @@ pub fn sys_drone_ai(
 
     let mut new_flights = Vec::new();
 
-    for (drone_id, &drone_idx) in drone_id_to_index.iter() {
-        if drone_idx >= drone_states.len() || active_drones.contains(drone_id) {
+    // IMPORTANT: Miniplex queries iterate entities in *reverse* insertion order.
+    // Drone target selection consumes RNG, so differing iteration order will swap
+    // rolls between drones and cause early divergence.
+    let drone_count = drone_states.len().min(drone_ids.len());
+    for drone_idx in (0..drone_count).rev() {
+        let drone_id = match drone_ids.get(drone_idx) {
+            Some(id) => id,
+            None => continue,
+        };
+
+        if active_drones.contains(drone_id) {
             continue;
         }
 
@@ -231,7 +240,7 @@ pub fn sys_drone_ai(
                 asteroid_positions,
                 asteroid_ore,
                 asteroid_metadata,
-                asteroid_id_to_index,
+                asteroid_index_to_id,
                 rng,
             ) {
                 let path_seed = next_path_seed(rng);
@@ -304,7 +313,7 @@ pub fn sys_drone_ai(
                     }
 
                     if assignment.start_travel {
-                        let path_seed = next_path_seed(rng);
+                        let path_seed = next_return_path_seed(rng);
                         let travel = build_travel_snapshot(
                             position,
                             assignment.destination,
@@ -346,7 +355,7 @@ fn select_asteroid_target(
     asteroid_positions: &[f32],
     asteroid_ore: &[f32],
     asteroid_metadata: &[AsteroidMetadata],
-    asteroid_id_to_index: &BTreeMap<String, usize>,
+    asteroid_index_to_id: &[String],
     rng: &mut Mulberry32,
 ) -> Option<AsteroidTarget> {
     let asteroid_count = asteroid_positions.len() / 3;
@@ -357,19 +366,24 @@ fn select_asteroid_target(
     #[derive(Clone)]
     struct Candidate {
         index: usize,
-        id: String,
         distance: f32,
     }
 
-    let mut candidates: Vec<Candidate> = asteroid_id_to_index
-        .iter()
-        .filter_map(|(id, &idx)| {
-            if idx >= asteroid_count {
-                return None;
-            }
+    // IMPORTANT: iterate in snapshot/index order, not BTreeMap key order.
+    // TS builds/sorts candidates based on world insertion order (which matches
+    // snapshot array order in parity harness). When f32 distances tie, stable
+    // sorting will preserve this original order, so we must mirror it.
+    let mut candidates: Vec<Candidate> = (0..asteroid_count)
+        .filter_map(|idx| {
             if *asteroid_ore.get(idx).unwrap_or(&0.0) <= 0.0 {
                 return None;
             }
+
+            let id = asteroid_index_to_id.get(idx).map(|s| s.as_str()).unwrap_or("");
+            if id.is_empty() {
+                return None;
+            }
+
             let pos = [
                 asteroid_positions[idx * 3],
                 asteroid_positions[idx * 3 + 1],
@@ -379,11 +393,8 @@ fn select_asteroid_target(
             let dy = pos[1] - drone_position[1];
             let dz = pos[2] - drone_position[2];
             let distance = (dx * dx + dy * dy + dz * dz).sqrt();
-            Some(Candidate {
-                index: idx,
-                id: id.clone(),
-                distance,
-            })
+
+            Some(Candidate { index: idx, distance })
         })
         .collect();
 
@@ -391,7 +402,11 @@ fn select_asteroid_target(
         return None;
     }
 
-    candidates.sort_by(|a, b| a.distance.total_cmp(&b.distance));
+    candidates.sort_by(|a, b| {
+        a.distance
+            .total_cmp(&b.distance)
+            .then_with(|| a.index.cmp(&b.index))
+    });
     candidates.truncate(NEARBY_LIMIT.min(candidates.len()));
 
     let mut total_weight = 0.0;
@@ -408,7 +423,7 @@ fn select_asteroid_target(
         let cand_payload: Vec<serde_json::Value> = candidates
             .iter()
             .map(|c| json!({
-                "id": c.id,
+                "id": asteroid_index_to_id.get(c.index).cloned().unwrap_or_default(),
                 "distance": c.distance,
             }))
             .collect();
@@ -423,7 +438,8 @@ fn select_asteroid_target(
         parity_debug::log_json("assignDroneTarget", &payload);
     }
 
-    let mut roll = raw_roll * total_weight.max(1.0);
+    // Match TS: roll is scaled by the actual totalWeight (fallback to 1 only if totalWeight is 0).
+    let mut roll = raw_roll * if total_weight > 0.0 { total_weight } else { 1.0 };
     let mut chosen = weighted.last().map(|(c, _)| (*c).clone());
     for (candidate, weight) in weighted {
         roll -= weight;
@@ -434,6 +450,7 @@ fn select_asteroid_target(
     }
 
     let chosen = chosen?;
+    let chosen_id = asteroid_index_to_id.get(chosen.index)?.clone();
     let base_pos = [
         asteroid_positions[chosen.index * 3],
         asteroid_positions[chosen.index * 3 + 1],
@@ -443,7 +460,7 @@ fn select_asteroid_target(
         .get(chosen.index)
         .cloned()
         .unwrap_or_default();
-    let (region, region_index) = pick_region(&chosen.id, &metadata, rng);
+    let (region, region_index) = pick_region(&chosen_id, &metadata, rng);
 
     let mut destination = base_pos;
     let mut gravity_multiplier = metadata.gravity_multiplier.max(0.5);
@@ -458,7 +475,7 @@ fn select_asteroid_target(
     }
 
     Some(AsteroidTarget {
-        id: chosen.id,
+        id: chosen_id,
         index: chosen.index,
         destination,
         region_id,
@@ -530,7 +547,8 @@ fn pick_region(
         parity_debug::log_json("pickRegionForDrone", &payload);
     }
 
-    let mut roll = raw_roll * total.max(0.01);
+    // Match TS: roll is scaled by the actual total (we already ensure weights contribute >= 0.01).
+    let mut roll = raw_roll * total;
     let mut chosen = weighted.last().cloned();
     for entry in weighted {
         roll -= entry.2;
@@ -866,6 +884,14 @@ fn resolve_factory_id(
 fn next_path_seed(rng: &mut Mulberry32) -> u32 {
     // Mirrors TS: Math.max(1, Math.floor(rng.next() * 0x7fffffff))
     let scaled = ((rng.next_u32() as u64) * 0x7fff_ffffu64) >> 32;
+    let seed = scaled as u32;
+    if seed == 0 { 1 } else { seed }
+}
+
+fn next_return_path_seed(rng: &mut Mulberry32) -> u32 {
+    // Mirrors TS returning flights: Math.max(1, Math.floor(rng.next() * 0xffffffff))
+    // (note: this never yields 0xffffffff; it yields 0..0xfffffffe)
+    let scaled = ((rng.next_u32() as u64) * 0xffff_ffffu64) >> 32;
     let seed = scaled as u32;
     if seed == 0 { 1 } else { seed }
 }

@@ -119,6 +119,9 @@ pub fn sys_movement(
         if arrived {
             // Update state to next state
             let next_state = if flight.state == "toAsteroid" {
+                // If the target asteroid was recycled/removed, keep the target index invalid.
+                // Mining will observe this and force a return, matching TS semantics.
+                target_asteroid_index[drone_idx] = -1.0;
                 if let Some(asteroid_id) = &flight.target_asteroid_id {
                     if let Some(&idx) = asteroid_id_to_index.get(asteroid_id) {
                         target_asteroid_index[drone_idx] = idx as f32;
