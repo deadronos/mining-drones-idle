@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@/state/store';
+import { useRustHUD } from '@/hooks/useRustHUD';
 import { WAREHOUSE_NODE_ID } from '@/ecs/logistics';
 import { getHaulerModuleBonuses } from '@/lib/haulerUpgrades';
 import { PaginationControls } from '@/ui/shared/PaginationControls';
@@ -17,7 +18,7 @@ const TRANSFERS_PAGE_SIZE = 5;
  */
 export const LogisticsPanel = () => {
   const factories = useStore((state) => state.factories);
-  const resources = useStore((state) => state.resources);
+  const { resources } = useRustHUD();
   const modules = useStore((state) => state.modules);
   const logisticsQueues = useStore((state) => state.logisticsQueues);
   const gameTime = useStore((state) => state.gameTime);
