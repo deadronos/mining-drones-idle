@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { vi, describe, it, beforeEach, expect } from 'vitest';
+import { vi, describe, it, beforeEach, afterEach, expect } from 'vitest';
 import type { RustSimBridge } from '@/lib/wasmSimBridge';
 
 const noop = () => undefined;
@@ -63,6 +63,13 @@ describe('Scene - Rust renderer fallback', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     baseState.settings.useRustSim = false;
+    // Silence React/Three.js runtime warnings in JSDOM during tests
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('falls back to TS asteroids/drones when rust bridge is not ready', () => {

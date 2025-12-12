@@ -20,7 +20,7 @@ vi.mock('@/gen/rust_engine', async (importOriginal) => {
     default: async () => {
       const wasmPath = path.resolve(process.cwd(), 'src/gen/rust_engine_bg.wasm');
       const buffer = fs.readFileSync(wasmPath);
-      return actual.default(buffer);
+      return actual.default({ module_or_path: buffer });
     },
   };
 });
