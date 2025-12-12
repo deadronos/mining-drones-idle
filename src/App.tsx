@@ -31,7 +31,7 @@ export const App = ({ persistence }: AppProps) => {
 
   return (
     <ToastProvider>
-      <div className="app">
+      <div className="app hud">
         <Canvas shadows camera={{ position: [0, 9, 22], fov: 52 }}>
           <Scene />
         </Canvas>

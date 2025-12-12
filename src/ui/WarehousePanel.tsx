@@ -18,27 +18,21 @@ interface ResourceDisplay {
 }
 
 export const WarehousePanel = ({ onOpenSettings }: WarehousePanelProps) => {
-  const ore = useStore((state) => state.resources.ore);
-  const metals = useStore((state) => state.resources.metals);
-  const crystals = useStore((state) => state.resources.crystals);
-  const organics = useStore((state) => state.resources.organics);
-  const ice = useStore((state) => state.resources.ice);
-  const bars = useStore((state) => state.resources.bars);
-  const energy = useStore((state) => state.resources.energy);
+  const resources = useStore((state) => state.resources);
   const droneBay = useStore((state) => state.modules.droneBay);
 
   const entries = useMemo<ResourceDisplay[]>(
     () => [
-      { key: 'ore', label: 'Ore', value: formatDecimalOne(ore) },
-      { key: 'metals', label: 'Metals', value: formatDecimalOne(metals) },
-      { key: 'crystals', label: 'Crystals', value: formatDecimalOne(crystals) },
-      { key: 'organics', label: 'Organics', value: formatDecimalOne(organics) },
-      { key: 'ice', label: 'Ice', value: formatDecimalOne(ice) },
-      { key: 'bars', label: 'Bars', value: formatDecimalOne(bars) },
-      { key: 'energy', label: 'Energy', value: formatInteger(energy) },
+      { key: 'ore', label: 'Ore', value: formatDecimalOne(resources.ore) },
+      { key: 'metals', label: 'Metals', value: formatDecimalOne(resources.metals) },
+      { key: 'crystals', label: 'Crystals', value: formatDecimalOne(resources.crystals) },
+      { key: 'organics', label: 'Organics', value: formatDecimalOne(resources.organics) },
+      { key: 'ice', label: 'Ice', value: formatDecimalOne(resources.ice) },
+      { key: 'bars', label: 'Bars', value: formatDecimalOne(resources.bars) },
+      { key: 'energy', label: 'Energy', value: formatInteger(resources.energy) },
       { key: 'drones', label: 'Drones', value: formatInteger(droneBay) },
     ],
-    [ore, metals, crystals, organics, ice, bars, energy, droneBay],
+    [resources, droneBay],
   );
 
   return (

@@ -1,111 +1,122 @@
 # Mining Drones Idle
 
-Mining Drones Idle is a small idle/automation prototype built with React, Three.js, and an ECS-driven simulation loop. The factory mines asteroids, refines ore into bars, and gradually unlocks upgrades through prestige resets.
+A production-ready idle/automation game built with React, Three.js, and an ECS-driven simulation loop. Manage factories, deploy fleets of mining drones, optimize logistics, and expand your industrial empire across the asteroid belt.
 
 ![Screenshot](image.png)
 
-This repository contains the interactive UI, simulation logic, and persistence utilities used by the prototype.
+## 🚀 Features
 
-## Getting started
+*   **Interactive 3D World**: Fully rendered asteroid fields, factories, and drone fleets using React Three Fiber.
+*   **Deep Simulation**: ECS-based logic for mining, logistics, power management, and refining.
+*   **Factory Automation**: Manage production chains, upgrade modules, and balance energy grids.
+*   **Logistics Network**: Smart hauler scheduling system to distribute resources between factories and the central warehouse.
+*   **Progression System**: Unlock upgrades, expand to new factories, and prestige to gain powerful cores.
+*   **Offline Progress**: Simulation continues even when you're away, calculating production and mining yields.
+*   **Hybrid Engine**: TypeScript-based simulation with an optional high-performance Rust/WASM engine backend.
 
-```bash
-npm install
-npm run dev
-```
+## 🛠️ Tech Stack
 
-The app runs on Vite with hot module replacement. To build or preview production assets:
+*   **Frontend**: React 19, TypeScript, Vite
+*   **3D Graphics**: Three.js, React Three Fiber (R3F), Drei
+*   **State Management**: Zustand, Immer
+*   **Simulation**: Miniplex (ECS), Custom Rust Engine (WASM)
+*   **Styling**: Tailwind CSS, Radix UI Themes
+*   **Testing**: Vitest, Playwright, React Testing Library
+
+## 📦 Getting Started
+
+### Prerequisites
+
+*   Node.js 18+
+*   npm 9+
+*   Rust (optional, for compiling the WASM engine)
+
+### Installation
+
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/your-username/mining-drones-idle.git
+    cd mining-drones-idle
+    ```
+
+2.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
+
+3.  **Start the development server**:
+    ```bash
+    npm run dev
+    ```
+    Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+### Building for Production
+
+To create an optimized build for deployment:
 
 ```bash
 npm run build
+```
+
+The output will be in the `dist/` directory. You can preview it locally with:
+
+```bash
 npm run preview
 ```
 
-## Core systems
+### Rust/WASM Engine (Optional)
 
-### Factories & upgrades
+To work on the Rust simulation engine:
 
-Factories are the primary production centers. Each factory has configurable upgrades including:
+1.  Ensure you have Rust and `wasm-pack` installed.
+2.  Run the WASM build in watch mode:
+    ```bash
+    npm run dev:wasm:watch
+    ```
+    This runs concurrently with `npm run dev` if you use the main start script.
 
-- **Docking Bay** – Increases drone capacity and travel speed
-- **Refinery** – Boosts bar production output
-- **Storage** – Expands local ore capacity
-- **Energy** – Increases energy capacity
-- **Solar Array** – Provides passive energy regeneration
+## 🧪 Testing
 
-Upgrades use exponential cost scaling (1.15× multiplier per level) to create meaningful progression milestones.
+We maintain a high standard of code quality with comprehensive test coverage.
 
-### Hauler logistics
+*   **Unit Tests**:
+    ```bash
+    npm run test
+    ```
+*   **Type Checking**:
+    ```bash
+    npm run typecheck
+    ```
+*   **Linting**:
+    ```bash
+    npm run lint
+    ```
+*   **End-to-End Tests**:
+    ```bash
+    npm run e2e
+    ```
 
-A reservation-based hauler scheduling system manages resource distribution across the factory network:
+## 📖 Documentation
 
-- **Hauler assignment** – Assign drones to factories for hauling duties. Each hauler has configurable capacity, speed, and resource filters.
-- **Automatic matching** – The scheduler matches factories with resource surplus to factories with resource need every 2 seconds. Transfers respect minimum reserves to keep factories operational.
-- **Warehouse integration** – Surplus resources are exported to the global warehouse when factories exceed their target buffer. Conversely, factories import from the warehouse when below their target to maintain optimal production.
-- **Per-resource buffers** – Each resource type has a consumption-based target (e.g., ore buffers account for refinery slot count). The system prevents starvation while avoiding wasteful overstock.
-- **Transfer tracking** – Active, scheduled, and completed transfers are displayed in the Logistics Panel with ETAs and resource amounts. Pagination ensures the UI remains stable.
+*   [**Architecture Overview**](docs/ARCHITECTURE.md): detailed breakdown of the system design, data flow, and key subsystems.
+*   [**Rust Engine Development**](docs/rust-wasm-dev.md): guide for working with the Rust/WASM simulation backend.
 
-### Warehouse
+## 🎮 How to Play
 
-The global warehouse stores surplus resources:
+1.  **Mining**: Drones automatically launch from your factory to mine nearby asteroids.
+2.  **Refining**: Ore is brought back and refined into Bars in the Refinery.
+3.  **Upgrading**: Use Bars and other resources to upgrade your Factory modules (Docking, Refinery, Storage, etc.).
+4.  **Logistics**: As you build more factories, use Haulers to move resources where they are needed.
+5.  **Prestige**: Reset your progress to gain Cores, which provide permanent boosts to your empire.
 
-- **Automatic exports** – When a factory produces more than its buffer target, excess flows to the warehouse via hauler transfers.
-- **Automatic imports** – When a factory falls below its target, the warehouse ships resources back (subject to available hauler capacity).
-- **Capacity upgrades** – Warehouse modules expand storage to hold more of each resource type.
-- **Resource reconciliation** – On load, the warehouse rebalances based on current factory needs to maintain optimal distribution.
+## 🤝 Contributing
 
-### Energy throttling
+1.  Fork the repository.
+2.  Create a feature branch (`git checkout -b feature/amazing-feature`).
+3.  Commit your changes (`git commit -m 'Add amazing feature'`).
+4.  Push to the branch (`git push origin feature/amazing-feature`).
+5.  Open a Pull Request.
 
-Each drone tracks its own battery and drains power while travelling or mining. The drain rate scales with the configured "Throttle floor": the lower the battery, the slower the drone moves and mines, but progress never drops below the floor unless the player explicitly sets it to zero. The power system converts the factory's stored energy and solar generation into per-drone charging whenever drones are docked, keeping energy values non-negative and smoothing out bursts of demand. Dedicated unit tests cover mining, travel, and power behaviour under drained and replenished batteries.
+## 📄 License
 
-Player progress is stored in `localStorage` using the `space-factory-save` key. Persistence is handled by the `PersistenceManager` that boots alongside the Zustand store.
-
-- **Autosave** – Enabled by default and configurable from the Settings panel. The interval respects the slider value (minimum 1 second) and pauses automatically if storage is unavailable.
-- **Offline simulation** – When a save is loaded, the manager computes the elapsed time since the last save, clamps it to the configured offline cap, and replays refinery ticks through the same `processRefinery` path used in real-time play.
-- **Import/Export** – Manual backups are available from Settings. Export generates a timestamped JSON download. Import validates the payload, applies store migrations, refreshes autosave, and reports errors inline without dropping the current save.
-- **Migrations** – Snapshots store a semantic `save.version`. New fields (for example, throttle settings or RNG seeds) are normalized when loading older saves so existing progress continues to work without manual intervention.
-
-### Save format & migration strategy
-
-Saves are JSON snapshots stored under the `space-factory-save` key in `localStorage`. The shape is described by the `StoreSnapshot` TypeScript type in `src/state/store.ts` and includes:
-
-- `resources` — ore, bars, energy, credits
-- `modules` — counts for droneBay, refinery, storage, solar, scanner
-- `prestige` — prestige cores
-- `settings` — user-configurable options (autosave, offline cap, notation, throttleFloor, showTrails)
-- `save` — metadata (lastSave timestamp and `version` string)
-- `rngSeed` — optional numeric seed for deterministic RNG
-- `droneFlights` — optional array describing active drone trips (target asteroid, path seed, travel progress)
-
-Versioning and migration strategy:
-
-- Each snapshot includes a `save.version` string. The current runtime exports saves with the repository `saveVersion` (see `src/state/store.ts`).
-- On load and on import, the `PersistenceManager` parses the snapshot and runs the migration pipeline (`src/state/migrations.ts`) before applying the snapshot to the live store.
-- Migrations are additive and idempotent. The migration pipeline ensures new fields get safe defaults (for example, `settings.showTrails` defaults to `true`) and updates `save.version` to the current version on successful migration.
-- When making breaking changes to the save shape, add a small migration function to `src/state/migrations.ts` that detects older `save.version` values and upgrades the payload step-by-step. Keep the migration logic minimal and test-backed.
-
-Troubleshooting:
-
-- If import fails with a parse error, check that the exported JSON is intact (no trailing text or formatting from editors). Use the Settings > Export to create a clean backup.
-- If older saves produce unexpected values, open an issue and include the exported payload; maintainers can add a migration test for the specific legacy format.
-
-## Deterministic RNG seeds
-
-Each save stores a `rngSeed` value. Fresh games generate a seed using `crypto.getRandomValues` (falling back to `Math.random` if necessary). A Mulberry32-based utility feeds world generation and math helpers so asteroid placement and other random-driven systems are reproducible. Exported saves include the seed, and importing that payload restores the same layout. Seeds that are missing from older snapshots are regenerated automatically.
-
-## Testing & quality checks
-
-The project uses Vitest, ESLint, and TypeScript project references.
-
-```bash
-npm run test        # unit tests
-npm run lint        # ESLint rules
-npm run typecheck   # TypeScript project references
-```
-
-Playwright end-to-end tests are available with `npm run e2e` after running `npm run build`.
-
-Prettier (with the Tailwind plugin) enforces formatting via `npm run format`.
-
-## Documentation
-
-For a comprehensive overview of the game's architecture and how all systems work together, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.

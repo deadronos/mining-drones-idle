@@ -30,9 +30,10 @@ export const WarehousePrimerSection = () => (
 interface DebugSectionProps {
   settings: StoreSettings;
   onToggle: ChangeEventHandler<HTMLInputElement>;
+  onRustSimToggle: ChangeEventHandler<HTMLInputElement>;
 }
 
-export const DebugSettingsSection = ({ settings, onToggle }: DebugSectionProps) => (
+export const DebugSettingsSection = ({ settings, onToggle, onRustSimToggle }: DebugSectionProps) => (
   <section className="settings-section">
     <h3>Debug</h3>
     <p className="settings-note">
@@ -48,6 +49,18 @@ export const DebugSettingsSection = ({ settings, onToggle }: DebugSectionProps) 
         checked={settings.showDebugPanel}
         onChange={onToggle}
         aria-label="Toggle debug panel"
+      />
+    </label>
+    <label className="settings-row">
+      <span>
+        Use Rust Simulation (Experimental)
+        <small>Switch to the WASM-based simulation engine.</small>
+      </span>
+      <input
+        type="checkbox"
+        checked={settings.useRustSim}
+        onChange={onRustSimToggle}
+        aria-label="Toggle Rust simulation"
       />
     </label>
   </section>

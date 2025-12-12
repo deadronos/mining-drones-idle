@@ -16,8 +16,8 @@ import type { FactoryUpgrades } from './models';
  * 3. Checks if factory has insufficient local resources
  * 4. Returns request if shortfall detected
  *
- * @param factory Factory to check for upgrade shortfalls
- * @param upgradeIds Array of upgrade IDs to check (in priority order)
+ * @param factory - Factory to check for upgrade shortfalls
+ * @param upgradeIds - Array of upgrade IDs to check (in priority order)
  * @returns FactoryUpgradeRequest if shortfall detected, null otherwise
  */
 export const detectUpgradeShortfall = (

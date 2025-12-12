@@ -16,6 +16,7 @@ import {
   getFactoryHaulerUpgradeCost,
   getFactoryHaulerUpgradeMaxLevel,
 } from '@/lib/haulerUpgrades';
+import { getBridge, isBridgeReady } from '@/lib/rustBridgeRegistry';
 
 export interface LogisticsSliceState {
   logisticsTick: number;
@@ -42,6 +43,37 @@ export const createLogisticsSlice: StateCreator<
   assignHaulers: (factoryId, delta) => {
     if (!Number.isFinite(delta) || delta === 0) {
       return false;
+    }
+
+    const state = get();
+
+    // Route through Rust bridge when enabled and ready (for hauler count tracking)
+    if (state.settings.useRustSim && isBridgeReady()) {
+      const bridge = getBridge();
+      if (bridge) {
+        bridge.applyCommand({
+          type: 'AssignHauler',
+          payload: { factoryId, count: delta },
+        });
+        // Try to read back authoritative hauler counts from Rust and update
+        // the store so UI reflects the Rust state immediately when possible.
+        try {
+          if (typeof bridge.getFactoryHaulersAssigned === 'function') {
+            const haulersBuf = bridge.getFactoryHaulersAssigned();
+            const idx = state.factories.findIndex((f) => f.id === factoryId);
+            if (idx >= 0 && haulersBuf && haulersBuf.length > idx) {
+              const value = Math.max(0, Math.trunc(haulersBuf[idx] ?? 0));
+              set((cur) => {
+                const factories = cur.factories.map((f, i) => (i === idx ? { ...f, haulersAssigned: value } : f));
+                return { factories };
+              });
+            }
+          }
+        } catch {
+          // Ignore transient bridge read issues and fall back to TS logic.
+        }
+        // Note: Cost deduction is still handled by TS logic below
+      }
     }
 
     if (delta > 0) {

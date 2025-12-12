@@ -111,6 +111,13 @@ export const createPersistenceManager = (
       settings.offlineCapHours,
     );
     if (offlineSeconds > 0) {
+      // If Rust simulation is enabled, defer offline progress to the bridge initialization
+      if (settings.useRustSim) {
+        console.info('Deferring offline simulation to Rust engine');
+        // Do NOT update lastSave here; wait for bridge to handle it
+        return;
+      }
+
       const report = simulateOfflineProgress(store, offlineSeconds, {
         capHours: settings.offlineCapHours,
       });

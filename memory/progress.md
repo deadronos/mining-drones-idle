@@ -2,6 +2,81 @@
 
 ## Summary
 
+## Recent Achievements
+
+- **2025-12-12**: Stabilized Playwright E2E suite after TS↔Rust handoff/parity changes.
+  - Fixed invalid import test to work with hidden file input (`tests/e2e/import-invalid.spec.ts`).
+  - Made factory logistics E2E deterministic by clearing persisted saves per test and using snapshot-based factory setup (`tests/e2e/factory-logistics.spec.ts`).
+  - Validation: `npm run e2e`, `npm run typecheck`, `npm run lint`, `npm run test`.
+
+- **2025-12-13**: Completed TASK057 (Commands, Snapshot & Offline Parity).
+  - Matched Rust command handlers to TS costs/effects (module/factory upgrades with ceil costs, hauler assignment cost deduction, prestige gain formula, asteroid recycle snapshot sync) and made command parity tests strict.
+  - Added schemaVersion normalization/validation across TS/Rust plus TS↔Rust snapshot round-trip coverage; Rust offline now mirrors TS refinery-only path with sink bonuses via a new WASM offline API and bridge support.
+  - Validation: `npm run build:wasm`, `npm run typecheck`, `npm run lint`, `npm run test`.
+
+- **2025-12-11**: Completed TASK056 (Logistics Parity Implementation).
+  - Ported Rust logistics scheduler to mirror TS reservations (factory↔factory/warehouse, upgrade requests), hauler config resolution, warehouse capacity math, and schema support for upgrade requests.
+  - Added focused logistics parity unit test (scheduled transfers/reservations) and rebuilt WASM; validation: `npm run typecheck`, `npm run lint`, `npm run build:wasm`, `npm run test` (parity divergence logs remain in existing suites).
+
+- **2025-12-12**: Completed TASK054 (Asteroids & Biomes Parity).
+  - Replaced Rust respawn with biome-driven profiles/gravity, scanner/sink richness bias, and TS-aligned RNG draw count; updated asteroid metadata.
+  - Added respawn parity test and rebuilt WASM; validation: `npm run build:wasm`, `npm run typecheck`, `npm run lint`, `npm run test` (parity divergences logged as expected).
+
+- **2025-12-12**: Fixed late-step step-parity divergence (asteroid recycle semantics).
+  - Rust now re-keys asteroid IDs on respawn (TS-style remove+spawn) and invalidates drone targets that referenced recycled asteroids to prevent “phantom” mining/return drift.
+  - Validation: WASM rebuild succeeded; parity suites pass under enforcement; `npm run typecheck`, `npm run lint`, `npm run test`.
+
+- **2025-12-12**: Completed TASK053 (Drone AI & Travel Parity).
+  - Finalized weighted targeting/region offsets, queue-aware returns, and travel seed/control parity; rebuilt WASM bundle.
+  - Validation: `npm run typecheck`, `npm run lint`, `npm run test` (parity suites log known divergences only).
+
+- **2025-12-12**: Started TASK055 (Power & Refinery Alignment).
+  - Captured EARS requirements and began mapping TS power/refinery semantics (idle/hauler drains, solar regen/capacity, local-first charging, refinery slot handling) to Rust.
+
+- **2025-12-12**: Completed TASK055 (Power & Refinery Alignment).
+  - Rust power now charges via owner/target factories with effective caps; refinery uses factory-specific idle/hauler drains, storage/slot limits, energy-per-refine, and low-energy throttling matching TS `processFactories`.
+  - Added `tests/unit/power-refinery-parity.test.ts`. Validation: `npm run build:wasm`, `npm run typecheck`, `npm run lint`, `npm run test` (parity divergence logs expected).
+
+- **2025-12-10**: Advanced TASK053 (drone AI/travel parity).
+  - Added asteroid metadata parsing (gravity/regions/hazards), drone index→id cache, queue-aware factory assignment, seeded Bézier travel matching TS waypoint logic, and target region/factory buffer updates.
+  - Rebuilt WASM (`npm run build:wasm`) and added Rust/unit parity coverage (seeded travel, metadata parse).
+  - Test suite: `npm run typecheck`, `npm run lint`, `npm run test` (pass; parity suites still log divergences and Rust snapshots lack drone flights in short runs—logged for follow-up).
+
+- **2025-12-11**: Unblocked Rust drone flight emission for parity snapshots.
+  - Parsed nested `extra.asteroids` payloads into buffers, burned RNG to mirror TS asteroid generation, and aligned path seed generation with TS-style positive seeds.
+  - WASM rebuilt; typecheck/lint pass. Step-parity seed/control still mismatched (seeds differ) though flights now present; longer-run divergences remain logged.
+
+- **2025-12-10**: Expanded parity coverage (factory position/energy checks, deterministic seeds), added TS↔Rust offline comparison (1% tolerance), introduced `schemaVersion` defaults/validation (TS + Rust), added `tests/perf/step-bench.spec.ts`, and created a dedicated `wasm-parity` CI job. Shadow-mode E2E now includes a 5s divergence-log guard.
+
+- **2025-12-09**: Implemented Logistics System in Rust (TASK050).
+  - Defined `PendingTransfer`, `LogisticsQueues`, and `FactoryLogisticsState` in `rust-engine` schema.
+  - Implemented `sys_logistics` to handle Hauler transfer completion, fixing the "haulers never arrive" bug.
+- **2025-11-21**: Fixed Parity Mismatch in Rust Simulation (TASK042).
+  - Identified and fixed a bug in `sys_drone_ai` where drones in `RETURNING` state were ignored, causing them to get stuck and not unload ore.
+  - Fixed a potential crash in `api.rs` when factory count is 0.
+  - Fixed a failing unit test in `sys_power`.
+  - Verified all Rust tests pass and built the WASM module.
+- **2025-11-20**: Started TASK042 (Rust Integration).
+  - Configured Vite for WASM support.
+  - Implemented `useRustEngine` hook to load and initialize the Rust simulation.
+  - Integrated the Rust simulation step into the main game loop in `Scene.tsx`.
+  - Added a toggle for "Use Rust Simulation" in the Settings panel.
+- **2025-11-20**: Completed TASK041 (Rust Systems Port).
+  - Ported Movement, Mining, Power, and Refinery systems to Rust.
+  - Verified parity with unit tests.
+- **2025-11-20**: In Progress TASK043 (Rust Parity Rewrite).
+  - Ported remaining systems (Refinery, Power, Unload) to Rust.
+  - Updated ECS buffer layout with `haulers_assigned`.
+  - Wired all systems into `api.rs` `step` function with correct modifiers.
+  - Verified compilation of the full Rust codebase.
+
+- 2025-11-19: **TASK041 – Rust simulation systems** – Implemented core ECS systems in Rust: `sys_movement` (Bezier curves, energy drain, arrival logic), `sys_mining` (resource gathering, target tracking), and `sys_power` (global generation, factory regen, drone charging). Updated `GameState` SoA layout to include `target_index` for drones. Verified all systems with unit tests.
+- **2025-12-10**: Fixed display regression when enabling Rust simulation.
+  - Scene now falls back to the JS `Asteroids` / `Drones` renderers until the WASM bridge is fully loaded so the asteroid field no longer disappears while the engine initializes.
+  - Added unit tests to prevent regressions and ensure Rust renderers are used only when the bridge is ready.
+- 2025-11-19: **TASK041 – Rust simulation systems** – Expanded `GameState` with factory components (resources, energy, upgrades, refinery state). Implemented `sys_refinery` in Rust with unit tests and verified parity. Fixed memory alignment issues by switching `GameState.data` to `Vec<u32>`.
+- 2025-11-19: **TASK040 – Rust simulation scaffolding** – Completed `/rust-engine` crate scaffolding with data buffer, RNG parity, and layout planning. Implemented `wasmSimBridge.ts` to expose WASM exports and typed-array views to TypeScript. Verified `wasm-pack` build pipeline and added `useRustSim` feature flag.
+- 2025-11-18: **TASK040 – Rust simulation bootstrap** – Captured RQ-067–RQ-070, drafted DES033 architecture, and began scaffolding `/rust-engine` crate plus TS bridge contracts for snapshot, RNG, and typed-array layout parity.
 - 2025-10-30: **TASK038 – Metrics recency cues** – Metrics banner now reports the last sampling time using game-time deltas, reinforcing when charts were last refreshed.
 - 2025-10-30: **TASK038 – Metrics accessibility polish** – Added descriptive sparkline titles/ARIA links, inline summary tooltips, and new FactoryMetricsInline Vitest coverage ensuring accessible wiring.
 - 2025-10-30: **TASK038 – Factory Metrics UI & coverage** – Implemented Factory Metrics tab banner/actions, sparkline cards, inline sparkline component, and Settings metrics controls. Added buffer/sampling/UI unit tests and verified npm run typecheck, npm run lint, and npm run test (209 tests) succeed.

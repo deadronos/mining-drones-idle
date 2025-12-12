@@ -9,7 +9,11 @@ import './LogisticsPanel.css';
 const TRANSFERS_PAGE_SIZE = 5;
 
 /**
- * Global Logistics Panel: overview of all factory transfers and hauler allocation
+ * Global Logistics Panel: overview of all factory transfers and hauler allocation.
+ * Displays summary statistics (total haulers, active transfers) and a paginated list of ongoing resource movements.
+ * Refreshes every 500ms to provide real-time ETA updates.
+ *
+ * @returns The rendered LogisticsPanel component.
  */
 export const LogisticsPanel = () => {
   const factories = useStore((state) => state.factories);

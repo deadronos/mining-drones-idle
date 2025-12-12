@@ -5,6 +5,7 @@ import { detectUpgradeShortfall } from '@/ecs/factories';
 import { computeFactoryUpgradeCost } from '../../utils';
 import { cloneFactory } from '../../serialization';
 import { factoryUpgradeDefinitions } from '../../constants';
+import { getBridge, isBridgeReady } from '@/lib/rustBridgeRegistry';
 
 export const createFactoryUpgradeMethods = (
   set: StoreApi<StoreState>['setState'],
@@ -12,6 +13,25 @@ export const createFactoryUpgradeMethods = (
 ) => ({
   upgradeFactory: (factoryId: string, upgrade: string, variant?: FactoryUpgradeCostVariantId) => {
     const state = get();
+
+    // Route through Rust bridge when enabled and ready
+    if (state.settings.useRustSim && isBridgeReady()) {
+      const bridge = getBridge();
+      if (bridge) {
+        bridge.applyCommand({
+          type: 'PurchaseFactoryUpgrade',
+          payload: {
+            factoryId,
+            upgradeType: upgrade,
+            costVariant: variant,
+          },
+        });
+        // Note: Full factory sync would require re-parsing the snapshot
+        // For now, we also execute the TS logic to keep local state consistent
+      }
+    }
+
+    // TypeScript logic (always executed for local state consistency)
     const index = state.factories.findIndex((f) => f.id === factoryId);
     if (index === -1) {
       return false;

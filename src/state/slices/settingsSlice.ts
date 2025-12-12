@@ -2,6 +2,8 @@ import type { StateCreator } from 'zustand';
 import type { StoreState, StoreSettings } from '../types';
 import { initialSettings } from '../constants';
 import { normalizeSettings } from '../serialization';
+import { getBridge, isBridgeReady } from '@/lib/rustBridgeRegistry';
+import { handoffRustToTs, handoffTsToRust } from '@/lib/simHandoff';
 
 export interface SettingsSliceState {
   settings: StoreSettings;
@@ -22,13 +24,31 @@ export const createSettingsSlice: StateCreator<
   [],
   [],
   SettingsSliceState & SettingsSliceMethods
-> = (set) => ({
+> = (set, get) => ({
   settings: { ...initialSettings },
   selectedAsteroidId: null,
   selectedFactoryId: null,
 
   updateSettings: (patch) => {
-    set((state) => ({ settings: normalizeSettings({ ...state.settings, ...patch }) }));
+    const prev = get().settings;
+    const next = normalizeSettings({ ...prev, ...patch });
+    set(() => ({ settings: next }));
+
+    if (prev.useRustSim === next.useRustSim || !isBridgeReady()) {
+      return;
+    }
+
+    const bridge = getBridge();
+    if (!bridge) {
+      return;
+    }
+
+    if (next.useRustSim) {
+      handoffTsToRust(bridge);
+      return;
+    }
+
+    handoffRustToTs(bridge, get().applySnapshot, next);
   },
 
   setSelectedAsteroid: (asteroidId) => {

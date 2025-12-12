@@ -7,23 +7,37 @@ import type { FactoryResources, FactoryUpgrades } from './models';
 
 /**
  * Factory configuration with sensible defaults.
+ * Defines base costs, capacities, and rates for new factories.
  */
 export const FACTORY_CONFIG = {
+  /** Base cost to build the first factory. */
   baseCost: { metals: 100, crystals: 50 },
+  /** Default docking capacity (number of drones). */
   dockingCapacity: 3,
+  /** Default number of refining slots. */
   refineSlots: 2,
-  refineTime: 10, // seconds per batch
+  /** Time in seconds to process one batch. */
+  refineTime: 10,
+  /** Energy consumed per second when idle. */
   idleEnergyPerSec: 1,
+  /** Energy consumed per active refining process. */
   energyPerRefine: 2,
+  /** Default storage capacity for resources. */
   storageCapacity: 300,
+  /** Default energy storage capacity. */
   energyCapacity: 80,
+  /** Initial energy level for new factories. */
   initialEnergy: 40,
-  priceScaleIncrement: 50, // linear price scaling
+  /** Linear price increment for each subsequent factory. */
+  priceScaleIncrement: 50,
 } as const;
 
 /**
  * Computes the cost to purchase the Nth factory (0-indexed).
  * Uses linear scaling: base + n * increment.
+ *
+ * @param factoryCount - The number of factories already owned (or index of next factory).
+ * @returns The resource cost for the next factory.
  */
 export const computeFactoryCost = (factoryCount: number) => {
   const n = factoryCount; // 0-indexed
@@ -38,13 +52,20 @@ export const computeFactoryCost = (factoryCount: number) => {
 /**
  * Computes total energy upkeep for all factories.
  * Scales linearly: count * idleEnergyPerSec.
+ *
+ * @param factoryCount - The total number of factories.
+ * @returns The total energy consumed per second by idle factories.
  */
 export const computeFactoryEnergyUpkeep = (factoryCount: number): number =>
   factoryCount * FACTORY_CONFIG.idleEnergyPerSec;
 
 /**
  * Helper to compute upgrade cost by ID and level.
- * Uses the same logic as state/utils.ts computeFactoryUpgradeCost.
+ * Uses exponential growth for cost scaling.
+ *
+ * @param upgradeId - The ID of the upgrade (e.g., 'docking').
+ * @param currentLevel - The current level of the upgrade.
+ * @returns The resource cost for the next level.
  */
 export const computeUpgradeCost = (
   upgradeId: keyof FactoryUpgrades,

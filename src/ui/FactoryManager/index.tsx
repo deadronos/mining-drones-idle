@@ -51,6 +51,8 @@ export const FactoryManager = () => {
   const safeIndex = selectedIndex >= 0 ? selectedIndex : 0;
   const selectedFactory = factories[safeIndex] ?? null;
 
+  const displayedFactory = selectedFactory;
+
   const handleUpgrade = (upgradeId: FactoryUpgradeId, variant?: FactoryUpgradeCostVariantId) => {
     if (!selectedFactory) return;
     upgradeFactory(selectedFactory.id, upgradeId, variant);
@@ -85,9 +87,9 @@ export const FactoryManager = () => {
         </button>
       </div>
 
-      {selectedFactory ? (
+      {displayedFactory ? (
         <SelectedFactoryCard
-          factory={selectedFactory}
+          factory={displayedFactory}
           index={safeIndex}
           total={factoryCount}
           onPrev={() => cycleFactory(-1)}

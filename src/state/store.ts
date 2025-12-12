@@ -103,6 +103,7 @@ export {
   SOLAR_ARRAY_LOCAL_REGEN_PER_LEVEL,
   SOLAR_ARRAY_LOCAL_MAX_ENERGY_PER_LEVEL,
   saveVersion,
+  SCHEMA_VERSION,
   moduleDefinitions,
   factoryUpgradeDefinitions,
   specTechDefinitions,
@@ -141,6 +142,10 @@ export { createDefaultFactories } from './factory';
 /**
  * Main store creator that composes all slices and implements game loop orchestration.
  * Refactored into modular functions in src/state/store/ for better maintainability.
+ *
+ * @param set - Zustand set function.
+ * @param get - Zustand get function.
+ * @returns The complete store state definition.
  */
 const storeCreator: StateCreator<StoreState> = (set, get) => {
   const defaultFactories = createDefaultFactories();
@@ -153,7 +158,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
   const resourceSlice = createResourceSlice(sliceSet, sliceGet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
-  const settingsSlice = createSettingsSlice(sliceSet);
+  const settingsSlice = createSettingsSlice(sliceSet, sliceGet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
   const factorySlice = createFactorySlice(sliceSet, sliceGet);
   // @ts-expect-error - StateCreator generics don't compose well with spread operator
@@ -299,6 +304,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
           droneFlights: (normalized.droneFlights ?? []).map(cloneDroneFlight),
           factories: restoredFactories,
           logisticsQueues: normalized.logisticsQueues ?? { pendingTransfers: [] },
+          gameTime: normalized.gameTime ?? 0,
           factoryProcessSequence: deriveProcessSequence(restoredFactories),
           factoryRoundRobin: 0,
           factoryAutofitSequence: 0,
@@ -373,12 +379,91 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
         };
       });
     },
+
+    syncLogisticsQueues: (queues) => {
+      set({ logisticsQueues: queues });
+    },
+
+    syncResources: (resources) => {
+      set({ resources });
+    },
+
+    // Sync per-factory buffers coming from Rust. This updates only the
+    // fields that are represented by the bridge (resources, energy, energyCapacity, haulersAssigned)
+    syncFactoriesFromRust: (buffers) => {
+      set((current) => {
+        const factories = current.factories;
+        if (!factories || factories.length === 0) return current;
+
+        const { resources: resBuf, energy: energyBuf, maxEnergy: maxEnergyBuf, haulers: haulersBuf } = buffers || {};
+
+        const resourcesArray: Float32Array | null = Array.isArray(resBuf) ? new Float32Array(resBuf) : resBuf instanceof Float32Array ? resBuf : null;
+        const energyArray: Float32Array | null = Array.isArray(energyBuf) ? new Float32Array(energyBuf) : energyBuf instanceof Float32Array ? energyBuf : null;
+        const maxEnergyArray: Float32Array | null = Array.isArray(maxEnergyBuf) ? new Float32Array(maxEnergyBuf) : maxEnergyBuf instanceof Float32Array ? maxEnergyBuf : null;
+        const haulersArray: Float32Array | null = Array.isArray(haulersBuf) ? new Float32Array(haulersBuf) : haulersBuf instanceof Float32Array ? haulersBuf : null;
+
+        const newFactories = factories.map((factory, idx) => {
+          let changed = false;
+          const clone = { ...factory };
+
+          // Resources buffer expected as 7 floats per factory
+          if (resourcesArray && resourcesArray.length >= (idx * 7 + 7)) {
+            const base = idx * 7;
+            const currentRes = clone.resources;
+            const newRes = {
+              ore: Number.isFinite(resourcesArray[base]) ? resourcesArray[base] : currentRes.ore,
+              ice: Number.isFinite(resourcesArray[base + 1]) ? resourcesArray[base + 1] : currentRes.ice,
+              metals: Number.isFinite(resourcesArray[base + 2]) ? resourcesArray[base + 2] : currentRes.metals,
+              crystals: Number.isFinite(resourcesArray[base + 3]) ? resourcesArray[base + 3] : currentRes.crystals,
+              organics: Number.isFinite(resourcesArray[base + 4]) ? resourcesArray[base + 4] : currentRes.organics,
+              bars: Number.isFinite(resourcesArray[base + 5]) ? resourcesArray[base + 5] : currentRes.bars,
+              credits: Number.isFinite(resourcesArray[base + 6]) ? resourcesArray[base + 6] : currentRes.credits,
+            };
+            clone.resources = { ...clone.resources, ...newRes };
+            changed = true;
+          }
+
+          if (energyArray && energyArray.length > idx && Number.isFinite(energyArray[idx])) {
+            clone.energy = energyArray[idx];
+            changed = true;
+          }
+
+          if (maxEnergyArray && maxEnergyArray.length > idx && Number.isFinite(maxEnergyArray[idx])) {
+            clone.energyCapacity = maxEnergyArray[idx];
+            changed = true;
+          }
+
+          if (haulersArray && haulersArray.length > idx) {
+            const rawHaulers = haulersArray[idx];
+            if (Number.isFinite(rawHaulers)) {
+              clone.haulersAssigned = Math.max(0, Math.trunc(rawHaulers));
+              changed = true;
+            }
+          }
+
+          return changed ? clone : factory;
+        });
+
+        return { factories: newFactories };
+      });
+    },
   };
 };
 
+/**
+ * Creates a vanilla (non-React) store instance.
+ * Useful for testing or usage outside of React components.
+ *
+ * @returns A fresh StoreState instance.
+ */
 export const createStoreInstance = () => createVanillaStore<StoreState>(storeCreator);
 
+/**
+ * The React hook for accessing the store.
+ */
 export const useStore = create<StoreState>()(storeCreator);
 
+/**
+ * Singleton API access to the store, useful for imperative updates.
+ */
 export const storeApi = useStore as unknown as StoreApiType;
-
