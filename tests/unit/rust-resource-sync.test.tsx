@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
-import { vi, describe, it, beforeEach, expect } from 'vitest';
+import { vi, describe, it, beforeEach, afterEach, expect } from 'vitest';
 import { storeApi } from '@/state/store';
 import type { RustSimBridge } from '@/lib/wasmSimBridge';
 
@@ -67,6 +67,9 @@ describe('Rust Resource Sync Integration', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     frameCallback = null;
+    // Silence React/Three.js runtime warnings in JSDOM during tests
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     // Reset store state
     act(() => {
@@ -101,6 +104,10 @@ describe('Rust Resource Sync Integration', () => {
         }
       });
     });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('syncs resources from Rust bridge to store every 6 frames', () => {
