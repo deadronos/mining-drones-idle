@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { computeFactoryCost, type BuildableFactory } from '@/ecs/factories';
-import { useRustHUD } from '@/hooks/useRustHUD';
 import { useStore, type FactoryUpgradeCostVariantId, type FactoryUpgradeId } from '@/state/store';
 import { DockingSection } from './sections/DockingSection';
 import { EnergySection } from './sections/EnergySection';
@@ -18,7 +17,6 @@ import '../FactoryManager.css';
 export const FactoryManager = () => {
   const factories = useStore((state) => state.factories);
   const resources = useStore((state) => state.resources);
-  const { getFactory, isRustActive } = useRustHUD();
   const selectedFactoryId = useStore((state) => state.selectedFactoryId);
   const setSelectedFactory = useStore((state) => state.setSelectedFactory);
   const cycleFactory = useStore((state) => state.cycleSelectedFactory);
@@ -53,17 +51,7 @@ export const FactoryManager = () => {
   const safeIndex = selectedIndex >= 0 ? selectedIndex : 0;
   const selectedFactory = factories[safeIndex] ?? null;
 
-  const displayedFactory = useMemo(() => {
-    if (!selectedFactory || !isRustActive) return selectedFactory;
-    const rustData = getFactory(safeIndex);
-    if (!rustData) return selectedFactory;
-    return {
-      ...selectedFactory,
-      resources: rustData.resources,
-      energy: rustData.energy,
-      haulersAssigned: rustData.haulersAssigned,
-    };
-  }, [selectedFactory, isRustActive, getFactory, safeIndex]);
+  const displayedFactory = selectedFactory;
 
   const handleUpgrade = (upgradeId: FactoryUpgradeId, variant?: FactoryUpgradeCostVariantId) => {
     if (!selectedFactory) return;

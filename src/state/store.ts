@@ -409,33 +409,36 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
           // Resources buffer expected as 7 floats per factory
           if (resourcesArray && resourcesArray.length >= (idx * 7 + 7)) {
             const base = idx * 7;
+            const currentRes = clone.resources;
             const newRes = {
-              ore: resourcesArray[base],
-              ice: resourcesArray[base + 1],
-              metals: resourcesArray[base + 2],
-              crystals: resourcesArray[base + 3],
-              organics: resourcesArray[base + 4],
-              bars: resourcesArray[base + 5],
-              credits: resourcesArray[base + 6],
+              ore: Number.isFinite(resourcesArray[base]) ? resourcesArray[base] : currentRes.ore,
+              ice: Number.isFinite(resourcesArray[base + 1]) ? resourcesArray[base + 1] : currentRes.ice,
+              metals: Number.isFinite(resourcesArray[base + 2]) ? resourcesArray[base + 2] : currentRes.metals,
+              crystals: Number.isFinite(resourcesArray[base + 3]) ? resourcesArray[base + 3] : currentRes.crystals,
+              organics: Number.isFinite(resourcesArray[base + 4]) ? resourcesArray[base + 4] : currentRes.organics,
+              bars: Number.isFinite(resourcesArray[base + 5]) ? resourcesArray[base + 5] : currentRes.bars,
+              credits: Number.isFinite(resourcesArray[base + 6]) ? resourcesArray[base + 6] : currentRes.credits,
             };
             clone.resources = { ...clone.resources, ...newRes };
             changed = true;
           }
 
-          if (energyArray && energyArray.length > idx) {
+          if (energyArray && energyArray.length > idx && Number.isFinite(energyArray[idx])) {
             clone.energy = energyArray[idx];
             changed = true;
           }
 
-          if (maxEnergyArray && maxEnergyArray.length > idx) {
+          if (maxEnergyArray && maxEnergyArray.length > idx && Number.isFinite(maxEnergyArray[idx])) {
             clone.energyCapacity = maxEnergyArray[idx];
             changed = true;
           }
 
           if (haulersArray && haulersArray.length > idx) {
-            // haulersAssigned is integer count
-            clone.haulersAssigned = Math.max(0, Math.trunc(haulersArray[idx] ?? 0));
-            changed = true;
+            const rawHaulers = haulersArray[idx];
+            if (Number.isFinite(rawHaulers)) {
+              clone.haulersAssigned = Math.max(0, Math.trunc(rawHaulers));
+              changed = true;
+            }
           }
 
           return changed ? clone : factory;

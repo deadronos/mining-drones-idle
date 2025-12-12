@@ -60,6 +60,8 @@ import { Scene } from '@/r3f/Scene';
 import { LogisticsPanel } from '@/ui/LogisticsPanel';
 import { WarehousePanel } from '@/ui/WarehousePanel';
 import { UpgradePanel } from '@/ui/UpgradePanel';
+import { createFactory } from '@/ecs/factories';
+import { Vector3 } from 'three';
 
 describe('Rust Resource Sync Integration', () => {
   beforeEach(() => {
@@ -365,5 +367,219 @@ describe('Rust Resource Sync Integration', () => {
     expect(f0.energy).toBeCloseTo(123.5, 3);
     expect(f0.energyCapacity).toBe(250);
     expect(f0.haulersAssigned).toBe(6);
+  });
+
+  it('syncs multi-factory buffers into the store', () => {
+    const fA = createFactory('factory-a', new Vector3(0, 0, 0));
+    const fB = createFactory('factory-b', new Vector3(10, 0, 0));
+    const fC = createFactory('factory-c', new Vector3(20, 0, 0));
+    act(() => storeApi.setState({ factories: [fA, fB, fC] }));
+
+    const resBuf = new Float32Array([
+      // factory-a
+      101, 11, 1, 2, 3, 4, 5,
+      // factory-b
+      201, 21, 2, 3, 4, 5, 6,
+      // factory-c
+      301, 31, 3, 4, 5, 6, 7,
+    ]);
+    const energyBuf = new Float32Array([10.5, 20.5, 30.5]);
+    const maxEnergyBuf = new Float32Array([100, 200, 300]);
+    const haulersBuf = new Float32Array([1, 2, 3]);
+
+    const mockBridge = {
+      isReady: () => true,
+      step: vi.fn(),
+      getGlobalResources: vi.fn().mockReturnValue(new Float64Array([0, 0, 0, 0, 0, 0, 0, 0])),
+      getLogisticsQueues: vi.fn().mockReturnValue({ pendingTransfers: [] }),
+      getAsteroidPositions: () => new Float32Array([]),
+      getAsteroidOre: () => new Float32Array([]),
+      getDronePositions: () => new Float32Array([]),
+      getDroneStates: () => new Float32Array([]),
+      getFactoryResources: vi.fn().mockReturnValue(resBuf),
+      getFactoryEnergy: vi.fn().mockReturnValue(energyBuf),
+      getFactoryMaxEnergy: vi.fn().mockReturnValue(maxEnergyBuf),
+      getFactoryHaulersAssigned: vi.fn().mockReturnValue(haulersBuf),
+    } as unknown as RustSimBridge;
+
+    mockUseRustEngine.mockReturnValue({
+      bridge: mockBridge,
+      isLoaded: true,
+      error: null,
+      fallbackReason: null,
+      reinitialize: async () => undefined,
+    });
+
+    render(<Scene />);
+    if (frameCallback) {
+      for (let i = 0; i < 6; i++) act(() => frameCallback!(null, 0.016));
+    }
+
+    const factories = storeApi.getState().factories;
+    expect(factories[0].resources.ore).toBe(101);
+    expect(factories[1].resources.ore).toBe(201);
+    expect(factories[2].resources.ore).toBe(301);
+    expect(factories[0].energy).toBeCloseTo(10.5, 3);
+    expect(factories[1].energy).toBeCloseTo(20.5, 3);
+    expect(factories[2].energy).toBeCloseTo(30.5, 3);
+    expect(factories[0].haulersAssigned).toBe(1);
+    expect(factories[1].haulersAssigned).toBe(2);
+    expect(factories[2].haulersAssigned).toBe(3);
+  });
+
+  it('handles partial and invalid buffers (partial-length resource arrays)', () => {
+    const fA = createFactory('factory-a', new Vector3(0, 0, 0));
+    const fB = createFactory('factory-b', new Vector3(10, 0, 0));
+    const fC = createFactory('factory-c', new Vector3(20, 0, 0));
+    // Set distinct sentinel initial values
+    fA.resources.ore = 1;
+    fB.resources.ore = 2;
+    fC.resources.ore = 3;
+    fA.haulersAssigned = 4;
+    fB.haulersAssigned = 5;
+    fC.haulersAssigned = 6;
+    act(() => storeApi.setState({ factories: [fA, fB, fC] }));
+
+    // resources array only contains data for factory-a (7 entries), not others
+    const resBuf = new Float32Array([555, 11, 1, 2, 3, 4, 5]);
+    const energyBuf = new Float32Array([111, 222]); // for first 2 factories
+    const haulersBuf = new Float32Array([7]); // only for first factory
+
+    const mockBridge = {
+      isReady: () => true,
+      step: vi.fn(),
+      getGlobalResources: vi.fn().mockReturnValue(new Float64Array([0, 0, 0, 0, 0, 0, 0, 0])),
+      getLogisticsQueues: vi.fn().mockReturnValue({ pendingTransfers: [] }),
+      getAsteroidPositions: () => new Float32Array([]),
+      getAsteroidOre: () => new Float32Array([]),
+      getDronePositions: () => new Float32Array([]),
+      getDroneStates: () => new Float32Array([]),
+      getFactoryResources: vi.fn().mockReturnValue(resBuf),
+      getFactoryEnergy: vi.fn().mockReturnValue(energyBuf),
+      getFactoryMaxEnergy: vi.fn().mockReturnValue(new Float32Array([50, 60])),
+      getFactoryHaulersAssigned: vi.fn().mockReturnValue(haulersBuf),
+    } as unknown as RustSimBridge;
+
+    mockUseRustEngine.mockReturnValue({
+      bridge: mockBridge,
+      isLoaded: true,
+      error: null,
+      fallbackReason: null,
+      reinitialize: async () => undefined,
+    });
+
+    render(<Scene />);
+    if (frameCallback) {
+      for (let i = 0; i < 6; i++) act(() => frameCallback!(null, 0.016));
+    }
+
+    const factories = storeApi.getState().factories;
+    // factory-a should update
+    expect(factories[0].resources.ore).toBe(555);
+    expect(factories[0].haulersAssigned).toBe(7);
+    expect(factories[0].energy).toBeCloseTo(111, 3);
+    // factory-b energy updated, resources unchanged
+    expect(factories[1].resources.ore).toBe(2);
+    expect(factories[1].energy).toBeCloseTo(222, 3);
+    // factory-c unchanged
+    expect(factories[2].resources.ore).toBe(3);
+    expect(factories[2].haulersAssigned).toBe(6);
+  });
+
+  it('sanitizes haulers (negative/NaN) and clamps to non-negative integers', () => {
+    const fA = createFactory('factory-a', new Vector3(0, 0, 0));
+    const fB = createFactory('factory-b', new Vector3(10, 0, 0));
+    const fC = createFactory('factory-c', new Vector3(20, 0, 0));
+    fA.haulersAssigned = 3;
+    fB.haulersAssigned = 5;
+    fC.haulersAssigned = 2;
+    act(() => storeApi.setState({ factories: [fA, fB, fC] }));
+
+    const haulersBuf = new Float32Array([-2, NaN, 2.7]);
+    const mockBridge = {
+      isReady: () => true,
+      step: vi.fn(),
+      getGlobalResources: vi.fn().mockReturnValue(new Float64Array([0, 0, 0, 0, 0, 0, 0, 0])),
+      getLogisticsQueues: vi.fn().mockReturnValue({ pendingTransfers: [] }),
+      getAsteroidPositions: () => new Float32Array([]),
+      getAsteroidOre: () => new Float32Array([]),
+      getDronePositions: () => new Float32Array([]),
+      getDroneStates: () => new Float32Array([]),
+      getFactoryResources: vi.fn().mockReturnValue(new Float32Array(21)),
+      getFactoryEnergy: vi.fn().mockReturnValue(new Float32Array([0, 0, 0])),
+      getFactoryMaxEnergy: vi.fn().mockReturnValue(new Float32Array([0, 0, 0])),
+      getFactoryHaulersAssigned: vi.fn().mockReturnValue(haulersBuf),
+    } as unknown as RustSimBridge;
+
+    mockUseRustEngine.mockReturnValue({
+      bridge: mockBridge,
+      isLoaded: true,
+      error: null,
+      fallbackReason: null,
+      reinitialize: async () => undefined,
+    });
+
+    render(<Scene />);
+    if (frameCallback) {
+      for (let i = 0; i < 6; i++) act(() => frameCallback!(null, 0.016));
+    }
+
+    const factories = storeApi.getState().factories;
+    expect(factories[0].haulersAssigned).toBe(0); // clamped from -2 to 0
+    expect(Number.isFinite(factories[1].haulersAssigned)).toBe(true); // NaN shouldn't be assigned
+    // because NaN is not finite, we expect the value to be unchanged from previous (5)
+    expect(factories[1].haulersAssigned).toBe(5);
+    expect(factories[2].haulersAssigned).toBe(2); // 2.7 -> trunc(2)
+  });
+
+  it('ignores extra trailing values in buffers beyond factory count', () => {
+    const fA = createFactory('factory-a', new Vector3(0, 0, 0));
+    const fB = createFactory('factory-b', new Vector3(10, 0, 0));
+    const fC = createFactory('factory-c', new Vector3(20, 0, 0));
+    act(() => storeApi.setState({ factories: [fA, fB, fC] }));
+
+    const resBuf = new Float32Array([
+      1, 1, 1, 1, 1, 1, 1,
+      2, 2, 2, 2, 2, 2, 2,
+      3, 3, 3, 3, 3, 3, 3,
+      999, 999, 999, // extra trailing values that shouldn't be assigned
+    ]);
+    const energyBuf = new Float32Array([10, 20, 30, 40, 50]); // extra values
+    const haulersBuf = new Float32Array([1, 2, 3, 4]);
+
+    const mockBridge = {
+      isReady: () => true,
+      step: vi.fn(),
+      getGlobalResources: vi.fn().mockReturnValue(new Float64Array([0, 0, 0, 0, 0, 0, 0, 0])),
+      getLogisticsQueues: vi.fn().mockReturnValue({ pendingTransfers: [] }),
+      getAsteroidPositions: () => new Float32Array([]),
+      getAsteroidOre: () => new Float32Array([]),
+      getDronePositions: () => new Float32Array([]),
+      getDroneStates: () => new Float32Array([]),
+      getFactoryResources: vi.fn().mockReturnValue(resBuf),
+      getFactoryEnergy: vi.fn().mockReturnValue(energyBuf),
+      getFactoryMaxEnergy: vi.fn().mockReturnValue(new Float32Array([0, 0, 0, 0, 0])),
+      getFactoryHaulersAssigned: vi.fn().mockReturnValue(haulersBuf),
+    } as unknown as RustSimBridge;
+
+    mockUseRustEngine.mockReturnValue({
+      bridge: mockBridge,
+      isLoaded: true,
+      error: null,
+      fallbackReason: null,
+      reinitialize: async () => undefined,
+    });
+
+    render(<Scene />);
+    if (frameCallback) {
+      for (let i = 0; i < 6; i++) act(() => frameCallback!(null, 0.016));
+    }
+
+    const factories = storeApi.getState().factories;
+    expect(factories[0].resources.ore).toBe(1);
+    expect(factories[1].resources.ore).toBe(2);
+    expect(factories[2].resources.ore).toBe(3);
+    // trailing extra should have been ignored (no crash and not applied)
+    expect(factories.length).toBe(3);
   });
 });
