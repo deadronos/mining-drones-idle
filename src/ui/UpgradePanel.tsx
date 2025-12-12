@@ -8,7 +8,6 @@ import {
   type ModuleId,
   useStore,
 } from '@/state/store';
-import { useRustHUD } from '@/hooks/useRustHUD';
 import { formatInteger } from '@/lib/formatters';
 
 const moduleRows = Object.entries(moduleDefinitions) as [
@@ -24,7 +23,7 @@ const moduleRows = Object.entries(moduleDefinitions) as [
  * @returns The rendered UpgradePanel component.
  */
 export const UpgradePanel = () => {
-  const { resources } = useRustHUD();
+  const resources = useStore((state) => state.resources);
   const modules = useStore((state) => state.modules);
   const prestige = useStore((state) => state.prestige);
   const buy = useStore((state) => state.buy);

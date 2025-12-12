@@ -17,7 +17,8 @@ import '../FactoryManager.css';
  */
 export const FactoryManager = () => {
   const factories = useStore((state) => state.factories);
-  const { resources, getFactory, isRustActive } = useRustHUD();
+  const resources = useStore((state) => state.resources);
+  const { getFactory, isRustActive } = useRustHUD();
   const selectedFactoryId = useStore((state) => state.selectedFactoryId);
   const setSelectedFactory = useStore((state) => state.setSelectedFactory);
   const cycleFactory = useStore((state) => state.cycleSelectedFactory);
