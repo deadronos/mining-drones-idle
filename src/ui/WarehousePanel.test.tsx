@@ -2,8 +2,6 @@ import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { WarehousePanel } from './WarehousePanel';
-import { registerBridge, unregisterBridge } from '@/lib/rustBridgeRegistry';
-import type { RustSimBridge } from '@/lib/wasmSimBridge';
 import {
   storeApi,
   type Resources,
@@ -109,41 +107,5 @@ describe('ui/WarehousePanel', () => {
     });
     expect(investmentButton).toBeDisabled();
     expect(specializationButton).toBeDisabled();
-  });
-
-  it('displays bridge resources when useRustSim is enabled', async () => {
-    vi.useFakeTimers();
-    act(() => {
-      storeApi.setState((state) => ({
-        ...state,
-        settings: { ...state.settings, useRustSim: true },
-        resources: {
-          ...state.resources,
-          ore: 0,
-          ice: 0,
-        },
-      }));
-    });
-
-    const mockBridge = {
-      isReady: () => true,
-      getGlobalResources: () =>
-        new Float32Array([111, 222, 333, 444, 555, 666, 777, 888]),
-    } as unknown as RustSimBridge;
-    registerBridge(mockBridge);
-
-    render(<WarehousePanel onOpenSettings={() => undefined} />);
-
-    await act(async () => {
-      vi.advanceTimersByTime(100);
-    });
-
-    expect(screen.getByText('111.0')).toBeInTheDocument(); // Ore
-    expect(screen.getByText('222.0')).toBeInTheDocument(); // Ice
-    expect(screen.getByText('333.0')).toBeInTheDocument(); // Metals
-    expect(screen.getByText('777')).toBeInTheDocument(); // Energy
-
-    unregisterBridge();
-    vi.useRealTimers();
   });
 });

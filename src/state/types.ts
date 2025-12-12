@@ -564,6 +564,14 @@ export interface StoreState {
   setHighlightedFactories(this: void, highlight: HighlightedFactories): void;
   /** Syncs logistics queues from an external source (e.g. Rust). */
   syncLogisticsQueues(this: void, queues: LogisticsQueues): void;
+  syncResources(this: void, resources: Resources): void;
+  /** Syncs per-factory buffers coming from Rust into the store. */
+  syncFactoriesFromRust(this: void, buffers: {
+    resources?: Float32Array | number[] | null;
+    energy?: Float32Array | number[] | null;
+    maxEnergy?: Float32Array | number[] | null;
+    haulers?: Float32Array | number[] | null;
+  }): void;
 }
 
 /** Type alias for the StoreApi. */

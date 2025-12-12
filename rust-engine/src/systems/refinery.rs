@@ -153,7 +153,7 @@ mod tests {
         let mut resources = vec![
             100.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, // Factory 1
         ];
-        let upgrades = vec![
+        let _upgrades = vec![
             0.0, 0.0, 0.0, 0.0, 0.0, // Factory 1
         ];
         let mut refinery_state = vec![0.0; MAX_REFINE_SLOTS * 4];

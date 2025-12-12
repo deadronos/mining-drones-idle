@@ -1,6 +1,14 @@
 use crate::constants::*;
 use crate::systems::energy::consume_drone_energy;
 
+const ORE_QUANTIZATION: f32 = 100.0; // 0.01-unit steps
+
+fn quantize_ore(value: f32) -> f32 {
+    let scaled = ((value as f64) * (ORE_QUANTIZATION as f64)).round();
+    let quantized = (scaled / (ORE_QUANTIZATION as f64)).max(0.0);
+    quantized as f32
+}
+
 pub fn sys_mining(
     drone_states: &mut [f32],
     drone_cargo: &mut [f32],
@@ -24,7 +32,7 @@ pub fn sys_mining(
     let drain_rate = DRONE_ENERGY_COST * energy_drain_multiplier;
     let drone_count = drone_states.len();
 
-    for i in 0..drone_count {
+    for i in (0..drone_count).rev() {
         let state = drone_states[i];
         if state != DRONE_STATE_MINING {
             continue;
@@ -84,9 +92,13 @@ pub fn sys_mining(
         }
 
         drone_cargo[i] += mined;
-        asteroid_ore_remaining[asteroid_idx] -= mined;
+        asteroid_ore_remaining[asteroid_idx] =
+            quantize_ore(asteroid_ore_remaining[asteroid_idx] - mined);
 
-        if drone_cargo[i] >= capacity - 0.01 || asteroid_ore_remaining[asteroid_idx] <= 0.01 {
+        let ore_steps = (((asteroid_ore_remaining[asteroid_idx] as f64) * (ORE_QUANTIZATION as f64)).round()
+            as i32)
+            .max(0);
+        if drone_cargo[i] >= capacity - 0.01 || ore_steps <= 1 {
             drone_states[i] = DRONE_STATE_RETURNING;
         }
     }

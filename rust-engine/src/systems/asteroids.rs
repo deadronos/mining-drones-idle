@@ -206,12 +206,14 @@ pub fn sys_asteroids(
     asteroid_max_ore: &mut [f32],
     asteroid_resource_profile: &mut [f32],
     asteroid_metadata: &mut [AsteroidMetadata],
+    respawned_indices: &mut Vec<usize>,
     rng: &mut Mulberry32,
     sink_bonuses: &SinkBonuses,
     scanner_level: i32,
     _dt: f32,
 ) {
     let count = asteroid_positions.len() / 3;
+    respawned_indices.clear();
     for i in 0..count {
         if asteroid_ore.get(i).copied().unwrap_or(0.0) <= 0.01 {
             respawn_asteroid(
@@ -225,6 +227,7 @@ pub fn sys_asteroids(
                 sink_bonuses,
                 scanner_level,
             );
+            respawned_indices.push(i);
         }
     }
 }

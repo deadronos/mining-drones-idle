@@ -9,6 +9,8 @@ export const Factory = () => {
   const useRustSim = useStore((state) => state.settings.useRustSim);
 
   const renderFactories = useMemo(() => {
+    // Prefer authoritative store values for factory state (resources, energy, haulers).
+    // Only read positions from the Rust bridge for smooth rendering updates.
     if (!useRustSim || !isBridgeReady()) {
       return factories;
     }
@@ -16,15 +18,10 @@ export const Factory = () => {
     if (!bridge) return factories;
     try {
       const positions = bridge.getFactoryPositions();
-      const resources = bridge.getFactoryResources();
-      const energy = bridge.getFactoryEnergy();
-      const maxEnergy = bridge.getFactoryMaxEnergy();
-      const haulers = bridge.getFactoryHaulersAssigned();
       const count = Math.min(factories.length, Math.floor(positions.length / 3));
 
       return factories.slice(0, count).map((factory, idx) => {
         const posIndex = idx * 3;
-        const resIndex = idx * 7;
         const position = factory.position.clone();
         if (positions[posIndex] !== undefined) position.x = positions[posIndex];
         if (positions[posIndex + 1] !== undefined) position.y = positions[posIndex + 1];
@@ -32,23 +29,16 @@ export const Factory = () => {
         return {
           ...factory,
           position,
-          energy: energy[idx] ?? factory.energy,
-          energyCapacity: maxEnergy[idx] ?? factory.energyCapacity,
-          resources: {
-            ...factory.resources,
-            ore: resources[resIndex] ?? factory.resources.ore,
-            ice: resources[resIndex + 1] ?? factory.resources.ice,
-            metals: resources[resIndex + 2] ?? factory.resources.metals,
-            crystals: resources[resIndex + 3] ?? factory.resources.crystals,
-            organics: resources[resIndex + 4] ?? factory.resources.organics,
-            bars: resources[resIndex + 5] ?? factory.resources.bars,
-            credits: resources[resIndex + 6] ?? factory.resources.credits,
-          },
-          haulersAssigned: haulers[idx] ?? factory.haulersAssigned ?? 0,
+          // Keep energy, energyCapacity, resources, and hauler count from the store,
+          // these are synchronized by Scene.tsx into the store regularly.
+          energy: factory.energy,
+          energyCapacity: factory.energyCapacity,
+          resources: factory.resources,
+          haulersAssigned: factory.haulersAssigned ?? 0,
         };
       });
     } catch (err) {
-      console.warn('Failed to read factory buffers from Rust bridge', err);
+      console.warn('Failed to read factory positions from Rust bridge', err);
       return factories;
     }
   }, [factories, useRustSim]);

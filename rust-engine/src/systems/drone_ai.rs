@@ -3,9 +3,11 @@ use crate::constants::{
     DRONE_STATE_MINING, DRONE_STATE_RETURNING, DRONE_STATE_TO_ASTEROID,
 };
 use crate::modifiers::ResourceModifierSnapshot;
+use crate::parity_debug;
 use crate::rng::Mulberry32;
 use crate::schema::{DroneFlight, FactorySnapshot, Modules, SimulationSnapshot, TravelSnapshot};
 use crate::sinks::SinkBonuses;
+use serde_json::json;
 use std::collections::{BTreeMap, HashSet};
 use std::f32::consts::PI;
 
@@ -16,6 +18,7 @@ const EPSILON: f32 = 1e-4;
 const MAX_OFFSET_DISTANCE: f32 = 3.0;
 const SEED_MIX: u32 = 0x9e37_79b9;
 const FRAC_PI_5: f32 = PI / 5.0;
+const TRAVEL_TIME_QUANTIZATION: f32 = 1000.0;
 
 #[derive(Clone, Debug, Default)]
 pub struct AsteroidRegionMeta {
@@ -162,9 +165,9 @@ pub fn sys_drone_ai(
     drone_target_region_index: &mut [f32],
     drone_owner_factory_index: &[f32],
     drone_ids: &[String],
-    drone_id_to_index: &BTreeMap<String, usize>,
+    _drone_id_to_index: &BTreeMap<String, usize>,
     factory_id_to_index: &BTreeMap<String, usize>,
-    asteroid_id_to_index: &BTreeMap<String, usize>,
+    asteroid_index_to_id: &[String],
     factories: &mut [FactorySnapshot],
     factory_positions: &[f32],
     asteroid_positions: &[f32],
@@ -182,8 +185,17 @@ pub fn sys_drone_ai(
 
     let mut new_flights = Vec::new();
 
-    for (drone_id, &drone_idx) in drone_id_to_index.iter() {
-        if drone_idx >= drone_states.len() || active_drones.contains(drone_id) {
+    // IMPORTANT: Miniplex queries iterate entities in *reverse* insertion order.
+    // Drone target selection consumes RNG, so differing iteration order will swap
+    // rolls between drones and cause early divergence.
+    let drone_count = drone_states.len().min(drone_ids.len());
+    for drone_idx in (0..drone_count).rev() {
+        let drone_id = match drone_ids.get(drone_idx) {
+            Some(id) => id,
+            None => continue,
+        };
+
+        if active_drones.contains(drone_id) {
             continue;
         }
 
@@ -215,14 +227,20 @@ pub fn sys_drone_ai(
             *slot = TARGET_INDEX_NONE;
         }
 
+        let drone_label = drone_ids
+            .get(drone_idx)
+            .cloned()
+            .unwrap_or_else(|| drone_id.to_string());
+
         let state = drone_states[drone_idx];
         if state == DRONE_STATE_IDLE {
             if let Some(target) = select_asteroid_target(
+                &drone_label,
                 position,
                 asteroid_positions,
                 asteroid_ore,
                 asteroid_metadata,
-                asteroid_id_to_index,
+                asteroid_index_to_id,
                 rng,
             ) {
                 let path_seed = next_path_seed(rng);
@@ -274,10 +292,6 @@ pub fn sys_drone_ai(
             if state == DRONE_STATE_RETURNING || cargo >= capacity {
                 let current_factory_index =
                     *drone_target_factory_index.get(drone_idx).unwrap_or(&TARGET_INDEX_NONE);
-                let drone_label = drone_ids
-                    .get(drone_idx)
-                    .cloned()
-                    .unwrap_or_else(|| drone_id.to_string());
 
                 if let Some(assignment) = select_return_factory(
                     &drone_label,
@@ -299,7 +313,7 @@ pub fn sys_drone_ai(
                     }
 
                     if assignment.start_travel {
-                        let path_seed = next_path_seed(rng);
+                        let path_seed = next_return_path_seed(rng);
                         let travel = build_travel_snapshot(
                             position,
                             assignment.destination,
@@ -336,11 +350,12 @@ pub fn sys_drone_ai(
 }
 
 fn select_asteroid_target(
+    drone_label: &str,
     drone_position: [f32; 3],
     asteroid_positions: &[f32],
     asteroid_ore: &[f32],
     asteroid_metadata: &[AsteroidMetadata],
-    asteroid_id_to_index: &BTreeMap<String, usize>,
+    asteroid_index_to_id: &[String],
     rng: &mut Mulberry32,
 ) -> Option<AsteroidTarget> {
     let asteroid_count = asteroid_positions.len() / 3;
@@ -351,19 +366,24 @@ fn select_asteroid_target(
     #[derive(Clone)]
     struct Candidate {
         index: usize,
-        id: String,
         distance: f32,
     }
 
-    let mut candidates: Vec<Candidate> = asteroid_id_to_index
-        .iter()
-        .filter_map(|(id, &idx)| {
-            if idx >= asteroid_count {
-                return None;
-            }
+    // IMPORTANT: iterate in snapshot/index order, not BTreeMap key order.
+    // TS builds/sorts candidates based on world insertion order (which matches
+    // snapshot array order in parity harness). When f32 distances tie, stable
+    // sorting will preserve this original order, so we must mirror it.
+    let mut candidates: Vec<Candidate> = (0..asteroid_count)
+        .filter_map(|idx| {
             if *asteroid_ore.get(idx).unwrap_or(&0.0) <= 0.0 {
                 return None;
             }
+
+            let id = asteroid_index_to_id.get(idx).map(|s| s.as_str()).unwrap_or("");
+            if id.is_empty() {
+                return None;
+            }
+
             let pos = [
                 asteroid_positions[idx * 3],
                 asteroid_positions[idx * 3 + 1],
@@ -373,11 +393,8 @@ fn select_asteroid_target(
             let dy = pos[1] - drone_position[1];
             let dz = pos[2] - drone_position[2];
             let distance = (dx * dx + dy * dy + dz * dz).sqrt();
-            Some(Candidate {
-                index: idx,
-                id: id.clone(),
-                distance,
-            })
+
+            Some(Candidate { index: idx, distance })
         })
         .collect();
 
@@ -385,7 +402,11 @@ fn select_asteroid_target(
         return None;
     }
 
-    candidates.sort_by(|a, b| a.distance.total_cmp(&b.distance));
+    candidates.sort_by(|a, b| {
+        a.distance
+            .total_cmp(&b.distance)
+            .then_with(|| a.index.cmp(&b.index))
+    });
     candidates.truncate(NEARBY_LIMIT.min(candidates.len()));
 
     let mut total_weight = 0.0;
@@ -396,7 +417,29 @@ fn select_asteroid_target(
         weighted.push((candidate, weight));
     }
 
-    let mut roll = rng.next_f32() * total_weight.max(1.0);
+    let raw_roll = rng.next_f32();
+
+    if parity_debug::enabled() {
+        let cand_payload: Vec<serde_json::Value> = candidates
+            .iter()
+            .map(|c| json!({
+                "id": asteroid_index_to_id.get(c.index).cloned().unwrap_or_default(),
+                "distance": c.distance,
+            }))
+            .collect();
+
+        let payload = json!({
+            "droneId": drone_label,
+            "rawRoll": raw_roll,
+            "totalWeight": total_weight,
+            "candidates": cand_payload,
+        });
+
+        parity_debug::log_json("assignDroneTarget", &payload);
+    }
+
+    // Match TS: roll is scaled by the actual totalWeight (fallback to 1 only if totalWeight is 0).
+    let mut roll = raw_roll * if total_weight > 0.0 { total_weight } else { 1.0 };
     let mut chosen = weighted.last().map(|(c, _)| (*c).clone());
     for (candidate, weight) in weighted {
         roll -= weight;
@@ -407,6 +450,7 @@ fn select_asteroid_target(
     }
 
     let chosen = chosen?;
+    let chosen_id = asteroid_index_to_id.get(chosen.index)?.clone();
     let base_pos = [
         asteroid_positions[chosen.index * 3],
         asteroid_positions[chosen.index * 3 + 1],
@@ -416,7 +460,7 @@ fn select_asteroid_target(
         .get(chosen.index)
         .cloned()
         .unwrap_or_default();
-    let (region, region_index) = pick_region(&metadata, rng);
+    let (region, region_index) = pick_region(&chosen_id, &metadata, rng);
 
     let mut destination = base_pos;
     let mut gravity_multiplier = metadata.gravity_multiplier.max(0.5);
@@ -431,7 +475,7 @@ fn select_asteroid_target(
     }
 
     Some(AsteroidTarget {
-        id: chosen.id,
+        id: chosen_id,
         index: chosen.index,
         destination,
         region_id,
@@ -441,6 +485,7 @@ fn select_asteroid_target(
 }
 
 fn pick_region(
+    asteroid_id: &str,
     metadata: &AsteroidMetadata,
     rng: &mut Mulberry32,
 ) -> (Option<AsteroidRegionMeta>, Option<usize>) {
@@ -477,7 +522,33 @@ fn pick_region(
         return (None, None);
     }
 
-    let mut roll = rng.next_f32() * total.max(0.01);
+    let raw_roll = rng.next_f32();
+
+    if parity_debug::enabled() {
+        let pool_payload: Vec<serde_json::Value> = weighted
+            .iter()
+            .map(|(idx, region, weight)| {
+                json!({
+                    "index": idx,
+                    "id": region.id,
+                    "weight": weight,
+                    "hazard": region.hazard_severity,
+                })
+            })
+            .collect();
+
+        let payload = json!({
+            "asteroidId": asteroid_id,
+            "rawRoll": raw_roll,
+            "total": total,
+            "pool": pool_payload,
+        });
+
+        parity_debug::log_json("pickRegionForDrone", &payload);
+    }
+
+    // Match TS: roll is scaled by the actual total (we already ensure weights contribute >= 0.01).
+    let mut roll = raw_roll * total;
     let mut chosen = weighted.last().cloned();
     for entry in weighted {
         roll -= entry.2;
@@ -566,6 +637,10 @@ fn select_return_factory(
         .filter(|(_, _, available, _)| *available > 0)
         .cloned()
         .collect();
+    let mut variety_roll: Option<f32> = None;
+    let mut used_variety = false;
+    let mut weighted_raw_roll: Option<f32> = None;
+    let mut weighted_total: Option<f32> = None;
 
     let selection_idx = if !candidates.is_empty() {
         candidates.sort_by(|a, b| {
@@ -577,16 +652,27 @@ fn select_return_factory(
             }
         });
         let mut chosen = candidates[0].0;
-        if candidates.len() > 1 && rng.next_f32() < FACTORY_VARIETY_CHANCE {
-            let others = &candidates[1..];
-            let weights: Vec<f32> = others.iter().map(|entry| 1.0 / entry.1.max(0.001)).collect();
-            let total: f32 = weights.iter().sum();
-            let mut roll = rng.next_f32() * total.max(0.001);
-            for (i, entry) in others.iter().enumerate() {
-                roll -= weights[i];
-                if roll <= 0.0 {
-                    chosen = entry.0;
-                    break;
+        if candidates.len() > 1 {
+            let roll = rng.next_f32();
+            variety_roll = Some(roll);
+            if roll < FACTORY_VARIETY_CHANCE {
+                used_variety = true;
+                let others = &candidates[1..];
+                let weights: Vec<f32> = others
+                    .iter()
+                    .map(|entry| 1.0 / entry.1.max(0.001))
+                    .collect();
+                let total: f32 = weights.iter().sum();
+                weighted_total = Some(total);
+                let raw_roll = rng.next_f32();
+                weighted_raw_roll = Some(raw_roll);
+                let mut roll = raw_roll * total.max(0.001);
+                for (i, entry) in others.iter().enumerate() {
+                    roll -= weights[i];
+                    if roll <= 0.0 {
+                        chosen = entry.0;
+                        break;
+                    }
                 }
             }
         }
@@ -605,6 +691,34 @@ fn select_return_factory(
             })
             .map(|entry| entry.0)?
     };
+
+    if parity_debug::enabled() {
+        let candidate_payload: Vec<serde_json::Value> = with_distances
+            .iter()
+            .map(|(idx, distance, available, queue_len)| {
+                json!({
+                    "index": idx,
+                    "distance": distance,
+                    "available": available,
+                    "queueLen": queue_len,
+                })
+            })
+            .collect();
+
+        let payload = json!({
+            "droneId": drone_id,
+            "currentFactoryIndex": current_factory_index,
+            "varietyRoll": variety_roll,
+            "varietyChance": FACTORY_VARIETY_CHANCE,
+            "usedVariety": used_variety,
+            "weightedRawRoll": weighted_raw_roll,
+            "weightedTotal": weighted_total,
+            "selectionIndex": selection_idx,
+            "candidates": candidate_payload,
+        });
+
+        parity_debug::log_json("assignReturnFactory", &payload);
+    }
 
     let destination = factory_position(factory_positions, selection_idx)?;
     let factory = factories.get_mut(selection_idx)?;
@@ -668,7 +782,7 @@ fn build_travel_snapshot(
     let distance = (dx * dx + dy * dy + dz * dz).sqrt();
     let gravity = gravity_multiplier.max(0.5);
     let effective_speed = ((base_speed * sink_speed_multiplier) / gravity).max(1.0);
-    let duration = (distance / effective_speed).max(0.1);
+    let duration = quantize_time((distance / effective_speed).max(0.1));
 
     TravelSnapshot {
         from,
@@ -677,6 +791,10 @@ fn build_travel_snapshot(
         duration,
         control: compute_control_point(from, to, path_seed),
     }
+}
+
+fn quantize_time(value: f32) -> f32 {
+    ((value.max(0.0)) * TRAVEL_TIME_QUANTIZATION).round() / TRAVEL_TIME_QUANTIZATION
 }
 
 fn compute_control_point(from: [f32; 3], to: [f32; 3], path_seed: u32) -> Option<[f32; 3]> {
@@ -770,6 +888,14 @@ fn next_path_seed(rng: &mut Mulberry32) -> u32 {
     if seed == 0 { 1 } else { seed }
 }
 
+fn next_return_path_seed(rng: &mut Mulberry32) -> u32 {
+    // Mirrors TS returning flights: Math.max(1, Math.floor(rng.next() * 0xffffffff))
+    // (note: this never yields 0xffffffff; it yields 0..0xfffffffe)
+    let scaled = ((rng.next_u32() as u64) * 0xffff_ffffu64) >> 32;
+    let seed = scaled as u32;
+    if seed == 0 { 1 } else { seed }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -819,6 +945,8 @@ mod tests {
                     interval_seconds: 5,
                     retention_seconds: 300,
                 },
+                use_rust_sim: false,
+                shadow_mode: false,
             },
             rng_seed: Some(1),
             drone_flights: vec![],
@@ -884,7 +1012,7 @@ mod tests {
         drone_id_to_index.insert("d1".to_string(), 0);
         let mut factory_id_to_index = BTreeMap::new();
         factory_id_to_index.insert("f1".to_string(), 0);
-        let asteroid_id_to_index = BTreeMap::new();
+        let asteroid_index_to_id: Vec<String> = Vec::new();
 
         let mut factories = vec![FactorySnapshot {
             id: "f1".to_string(),
@@ -901,6 +1029,8 @@ mod tests {
             energy_capacity: 0.0,
             resources: Default::default(),
             upgrades: Default::default(),
+            active_refines: Default::default(),
+            upgrade_requests: Default::default(),
             haulers_assigned: None,
             hauler_config: None,
             hauler_upgrades: None,
@@ -963,7 +1093,7 @@ mod tests {
             &drone_ids,
             &drone_id_to_index,
             &factory_id_to_index,
-            &asteroid_id_to_index,
+            &asteroid_index_to_id,
             &mut factories,
             &factory_positions,
             &asteroid_positions,

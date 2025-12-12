@@ -69,20 +69,18 @@ pub fn sys_logistics(
     game_time: f32,
     run_scheduler: bool,
 ) {
-    if !run_scheduler {
-        return;
-    }
-
     let warehouse_capacity = compute_warehouse_capacity(modules, modifiers);
 
-    process_scheduler(
-        logistics_queues,
-        factories,
-        resources,
-        modules,
-        warehouse_capacity,
-        game_time,
-    );
+    if run_scheduler {
+        process_scheduler(
+            logistics_queues,
+            factories,
+            resources,
+            modules,
+            warehouse_capacity,
+            game_time,
+        );
+    }
 
     process_completions(
         logistics_queues,

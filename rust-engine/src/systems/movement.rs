@@ -7,6 +7,11 @@ use crate::systems::energy::consume_drone_energy;
 use std::collections::BTreeMap;
 
 const UNLOAD_ARRIVAL_DISTANCE: f32 = 1.0;
+const TRAVEL_TIME_QUANTIZATION: f32 = 1000.0;
+
+fn quantize_time(value: f32) -> f32 {
+    ((value.max(0.0)) * TRAVEL_TIME_QUANTIZATION).round() / TRAVEL_TIME_QUANTIZATION
+}
 
 pub fn sys_movement(
     drone_flights: &mut Vec<DroneFlight>,
@@ -61,7 +66,8 @@ pub fn sys_movement(
             drain_rate,
         );
 
-        travel.elapsed = (travel.elapsed + dt * consumption.fraction).min(travel.duration);
+        let new_elapsed = (travel.elapsed + dt * consumption.fraction).min(travel.duration);
+        travel.elapsed = quantize_time(new_elapsed);
 
         // Compute position
         let pos = compute_travel_position(travel);
@@ -113,6 +119,9 @@ pub fn sys_movement(
         if arrived {
             // Update state to next state
             let next_state = if flight.state == "toAsteroid" {
+                // If the target asteroid was recycled/removed, keep the target index invalid.
+                // Mining will observe this and force a return, matching TS semantics.
+                target_asteroid_index[drone_idx] = -1.0;
                 if let Some(asteroid_id) = &flight.target_asteroid_id {
                     if let Some(&idx) = asteroid_id_to_index.get(asteroid_id) {
                         target_asteroid_index[drone_idx] = idx as f32;

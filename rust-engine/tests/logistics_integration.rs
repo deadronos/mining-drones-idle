@@ -3,10 +3,12 @@ use rust_engine::schema::{
     SimulationSnapshot, Resources, Modules, Prestige, SaveMeta, StoreSettings, MetricsSettings,
     FactorySnapshot, LogisticsQueues, PendingTransfer, FactoryResourceSnapshot
 };
+use rust_engine::schema::SCHEMA_VERSION;
 use std::collections::BTreeMap;
 
 fn create_base_snapshot() -> SimulationSnapshot {
     SimulationSnapshot {
+        schema_version: SCHEMA_VERSION.to_string(),
         resources: Resources::default(),
         modules: Modules { drone_bay: 1, ..Default::default() },
         prestige: Prestige { cores: 0 },
@@ -27,6 +29,8 @@ fn create_base_snapshot() -> SimulationSnapshot {
                 interval_seconds: 5,
                 retention_seconds: 300,
             },
+            use_rust_sim: false,
+            shadow_mode: false,
         },
         rng_seed: Some(123),
         drone_flights: vec![],

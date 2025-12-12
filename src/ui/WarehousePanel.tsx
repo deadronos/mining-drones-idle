@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { useStore } from '@/state/store';
-import { useRustHUD } from '@/hooks/useRustHUD';
 import { ResourceModifiersDebug } from '@/ui/ResourceModifiersDebug';
 import { HaulerModulesPanel } from './HaulerModulesPanel';
 import { SpecializationTechsPanel } from './SpecializationTechsPanel';
@@ -19,7 +18,7 @@ interface ResourceDisplay {
 }
 
 export const WarehousePanel = ({ onOpenSettings }: WarehousePanelProps) => {
-  const { resources } = useRustHUD();
+  const resources = useStore((state) => state.resources);
   const droneBay = useStore((state) => state.modules.droneBay);
 
   const entries = useMemo<ResourceDisplay[]>(

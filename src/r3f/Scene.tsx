@@ -141,13 +141,57 @@ export const Scene = () => {
         if (useRustSim) {
           storeApi.setState((state) => ({ gameTime: state.gameTime + step }));
 
-          // Sync logistics queues every 6 ticks (approx 100ms at 60Hz)
+          // Sync state from Rust bridge every 6 ticks (approx 100ms at 60Hz)
           if (frameCount.current % 6 === 0) {
             try {
               const queues = bridge.getLogisticsQueues();
               storeApi.getState().syncLogisticsQueues(queues);
+
+              const rawResources = bridge.getGlobalResources();
+              if (rawResources.length === 8) {
+                storeApi.getState().syncResources({
+                  ore: rawResources[0],
+                  ice: rawResources[1],
+                  metals: rawResources[2],
+                  crystals: rawResources[3],
+                  organics: rawResources[4],
+                  bars: rawResources[5],
+                  energy: rawResources[6],
+                  credits: rawResources[7],
+                });
+              }
+
+              // Sync per-factory buffers: resources, energy, maxEnergy, haulersAssigned
+              // Only call buffer getters if they're present on the bridge object.
+              let facResources: Float32Array | null = null;
+              let facEnergy: Float32Array | null = null;
+              let facMaxEnergy: Float32Array | null = null;
+              let facHaulers: Float32Array | null = null;
+
+              if (typeof bridge.getFactoryResources === 'function') {
+                facResources = bridge.getFactoryResources();
+              }
+              if (typeof bridge.getFactoryEnergy === 'function') {
+                facEnergy = bridge.getFactoryEnergy();
+              }
+              if (typeof bridge.getFactoryMaxEnergy === 'function') {
+                facMaxEnergy = bridge.getFactoryMaxEnergy();
+              }
+              if (typeof bridge.getFactoryHaulersAssigned === 'function') {
+                facHaulers = bridge.getFactoryHaulersAssigned();
+              }
+
+              if (facResources && facResources.length >= 7) {
+                storeApi.getState().syncFactoriesFromRust({
+                  resources: facResources,
+                  energy: facEnergy,
+                  maxEnergy: facMaxEnergy,
+                  haulers: facHaulers,
+                });
+              }
+
             } catch (e) {
-              console.error('Failed to sync logistics queues from Rust', e);
+              console.error('Failed to sync state from Rust bridge', e);
             }
           }
         }

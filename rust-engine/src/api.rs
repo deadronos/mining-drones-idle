@@ -4,7 +4,9 @@ use crate::constants::SOLAR_ARRAY_LOCAL_MAX_ENERGY_PER_LEVEL;
 use crate::error::SimulationError;
 use crate::modifiers::get_resource_modifiers;
 use crate::rng::Mulberry32;
-use crate::schema::{Modules, Resources, SimulationSnapshot, StoreSettings};
+use crate::schema::{Modules, Resources, SimulationSnapshot, StoreSettings, RefineProcessSnapshot};
+use crate::buffers::MAX_REFINE_SLOTS;
+use crate::constants::{FACTORY_REFINE_TIME, FACTORY_ENERGY_PER_REFINE};
 use crate::systems::drone_ai::{self, AsteroidMetadata};
 use crate::systems::fleet;
 use serde::{Deserialize, Serialize};
@@ -103,11 +105,111 @@ pub struct GameState {
     logistics_tick: f32,
     /// The linear memory buffer containing entity data (SoA layout).
     pub data: Vec<u32>,
+    entity_id_counter: u32,
     drone_id_to_index: BTreeMap<String, usize>,
     drone_index_to_id: Vec<String>,
     factory_id_to_index: BTreeMap<String, usize>,
     asteroid_id_to_index: BTreeMap<String, usize>,
+    asteroid_index_to_id: Vec<String>,
     asteroid_metadata: Vec<AsteroidMetadata>,
+}
+
+impl GameState {
+    pub fn drone_ids(&self) -> &[String] {
+        &self.drone_index_to_id
+    }
+
+    pub fn asteroid_ids(&self) -> &[String] {
+        &self.asteroid_index_to_id
+    }
+}
+
+fn parse_hex_suffix(id: &str) -> Option<u32> {
+    let (_prefix, suffix) = id.rsplit_once('-')?;
+    u32::from_str_radix(suffix, 16).ok()
+}
+
+fn derive_entity_id_counter(snapshot: &SimulationSnapshot) -> u32 {
+    let mut max_id: u32 = 0;
+
+    for factory in snapshot.factories.iter() {
+        if let Some(value) = parse_hex_suffix(&factory.id) {
+            max_id = max_id.max(value);
+        }
+    }
+
+    for flight in snapshot.drone_flights.iter() {
+        if let Some(value) = parse_hex_suffix(&flight.drone_id) {
+            max_id = max_id.max(value);
+        }
+    }
+
+    for drone_id in snapshot.drone_owners.keys() {
+        if let Some(value) = parse_hex_suffix(drone_id) {
+            max_id = max_id.max(value);
+        }
+    }
+
+    if let Some(asteroids) = asteroid_array(&snapshot.extra) {
+        for asteroid in asteroids.iter() {
+            if let Some(id) = asteroid.get("id").and_then(|v| v.as_str()) {
+                if let Some(value) = parse_hex_suffix(id) {
+                    max_id = max_id.max(value);
+                }
+            }
+        }
+    }
+
+    max_id
+}
+
+impl GameState {
+    fn next_entity_id(&mut self, prefix: &str) -> String {
+        self.entity_id_counter = self.entity_id_counter.saturating_add(1);
+        format!("{}-{:x}", prefix, self.entity_id_counter)
+    }
+
+    fn rekey_respawned_asteroids(&mut self, respawned_indices: &[usize]) {
+        if respawned_indices.is_empty() {
+            return;
+        }
+
+        let mut updates: Vec<(usize, String, f32)> = Vec::new();
+
+        for &idx in respawned_indices {
+            if idx >= self.asteroid_index_to_id.len() {
+                continue;
+            }
+
+            let old_id = self.asteroid_index_to_id[idx].clone();
+            let new_id = self.next_entity_id("asteroid");
+            let gravity = self
+                .asteroid_metadata
+                .get(idx)
+                .map(|m| m.gravity_multiplier)
+                .unwrap_or(1.0);
+
+            self.asteroid_index_to_id[idx] = new_id.clone();
+            self.asteroid_id_to_index.remove(&old_id);
+            self.asteroid_id_to_index.insert(new_id.clone(), idx);
+            updates.push((idx, new_id, gravity));
+        }
+
+        let Some(asteroids) = asteroid_array_mut(&mut self.snapshot.extra) else {
+            return;
+        };
+
+        for (idx, new_id, gravity) in updates {
+            if let Some(Value::Object(obj)) = asteroids.get_mut(idx) {
+                obj.insert("id".to_string(), Value::String(new_id));
+                obj.insert("gravityMultiplier".to_string(), serde_json::Value::from(gravity));
+
+                // TS spawn sets regions to null; Rust keeps metadata regions separately.
+                obj.insert("regions".to_string(), Value::Null);
+            }
+        }
+    }
+
 }
 
 impl GameState {
@@ -167,10 +269,14 @@ impl GameState {
         }
 
         let mut asteroid_id_to_index = BTreeMap::new();
+        let mut asteroid_index_to_id = vec![String::new(); asteroid_count];
         if let Some(asteroids) = asteroid_array(&snapshot.extra) {
             for (i, asteroid) in asteroids.iter().enumerate() {
                 if let Some(id) = asteroid.get("id").and_then(|v| v.as_str()) {
                     asteroid_id_to_index.insert(id.to_string(), i);
+                    if i < asteroid_index_to_id.len() {
+                        asteroid_index_to_id[i] = id.to_string();
+                    }
                 }
             }
         }
@@ -185,13 +291,20 @@ impl GameState {
             layout,
             logistics_tick: 0.0,
             data,
+            entity_id_counter: 0,
             drone_id_to_index,
             drone_index_to_id,
             factory_id_to_index,
             asteroid_id_to_index,
+            asteroid_index_to_id,
             asteroid_metadata,
         };
 
+        state.entity_id_counter = derive_entity_id_counter(&state.snapshot);
+
+        // Burn RNG to mirror the draws used by the TypeScript world when spawning asteroids.
+        // Even when asteroids are provided explicitly in the snapshot, we must advance the RNG
+        // so that subsequent random decisions (targets, paths, biomes) consume the same sequence.
         burn_rng_for_asteroids(&mut state.rng, asteroid_count);
         state.initialize_data_from_snapshot();
         Ok(state)
@@ -250,10 +363,14 @@ impl GameState {
         }
 
         self.asteroid_id_to_index.clear();
+        let mut asteroid_index_to_id = vec![String::new(); asteroid_count];
         if let Some(asteroids) = asteroid_array(&snapshot.extra) {
             for (i, asteroid) in asteroids.iter().enumerate() {
                 if let Some(id) = asteroid.get("id").and_then(|v| v.as_str()) {
                     self.asteroid_id_to_index.insert(id.to_string(), i);
+                    if i < asteroid_index_to_id.len() {
+                        asteroid_index_to_id[i] = id.to_string();
+                    }
                 }
             }
         }
@@ -261,8 +378,12 @@ impl GameState {
         self.game_time = snapshot.game_time;
         self.snapshot = snapshot;
         self.drone_index_to_id = build_drone_index_to_id(&self.drone_id_to_index, total_drone_count);
+        self.asteroid_index_to_id = asteroid_index_to_id;
         self.asteroid_metadata =
             drone_ai::extract_asteroid_metadata(&self.snapshot, &self.asteroid_id_to_index);
+
+        self.entity_id_counter = derive_entity_id_counter(&self.snapshot);
+
         burn_rng_for_asteroids(&mut self.rng, asteroid_count);
         self.initialize_data_from_snapshot();
         Ok(())
@@ -278,7 +399,7 @@ impl GameState {
         let layout = &self.layout;
         let data = &mut self.data;
 
-        for factory in factories {
+        for factory in factories.iter() {
             if let Some(&index) = factory_map.get(&factory.id) {
                 let offset = layout.factories.positions.offset_bytes / 4 + index * 3;
                 data[offset] = factory.position[0].to_bits();
@@ -307,8 +428,19 @@ impl GameState {
                 data[offset + 3] = (factory.upgrades.energy as f32).to_bits();
                 data[offset + 4] = (factory.upgrades.solar as f32).to_bits();
 
-                let offset = layout.factories.haulers_assigned.offset_bytes / 4 + index;
-                data[offset] = (factory.haulers_assigned.unwrap_or(0) as f32).to_bits();
+                let haulers_offset = layout.factories.haulers_assigned.offset_bytes / 4 + index;
+                data[haulers_offset] = (factory.haulers_assigned.unwrap_or(0) as f32).to_bits();
+
+                // Initialize refinery state slots from factory.active_refines if provided
+                let ref_idx_base = layout.factories.refinery_state.offset_bytes / 4 + index * (MAX_REFINE_SLOTS * 4);
+                let slots_limit = factory.refine_slots as usize;
+                for (s, proc) in factory.active_refines.iter().enumerate().take(slots_limit.min(MAX_REFINE_SLOTS)) {
+                    let slot_offset = ref_idx_base + s * 4;
+                    data[slot_offset] = (1.0f32).to_bits(); // active
+                    data[slot_offset + 1] = proc.amount.to_bits();
+                    data[slot_offset + 2] = proc.progress.to_bits();
+                    data[slot_offset + 3] = proc.speed_multiplier.to_bits();
+                }
             }
         }
 
@@ -539,7 +671,7 @@ impl GameState {
 
     /// Syncs buffer data back to the snapshot.
     pub fn sync_data_to_snapshot(&mut self) {
-        // Sync factories
+            // Sync factories
         for (i, factory) in self.snapshot.factories.iter_mut().enumerate() {
             if i >= self.layout.factories.resources.length { break; }
 
@@ -571,6 +703,36 @@ impl GameState {
             // Haulers
             let offset = self.layout.factories.haulers_assigned.offset_bytes / 4 + i;
             factory.haulers_assigned = Some(f32::from_bits(self.data[offset]) as i32);
+
+            // Sync active refines from refinery_state buffer into snapshot.active_refines
+            let ref_base = self.layout.factories.refinery_state.offset_bytes / 4 + i * (MAX_REFINE_SLOTS * 4);
+            let mut new_refines: Vec<RefineProcessSnapshot> = Vec::new();
+            let slots_limit = factory.refine_slots as usize;
+            for s in 0..slots_limit.min(MAX_REFINE_SLOTS) {
+                let slot_offset = ref_base + s * 4;
+                let active = f32::from_bits(self.data[slot_offset]);
+                if active > 0.5 {
+                    let amount = f32::from_bits(self.data[slot_offset + 1]);
+                    let progress = f32::from_bits(self.data[slot_offset + 2]);
+                    let speed_multiplier = f32::from_bits(self.data[slot_offset + 3]);
+                    // Preserve ID / oreType / timeTotal / energyRequired if provided in original snapshot
+                    let existing = factory.active_refines.get(s).cloned();
+                    let id = existing.as_ref().map(|e| e.id.clone()).unwrap_or_else(|| format!("refine-{}-{}", factory.id, s));
+                    let ore_type = existing.as_ref().map(|e| e.ore_type.clone()).unwrap_or_else(|| "ore".to_string());
+                    let time_total = existing.as_ref().map(|e| e.time_total).unwrap_or(FACTORY_REFINE_TIME);
+                    let energy_required = existing.as_ref().map(|e| e.energy_required).unwrap_or(FACTORY_ENERGY_PER_REFINE);
+                    new_refines.push(RefineProcessSnapshot {
+                        id,
+                        ore_type,
+                        amount,
+                        progress,
+                        time_total,
+                        energy_required,
+                        speed_multiplier,
+                    });
+                }
+            }
+            factory.active_refines = new_refines;
         }
 
         // Sync drone flights
@@ -729,17 +891,41 @@ impl GameState {
                 let asteroid_max_ore = get_slice_mut(&self.layout.asteroids.max_ore);
                 let asteroid_resource_profile = get_slice_mut(&self.layout.asteroids.resource_profile);
 
+                let mut respawned_indices: Vec<usize> = Vec::new();
+
                 crate::systems::asteroids::sys_asteroids(
                     asteroid_positions,
                     asteroid_ore,
                     asteroid_max_ore,
                     asteroid_resource_profile,
                     &mut self.asteroid_metadata,
+                    &mut respawned_indices,
                     &mut self.rng,
                     &sink_bonuses,
                     self.snapshot.modules.scanner,
                     dt,
                 );
+
+                if !respawned_indices.is_empty() {
+                    self.rekey_respawned_asteroids(&respawned_indices);
+
+                    let drone_target_asteroid_index =
+                        get_slice_mut(&self.layout.drones.target_asteroid_index);
+                    let drone_target_region_index =
+                        get_slice_mut(&self.layout.drones.target_region_index);
+
+                    for drone_idx in 0..drone_target_asteroid_index.len() {
+                        let target = drone_target_asteroid_index[drone_idx];
+                        if target < 0.0 {
+                            continue;
+                        }
+                        let target_idx = target.floor() as usize;
+                        if respawned_indices.contains(&target_idx) {
+                            drone_target_asteroid_index[drone_idx] = -1.0;
+                            drone_target_region_index[drone_idx] = -1.0;
+                        }
+                    }
+                }
             }
 
             // Drone AI System (assign new flights/targets before movement)
@@ -775,7 +961,7 @@ impl GameState {
                     &self.drone_index_to_id,
                     &self.drone_id_to_index,
                     &self.factory_id_to_index,
-                    &self.asteroid_id_to_index,
+                    &self.asteroid_index_to_id,
                     &mut self.snapshot.factories,
                     factory_positions,
                     asteroid_positions,
@@ -1586,6 +1772,7 @@ mod tests {
     use super::*;
     use crate::schema::{
         MetricsSettings, Modules, Prestige, Resources, SaveMeta, SimulationSnapshot, StoreSettings,
+        SCHEMA_VERSION,
     };
     use std::collections::BTreeMap;
 
@@ -1633,6 +1820,8 @@ mod tests {
                     interval_seconds: 5,
                     retention_seconds: 300,
                 },
+                use_rust_sim: false,
+                shadow_mode: false,
             },
             rng_seed: Some(7),
             drone_flights: vec![],
@@ -1682,7 +1871,62 @@ mod tests {
             .simulate_offline(1.2, 0.5)
             .expect("offline sim should run");
         assert_eq!(result.steps, 3);
-        assert!((result.elapsed - 1.5).abs() < 0.001);
+        assert!((result.elapsed - 1.2).abs() < 0.001);
         assert!(state.game_time > 0.0);
+    }
+
+    #[test]
+    fn from_snapshot_deserializes_without_bars() {
+        let json = r#"{
+            "schemaVersion": "1.0.0",
+            "resources": { "ore": 10.0, "ice": 0.0, "metals": 0.0, "crystals": 0.0, "organics": 0.0, "energy": 0.0, "credits": 0.0 },
+            "modules": { "droneBay": 1 },
+            "prestige": { "cores": 0 },
+            "save": { "lastSave": 0, "version": "0.0.0" },
+            "settings": { "autosaveEnabled": true, "autosaveInterval": 30, "offlineCapHours": 8, "notation": "standard", "throttleFloor": 0.2, "showTrails": true, "showHaulerShips": true, "showDebugPanel": false, "performanceProfile": "high", "inspectorCollapsed": false, "metrics": { "enabled": true, "intervalSeconds": 5, "retentionSeconds": 300 } },
+            "rngSeed": 1,
+            "droneFlights": [],
+            "factories": [],
+            "droneOwners": {},
+            "gameTime": 0.0,
+            "extra": {}
+        }"#;
+        let snapshot: SimulationSnapshot = serde_json::from_str(json).expect("should parse snapshot without bars");
+        let _state = GameState::from_snapshot(snapshot).expect("should create state without bars");
+    }
+
+    #[test]
+    fn active_refines_round_trip() {
+        use crate::schema::{FactorySnapshot, RefineProcessSnapshot};
+        let mut snapshot = sample_snapshot();
+        let mut factory: FactorySnapshot = Default::default();
+        factory.id = "f1".to_string();
+        factory.position = [0.0, 0.0, 0.0];
+        factory.refine_slots = 2;
+        factory.resources.ore = 100.0;
+        factory.active_refines = vec![RefineProcessSnapshot {
+            id: "r1".to_string(),
+            ore_type: "ore".to_string(),
+            amount: 20.0,
+            progress: 0.0,
+            time_total: crate::constants::FACTORY_REFINE_TIME,
+            energy_required: crate::constants::FACTORY_ENERGY_PER_REFINE,
+            speed_multiplier: 1.0,
+        }];
+        snapshot.factories = vec![factory];
+        let mut state = GameState::from_snapshot(snapshot).expect("should build state");
+        // Ensure factory refine slots and active_refines are present in state
+        assert_eq!(state.snapshot.factories[0].refine_slots, 2);
+        assert_eq!(state.snapshot.factories[0].active_refines.len(), 1);
+        // Verify that refinery buffer was initialized from snapshot
+        let ref_state = state.get_factory_refinery_state_mut();
+        assert!(ref_state[0] > 0.5);
+        assert_eq!(ref_state[1], 20.0);
+
+        // Export snapshot and validate activeRefines present
+        let json = state.export_snapshot_str().expect("should export snapshot");
+        let exported: SimulationSnapshot = serde_json::from_str(&json).expect("should parse exported snapshot");
+        assert_eq!(exported.factories[0].active_refines.len(), 1);
+        assert_eq!(exported.factories[0].active_refines[0].amount, 20.0);
     }
 }

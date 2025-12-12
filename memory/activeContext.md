@@ -10,6 +10,17 @@
 - Added dedicated `wasm-parity` CI job running parity/perf suites; shadow-mode E2E now includes a 5s divergence-log guard.
 - Remaining: asteroid/depletion + per-drone parity coverage, longer shadow-mode parity runs/nightly gating, WASM artifact caching, biome parity decision.
 
+- Stabilized Playwright E2E after TS↔Rust handoff work:
+  - Fixed hidden import file input interaction in `tests/e2e/import-invalid.spec.ts`.
+  - Made `tests/e2e/factory-logistics.spec.ts` deterministic (snapshot-based setup + robust hauler-count handling).
+  - Full `npm run e2e` suite now passes (shadow-mode Rust-enabled tests still skipped).
+
+- Fixed late-step parity divergence caused by asteroid recycle semantics: Rust now re-keys asteroid IDs on respawn and invalidates drone targets, matching TS “remove + spawn new” behavior.
+
+- Aligned RNG consumption between TS and Rust for drone asteroid targeting and path seeds by:
+  - Moving TS pathSeed draw in `assignDroneTarget` to occur after region selection.
+  - Restoring unconditional asteroid RNG burn in `GameState::from_snapshot` so Rust advances RNG to match TS asteroid spawning even when asteroid metadata is provided.
+
 ## Active Tasks
 
 ### ✅ **TASK045 – TypeScript WASM Bridge Implementation** (Just Completed)

@@ -2,7 +2,7 @@ import type { DroneEntity } from '@/ecs/world';
 import type { DroneFlightPhase, StoreApiType } from '@/state/store';
 import type { TravelData } from '@/ecs/world';
 import { getSinkBonuses } from '@/state/sinks';
-import { computeWaypointWithOffset } from '@/ecs/systems/travel';
+import { computeWaypointWithOffset, quantizeTravelTime } from '@/ecs/systems/travel';
 import { travelToSnapshot } from '@/ecs/flights';
 import { Vector3 } from 'three';
 
@@ -42,7 +42,7 @@ export const startTravel = (
   const gravity = Math.max(0.5, options?.gravityMultiplier ?? 1);
   const sinkBonuses = getSinkBonuses(store.getState());
   const effectiveSpeed = Math.max(1, (drone.speed * sinkBonuses.droneSpeedMultiplier) / gravity);
-  const duration = Math.max(distance / effectiveSpeed, 0.1);
+  const duration = quantizeTravelTime(Math.max(distance / effectiveSpeed, 0.1));
   const travel: TravelData = { from, to, elapsed: 0, duration };
   const pathSeed = drone.flightSeed ?? 1;
   drone.flightSeed = pathSeed;

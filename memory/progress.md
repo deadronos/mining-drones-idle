@@ -4,6 +4,11 @@
 
 ## Recent Achievements
 
+- **2025-12-12**: Stabilized Playwright E2E suite after TS↔Rust handoff/parity changes.
+  - Fixed invalid import test to work with hidden file input (`tests/e2e/import-invalid.spec.ts`).
+  - Made factory logistics E2E deterministic by clearing persisted saves per test and using snapshot-based factory setup (`tests/e2e/factory-logistics.spec.ts`).
+  - Validation: `npm run e2e`, `npm run typecheck`, `npm run lint`, `npm run test`.
+
 - **2025-12-13**: Completed TASK057 (Commands, Snapshot & Offline Parity).
   - Matched Rust command handlers to TS costs/effects (module/factory upgrades with ceil costs, hauler assignment cost deduction, prestige gain formula, asteroid recycle snapshot sync) and made command parity tests strict.
   - Added schemaVersion normalization/validation across TS/Rust plus TS↔Rust snapshot round-trip coverage; Rust offline now mirrors TS refinery-only path with sink bonuses via a new WASM offline API and bridge support.
@@ -16,6 +21,10 @@
 - **2025-12-12**: Completed TASK054 (Asteroids & Biomes Parity).
   - Replaced Rust respawn with biome-driven profiles/gravity, scanner/sink richness bias, and TS-aligned RNG draw count; updated asteroid metadata.
   - Added respawn parity test and rebuilt WASM; validation: `npm run build:wasm`, `npm run typecheck`, `npm run lint`, `npm run test` (parity divergences logged as expected).
+
+- **2025-12-12**: Fixed late-step step-parity divergence (asteroid recycle semantics).
+  - Rust now re-keys asteroid IDs on respawn (TS-style remove+spawn) and invalidates drone targets that referenced recycled asteroids to prevent “phantom” mining/return drift.
+  - Validation: WASM rebuild succeeded; parity suites pass under enforcement; `npm run typecheck`, `npm run lint`, `npm run test`.
 
 - **2025-12-12**: Completed TASK053 (Drone AI & Travel Parity).
   - Finalized weighted targeting/region offsets, queue-aware returns, and travel seed/control parity; rebuilt WASM bundle.

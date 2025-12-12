@@ -19,7 +19,7 @@ pub fn sys_unload(
     let drone_count = drone_states.len();
     let factory_count = if !factory_resources.is_empty() { factory_resources.len() / 7 } else { 0 };
 
-    for i in 0..drone_count {
+    for i in (0..drone_count).rev() {
         if drone_states[i] != DRONE_STATE_UNLOADING {
             continue;
         }
