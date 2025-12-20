@@ -1,4 +1,4 @@
-import { useId, useMemo } from 'react';
+import { useId, useMemo, memo } from 'react';
 import { useStore } from '@/state/store';
 import { resolveMetricsConfig } from '@/state/metrics';
 import type { FactoryMetricSeries, FactoryMetricSeriesId, MetricSample } from '@/state/types';
@@ -61,13 +61,33 @@ const formatElapsedTime = (seconds: number): string => {
   return `${Math.round(days)}d ago`;
 };
 
+/**
+ * Isolated component to handle high-frequency gameTime updates
+ * independent of the main metrics tab re-renders.
+ */
+const LastSampleLabel = memo(({ latestSampleTimestamp }: { latestSampleTimestamp: number }) => {
+  const gameTime = useStore((state) => state.gameTime);
+
+  if (latestSampleTimestamp <= 0) return null;
+
+  const secondsSince = Math.max(0, gameTime - latestSampleTimestamp / 1000);
+  const label = formatElapsedTime(secondsSince);
+
+  return (
+    <p className="factory-metrics-banner__note">
+      Last sample {label}
+    </p>
+  );
+});
+LastSampleLabel.displayName = 'LastSampleLabel';
+
 interface MetricsCardProps {
   metric: FactoryMetricSeriesId;
   samples: MetricSample[];
   summary: MetricSummary;
 }
 
-const MetricsCard = ({ metric, samples, summary }: MetricsCardProps) => {
+const MetricsCard = memo(({ metric, samples, summary }: MetricsCardProps) => {
   const meta = METRIC_META[metric];
   const trimmed = useMemo(() => trimSamples(samples), [samples]);
   const path = useMemo(() => buildSparklinePath(trimmed, 160, 48), [trimmed]);
@@ -125,7 +145,8 @@ const MetricsCard = ({ metric, samples, summary }: MetricsCardProps) => {
       </dl>
     </section>
   );
-};
+});
+MetricsCard.displayName = 'MetricsCard';
 
 export interface FactoryMetricsTabProps {
   factoryId: string | null;
@@ -135,7 +156,7 @@ export const FactoryMetricsTab = ({ factoryId }: FactoryMetricsTabProps) => {
   const settings = useStore((state) => state.settings);
   const metrics = useStore((state) => state.metrics);
   const updateSettings = useStore((state) => state.updateSettings);
-  const gameTime = useStore((state) => state.gameTime);
+  // gameTime removed to prevent high-frequency re-renders
 
   const config = useMemo(() => resolveMetricsConfig(settings), [settings]);
   const intervalSeconds = Math.round(config.intervalMs / 1000);
@@ -145,6 +166,26 @@ export const FactoryMetricsTab = ({ factoryId }: FactoryMetricsTabProps) => {
   const activeSeries: FactoryMetricSeries | undefined = factoryId
     ? metrics.series[factoryId]
     : undefined;
+
+  // Memoize cards calculation to avoid reprocessing on every render if metrics haven't changed
+  const cards = useMemo(() => SERIES_ORDER.map((metric) => {
+    const samples = activeSeries?.[metric] ?? [];
+    return {
+      metric,
+      samples,
+      summary: summarizeSamples(samples),
+    };
+  }), [activeSeries]);
+
+  const hasData = useMemo(() => cards.some((card) => card.summary.hasData), [cards]);
+
+  const latestSampleTimestamp = useMemo(() => cards.reduce((latest, card) => {
+    if (!card.summary.hasData || card.samples.length === 0) {
+      return latest;
+    }
+    const lastSample = card.samples[card.samples.length - 1];
+    return lastSample.ts > latest ? lastSample.ts : latest;
+  }, 0), [cards]);
 
   if (!factoryId) {
     return (
@@ -176,28 +217,6 @@ export const FactoryMetricsTab = ({ factoryId }: FactoryMetricsTabProps) => {
     );
   }
 
-  const cards = SERIES_ORDER.map((metric) => {
-    const samples = activeSeries?.[metric] ?? [];
-    return {
-      metric,
-      samples,
-      summary: summarizeSamples(samples),
-    };
-  });
-
-  const hasData = cards.some((card) => card.summary.hasData);
-  const latestSampleTimestamp = cards.reduce((latest, card) => {
-    if (!card.summary.hasData || card.samples.length === 0) {
-      return latest;
-    }
-    const lastSample = card.samples[card.samples.length - 1];
-    return lastSample.ts > latest ? lastSample.ts : latest;
-  }, 0);
-
-  const lastSampleLabel = hasData && latestSampleTimestamp > 0
-    ? formatElapsedTime(Math.max(0, gameTime - latestSampleTimestamp / 1000))
-    : null;
-
   return (
     <div className="factory-metrics-tab">
       <div className="factory-metrics-banner">
@@ -222,11 +241,12 @@ export const FactoryMetricsTab = ({ factoryId }: FactoryMetricsTabProps) => {
             Low performance profile detected — sampling slows to preserve frame time.
           </p>
         ) : null}
-        {lastSampleLabel ? (
-          <p className="factory-metrics-banner__note">
-            Last sample {lastSampleLabel}
-          </p>
+
+        {/* Isolated component for high-frequency updates */}
+        {hasData && latestSampleTimestamp > 0 ? (
+          <LastSampleLabel latestSampleTimestamp={latestSampleTimestamp} />
         ) : null}
+
         {!hasData ? (
           <p className="factory-metrics-banner__note">
             Metrics populate after one sampling interval. Keep the factory running to gather data.
