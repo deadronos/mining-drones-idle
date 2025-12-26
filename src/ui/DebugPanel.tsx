@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useStore } from '@/state/store';
 import { usePagination } from '@/ui/FactoryManager/hooks/usePagination';
 import { PaginationControls } from '@/ui/shared/PaginationControls';
@@ -8,11 +8,13 @@ import './DebugPanel.css';
 const DRONES_PAGE_SIZE = 12;
 
 export const DebugPanel = () => {
-  const droneFlights = useStore((s) => s.droneFlights);
+  const droneFlightsRecord = useStore((s) => s.droneFlights);
   const unstickDrone = useStore((s) => s.unstickDrone);
   const clearDroneFlight = useStore((s) => s.clearDroneFlight);
   const useRustSim = useStore((s) => s.settings.useRustSim);
   const updateSettings = useStore((s) => s.updateSettings);
+
+  const droneFlights = useMemo(() => Object.values(droneFlightsRecord), [droneFlightsRecord]);
 
   const { page, totalPages, currentItems, goNext, goPrev } = usePagination(
     droneFlights,

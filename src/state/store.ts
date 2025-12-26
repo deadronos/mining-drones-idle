@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { createStore as createVanillaStore, type StateCreator } from 'zustand/vanilla';
-import type { StoreState, StoreApiType, HighlightedFactories } from './types';
+import type { StoreState, StoreApiType, HighlightedFactories, DroneFlightState } from './types';
 import {
   createResourceSlice,
   createSettingsSlice,
@@ -22,7 +22,6 @@ import {
 import {
   normalizeSnapshot,
   snapshotToFactory,
-  cloneDroneFlight,
   normalizeDroneOwners,
   serializeStore,
   stringifySnapshot,
@@ -264,6 +263,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
     // Snapshot and import/export
     applySnapshot: (snapshot) =>
       set(() => {
+        // normalizeSnapshot now returns StoreSnapshot (Array based)
         const normalized = normalizeSnapshot(snapshot);
         const save = { ...normalized.save, version: SAVE_VERSION };
         const restoredFactories =
@@ -301,7 +301,11 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
             : { ...initialPrestigeInvestments },
           save,
           rngSeed: restoredRng,
-          droneFlights: (normalized.droneFlights ?? []).map(cloneDroneFlight),
+          // Convert array to Record for runtime StoreState
+          droneFlights: (normalized.droneFlights ?? []).reduce((acc, flight) => {
+            acc[flight.droneId] = flight;
+            return acc;
+          }, {} as Record<string, DroneFlightState>),
           factories: restoredFactories,
           logisticsQueues: normalized.logisticsQueues ?? { pendingTransfers: [] },
           gameTime: normalized.gameTime ?? 0,
@@ -345,7 +349,7 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
           save: { ...initialSave, lastSave: Date.now() },
           settings: { ...currentSettings },
           rngSeed: generateSeed(),
-          droneFlights: [],
+          droneFlights: {},
           factories,
           logisticsQueues: { pendingTransfers: [] },
           gameTime: 0,

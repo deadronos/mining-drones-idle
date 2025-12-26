@@ -1,12 +1,10 @@
 import type { GameWorld } from '@/ecs/world';
-import type { StoreApiType } from '@/state/store';
+import type { StoreApiType, DroneFlightState } from '@/state/store';
 import { getRegionById, pickRegionForDrone } from '@/ecs/biomes';
 import { assignDroneTarget } from './droneAI/targetAssignment';
 import { startTravel } from './droneAI/travelManagement';
 import { synchronizeDroneFlight } from './droneAI/flightSync';
 import { assignReturnFactory } from './droneAI/factoryAssignment';
-
-type DroneFlightSnapshot = ReturnType<StoreApiType['getState']>['droneFlights'][number];
 
 // Re-export for backward compatibility
 export { assignDroneTarget } from './droneAI/targetAssignment';
@@ -22,17 +20,22 @@ export { assignDroneTarget } from './droneAI/targetAssignment';
  */
 export const createDroneAISystem = (world: GameWorld, store: StoreApiType) => {
   const { droneQuery, asteroidQuery, rng } = world;
-  const flightMap = new Map<string, DroneFlightSnapshot>();
+  const flightMap = new Map<string, DroneFlightState>();
 
   return (_dt: number) => {
+    // droneFlights is now a Record, but we can iterate it or use keys.
+    // However, the original logic built a Map from array.
+    // Now we can just use the Record directly or values.
     const flights = store.getState().droneFlights;
-    flightMap.clear();
-    for (const flight of flights) {
-      flightMap.set(flight.droneId, flight);
-    }
+
+    // We can clear flightMap and repopulate, or just assume the Record is efficient.
+    // Given the previous code copied to a Map, doing:
+    // const flight = flights[drone.id];
+    // is O(1) and much faster than building the Map every frame (which was O(N)).
+    // So we don't need flightMap anymore!
 
     for (const drone of droneQuery) {
-      const storedFlight = flightMap.get(drone.id);
+      const storedFlight = flights[drone.id];
       if (storedFlight) {
         synchronizeDroneFlight(drone, storedFlight, world, store);
       }

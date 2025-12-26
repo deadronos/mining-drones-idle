@@ -167,8 +167,8 @@ describe('state/store', () => {
           },
         ],
       },
-      droneFlights: [
-        {
+      droneFlights: {
+        'drone-1': {
           droneId: 'drone-1',
           state: 'toAsteroid',
           targetAsteroidId: 'asteroid-1',
@@ -183,7 +183,7 @@ describe('state/store', () => {
             duration: 1,
           },
         },
-      ],
+      },
       droneOwners: { 'drone-1': factoryA.id },
       gameTime: 42,
       logisticsTick: 1.5,
@@ -198,7 +198,7 @@ describe('state/store', () => {
     expect(after.factories[0]?.id).toBe('factory-0');
     expect(after.factories[0]?.haulersAssigned ?? 0).toBe(1);
     expect(after.logisticsQueues.pendingTransfers).toHaveLength(0);
-    expect(after.droneFlights).toHaveLength(0);
+    expect(Object.keys(after.droneFlights)).toHaveLength(0);
     expect(Object.keys(after.droneOwners)).toHaveLength(0);
     expect(after.selectedFactoryId).toBe(after.factories[0]?.id ?? null);
     expect(after.selectedAsteroidId).toBeNull();
@@ -329,12 +329,17 @@ describe('state/store', () => {
         duration: 1,
       },
     });
+    // serializeStore returns snapshot which has array
     const snapshot = serializeStore(store.getState());
     expect(snapshot.droneFlights).toHaveLength(1);
     expect(snapshot.droneFlights?.[0].pathSeed).toBe(42);
     expect(snapshot.droneFlights?.[0].targetRegionId).toBe('region-1');
     expect(snapshot.droneFlights?.[0].travel.elapsed).toBeCloseTo(0.25, 5);
+
+    // Store itself has Record
+    expect(store.getState().droneFlights['drone-1']).toBeDefined();
+
     api.clearDroneFlight('drone-1');
-    expect(store.getState().droneFlights).toHaveLength(0);
+    expect(Object.keys(store.getState().droneFlights)).toHaveLength(0);
   });
 });
