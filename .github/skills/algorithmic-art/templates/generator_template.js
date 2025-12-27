@@ -14,7 +14,7 @@
 
 /* eslint-env browser */
 /* global randomSeed noiseSeed createCanvas fill noStroke rect width height noise createVector cos sin saveCanvas */
-/* eslint-disable no-unused-vars, no-undef */
+/* eslint-disable no-unused-vars */
 
 // ============================================================================
 // 1. PARAMETER ORGANIZATION
