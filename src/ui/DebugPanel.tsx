@@ -47,6 +47,14 @@ export const DebugPanel = () => {
     };
   }, []);
 
+  // update CSS variables for panel position (avoid inline JSX styles)
+  useEffect(() => {
+    if (panelRef.current) {
+      panelRef.current.style.setProperty('--debug-panel-left', `${pos.left}px`);
+      panelRef.current.style.setProperty('--debug-panel-top', `${pos.top}px`);
+    }
+  }, [pos]);
+
   const startDrag = (ev: React.MouseEvent) => {
     dragging.current = true;
     dragStart.current = { x: ev.clientX, y: ev.clientY, left: pos.left, top: pos.top };
@@ -70,13 +78,7 @@ export const DebugPanel = () => {
   };
 
   return (
-    <div
-      ref={panelRef}
-      className="debug-panel"
-      style={{ left: `${pos.left}px`, top: `${pos.top}px` }}
-      role="region"
-      aria-label="Debug panel"
-    >
+    <div ref={panelRef} className="debug-panel" role="region" aria-label="Debug panel">
       <div className="debug-panel-header" onMouseDown={startDrag}>
         <div className="debug-panel-title">Debug</div>
         <div className="debug-panel-tabs">
