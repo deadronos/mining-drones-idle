@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useStore } from '@/state/store';
 import { usePagination } from '@/ui/FactoryManager/hooks/usePagination';
 import { PaginationControls } from '@/ui/shared/PaginationControls';
@@ -8,11 +8,13 @@ import './DebugPanel.css';
 const DRONES_PAGE_SIZE = 12;
 
 export const DebugPanel = () => {
-  const droneFlights = useStore((s) => s.droneFlights);
+  const droneFlightsRecord = useStore((s) => s.droneFlights);
   const unstickDrone = useStore((s) => s.unstickDrone);
   const clearDroneFlight = useStore((s) => s.clearDroneFlight);
   const useRustSim = useStore((s) => s.settings.useRustSim);
   const updateSettings = useStore((s) => s.updateSettings);
+
+  const droneFlights = useMemo(() => Object.values(droneFlightsRecord), [droneFlightsRecord]);
 
   const { page, totalPages, currentItems, goNext, goPrev } = usePagination(
     droneFlights,
@@ -45,6 +47,14 @@ export const DebugPanel = () => {
     };
   }, []);
 
+  // update CSS variables for panel position (avoid inline JSX styles)
+  useEffect(() => {
+    if (panelRef.current) {
+      panelRef.current.style.setProperty('--debug-panel-left', `${pos.left}px`);
+      panelRef.current.style.setProperty('--debug-panel-top', `${pos.top}px`);
+    }
+  }, [pos]);
+
   const startDrag = (ev: React.MouseEvent) => {
     dragging.current = true;
     dragStart.current = { x: ev.clientX, y: ev.clientY, left: pos.left, top: pos.top };
@@ -68,13 +78,7 @@ export const DebugPanel = () => {
   };
 
   return (
-    <div
-      ref={panelRef}
-      className="debug-panel"
-      style={{ left: `${pos.left}px`, top: `${pos.top}px` }}
-      role="region"
-      aria-label="Debug panel"
-    >
+    <div ref={panelRef} className="debug-panel" role="region" aria-label="Debug panel">
       <div className="debug-panel-header" onMouseDown={startDrag}>
         <div className="debug-panel-title">Debug</div>
         <div className="debug-panel-tabs">

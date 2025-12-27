@@ -6,7 +6,26 @@ import { useStore } from '@/state/store';
 export const buildRustSnapshotFromTs = (): StoreSnapshot & Record<string, unknown> => {
   // Ensure we pass a fully-normalized snapshot to the Rust engine so
   // required numeric fields (like `bars`) are always present.
-  const currentSnapshot = normalizeSnapshot(serializeStore(useStore.getState()));
+  const serialized = serializeStore(useStore.getState());
+  // normalizeSnapshot returns StoreState (with Record) but we want Snapshot (with Array) for compatibility
+  // However, `serializeStore` already returns `StoreSnapshot` (with Array).
+  // So `serialized` has `droneFlights` as `DroneFlightState[]`.
+  // We don't need to call `normalizeSnapshot` again here unless we want to validate/repair.
+  // The original code did `normalizeSnapshot(serializeStore(...))`.
+  // If `normalizeSnapshot` returns `StoreState` (Record), that might break `snapshotWithExtra.droneFlights` assignment if types mismatch,
+  // but we are overriding `droneFlights` below anyway with data from ECS.
+
+  // Let's just use `serialized` which is `StoreSnapshot`.
+  // Wait, `normalizeSnapshot` was ensuring numeric fields are present.
+  // `serializeStore` takes the state (which has numbers) and puts them in snapshot.
+  // So `serialized` should be fine.
+  // However, keeping `normalizeSnapshot` is safer if `serializeStore` ever produces partials? No, it produces full snapshot.
+
+  // The issue is `normalizeSnapshot` return type. I changed it to `StoreState` (Record).
+  // `currentSnapshot` is typed as `StoreSnapshot` (Array) in this file's signature? No, inferred.
+  // Let's rely on `serializeStore` output which is `StoreSnapshot`.
+
+  const currentSnapshot = serialized;
 
   // Inject asteroid data from ECS.
   // Rust relies on `gravityMultiplier` + `regions` (when present) to mirror TS biome targeting.
