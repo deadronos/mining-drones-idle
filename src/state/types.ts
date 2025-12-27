@@ -431,7 +431,7 @@ export interface StoreState {
   save: SaveMeta;
   settings: StoreSettings;
   rngSeed: number;
-  droneFlights: DroneFlightState[];
+  droneFlights: Record<string, DroneFlightState>;
   factories: BuildableFactory[];
   logisticsQueues: LogisticsQueues;
   specTechs: SpecTechState;

@@ -56,7 +56,7 @@ describe('ecs/systems/travel defensive guards', () => {
     aiSystem(0);
 
     // invalid flight should be cleared and drone put back to idle
-    expect(store.getState().droneFlights.length).toBe(0);
+    expect(Object.keys(store.getState().droneFlights)).toHaveLength(0);
     expect(drone.state).toBe('idle');
     expect(drone.travel).toBeNull();
   });

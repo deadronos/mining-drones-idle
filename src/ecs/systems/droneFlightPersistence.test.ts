@@ -17,10 +17,10 @@ describe('drone flight persistence', () => {
     const travelSystem = createTravelSystem(world, store);
 
     aiSystem(0);
-    expect(store.getState().droneFlights).toHaveLength(1);
+    expect(Object.keys(store.getState().droneFlights)).toHaveLength(1);
 
     travelSystem(0.4);
-    const progressedFlight = store.getState().droneFlights[0];
+    const progressedFlight = Object.values(store.getState().droneFlights)[0];
     expect(progressedFlight.travel.elapsed).toBeGreaterThan(0);
 
     const snapshot = serializeStore(store.getState());
