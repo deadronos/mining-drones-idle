@@ -49,7 +49,13 @@ export const UpgradePanel = () => {
               <div className="desc">{def.description}</div>
             </div>
             <div className="right">
-              <button type="button" disabled={!affordable} onClick={() => buy(id)}>
+              <button
+                type="button"
+                disabled={!affordable}
+                onClick={() => buy(id)}
+                aria-label={`Buy ${def.label} level ${level + 1} for ${formatInteger(cost)} warehouse bars`}
+                title={!affordable ? 'Not enough warehouse bars' : undefined}
+              >
                 Buy ({formatInteger(cost)} warehouse bars)
               </button>
             </div>
@@ -62,7 +68,16 @@ export const UpgradePanel = () => {
         Warehouse Bars: {formatInteger(Math.floor(resources.bars))} → Next Cores:{' '}
         {formatInteger(nextCores)}
       </div>
-      <button type="button" disabled={prestigeDisabled} onClick={doPrestige}>
+      <button
+        type="button"
+        disabled={prestigeDisabled}
+        onClick={doPrestige}
+        title={
+          prestigeDisabled
+            ? `Requires ${formatInteger(PRESTIGE_THRESHOLD)} bars to prestige`
+            : undefined
+        }
+      >
         Prestige Run
       </button>
       <div className="muted">
