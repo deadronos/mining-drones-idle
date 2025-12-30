@@ -35,6 +35,10 @@ test.describe('Factory management flow', () => {
     snapshot.resources.crystals = 1_000;
     snapshot.resources.energy = 500;
 
+    // Ensure energy capacity is sufficient for the boosted energy value
+    snapshot.modules = snapshot.modules ?? {};
+    snapshot.modules.solar = Math.max(snapshot.modules.solar ?? 0, 20);
+
     const importSucceeded = await page.evaluate((payload) => {
       const helper = window as Window & { __persistence?: PersistenceBridge };
       if (!helper.__persistence || typeof helper.__persistence.importState !== 'function') {

@@ -3,7 +3,7 @@ import type { StoreState, DroneFlightState } from '../types';
 import { cloneDroneFlight } from '../serialization';
 
 export interface DroneSliceState {
-  droneFlights: DroneFlightState[];
+  droneFlights: Record<string, DroneFlightState>;
   droneOwners: Record<string, string | null>;
 }
 
@@ -18,20 +18,25 @@ export const createDroneSlice: StateCreator<
   [],
   DroneSliceState & DroneSliceMethods
 > = (set) => ({
-  droneFlights: [],
+  droneFlights: {},
   droneOwners: {},
 
   recordDroneFlight: (flight) => {
     set((state) => {
       const snapshot = cloneDroneFlight(flight);
-      const remaining = state.droneFlights.filter((entry) => entry.droneId !== snapshot.droneId);
-      return { droneFlights: [...remaining, snapshot] };
+      return {
+        droneFlights: {
+          ...state.droneFlights,
+          [snapshot.droneId]: snapshot,
+        },
+      };
     });
   },
 
   clearDroneFlight: (droneId) => {
-    set((state) => ({
-      droneFlights: state.droneFlights.filter((entry) => entry.droneId !== droneId),
-    }));
+    set((state) => {
+      const { [droneId]: _, ...remaining } = state.droneFlights;
+      return { droneFlights: remaining };
+    });
   },
 });

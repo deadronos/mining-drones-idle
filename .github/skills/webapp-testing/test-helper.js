@@ -1,3 +1,4 @@
+/* global module */
 /**
  * Helper utilities for web application testing with Playwright
  */

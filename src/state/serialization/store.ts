@@ -13,6 +13,7 @@ import type {
   PrestigeInvestmentState,
   PendingTransfer,
   LogisticsQueues,
+  DroneFlightState,
 } from '../types';
 import {
   SAVE_VERSION,
@@ -267,43 +268,48 @@ export const normalizeSettings = (snapshot?: Partial<StoreSettings>): StoreSetti
   },
 });
 
-export const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapshot => ({
-  schemaVersion: snapshot.schemaVersion === SCHEMA_VERSION ? snapshot.schemaVersion : SCHEMA_VERSION,
-  resources: normalizeResources(snapshot.resources),
-  modules: normalizeModules(snapshot.modules),
-  prestige: normalizePrestige(snapshot.prestige),
-  save: normalizeSave(snapshot.save),
-  settings: normalizeSettings(snapshot.settings),
-  specTechs: normalizeSpecTechs(snapshot.specTechs),
-  specTechSpent: normalizeSpecTechSpent(snapshot.specTechSpent),
-  prestigeInvestments: normalizePrestigeInvestments(snapshot.prestigeInvestments),
-  rngSeed:
-    typeof snapshot.rngSeed === 'number' && Number.isFinite(snapshot.rngSeed)
-      ? snapshot.rngSeed
+export const normalizeSnapshot = (snapshot: Partial<StoreSnapshot>): StoreSnapshot => {
+  return {
+    schemaVersion: snapshot.schemaVersion === SCHEMA_VERSION ? snapshot.schemaVersion : SCHEMA_VERSION,
+    resources: normalizeResources(snapshot.resources),
+    modules: normalizeModules(snapshot.modules),
+    prestige: normalizePrestige(snapshot.prestige),
+    save: normalizeSave(snapshot.save),
+    settings: normalizeSettings(snapshot.settings),
+    specTechs: normalizeSpecTechs(snapshot.specTechs),
+    specTechSpent: normalizeSpecTechSpent(snapshot.specTechSpent),
+    prestigeInvestments: normalizePrestigeInvestments(snapshot.prestigeInvestments),
+    rngSeed:
+      typeof snapshot.rngSeed === 'number' && Number.isFinite(snapshot.rngSeed)
+        ? snapshot.rngSeed
+        : undefined,
+
+    // Return Array for StoreSnapshot compliance
+    droneFlights: normalizeDroneFlights(snapshot.droneFlights),
+
+    factories: Array.isArray(snapshot.factories)
+      ? snapshot.factories
+          .map((entry) => normalizeFactorySnapshot(entry))
+          .filter((entry): entry is Exclude<typeof entry, null> => entry !== null)
       : undefined,
-  droneFlights: normalizeDroneFlights(snapshot.droneFlights),
-  factories: Array.isArray(snapshot.factories)
-    ? snapshot.factories
-        .map((entry) => normalizeFactorySnapshot(entry))
-        .filter((entry): entry is Exclude<typeof entry, null> => entry !== null)
-    : undefined,
-  selectedFactoryId:
-    typeof snapshot.selectedFactoryId === 'string' && snapshot.selectedFactoryId.length > 0
-      ? snapshot.selectedFactoryId
-      : null,
-  droneOwners:
-    snapshot.droneOwners && typeof snapshot.droneOwners === 'object'
-      ? Object.entries(snapshot.droneOwners).reduce(
-          (acc: Record<string, string | null>, [key, owner]) => {
-            acc[key] = typeof owner === 'string' && owner.length > 0 ? owner : null;
-            return acc;
-          },
-          {},
-        )
-      : undefined,
-  logisticsQueues: normalizeLogisticsQueues(snapshot.logisticsQueues),
-  gameTime: coerceNumber(snapshot.gameTime, 0),
-});
+    selectedFactoryId:
+      typeof snapshot.selectedFactoryId === 'string' && snapshot.selectedFactoryId.length > 0
+        ? snapshot.selectedFactoryId
+        : null,
+    droneOwners:
+      snapshot.droneOwners && typeof snapshot.droneOwners === 'object'
+        ? Object.entries(snapshot.droneOwners).reduce(
+            (acc: Record<string, string | null>, [key, owner]) => {
+              acc[key] = typeof owner === 'string' && owner.length > 0 ? owner : null;
+              return acc;
+            },
+            {},
+          )
+        : undefined,
+    logisticsQueues: normalizeLogisticsQueues(snapshot.logisticsQueues),
+    gameTime: coerceNumber(snapshot.gameTime, 0),
+  };
+};
 
 /**
  * Validate a (partial) snapshot before it's passed to the WASM engine.
@@ -361,7 +367,8 @@ export const serializeStore = (state: StoreState): StoreSnapshot => ({
   specTechSpent: { ...state.specTechSpent },
   prestigeInvestments: { ...state.prestigeInvestments },
   rngSeed: state.rngSeed,
-  droneFlights: state.droneFlights.map(cloneDroneFlight),
+  // Convert Record back to Array for snapshot
+  droneFlights: Object.values(state.droneFlights).map(cloneDroneFlight),
   factories: state.factories.map(factoryToSnapshot),
   selectedFactoryId: state.selectedFactoryId,
   droneOwners: { ...state.droneOwners },
@@ -375,6 +382,7 @@ export const parseSnapshot = (payload: string): StoreSnapshot | null => {
   try {
     const parsed = JSON.parse(payload) as Partial<StoreSnapshot>;
     // Note: migrations are applied during import in store.ts, using migration logic defined in migrations.ts
+    // Return standard StoreSnapshot (Array-based)
     return normalizeSnapshot(parsed);
   } catch (error) {
     console.warn('Failed to parse snapshot payload', error);

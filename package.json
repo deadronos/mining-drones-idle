@@ -10,7 +10,7 @@
     "test": "vitest",
     "test:watch": "vitest --watch",
     "coverage": "vitest run --coverage",
-    "build:wasm": "cd rust-engine && wasm-pack build --target web --out-dir ../src/gen --features wasm",
+    "build:wasm": "cd rust-engine && wasm-pack build --no-opt --target web --out-dir ../src/gen --features wasm",
     "build": "npm run build:wasm && tsc -b && vite build",
     "build:output": "npm run build",
     "deploy:pages": "echo 'Use GitHub Actions to deploy on tag push'",
