@@ -15,8 +15,8 @@ Checklist:
 - [ ] All state via canonical GameState if simulation
 - [ ] Tests: happy path + edge
 
-Repo notes (SpaceAutoBattler):
+Repo notes:
 
-- Run `npm run typecheck` and `npm test` after edits; CI enforces these gates. Avoid changing files outside `src/` (no edits to `dist/`).
+- Run `pnpm typecheck` and `pnpm test` after edits; CI enforces these gates. Avoid changing files outside `src/` (no edits to `dist/`).
 
 End.

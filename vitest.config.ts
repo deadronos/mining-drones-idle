@@ -4,7 +4,8 @@ import path from 'path';
 
 // Vitest configuration with Vite plugins and coverage using coverage-v8
 export default defineConfig({
-  plugins: [react()],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  plugins: [react() as any],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),

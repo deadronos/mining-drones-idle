@@ -3,6 +3,17 @@ description: 'Playwright test generation instructions'
 applyTo: '**'
 ---
 
+# Playwright (TypeScript) — Short Guide
+
+Receipt: "Write resilient Playwright tests."
+
+Plan: 1) Use role-based locators. 2) Use auto-retrying assertions. 3) No hard waits.
+
+Checklist:
+- [ ] Role-based locators
+- [ ] All state via canonical GameState if simulation
+- [ ] Clear test titles and steps
+
 ## Test Writing Guidelines
 
 ### Code Quality Standards
@@ -40,7 +51,8 @@ import { test, expect } from '@playwright/test';
 test.describe('Movie Search Feature', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the application before each test
-    await page.goto('https://debs-obrien.github.io/playwright-movies-app');
+    // Note: use the URL from playwright.config.ts (usually / or http://localhost:5173 or 5174)
+    await page.goto('/');
   });
 
   test('Search for a movie by title', async ({ page }) => {
@@ -48,19 +60,13 @@ test.describe('Movie Search Feature', () => {
       await page.getByRole('search').click();
       const searchInput = page.getByRole('textbox', { name: 'Search Input' });
       await searchInput.fill('Garfield');
-            await page.goto('http://localhost:8080/');
+    });
 
-      # Playwright (TypeScript) — Short Guide
-
-      Receipt: "Write resilient Playwright tests."
-
-      Plan: 1) Use role-based locators. 2) Use auto-retrying assertions. 3) No hard waits.
-
-      Checklist:
-      - [ ] Role-based locators
-      - [ ] All state via canonical GameState if simulation
-      - [ ] Clear test titles and steps
-
-      End.
-
+    await test.step('Verify results', async () => {
+       // ... assertions
+    });
+  });
+});
 ```
+
+End.
