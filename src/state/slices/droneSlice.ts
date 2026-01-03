@@ -35,7 +35,8 @@ export const createDroneSlice: StateCreator<
 
   clearDroneFlight: (droneId) => {
     set((state) => {
-      const { [droneId]: _, ...remaining } = state.droneFlights;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { [droneId]: _removed, ...remaining } = state.droneFlights;
       return { droneFlights: remaining };
     });
   },

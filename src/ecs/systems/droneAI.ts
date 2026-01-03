@@ -1,5 +1,5 @@
 import type { GameWorld } from '@/ecs/world';
-import type { StoreApiType, DroneFlightState } from '@/state/store';
+import type { StoreApiType } from '@/state/store';
 import { getRegionById, pickRegionForDrone } from '@/ecs/biomes';
 import { assignDroneTarget } from './droneAI/targetAssignment';
 import { startTravel } from './droneAI/travelManagement';
@@ -20,7 +20,6 @@ export { assignDroneTarget } from './droneAI/targetAssignment';
  */
 export const createDroneAISystem = (world: GameWorld, store: StoreApiType) => {
   const { droneQuery, asteroidQuery, rng } = world;
-  const flightMap = new Map<string, DroneFlightState>();
 
   return (_dt: number) => {
     // droneFlights is now a Record, but we can iterate it or use keys.
