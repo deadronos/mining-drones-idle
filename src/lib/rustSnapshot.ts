@@ -1,6 +1,6 @@
 import { gameWorld } from '@/ecs/world';
 import type { DroneFlightState, StoreSnapshot } from '@/state/types';
-import { serializeStore, normalizeSnapshot } from '@/state/serialization/store';
+import { serializeStore } from '@/state/serialization/store';
 import { useStore } from '@/state/store';
 
 export const buildRustSnapshotFromTs = (): StoreSnapshot & Record<string, unknown> => {
