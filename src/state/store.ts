@@ -31,7 +31,7 @@ import {
   normalizeSettings,
 } from './serialization';
 import { createDefaultFactories } from './factory';
-import { generateSeed, deriveProcessSequence } from './utils';
+import { generateSeed, deriveProcessSequence, applyRefineryProduction } from './utils';
 import {
   SAVE_VERSION,
   initialResources,
@@ -200,6 +200,14 @@ const storeCreator: StateCreator<StoreState> = (set, get) => {
       const { resources, refineryStats } = processRefinery(state, dt);
       set({ resources });
       return refineryStats;
+    },
+
+    // Apply refinery production stats to global resources (called from ECS system)
+    applyRefineryStats: (stats) => {
+      if (stats.oreConsumed <= 0 && stats.barsProduced <= 0) return;
+      const state = get();
+      const updatedState = applyRefineryProduction(state, stats);
+      set({ resources: updatedState.resources });
     },
 
     // Process factories (called from tick)

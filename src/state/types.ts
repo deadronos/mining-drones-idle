@@ -460,6 +460,8 @@ export interface StoreState {
   tick(this: void, dt: number): void;
   /** Processes refinery logic for offline simulation. */
   processRefinery(this: void, dt: number): RefineryStats;
+  /** Applies refinery production stats to global resources. */
+  applyRefineryStats(this: void, stats: RefineryStats): void;
   /** Checks if a prestige reset is available. */
   prestigeReady(this: void): boolean;
   /** Calculates estimated prestige currency gain. */
