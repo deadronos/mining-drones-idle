@@ -19,12 +19,22 @@ cargo install cargo-watch --locked
 cargo install wasm-pack
 ```
 
+- Verify `wasm-pack` is available:
+
+```bash
+wasm-pack --version
+# or
+npm run check:wasm-pack
+```
+
 Start dev server with live WASM rebuilds:
 
 ```bash
 npm ci
 npm run dev
 ```
+
+> Note: If you encounter an "Unsupported platform" error during `npm install` (for example on Windows ARM64), installing `wasm-pack` via `cargo install wasm-pack` or using an x64 environment (WSL/x64, VM) avoids the failing npm postinstall that attempts to download a prebuilt binary.
 
 What that does:
 

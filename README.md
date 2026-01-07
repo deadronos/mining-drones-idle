@@ -68,12 +68,23 @@ npm run preview
 
 To work on the Rust simulation engine:
 
-1.  Ensure you have Rust and `wasm-pack` installed.
-2.  Run the WASM build in watch mode:
+1.  Ensure you have Rust installed (see https://rustup.rs).
+2.  Install `wasm-pack` (recommended via `cargo`):
+    ```bash
+    cargo install wasm-pack
+    wasm-pack --version
+    ```
+    Or run the included checker:
+    ```bash
+    npm run check:wasm-pack
+    ```
+3.  Run the WASM build in watch mode:
     ```bash
     npm run dev:wasm:watch
     ```
     This runs concurrently with `npm run dev` if you use the main start script.
+
+> Note: If you see an "Unsupported platform" error during `npm install` (common on Windows ARM64), installing `wasm-pack` via `cargo install wasm-pack` or building in WSL/x64 avoids the failing npm postinstall step that downloads a prebuilt binary.
 
 ## 🧪 Testing
 
