@@ -13,7 +13,6 @@ import type {
   PrestigeInvestmentState,
   PendingTransfer,
   LogisticsQueues,
-  DroneFlightState,
 } from '../types';
 import {
   SAVE_VERSION,

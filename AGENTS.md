@@ -15,9 +15,9 @@ Do not create explainer documents or other documentation unless specifically ask
 
 Run before handing off code changes:
 
-npm run typecheck
-npm run lint
-npm run test
+pnpm typecheck
+pnpm lint
+pnpm test
 
 ## 🧠 Memory Bank System
 
