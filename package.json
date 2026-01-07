@@ -5,12 +5,14 @@
   "type": "module",
   "scripts": {
     "dev:wasm:watch": "cd rust-engine && cargo watch -s \"wasm-pack build --target web --out-dir ../src/gen --features wasm\"",
+    "check:wasm-pack": "node ./scripts/check-wasm-pack.js",
     "dev": "concurrently \"npm:dev:wasm:watch\" \"vite\"",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "coverage": "vitest run --coverage",
-    "build:wasm": "cd rust-engine && wasm-pack build --no-opt --target web --out-dir ../src/gen --features wasm",
+    "build:wasm": "cd rust-engine && npm run check:wasm-pack && wasm-pack build --no-opt --target web --out-dir ../src/gen --features wasm",
+    "prebuild:wasm": "npm run check:wasm-pack",
     "build": "npm run build:wasm && tsc -b && vite build",
     "build:output": "npm run build",
     "deploy:pages": "echo 'Use GitHub Actions to deploy on tag push'",
@@ -80,8 +82,7 @@
     "vite": "npm:rolldown-vite@7.3.0",
     "vite-plugin-top-level-await": "^1.6.0",
     "vite-plugin-wasm": "^3.5.0",
-    "vitest": "^4.0.16",
-    "wasm-pack": "^0.13.1"
+    "vitest": "^4.0.16"
   },
   "overrides": {
     "vite": "npm:rolldown-vite@7.3.0"
