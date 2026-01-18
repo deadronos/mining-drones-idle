@@ -1,15 +1,10 @@
-import { Vector3 } from 'three';
 import { calculateExponentialCost } from '@/lib/math';
 import { getResourceModifiers, type ResourceModifierSnapshot } from '@/lib/resourceModifiers';
 import type { BuildableFactory } from '@/ecs/factories';
 import type {
-  VectorTuple,
   StoreState,
   Modules,
   RefineryStats,
-  FactoryUpgradeId,
-  FactoryUpgradeCostVariantId,
-  FactoryResources,
 } from './types';
 import { getSinkBonuses } from './sinks';
 import {
@@ -23,7 +18,6 @@ import {
   ENERGY_PER_SOLAR,
   SOLAR_BASE_GEN,
   DRONE_ENERGY_COST,
-  FACTORY_UPGRADE_GROWTH,
   emptyRefineryStats,
   FACTORY_SOLAR_BASE_REGEN,
   FACTORY_SOLAR_REGEN_PER_LEVEL,

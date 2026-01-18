@@ -5,6 +5,27 @@
 import { calculateExponentialCost } from '@/lib/math';
 import type { FactoryResources, FactoryUpgrades } from './models';
 
+type FactoryCostMap = Partial<Record<keyof FactoryResources, number>>;
+
+type FactoryUpgradeCostDef = {
+  baseCost: FactoryCostMap;
+  alternativeCosts?: Record<string, FactoryCostMap>;
+  growth: number;
+};
+
+const FACTORY_RESOURCE_KEYS: Array<keyof FactoryResources> = [
+  'ore',
+  'bars',
+  'metals',
+  'crystals',
+  'organics',
+  'ice',
+  'credits',
+];
+
+const isFactoryResourceKey = (key: string): key is keyof FactoryResources =>
+  (FACTORY_RESOURCE_KEYS as readonly string[]).includes(key);
+
 /**
  * Factory configuration with sensible defaults.
  * Defines base costs, capacities, and rates for new factories.
@@ -41,7 +62,7 @@ export const FACTORY_SOLAR_BASE_REGEN = 1.25;
 export const FACTORY_SOLAR_REGEN_PER_LEVEL = 0.5;
 export const FACTORY_SOLAR_MAX_ENERGY_PER_LEVEL = 10;
 
-export const FACTORY_UPGRADE_CONFIG = {
+export const FACTORY_UPGRADE_CONFIG: Record<keyof FactoryUpgrades, FactoryUpgradeCostDef> = {
   docking: {
     baseCost: { bars: 13 },
     alternativeCosts: {
@@ -77,7 +98,7 @@ export const FACTORY_UPGRADE_CONFIG = {
     },
     growth: FACTORY_UPGRADE_GROWTH,
   },
-} as const;
+};
 
 /**
  * Computes the cost to purchase the Nth factory (0-indexed).
@@ -123,24 +144,15 @@ export const computeUpgradeCost = (
   const def = FACTORY_UPGRADE_CONFIG[upgradeId];
   if (!def) return {};
 
-  let baseCostMap = def.baseCost;
-
-  if (variant && 'alternativeCosts' in def) {
-    const alt = (def.alternativeCosts as any)[variant];
-    if (alt) {
-      baseCostMap = alt;
-    }
-  }
+  const baseCostMap = (variant ? def.alternativeCosts?.[variant] : undefined) ?? def.baseCost;
 
   const result: Partial<FactoryResources> = {};
   for (const [key, value] of Object.entries(baseCostMap)) {
-    if (typeof value === 'number') {
-      result[key as keyof FactoryResources] = calculateExponentialCost(
-        value,
-        def.growth,
-        currentLevel,
-      );
+    if (!isFactoryResourceKey(key) || typeof value !== 'number') {
+      continue;
     }
+
+    result[key] = calculateExponentialCost(value, def.growth, currentLevel);
   }
   return result;
 };
