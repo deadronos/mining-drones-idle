@@ -39,6 +39,7 @@ export {
   startRefineProcess,
   tickRefineProcess,
   enforceMinOneRefining,
+  deriveProcessSequence,
 } from './refining';
 
 // Energy management
@@ -46,6 +47,7 @@ export { computeFactoryEnergyDemand } from './energy';
 
 // Routing and placement
 export { findNearestAvailableFactory, computeDistance } from './routing';
+export { computeFactoryPlacement } from './placement';
 
 // Upgrade management
 export { detectUpgradeShortfall } from './upgrades';

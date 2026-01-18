@@ -7,8 +7,9 @@ import {
   computeFactoryCost,
   removeDroneFromFactory,
   transferOreToFactory,
+  computeFactoryPlacement,
 } from '@/ecs/factories';
-import { computeFactoryPlacement, generateUniqueId } from '../utils';
+import { generateUniqueId } from '@/lib/utils';
 import { cloneFactory } from '../serialization';
 import { createFactoryUpgradeMethods } from './factory/upgradeRequests';
 

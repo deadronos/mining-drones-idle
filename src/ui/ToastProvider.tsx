@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
-import { generateUniqueId } from '@/state/utils';
+import { generateUniqueId } from '@/lib/utils';
 import Toast from './Toast';
 
 type ToastEntry = { id: string; message: string };
