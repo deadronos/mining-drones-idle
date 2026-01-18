@@ -57,3 +57,15 @@ export const createRng = (seed: number): RandomGenerator => {
     },
   };
 };
+
+export const generateSeed = () => {
+  // Generate seed that fits in i32 for Rust compatibility (max 2,147,483,647)
+  if (typeof crypto !== 'undefined' && 'getRandomValues' in crypto) {
+    const buffer = new Uint32Array(1);
+    crypto.getRandomValues(buffer);
+    // Mask to ensure positive i32 range
+    return buffer[0] & 0x7fffffff;
+  }
+  // Fallback: random positive i32
+  return Math.floor(Math.random() * 0x7fffffff);
+};

@@ -30,18 +30,29 @@ export const ENERGY_PER_SOLAR = 25;
 export const SOLAR_BASE_GEN = 7;
 export const DRONE_ENERGY_COST = 0.9;
 // Solar Collector upgrade (factory-local)
-export const FACTORY_SOLAR_BASE_REGEN = 1.25;
-export const FACTORY_SOLAR_REGEN_PER_LEVEL = 0.5;
-export const FACTORY_SOLAR_MAX_ENERGY_PER_LEVEL = 10; // +10 max energy per Solar Collector level
+export {
+  FACTORY_SOLAR_BASE_REGEN,
+  FACTORY_SOLAR_REGEN_PER_LEVEL,
+} from '@/ecs/factories/config';
+
+import {
+  FACTORY_SOLAR_MAX_ENERGY_PER_LEVEL,
+} from '@/ecs/factories/config';
+
+export { FACTORY_SOLAR_MAX_ENERGY_PER_LEVEL };
 
 // Solar Array module (global, provides local bonuses to all factories)
 export const SOLAR_ARRAY_LOCAL_REGEN_PER_LEVEL = 0.25;
 export const SOLAR_ARRAY_LOCAL_MAX_ENERGY_PER_LEVEL = 3;
 
-export const FACTORY_MIN_DISTANCE = 10;
-export const FACTORY_MAX_DISTANCE = 50;
-export const FACTORY_PLACEMENT_ATTEMPTS = 100;
-export const FACTORY_UPGRADE_GROWTH = 1.35;
+export {
+  FACTORY_MIN_DISTANCE,
+  FACTORY_MAX_DISTANCE,
+  FACTORY_PLACEMENT_ATTEMPTS,
+  FACTORY_UPGRADE_GROWTH,
+} from '@/ecs/factories/config';
+
+import { FACTORY_UPGRADE_CONFIG } from '@/ecs/factories/config';
 
 export const WAREHOUSE_CONFIG = {
   storageMultiplier: 8,
@@ -194,10 +205,8 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
   docking: {
     label: 'Landing Bay',
     description: '+1 docking slot for concurrent drones',
-    baseCost: { bars: 13 },
-    alternativeCosts: {
-      metals: { metals: 50 },
-    },
+    baseCost: FACTORY_UPGRADE_CONFIG.docking.baseCost,
+    alternativeCosts: FACTORY_UPGRADE_CONFIG.docking.alternativeCosts,
     apply: (factory) => {
       factory.dockingCapacity += 1;
       factory.upgrades.docking += 1;
@@ -206,10 +215,8 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
   refine: {
     label: 'Refinery Line',
     description: '+1 refine slot for parallel batches',
-    baseCost: { bars: 13 },
-    alternativeCosts: {
-      organics: { organics: 25, metals: 25 },
-    },
+    baseCost: FACTORY_UPGRADE_CONFIG.refine.baseCost,
+    alternativeCosts: FACTORY_UPGRADE_CONFIG.refine.alternativeCosts,
     apply: (factory) => {
       factory.refineSlots += 1;
       factory.upgrades.refine += 1;
@@ -218,10 +225,8 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
   storage: {
     label: 'Bulk Storage',
     description: '+150 storage capacity',
-    baseCost: { bars: 13 },
-    alternativeCosts: {
-      organics: { organics: 20 },
-    },
+    baseCost: FACTORY_UPGRADE_CONFIG.storage.baseCost,
+    alternativeCosts: FACTORY_UPGRADE_CONFIG.storage.alternativeCosts,
     apply: (factory) => {
       factory.storageCapacity += 150;
       factory.upgrades.storage += 1;
@@ -230,10 +235,8 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
   energy: {
     label: 'Capacitors',
     description: '+30 local energy capacity',
-    baseCost: { bars: 13 },
-    alternativeCosts: {
-      ice: { ice: 30, metals: 15 },
-    },
+    baseCost: FACTORY_UPGRADE_CONFIG.energy.baseCost,
+    alternativeCosts: FACTORY_UPGRADE_CONFIG.energy.alternativeCosts,
     apply: (factory) => {
       factory.energyCapacity += 30;
       factory.upgrades.energy += 1;
@@ -243,10 +246,8 @@ export const factoryUpgradeDefinitions: Record<FactoryUpgradeId, FactoryUpgradeD
   solar: {
     label: 'Solar Collectors',
     description: 'Regenerates local energy each second',
-    baseCost: { bars: 13 },
-    alternativeCosts: {
-      crystals: { crystals: 25, metals: 10 },
-    },
+    baseCost: FACTORY_UPGRADE_CONFIG.solar.baseCost,
+    alternativeCosts: FACTORY_UPGRADE_CONFIG.solar.alternativeCosts,
     apply: (factory) => {
       factory.upgrades.solar += 1;
       // Apply local bonus: +10 max energy per level

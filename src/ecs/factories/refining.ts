@@ -148,3 +148,26 @@ export const enforceMinOneRefining = (
 
   return true;
 };
+
+/**
+ * Derives the highest process sequence number from existing factories.
+ * Used to resume ID generation after load.
+ *
+ * @param factories - List of factories to scan.
+ * @returns Max sequence number found.
+ */
+export const deriveProcessSequence = (factories: BuildableFactory[]): number => {
+  let maxSequence = 0;
+  for (const factory of factories) {
+    for (const process of factory.activeRefines) {
+      const match = /-p(\d+)$/.exec(process.id);
+      if (match) {
+        const value = Number.parseInt(match[1] ?? '0', 10);
+        if (Number.isFinite(value)) {
+          maxSequence = Math.max(maxSequence, value);
+        }
+      }
+    }
+  }
+  return maxSequence;
+};

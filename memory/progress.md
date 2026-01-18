@@ -4,6 +4,10 @@
 
 ## Recent Achievements
 
+- **2026-01-18**: Started TASK060 (Shadcn UI Overhaul).
+  - Added a reusable sidebar section component and rebuilt the layout with nested collapsible sidebars.
+  - Added a mission-control header over the main R3F canvas, resizable sidebars, and scrollable nested sections.
+
 - **2025-12-12**: Stabilized Playwright E2E suite after TS↔Rust handoff/parity changes.
   - Fixed invalid import test to work with hidden file input (`tests/e2e/import-invalid.spec.ts`).
   - Made factory logistics E2E deterministic by clearing persisted saves per test and using snapshot-based factory setup (`tests/e2e/factory-logistics.spec.ts`).

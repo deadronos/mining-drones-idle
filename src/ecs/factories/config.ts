@@ -5,6 +5,27 @@
 import { calculateExponentialCost } from '@/lib/math';
 import type { FactoryResources, FactoryUpgrades } from './models';
 
+type FactoryCostMap = Partial<Record<keyof FactoryResources, number>>;
+
+type FactoryUpgradeCostDef = {
+  baseCost: FactoryCostMap;
+  alternativeCosts?: Record<string, FactoryCostMap>;
+  growth: number;
+};
+
+const FACTORY_RESOURCE_KEYS: Array<keyof FactoryResources> = [
+  'ore',
+  'bars',
+  'metals',
+  'crystals',
+  'organics',
+  'ice',
+  'credits',
+];
+
+const isFactoryResourceKey = (key: string): key is keyof FactoryResources =>
+  (FACTORY_RESOURCE_KEYS as readonly string[]).includes(key);
+
 /**
  * Factory configuration with sensible defaults.
  * Defines base costs, capacities, and rates for new factories.
@@ -31,6 +52,53 @@ export const FACTORY_CONFIG = {
   /** Linear price increment for each subsequent factory. */
   priceScaleIncrement: 50,
 } as const;
+
+export const FACTORY_MIN_DISTANCE = 10;
+export const FACTORY_MAX_DISTANCE = 50;
+export const FACTORY_PLACEMENT_ATTEMPTS = 100;
+export const FACTORY_UPGRADE_GROWTH = 1.35;
+
+export const FACTORY_SOLAR_BASE_REGEN = 1.25;
+export const FACTORY_SOLAR_REGEN_PER_LEVEL = 0.5;
+export const FACTORY_SOLAR_MAX_ENERGY_PER_LEVEL = 10;
+
+export const FACTORY_UPGRADE_CONFIG: Record<keyof FactoryUpgrades, FactoryUpgradeCostDef> = {
+  docking: {
+    baseCost: { bars: 13 },
+    alternativeCosts: {
+      metals: { metals: 50 },
+    },
+    growth: FACTORY_UPGRADE_GROWTH,
+  },
+  refine: {
+    baseCost: { bars: 13 },
+    alternativeCosts: {
+      organics: { organics: 25, metals: 25 },
+    },
+    growth: FACTORY_UPGRADE_GROWTH,
+  },
+  storage: {
+    baseCost: { bars: 13 },
+    alternativeCosts: {
+      organics: { organics: 20 },
+    },
+    growth: FACTORY_UPGRADE_GROWTH,
+  },
+  energy: {
+    baseCost: { bars: 13 },
+    alternativeCosts: {
+      ice: { ice: 30, metals: 15 },
+    },
+    growth: FACTORY_UPGRADE_GROWTH,
+  },
+  solar: {
+    baseCost: { bars: 13 },
+    alternativeCosts: {
+      crystals: { crystals: 25, metals: 10 },
+    },
+    growth: FACTORY_UPGRADE_GROWTH,
+  },
+};
 
 /**
  * Computes the cost to purchase the Nth factory (0-indexed).
@@ -65,50 +133,26 @@ export const computeFactoryEnergyUpkeep = (factoryCount: number): number =>
  *
  * @param upgradeId - The ID of the upgrade (e.g., 'docking').
  * @param currentLevel - The current level of the upgrade.
+ * @param variant - Optional variant ID for alternative costs.
  * @returns The resource cost for the next level.
  */
 export const computeUpgradeCost = (
   upgradeId: keyof FactoryUpgrades,
   currentLevel: number,
+  variant?: string,
 ): Partial<FactoryResources> => {
-  const upgradeMap: Record<
-    keyof FactoryUpgrades,
-    { baseCost: Partial<FactoryResources>; growth: number }
-  > = {
-    docking: {
-      baseCost: { bars: 13 },
-      growth: 1.35,
-    },
-    refine: {
-      baseCost: { bars: 13 },
-      growth: 1.35,
-    },
-    storage: {
-      baseCost: { bars: 13 },
-      growth: 1.35,
-    },
-    energy: {
-      baseCost: { bars: 13 },
-      growth: 1.35,
-    },
-    solar: {
-      baseCost: { bars: 13 },
-      growth: 1.35,
-    },
-  };
-
-  const def = upgradeMap[upgradeId];
+  const def = FACTORY_UPGRADE_CONFIG[upgradeId];
   if (!def) return {};
 
+  const baseCostMap = (variant ? def.alternativeCosts?.[variant] : undefined) ?? def.baseCost;
+
   const result: Partial<FactoryResources> = {};
-  for (const [key, value] of Object.entries(def.baseCost)) {
-    if (typeof value === 'number') {
-      result[key as keyof FactoryResources] = calculateExponentialCost(
-        value,
-        def.growth,
-        currentLevel,
-      );
+  for (const [key, value] of Object.entries(baseCostMap)) {
+    if (!isFactoryResourceKey(key) || typeof value !== 'number') {
+      continue;
     }
+
+    result[key] = calculateExponentialCost(value, def.growth, currentLevel);
   }
   return result;
 };

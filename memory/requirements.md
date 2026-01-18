@@ -279,3 +279,15 @@ WHEN the Rust simulation core seeds its RNG with the same value used by the Type
 ## RQ-070 Typed-Array Layout Calculation
 
 WHEN the Rust simulation core plans typed-array exports for drones, asteroids, and factories, THE SYSTEM SHALL compute contiguous Float32/Uint32 sections with byte offsets and lengths that reflect the requested entity counts. [Acceptance: Rust unit test requests a layout for specific counts and verifies offsets increase monotonically and lengths match per-entity component sizes.]
+
+## RQ-071 Shadcn Layout Shell
+
+WHEN the game UI loads, THE SYSTEM SHALL render a three-column shell with left and right collapsible sidebars framing the central simulation view. [Acceptance: Manual verification confirms both sidebars can collapse while the canvas remains centered.]
+
+## RQ-072 Nested Sidebar Sections
+
+WHEN players interact with sidebar groups, THE SYSTEM SHALL allow nested collapsible sections to expand and collapse without affecting other groups. [Acceptance: Manual verification toggles group and section summaries independently.]
+
+## RQ-073 Mission Control Canvas Focus
+
+WHEN the main scene renders, THE SYSTEM SHALL present the R3F canvas as the primary content area with an overlay status header. [Acceptance: Manual verification confirms the canvas fills the center column with a header above it.]
