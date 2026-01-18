@@ -2,6 +2,12 @@
 
 ## Current Work
 
+### 🔄 **TASK060 – Shadcn UI Overhaul**
+
+- Rebuilding the UI shell with nested collapsible sidebars and a mission-control header.
+- Introducing a reusable `SidebarSection` component and reshaping the layout around the R3F canvas.
+- Updating global styles to match shadcn-inspired surfaces, scrollable sidebar groups, and resizable handles.
+
 ### 🔄 **TASK050 – Full Parity Implementation**
 
 - Added factory position/energy parity checks and deterministic-seed coverage in `tests/unit/step-parity.test.ts`.
