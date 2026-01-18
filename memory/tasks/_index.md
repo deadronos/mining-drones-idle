@@ -62,3 +62,4 @@
 | TASK057 | Commands, Snapshot & Offline Parity | Completed | 2025-12-13 |
 | TASK058 | Rendering & Bridge Integration | Completed | 2025-12-13 |
 | TASK059 | CI & Continuous Validation | Pending | 2025-12-10 |
+| TASK060 | Shadcn UI Overhaul | In Progress | 2026-01-18 |
