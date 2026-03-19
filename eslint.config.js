@@ -6,7 +6,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import vitest from 'eslint-plugin-vitest';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
-import { defineConfig, globalIgnores } from 'eslint/config';
+// import { defineConfig, globalIgnores } from 'eslint/config';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
@@ -14,8 +14,8 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export default defineConfig([
-  globalIgnores(['dist', 'build', 'coverage', '.triplex', 'src/gen']),
+export default [
+  { ignores: ['dist', 'build', 'coverage', '.triplex', 'src/gen'] },
   // Provide shared settings for eslint plugins (react version detection)
   {
     settings: { react: { version: '19.2' } },
@@ -143,7 +143,7 @@ export default defineConfig([
     files: ['**/*.{spec,test}.{ts,tsx,js,jsx}'],
     // prefer the plugin's recommended settings when the plugin is installed
     plugins: { vitest },
-    extends: [vitest.configs.recommended],
+    ...vitest.configs.recommended,
     languageOptions: {
       globals: {
         describe: 'readonly',
@@ -185,4 +185,4 @@ export default defineConfig([
       '@typescript-eslint/no-unnecessary-type-assertion': 'off',
     },
   },
-]);
+];
