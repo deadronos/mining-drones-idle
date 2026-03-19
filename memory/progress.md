@@ -4,6 +4,11 @@
 
 ## Recent Achievements
 
+- **2026-03-19**: Polished the dependency/tooling modernization branch.
+  - Completed the pnpm migration by adding `packageManager`/`engines` metadata, removing a duplicate Tailwind PostCSS dev dependency, switching package scripts/docs from npm to pnpm, and removing misleading `wasm-pack` Cargo metadata that current `wasm-pack` ignores.
+  - Hardened `src/state/import-migrations.test.ts` and `src/state/persistence.test.ts` with in-memory storage mocks so the suite passes on both local Node 25 and CI-target Node 22 runtimes.
+  - Validation: `pnpm run lint`, `pnpm test -- --silent`, `npx -y node@22 /opt/homebrew/bin/pnpm test -- --silent`, `npx -y node@22 /opt/homebrew/bin/pnpm run build`.
+
 - **2026-01-18**: Started TASK060 (Shadcn UI Overhaul).
   - Added a reusable sidebar section component and rebuilt the layout with nested collapsible sidebars.
   - Added a mission-control header over the main R3F canvas, resizable sidebars, and scrollable nested sections.
