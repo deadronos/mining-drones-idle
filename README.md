@@ -6,59 +6,59 @@ A production-ready idle/automation game built with React, Three.js, and an ECS-d
 
 ## 🚀 Features
 
-*   **Interactive 3D World**: Fully rendered asteroid fields, factories, and drone fleets using React Three Fiber.
-*   **Deep Simulation**: ECS-based logic for mining, logistics, power management, and refining.
-*   **Factory Automation**: Manage production chains, upgrade modules, and balance energy grids.
-*   **Logistics Network**: Smart hauler scheduling system to distribute resources between factories and the central warehouse.
-*   **Progression System**: Unlock upgrades, expand to new factories, and prestige to gain powerful cores.
-*   **Offline Progress**: Simulation continues even when you're away, calculating production and mining yields.
-*   **Hybrid Engine**: TypeScript-based simulation with an optional high-performance Rust/WASM engine backend.
+- **Interactive 3D World**: Fully rendered asteroid fields, factories, and drone fleets using React Three Fiber.
+- **Deep Simulation**: ECS-based logic for mining, logistics, power management, and refining.
+- **Factory Automation**: Manage production chains, upgrade modules, and balance energy grids.
+- **Logistics Network**: Smart hauler scheduling system to distribute resources between factories and the central warehouse.
+- **Progression System**: Unlock upgrades, expand to new factories, and prestige to gain powerful cores.
+- **Offline Progress**: Simulation continues even when you're away, calculating production and mining yields.
+- **Hybrid Engine**: TypeScript-based simulation with an optional high-performance Rust/WASM engine backend.
 
 ## 🛠️ Tech Stack
 
-*   **Frontend**: React 19, TypeScript, Vite
-*   **3D Graphics**: Three.js, React Three Fiber (R3F), Drei
-*   **State Management**: Zustand, Immer
-*   **Simulation**: Miniplex (ECS), Custom Rust Engine (WASM)
-*   **Styling**: Tailwind CSS, Radix UI Themes
-*   **Testing**: Vitest, Playwright, React Testing Library
+- **Frontend**: React 19, TypeScript, Vite
+- **3D Graphics**: Three.js, React Three Fiber (R3F), Drei
+- **State Management**: Zustand, Immer
+- **Simulation**: Miniplex (ECS), Custom Rust Engine (WASM)
+- **Styling**: Tailwind CSS, Radix UI Themes
+- **Testing**: Vitest, Playwright, React Testing Library
 
 ## 📦 Getting Started
 
 ### Prerequisites
 
-* Node.js 22+
-* pnpm 10+
-* Rust (optional, for compiling the WASM engine)
+- Node.js 22+
+- pnpm 10+
+- Rust (optional, for compiling the WASM engine)
 
 ### Installation
 
 1. **Clone the repository**:
 
-    ```bash
-    git clone https://github.com/your-username/mining-drones-idle.git
-    cd mining-drones-idle
-    ```
+   ```bash
+   git clone https://github.com/your-username/mining-drones-idle.git
+   cd mining-drones-idle
+   ```
 
 2. **Enable Corepack** (once per machine, if `pnpm` is not already installed):
 
-    ```bash
-    corepack enable
-    ```
+   ```bash
+   corepack enable
+   ```
 
 3. **Install dependencies**:
 
-    ```bash
-    pnpm install
-    ```
+   ```bash
+   pnpm install
+   ```
 
 4. **Start the development server**:
 
-    ```bash
-    pnpm dev
-    ```
+   ```bash
+   pnpm dev
+   ```
 
-    Open [http://localhost:5173](http://localhost:5173) in your browser.
+   Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ### Building for Production
 
@@ -81,24 +81,24 @@ To work on the Rust simulation engine:
 1. Ensure you have Rust installed (see [rustup.rs](https://rustup.rs)).
 2. Install `wasm-pack` (recommended via `cargo`):
 
-    ```bash
-    cargo install wasm-pack
-    wasm-pack --version
-    ```
+   ```bash
+   cargo install wasm-pack
+   wasm-pack --version
+   ```
 
-    Or run the included checker:
+   Or run the included checker:
 
-    ```bash
-    pnpm run check:wasm-pack
-    ```
+   ```bash
+   pnpm run check:wasm-pack
+   ```
 
 3. Run the WASM build in watch mode:
 
-    ```bash
-    pnpm run dev:wasm:watch
-    ```
+   ```bash
+   pnpm run dev:wasm:watch
+   ```
 
-    This runs concurrently with `pnpm dev` if you use the main start script.
+   This runs concurrently with `pnpm dev` if you use the main start script.
 
 > Note: If you see an "Unsupported platform" error during `pnpm install` (common on Windows ARM64), installing `wasm-pack` via `cargo install wasm-pack` or building in WSL/x64 avoids the failing package-manager postinstall step that downloads a prebuilt binary.
 
@@ -106,34 +106,34 @@ To work on the Rust simulation engine:
 
 We maintain a high standard of code quality with comprehensive test coverage.
 
-* **Unit Tests**:
+- **Unit Tests**:
 
-    ```bash
-    pnpm test
-    ```
+  ```bash
+  pnpm test
+  ```
 
-* **Type Checking**:
+- **Type Checking**:
 
-    ```bash
-    pnpm typecheck
-    ```
+  ```bash
+  pnpm typecheck
+  ```
 
-* **Linting**:
+- **Linting**:
 
-    ```bash
-    pnpm lint
-    ```
+  ```bash
+  pnpm lint
+  ```
 
-* **End-to-End Tests**:
+- **End-to-End Tests**:
 
-    ```bash
-    pnpm e2e
-    ```
+  ```bash
+  pnpm e2e
+  ```
 
 ## 📖 Documentation
 
-* [**Architecture Overview**](docs/ARCHITECTURE.md): detailed breakdown of the system design, data flow, and key subsystems.
-* [**Rust Engine Development**](docs/rust-wasm-dev.md): guide for working with the Rust/WASM simulation backend.
+- [**Architecture Overview**](docs/ARCHITECTURE.md): detailed breakdown of the system design, data flow, and key subsystems.
+- [**Rust Engine Development**](docs/rust-wasm-dev.md): guide for working with the Rust/WASM simulation backend.
 
 ## 🎮 How to Play
 
