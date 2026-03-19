@@ -1,19 +1,51 @@
-import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createStoreInstance } from '@/state/store';
 import { createPersistenceManager, SAVE_KEY, type PersistenceManager } from '@/state/persistence';
 import type { MigrationReport } from '@/state/migrations';
 
+function createMemoryStorage(): Storage {
+  const store = new Map<string, string>();
+
+  return {
+    get length() {
+      return store.size;
+    },
+    clear: () => {
+      store.clear();
+    },
+    getItem: (key: string) => store.get(key) ?? null,
+    key: (index: number) => Array.from(store.keys())[index] ?? null,
+    removeItem: (key: string) => {
+      store.delete(key);
+    },
+    setItem: (key: string, value: string) => {
+      store.set(key, value);
+    },
+  };
+}
+
+const originalLocalStorage = window.localStorage;
+
 describe('persistence migration reporting', () => {
   beforeEach(() => {
+    Object.defineProperty(window, 'localStorage', {
+      value: createMemoryStorage(),
+      configurable: true,
+    });
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2025-02-14T12:00:00Z'));
-    window.localStorage.clear();
   });
 
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
-    window.localStorage.clear();
+  });
+
+  afterAll(() => {
+    Object.defineProperty(window, 'localStorage', {
+      value: originalLocalStorage,
+      configurable: true,
+    });
   });
 
   it('importStateWithReport returns a migration report when importing legacy payloads', () => {

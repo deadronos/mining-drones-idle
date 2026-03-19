@@ -1,21 +1,53 @@
-import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createStoreInstance } from '@/state/store';
 import { createPersistenceManager, SAVE_KEY } from '@/state/persistence';
 import * as offlineLib from '@/lib/offline';
 
 const FIXED_NOW = new Date('2025-02-14T12:00:00Z');
 
+function createMemoryStorage(): Storage {
+  const store = new Map<string, string>();
+
+  return {
+    get length() {
+      return store.size;
+    },
+    clear: () => {
+      store.clear();
+    },
+    getItem: (key: string) => store.get(key) ?? null,
+    key: (index: number) => Array.from(store.keys())[index] ?? null,
+    removeItem: (key: string) => {
+      store.delete(key);
+    },
+    setItem: (key: string, value: string) => {
+      store.set(key, value);
+    },
+  };
+}
+
+const originalLocalStorage = window.localStorage;
+
 describe('state/persistence', () => {
   beforeEach(() => {
+    Object.defineProperty(window, 'localStorage', {
+      value: createMemoryStorage(),
+      configurable: true,
+    });
     vi.useFakeTimers();
     vi.setSystemTime(FIXED_NOW);
-    window.localStorage.clear();
   });
 
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
-    window.localStorage.clear();
+  });
+
+  afterAll(() => {
+    Object.defineProperty(window, 'localStorage', {
+      value: originalLocalStorage,
+      configurable: true,
+    });
   });
 
   it('loads save and simulates offline with configured cap hours', { timeout: 30000 }, () => {

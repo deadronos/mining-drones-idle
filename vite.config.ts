@@ -13,6 +13,7 @@ export default defineConfig(async ({ mode }) => {
     topLevelAwait(),
     react({
       // keep the user's react-compiler babel plugin
+      // @ts-expect-error react-compiler not in types
       babel: {
         plugins: [['babel-plugin-react-compiler']],
       },
