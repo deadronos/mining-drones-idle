@@ -16,7 +16,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -40,13 +40,21 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Install wasm-pack (CI)
+        uses: jetli/wasm-pack-action@v0.4.0
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 10
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Build WASM
+        run: pnpm run build:wasm
       - name: Run linter
         run: pnpm run lint
 
@@ -58,7 +66,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -75,7 +83,7 @@ jobs:
       - name: Build WASM
         run: pnpm run build:wasm
       - name: Run unit tests (Vitest)
-        run: pnpm test --silent
+        run: pnpm test -- --silent
       - name: Upload vitest snapshots/logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -93,7 +101,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -110,7 +118,7 @@ jobs:
       - name: Build WASM
         run: pnpm run build:wasm
       - name: Run parity + perf suites
-        run: pnpm test --silent tests/unit/step-parity.test.ts tests/unit/offline-parity.test.ts tests/unit/command-parity.test.ts tests/perf/step-bench.spec.ts
+        run: pnpm test tests/unit/step-parity.test.ts tests/unit/offline-parity.test.ts tests/unit/command-parity.test.ts tests/perf/step-bench.spec.ts -- --silent
       - name: Upload parity logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
